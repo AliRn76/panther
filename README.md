@@ -1,9 +1,9 @@
 # framework
 
 ## idea
-- TUI for a monitoring system / CLI for project commands
-- Set **static** Config to .yaml or .ini (.conf, .cfg, etc...)
-
+- [ ] TUI for a monitoring system / CLI for project commands
+- [ ] Set **static** Config to .yaml or .ini (.conf, .cfg, etc...)
+- [ ] Cli command API output mode for postman
 
 ### TODO:
 - [ ] Database core (MongoDB)
@@ -15,4 +15,3 @@
 - [ ] Thread and Multiprocessing
 - [ ] Websocket core
 - [ ] Jinja
-- [ ] 
