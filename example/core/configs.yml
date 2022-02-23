@@ -2,15 +2,15 @@ configs:
   - URLs: config.urls
 
   # Go To https://framework.org/Middlewares For More Options
-  - Middlewares: middlewares
+  - Middlewares: config.middlewares
 
   # Go To https://framework.org/Authentications For More Options
-  - Authentication: framework.authentication.JWTAuthentication
+  - Authentication: JWTAuthentication
 
   # Go To https://framework.org/DatabaseDrivers For More Options
-  - DatabaseDriver: framework.db.drivers.MYSQLDriver
-
+  - DatabaseDriver: MYSQLDriver
 
   - LogQueries: True
+
 
 
