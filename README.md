@@ -6,11 +6,13 @@
 
 
 ### TODO:
--  [ ] Database core (MongoDB)
--  [ ] Url core
--  [ ] Signal core
--  [ ] View core
--  [ ] Middleware core
--  [ ] Test core
--  [ ] Thread and Multiprocessing
--  [ ] ...
+- [ ] Database core (MongoDB)
+- [ ] Url core
+- [ ] Signal core (models, query, view, ...)
+- [ ] View core
+- [ ] Middleware core
+- [ ] Test core
+- [ ] Thread and Multiprocessing
+- [ ] Websocket core
+- [ ] Jinja
+- [ ] 
