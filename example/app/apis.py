@@ -1,14 +1,13 @@
-from framework.api import API
-from framework.decorators import validation
+from framework.app import API
 from .serializer import UserInputSerializer, UserSerializer
 
 
-@API(input=UserInputSerializer, output_model=UserSerializer)
+@API.get(output_model=UserSerializer)
 def single_user(request, body):
     return {'detail': 'ok'}
 
 
-@validation(input=UserInputSerializer, output=UserSerializer)
-def single_user(request, body):
-    body: UserInputSerializer
+@API.post(input=UserInputSerializer, output_model=UserSerializer)
+def create_user(request, body):
     return {'detail': 'ok'}
+

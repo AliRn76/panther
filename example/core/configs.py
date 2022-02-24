@@ -6,13 +6,20 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import dotenv_values
 from example.core import urls, middlewares
-from framework.db.drivers import MYSQLDriver
+from framework.db.drivers import MYSQLDriver, MongoDBDriver
 from framework.authentications import JWTAuthentication
 
 
+# Load Env Variables
 BASE_DIR = Path(__name__).resolve().parent.parent
 env = dotenv_values(BASE_DIR / '.env')
 SECRET_KEY = env['SECRET_KEY']
+
+DB_NAME = env['DB_NAME']
+DB_HOST = env['DB_HOST']
+DB_PORT = env['DB_PORT']
+DB_USERNAME = env['DB_USERNAME']
+DB_PASSWORD = env['DB_PASSWORD']
 
 
 # Go To https://framework.org/Middlewares For More Options
@@ -30,7 +37,14 @@ JWTConfig = {
 
 
 # Go To https://framework.org/DatabaseDrivers For More Options
-DatabaseDriver = MYSQLDriver
+DatabaseDriver = MongoDBDriver
+DatabaseConfig = {
+    'NAME': DB_NAME,
+    'HOST': DB_HOST,
+    'PORT': DB_PORT,
+    'USERNAME': DB_USERNAME,
+    'PASSWORD': DB_PASSWORD,
+}
 
 LogQueries: True
 

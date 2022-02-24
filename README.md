@@ -15,3 +15,6 @@
 - [ ] Thread and Multiprocessing
 - [ ] Websocket core
 - [ ] Jinja
+- [ ] Load config file in config of framework
+- [ ] Database Driver (Mongo)
+- [ ] User strawberry.rocks for GraphQL

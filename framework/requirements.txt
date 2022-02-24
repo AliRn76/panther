@@ -1,3 +1,5 @@
 python-dotenv
 pydantic
 python-jose
+bson
+pymongo
