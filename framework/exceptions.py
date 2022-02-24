@@ -1,5 +1,19 @@
+class BaseException:
+    """ Base class Exception """
+    pass
 
-class APIException(Exception):
+
+class HTTPException(BaseException):
+    """ HTTP Error base Exception """
+    pass
+
+
+class IsNotHTTPError(HTTPException):
+    """ for check HTTP method """
+    pass
+
+
+class APIException(BaseException):
     pass
 
 
@@ -13,5 +27,3 @@ class JWTClaimsError(APIException):
 
 class ExpiredSignatureError(JWTError):
     pass
-
-
