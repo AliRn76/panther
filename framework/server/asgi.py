@@ -7,5 +7,5 @@ class Asgi:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        await self.app(scope)
+        await self.app(scope, receive, send)
 
