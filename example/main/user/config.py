@@ -10,6 +10,10 @@ MIDDLEWARE_USER = {
 }
 
 DATABASE_USER = {
-    "username": "XXX",
-    "password": "XXX"
+    'type': 'postgresql',
+    'name': '',
+    'user': '',
+    'password': '',
+    'host': '',
+    'port': '',
 }

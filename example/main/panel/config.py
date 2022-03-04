@@ -8,3 +8,12 @@ PATHS = {
 MIDDLEWARE_PANEL = {
 
 }
+
+DATABASE_USER = {
+    'type': 'sqlite',
+    'name': '',
+    'user': '',
+    'password': '',
+    'host': '',
+    'port': '',
+}

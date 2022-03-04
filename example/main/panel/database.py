@@ -1,4 +1,4 @@
-from framework.database import Database
+from framework.databases import Database
 
 
 class DashboardDB(Database):
