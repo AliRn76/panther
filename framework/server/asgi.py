@@ -1,4 +1,4 @@
-from contextlib
+from contextlib import AsyncExitStack
 
 
 class Asgi:
@@ -7,5 +7,5 @@ class Asgi:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        assert scope['type'] == 'http'
-        ...
+        await self.app(scope, receive, send)
+
