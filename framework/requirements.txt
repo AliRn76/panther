@@ -3,3 +3,4 @@ pydantic
 python-jose
 bson
 pymongo
+uvicorn

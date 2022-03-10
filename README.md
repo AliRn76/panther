@@ -6,15 +6,19 @@
 - [ ] Cli command API output mode for postman
 
 ### TODO:
-- [ ] Database core (MongoDB)
-- [ ] Url core
+- [ ] Database core 
+   - [ ] NoSQL
+   - [x] SQL
+- [x] Url core
+- [ ] HTML Rendering
+- [ ] CronJob (Optional)
 - [ ] Signal core (models, query, view, ...)
-- [ ] View core
+- [ ] View core --> (actors, views, apis, controllers, ...)
 - [ ] Middleware core
-- [ ] Test core
-- [ ] Thread and Multiprocessing
+- [x] Serializer --> Serpyco
+- [ ] Test --> Pytest
 - [ ] Websocket core
 - [ ] Jinja
 - [ ] Load config file in config of framework
-- [ ] Database Driver (Mongo)
+- [ ] Database Driver
 - [ ] User strawberry.rocks for GraphQL
