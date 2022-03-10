@@ -1,5 +1,8 @@
-from framework import Framework
+from framework.main import Framework
+import os
+os.system('clear')
 
-app = Framework()
+app = Framework(__name__)
+
 
 

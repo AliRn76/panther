@@ -1,4 +1,4 @@
-from example.app.urls import app_urls
+from example2.app.urls import app_urls
 
 urls = {
     '': ...,
