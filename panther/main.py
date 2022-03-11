@@ -1,7 +1,7 @@
-from framework.exceptions import APIException
-from framework.response import Response
-from framework.request import Request
-from framework.logger import logger
+from panther.exceptions import APIException
+from panther.response import Response
+from panther.request import Request
+from panther.logger import logger
 from pathlib import Path
 
 

@@ -1,8 +1,8 @@
 import bson
 import logging
 from typing import Tuple
-from framework.db.connection import db  # It Used In eval
-from framework.db.utils import clean_data, query_logger
+from panther.db.connection import db  # It Used In eval
+from panther.db.utils import clean_data, query_logger
 
 
 logger = logging.getLogger(__name__)

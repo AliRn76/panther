@@ -1,6 +1,6 @@
 import orjson
 from dataclasses import dataclass
-from framework.logger import logger
+from panther.logger import logger
 
 
 @dataclass(frozen=True)

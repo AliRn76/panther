@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 
 class APIException(Exception):
     detail: str | dict | list = ''
