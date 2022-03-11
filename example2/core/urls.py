@@ -1,7 +1,12 @@
-from example2.app.urls import app_urls
+from app.urls import app_urls
+
+def admin_func():
+    ...
+
 
 urls = {
-    '': ...,
-    'user/': app_urls
+    # '': None,
+    'user/': app_urls,
+    'admin/': admin_func,
 }
 # He can import another dict as url here

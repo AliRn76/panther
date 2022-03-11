@@ -12,8 +12,10 @@ from dotenv import dotenv_values
 
 
 # Load Env Variables
-# from example2.core.urls import urls
+from core.urls import urls
 
+# DEBUG is default False (You Can Remove It)
+DEBUG = True
 BASE_DIR = Path(__name__).resolve().parent
 env = dotenv_values(BASE_DIR / '.env')
 SECRET_KEY = env['SECRET_KEY']
@@ -51,9 +53,9 @@ DatabaseConfig = {
 
 LogQueries: True
 
-# URLs = urls
-URLs = {
-    '': ...,
-    'user/': 'app_urls'
-}
+URLs = urls
+# URLs = {
+#     '': ...,
+#     'user/': 'app_urls'
+# }
 
