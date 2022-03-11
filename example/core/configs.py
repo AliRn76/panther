@@ -54,8 +54,3 @@ DatabaseConfig = {
 LogQueries: True
 
 URLs = urls
-# URLs = {
-#     '': ...,
-#     'user/': 'app_urls'
-# }
-
