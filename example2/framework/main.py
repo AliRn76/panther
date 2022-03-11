@@ -3,6 +3,11 @@ from framework.logger import logger
 
 import orjson
 
+from framework.request import Request
+
+from framework.response import Response
+
+
 class Framework:
 
     def load_configs(self) -> None:
@@ -49,51 +54,69 @@ class Framework:
             if path == url:
                 return self.urls[url]
 
-    async def __call__(self, scope, receive, send):
-        assert scope['type'] == 'http'
-        method = scope['method']
-        path = scope['path']
-        # print(f'{scope = }', end='\n\n')
-        # print(f'{receive = }', end='\n\n')
-        # print(f'{send = }', end='\n\n')
-        # print(f'{self = }', end='\n\n')
-        # print(f'{method = }', end='\n\n')
-        # print(f'{path = }', end='\n\n')
-        # print(f'{dir(self) = }', end='\n\n')
-        # print(f'{self.__dict__ = }', end='\n\n')
-        # print(f'{self.__doc__ = }', end='\n\n')
-        # print(f'{self.__doc__ = }', end='\n\n')
-        # print(f'{self.base_dir = }', end='\n\n')
-        print(f'{self.urls = }', end='\n\n')
-        endpoint = self.find_endpoint(path=path)
-        print(f'{endpoint = }', end='\n\n')
-        # TODO: check method exists?
-        response = await endpoint('', body=receive)
-
-        print(f'{response = }', end='\n\n')
-        print(f'{type(response) = }', end='\n\n')
-        if isinstance(response, tuple):
-            # TODO: validate response type with specific class
-            if isinstance(response[0], int):
-                response_status_code = response[0]
-            else:
-                logger.error(f'Status Code Should Be Int. ({response[0]} -> {type(response[0])})')
-                response_status_code = 400
-            response_body = response[1]
-        else:
-            response_status_code = 200
-            response_body = response
-
+    @classmethod
+    async def _404(cls, send):
+        # TODO: Work On This Func
         await send({
             'type': 'http.response.start',
-            'status': response_status_code,
+            'status': 404,
             'headers': [
-                [b'content-type', b'text/plain'],
+                [b'content-type', b'application/json'],
+            ],
+        })
+        return await send({
+            'type': 'http.response.body',
+            'body': b'',
+        })
+
+    @classmethod
+    async def read_body(cls, receive):
+        """
+        Read and return the entire body from an incoming ASGI message.
+        """
+        body = b''
+        more_body = True
+
+        while more_body:
+            message = await receive()
+            body += message.get('body', b'')
+            more_body = message.get('more_body', False)
+
+        return body
+
+    async def __call__(self, scope, receive, send) -> None:
+        # Find Endpoint
+        endpoint = self.find_endpoint(path=scope['path'])
+        if endpoint is None:
+            return await self._404(send)
+
+        # Check Endpoint Method
+        endpoint_method = str(endpoint).split('.')[1].upper()
+        if endpoint_method != scope['method']:
+            return await self._404(send)
+
+        # TODO: Input Validation
+
+        # Read Body & Create Request
+        body = await self.read_body(receive)
+        request = Request(scope=scope, body=body)
+        # Call Endpoint
+        response = await endpoint(request, body=receive)
+        if not isinstance(response, Response):
+            return logger.error(f"Response Should Be Instance Of 'Response'.")
+
+        # TODO: Clean Output Data
+        # Return Response
+        await send({
+            'type': 'http.response.start',
+            'status': response.status_code,
+            'headers': [
+                [b'content-type', b'application/json'],
             ],
         })
         await send({
             'type': 'http.response.body',
-            'body': orjson.dumps(response_body),
+            'body': response.data,
         })
 
 

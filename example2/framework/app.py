@@ -1,7 +1,8 @@
 
 class API:
     @classmethod
-    def get(cls, output_model):
+    # def get(cls, output_model):
+    def get(cls):
         def decorator(func):
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
