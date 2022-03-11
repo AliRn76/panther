@@ -1,21 +1,15 @@
 from app.serializers import UserInputSerializer, UserOutputSerializer
-from framework.app import API
-# from .serializer import UserInputSerializer, UserSerializer
-
-
-# @API.get(output_model=UserSerializer)
-from typing import Tuple, Union
-
 from framework.response import Response
+from framework.request import Request
+from framework.app import API
 
-
-# async def single_user(request, body) -> Union[Tuple[int, dict], dict]:
 
 @API.post(input_model=UserInputSerializer, output_model=UserOutputSerializer)
-async def single_user(request) -> Response:
+async def single_user(request: Request):
     print(f'{request.data = }')
     # print(f'{dir(request) = }')
     # print(f'{request.query_params = }')
+    # raise UserNotFound
     return Response(status_code=200, data=request.data)
     # return 200, {'detail': 'ok'}
     # return {'detail': 'ok'}
