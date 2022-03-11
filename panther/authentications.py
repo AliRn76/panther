@@ -1,8 +1,8 @@
 from jose import JWTError, jwt
 from datetime import datetime
-from framework.configs import JWTConfig
+from panther.configs import JWTConfig
 from example.core.configs import JWTConfig
-from framework.exceptions import CredentialsException
+from panther.exceptions import CredentialsException
 
 
 class JWTAuthentication:
