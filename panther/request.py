@@ -15,10 +15,7 @@ class Headers:
 
 
 class Request:
-    def __init__(self, scope: dict, body):
-        """
-        :param data: should be dict or str
-        """
+    def __init__(self, scope: dict, body: bytes):
         self.scope = scope
         self._body = body
 

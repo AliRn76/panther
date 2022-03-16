@@ -14,15 +14,15 @@ class Framework:
             from runpy import run_path
             logger.debug('Loading Configs ...')
             urls_path = self.base_dir / 'core/configs.py'
-            settings = run_path(f'{urls_path}')
+            settings = run_path(str(urls_path))
         except FileNotFoundError:
             return logger.critical('core/configs.py Not Found.')
         finally:
             del run_path
 
         # Check Configs
-        if not settings.get('URLs'):
-            return logger.critical('configs.py Does Not Have \'URLs\'')
+        if 'URLs' not in settings:
+            return logger.critical("configs.py Does Not Have 'URLs'")
 
         # Set Configs
         self.urls = {}
@@ -45,10 +45,12 @@ class Framework:
     def __init__(self, name):
         import os
         os.system('clear')
+        del os
         self.base_dir = Path(name).resolve().parent
         self.load_configs()
 
     def find_endpoint(self, path):
+        # TODO: Fix it later, it does not support root url or something like ''
         for url in self.urls:
             if path == url:
                 return self.urls[url]
@@ -69,7 +71,7 @@ class Framework:
         })
 
     @classmethod
-    async def read_body(cls, receive):
+    async def read_body(cls, receive) -> bytes:
         """
         Read and return the entire body from an incoming ASGI message.
         """
