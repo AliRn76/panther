@@ -1,24 +1,46 @@
-# framework
 
-## idea
-- [ ] TUI for a monitoring system / CLI for project commands
-- [ ] Set **static** Config to .yaml or .ini (.conf, .cfg, etc...)
-- [ ] Cli command API output mode for postman
+## Requirements
 
-### TODO:
-- [ ] Database core 
-   - [ ] NoSQL
-   - [x] SQL
-- [x] Url core
-- [ ] HTML Rendering
-- [ ] CronJob (Optional)
-- [ ] Signal core (models, query, view, ...)
-- [ ] View core --> (actors, views, apis, controllers, ...)
-- [ ] Middleware core
-- [x] Serializer --> Serpyco
-- [ ] Test --> Pytest
-- [ ] Websocket core
-- [ ] Jinja
-- [ ] Load config file in config of framework
-- [ ] Database Driver
-- [ ] User strawberry.rocks for GraphQL
+Python 3.10+
+
+## Installation
+
+### Create Virtual Environment
+
+* <a href="https://">Linux </a>
+* <a href="https://">Windows </a>
+* <a href="https://">Mac </a>
+
+### Install Panther 
+
+<div class="termy">
+
+```console
+$ pip install panter
+```
+
+## Usage
+#### Create Project
+<div class="termy">
+
+```console
+$ panther create
+```
+</div>
+
+#### Manage Project
+<div class="termy">
+
+```console
+$ panther manage
+```
+</div>
+
+#### Run Project
+<div class="termy">
+
+```console
+$ panther run 
+```
+
+
