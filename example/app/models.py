@@ -1,8 +1,9 @@
-# from framework.db.models import BaseModel
-# from framework.db.columns import *
-# from framework.db.models import *
+from panther.db import BaseModel, Column, String, Integer
 
-# MongoEngine
-# class User(BaseModel):
-#     id = ObjectIdField()
-#     username = StringField
+
+class User(BaseModel):
+    __tablename__ = 'User'
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String)
+    password = Column(String)

@@ -1,5 +1,7 @@
+panther
 python-dotenv
 pydantic
 python-jose
 uvicorn
 orjson
+sqlalchemy

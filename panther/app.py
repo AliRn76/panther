@@ -1,6 +1,6 @@
 from pydantic import ValidationError
-from framework.request import Request
-from framework.exceptions import APIException
+from panther.request import Request
+from panther.exceptions import APIException
 
 
 class API:
