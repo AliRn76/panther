@@ -41,16 +41,15 @@ DB_PASSWORD = env['DB_PASSWORD']
 # }
 
 
-# Go To https://framework.org/DatabaseDrivers For More Options
-# DatabaseDriver = MongoDBDriver
+# Go To https://framework.org/SupportedDatabase For More Options
+# DATABASE = postgresql
 DatabaseConfig = {
+    'DATABASE_TYPE': 'SQLite',
     'NAME': DB_NAME,
     'HOST': DB_HOST,
     'PORT': DB_PORT,
     'USERNAME': DB_USERNAME,
     'PASSWORD': DB_PASSWORD,
 }
-
-LogQueries: True
 
 URLs = urls

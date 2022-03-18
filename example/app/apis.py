@@ -1,3 +1,4 @@
+from app.models import User
 from app.serializers import UserInputSerializer, UserOutputSerializer
 from panther.response import Response
 from panther.request import Request
@@ -7,6 +8,9 @@ from panther.app import API
 @API.post(input_model=UserInputSerializer, output_model=UserOutputSerializer)
 async def single_user(request: Request):
     print(f'{request.data = }')
+    user = User.create(username='ali', password='123')
+    print(f'{user = }')
+    print('user')
     # print(f'{dir(request) = }')
     # print(f'{request.query_params = }')
     # raise UserNotFound

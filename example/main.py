@@ -1,6 +1,6 @@
-from panther.main import Framework
+from panther import Panther
 
-app = Framework(__name__)
+app = Panther(__name__)
 
 
 

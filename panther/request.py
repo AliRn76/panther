@@ -25,6 +25,7 @@ class Request:
         for header in self.scope['headers']:
             key, value = header
             _headers[key.decode('utf-8')] = value.decode('utf-8')
+        # logger.debug(_headers)
         return Headers(
             accept_encoding=_headers.get('accept-encoding'),
             content_length=_headers.get('content_length'),
@@ -70,8 +71,11 @@ class Request:
 
     @property
     def data(self) -> dict:
-        body = self._body.decode('utf-8')
-        if self.headers.content_type == 'application/json':
+        body = self._body.decode('utf-8') or {}
+        if self.headers.content_type is None:
+            logger.error(f'request content-type is None')
+            _data = body
+        elif self.headers.content_type == 'application/json':
             _data = orjson.loads(body)
         elif self.headers.content_type[:19] == 'multipart/form-data':
             # TODO: Handle Multipart Form Data
@@ -80,4 +84,6 @@ class Request:
         else:
             logger.error(f'{self.headers.content_type} Is Not Supported.')
             _data = None
-        return _data
+
+        return {'id': 1, 'username': 'ali', 'password': '1123'}
+        # return _data
