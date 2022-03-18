@@ -4,3 +4,4 @@ __pycache__/
 panther.egg-info/
 dist/
 example/panther/
+build/
