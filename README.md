@@ -63,10 +63,15 @@ $ panther run
 - [x] Response Class 
 - [x] Validate Input 
 - [x] Custom Output Model 
+- [ ] Handle Cookie
+- [ ] Handle File 
+- [ ] Handle Form-Data
+- [ ] Handle WS 
+- [ ] Add py.typed 
 
 #### Database Connection:
 
-- [x] SQLite Connection
+- [ ] SQLite Connection
 - [ ] MySQL Connection
 - [ ] PostgreSQL Connection
 
@@ -115,3 +120,7 @@ $ panther run
 #### CLI (for Windows)
 - [ ] Create Project 
 - [ ] Migration
+
+#### Documentation 
+- [ ] Read The Doc or MkDoc 
+- [ ] Framework Performance Ranking 
