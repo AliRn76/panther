@@ -4,16 +4,19 @@ import uvicorn
 import os
 
 
-def create_project(args):
-    ...
+def make_project(args): ...
 
 
 def parser(args):
     match args:
-        case {'version': True}: print('0.1.4')
-        case {'host': _, 'port': _}: ...
-        case {'path': _}: ...
-        case {'apps': _}: ...
+        case {'version': True}:
+            print('0.1.4')
+        case {'host': _, 'port': _}:
+            uvicorn.run('main:app', host=args.get('host'), port=args.get('port'))
+        case {'path': _}:
+            make_project(args)
+        case {'apps': _}:
+            ...
     return 0
 
 
@@ -27,6 +30,7 @@ def main():
     run_parser.add_argument('-port', default=8000, type=int, help='port')
     # make project command
     make_project_parser = sub_parser.add_parser(name='makeproject', help='make project files.')
+    make_project_parser.add_argument('name', type=str, help='project name.')
     make_project_parser.add_argument('-path', default=os.getcwd(), type=str, help='path')
     # makeapp command
     makeapp = sub_parser.add_parser('makeapp', help='make app files.')
