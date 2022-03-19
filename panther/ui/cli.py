@@ -10,29 +10,30 @@ def create_project(args):
 
 def parser(args):
     match args:
-        case {'command': 'run'}:
-            uvicorn.run('main:app', host=args.get('host'), port=args.get('port'))
-        case {'command': 'test'}:
-            print('soon')
-        case {'command': 'migrate'}:
-            print('Soon.')
-        case {'command': 'makeproject'}:
-            create_project(args)
+        case {'version': True}: print('0.1.4')
+        case {'host': _, 'port': _}: ...
+        case {'path': _}: ...
+        case {'apps': _}: ...
     return 0
 
 
 def main():
     arg_parser = ArgumentParser(description='Panther, Fast & Easy Python Framework.')
-    arg_parser.add_argument('-v', '--version', action='store_true', help='Panther Version.')
-    arg_parser.add_argument('command', help='Command.', choices=('run', 'makeproject', 'makeapp', 'test', 'migrate'))
-    optional = arg_parser.add_argument_group(title='optional')
-    optional.add_argument('-host', default='127.0.0.1', type=str, help='host')
-    optional.add_argument('-port', default=8000, type=int, help='port')
-    optional.add_argument('-path', default=os.getcwd(), type=str, help='path')
+    arg_parser.add_argument('-v', '--version', action='store_true', help='panther version.')
+    sub_parser = arg_parser.add_subparsers(title='Main Commands')
+    # run command
+    run_parser = sub_parser.add_parser(name='run', help='run server.')
+    run_parser.add_argument('-host', default='127.0.0.1', type=str, help='host')
+    run_parser.add_argument('-port', default=8000, type=int, help='port')
+    # make project command
+    make_project_parser = sub_parser.add_parser(name='makeproject', help='make project files.')
+    make_project_parser.add_argument('-path', default=os.getcwd(), type=str, help='path')
+    # makeapp command
+    makeapp = sub_parser.add_parser('makeapp', help='make app files.')
+    makeapp.add_argument('-apps', default=[], nargs='*', help='app names.')
     args = arg_parser.parse_args()
     return args
 
 
 if __name__ == '__main__':
-    print(main().__dict__)
     parser(main().__dict__)
