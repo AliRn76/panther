@@ -1,10 +1,10 @@
 import argparse
+import os
 from argparse import ArgumentParser
 import uvicorn
-import os
-
-
-def make_project(args): ...
+from os import getcwd
+from shutil import copytree
+from pathlib import Path
 
 
 def parser(args):
@@ -20,6 +20,18 @@ def parser(args):
     return 0
 
 
+def make_project(args):
+    try:
+        project_dir = os.path.join(args['path'], args['name'])
+        print(project_dir)
+        os.mkdir(project_dir)
+        project_files_dir = Path(__file__).resolve() / 'template/project'
+        print(project_files_dir)
+        copytree(project_files_dir, project_dir)
+    except FileExistsError:
+        print('Folder Exists.')
+
+
 def main():
     arg_parser = ArgumentParser(description='Panther, Fast & Easy Python Framework.')
     arg_parser.add_argument('-v', '--version', action='store_true', help='panther version.')
@@ -31,7 +43,7 @@ def main():
     # make project command
     make_project_parser = sub_parser.add_parser(name='makeproject', help='make project files.')
     make_project_parser.add_argument('name', type=str, help='project name.')
-    make_project_parser.add_argument('-path', default=os.getcwd(), type=str, help='path')
+    make_project_parser.add_argument('-path', default=getcwd(), type=str, help='path')
     # makeapp command
     makeapp = sub_parser.add_parser('makeapp', help='make app files.')
     makeapp.add_argument('-apps', default=[], nargs='*', help='app names.')
