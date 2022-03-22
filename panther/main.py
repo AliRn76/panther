@@ -5,6 +5,7 @@ from panther.exceptions import APIException
 from panther.response import Response
 from panther.request import Request
 from panther.logger import logger
+from runpy import run_path
 from pathlib import Path
 
 
@@ -84,21 +85,33 @@ class Panther:
         logger.debug(f'Base Directory: {self.base_dir}')
 
         try:
-            from runpy import run_path
             logger.debug('Loading Configs ...')
-            urls_path = self.base_dir / 'core/configs.py'
-            self.settings = run_path(str(urls_path))
+            configs_path = self.base_dir / 'core/configs.py'
+            self.settings = run_path(str(configs_path))
         except FileNotFoundError:
             return logger.critical('core/configs.py Not Found.')
-        finally:
-            del run_path
 
         # Check Configs
         self.check_configs()
 
         # Set Configs
         self.urls = {}
-        self.collect_urls('', self.settings['URLs'])
+
+        # Collect URLs
+        urls_path = self.settings['URLs']
+        try:
+            logger.debug('Loading Configs ...')
+            full_urls_path = self.base_dir / urls_path
+            urls_dict = run_path(str(full_urls_path))['urls']
+        except FileNotFoundError:
+            return logger.critical("Could Open 'URLs' Address.")
+        except KeyError:
+            return logger.critical("'URLs' Address Does Not Have 'urls'")
+        if not isinstance(urls_dict, dict):
+            return logger.critical("'urls' Of URLs Is Not dict.")
+
+
+        self.collect_urls('', urls_dict)
         self.debug = self.settings.get('DEBUG', False)
         self.middlewares = []
         self.collect_middlewares()
