@@ -28,8 +28,10 @@ DB_PASSWORD = env['DB_PASSWORD']
 
 
 # # Go To https://framework.org/Middlewares For More Options
-# Middlewares = middlewares
-#
+Middlewares = [
+    'panther/middlewares/db.py'
+]
+
 # # Go To https://framework.org/Authentications For More Options
 # Authentication = JWTAuthentication
 #

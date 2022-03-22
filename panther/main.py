@@ -1,4 +1,4 @@
-from panther.db.connection import create_session
+# from panther.db.connection import create_session
 from panther.database import SupportedDatabase
 from panther.utils import read_body, send_404
 from panther.exceptions import APIException
@@ -13,9 +13,11 @@ class Panther:
     def __init__(self, name):
         import os
         os.system('clear')
-        del os
         self.base_dir = Path(name).resolve().parent
+        # TODO: Fix self.panther_dir
+        self.panther_dir = f"{os.environ['VIRTUAL_ENV']}/lib/python3.10/site-packages/panther"
         self.load_configs()
+        del os
 
     async def __call__(self, scope, receive, send) -> None:
         # Find Endpoint
@@ -31,13 +33,27 @@ class Panther:
         # Read Body & Create Request
         body = await read_body(receive)
         request = Request(scope=scope, body=body)
+
+        setattr(request, 'db_url', self.db_url())  # TODO: I think this is not the best place for db_url ?(
+        # Call Before Middlewares
+        logger.info(f'{self.middlewares = }')
+        for middleware in self.middlewares:
+            request = await middleware.before(request=request)
+
         # Call Endpoint
         try:
             response = await endpoint(request=request)
         except APIException as e:
+            logger.error(f'{e = }')
             response = Response(data=e.detail, status_code=e.status_code)
         if not isinstance(response, Response):
             return logger.error(f"Response Should Be Instance Of 'Response'.")
+
+        # Call After Middleware
+        self.middlewares.reverse()
+        for middleware in self.middlewares:
+            response = await middleware.after(response=response)
+
         # Return Response
         await send({
             'type': 'http.response.start',
@@ -84,7 +100,16 @@ class Panther:
         self.urls = {}
         self.collect_urls('', self.settings['URLs'])
         self.debug = self.settings.get('DEBUG', False)
-        self.set_database_url()
+        self.middlewares = []
+        self.collect_middlewares()
+
+    def collect_middlewares(self):
+        # TODO: is sub instance of BaseMiddleware
+        _middlewares = self.settings['Middlewares']
+        _first_middleware_path = _middlewares[0]
+        if _first_middleware_path.split('/')[-1] == 'db.py':
+            from panther.middlewares.db import Middleware as db_middleware
+            self.middlewares.append(db_middleware())
 
     def collect_urls(self, pre_url, urls):
         for url, endpoint in urls.items():
@@ -99,7 +124,7 @@ class Panther:
                 self.urls[f'{pre_url}{url}'] = endpoint
         return urls
 
-    def set_database_url(self):
+    def db_url(self) -> str:
         config = self.settings['DatabaseConfig']
         db_type = config['DATABASE_TYPE']
         host = config.get('HOST', '127.0.0.1')
@@ -110,9 +135,11 @@ class Panther:
         """sqlite+aiosqlite:///file_path"""
         # TODO: install aiosqlite if sqlite selected
         # self.database_url = f'{db_type.lower()}://{username}:{password}@{host}:{port}/{name}'
-        self.database_url = f'sqlite+aiosqlite:///{name}'
+        # return f'sqlite+aiosqlite:///{name}.db'
+        # return f'sqlite:///{name}.db'
+        return 'sqlite:////home/ali/dev/panther/example/db.db'
         # DBSession(database_url=self.database_url, database_type=db_type)
-        create_session(database_url=self.database_url, database_type=db_type)
+        # create_session(database_url=self.database_url, database_type=db_type)
 
     def find_endpoint(self, path):
         # TODO: Fix it later, it does not support root url or something like ''
