@@ -50,6 +50,5 @@ DatabaseConfig = {
     'PASSWORD': DB_PASSWORD,
 }
 
-# Base = declarative_base()
 
 URLs = 'core/urls.py'
