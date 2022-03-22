@@ -1,7 +1,4 @@
-import logging
-
-
-logger = logging.getLogger(__name__)
+from panther.logger import logger
 
 
 def query_logger(func):

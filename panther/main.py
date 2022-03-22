@@ -37,7 +37,6 @@ class Panther:
 
         setattr(request, 'db_url', self.db_url())  # TODO: I think this is not the best place for db_url ?(
         # Call Before Middlewares
-        logger.info(f'{self.middlewares = }')
         for middleware in self.middlewares:
             request = await middleware.before(request=request)
 
@@ -45,7 +44,6 @@ class Panther:
         try:
             response = await endpoint(request=request)
         except APIException as e:
-            logger.error(f'{e = }')
             response = Response(data=e.detail, status_code=e.status_code)
         if not isinstance(response, Response):
             return logger.error(f"Response Should Be Instance Of 'Response'.")
@@ -68,6 +66,29 @@ class Panther:
             'body': response.data,
         })
 
+    def load_configs(self) -> None:
+        logger.debug(f'Base Directory: {self.base_dir}')
+
+        try:
+            logger.debug('Loading Configs ...')
+            configs_path = self.base_dir / 'core/configs.py'
+            self.settings = run_path(str(configs_path))
+        except FileNotFoundError:
+            return logger.critical('core/configs.py Not Found.')
+
+        # Check Configs
+        self.check_configs()
+        self.debug = self.settings.get('DEBUG', False)
+
+        # Check & Collect URLs
+        urls = self.check_urls()
+        self.urls = {}
+        self.collect_urls('', urls)
+
+        # Collect Middlewares
+        self.middlewares = []
+        self.collect_middlewares()
+
     def check_configs(self):
         # URLs
         if 'URLs' not in self.settings:
@@ -81,26 +102,9 @@ class Panther:
         if self.settings['DatabaseConfig']['DATABASE_TYPE'] not in SupportedDatabase:
             return logger.critical("'DATABASE_TYPE' Is Not In 'SupportedDatabase'")
 
-    def load_configs(self) -> None:
-        logger.debug(f'Base Directory: {self.base_dir}')
-
-        try:
-            logger.debug('Loading Configs ...')
-            configs_path = self.base_dir / 'core/configs.py'
-            self.settings = run_path(str(configs_path))
-        except FileNotFoundError:
-            return logger.critical('core/configs.py Not Found.')
-
-        # Check Configs
-        self.check_configs()
-
-        # Set Configs
-        self.urls = {}
-
-        # Collect URLs
+    def check_urls(self) -> dict:
         urls_path = self.settings['URLs']
         try:
-            logger.debug('Loading Configs ...')
             full_urls_path = self.base_dir / urls_path
             urls_dict = run_path(str(full_urls_path))['urls']
         except FileNotFoundError:
@@ -109,20 +113,7 @@ class Panther:
             return logger.critical("'URLs' Address Does Not Have 'urls'")
         if not isinstance(urls_dict, dict):
             return logger.critical("'urls' Of URLs Is Not dict.")
-
-
-        self.collect_urls('', urls_dict)
-        self.debug = self.settings.get('DEBUG', False)
-        self.middlewares = []
-        self.collect_middlewares()
-
-    def collect_middlewares(self):
-        # TODO: is sub instance of BaseMiddleware
-        _middlewares = self.settings['Middlewares']
-        _first_middleware_path = _middlewares[0]
-        if _first_middleware_path.split('/')[-1] == 'db.py':
-            from panther.middlewares.db import Middleware as db_middleware
-            self.middlewares.append(db_middleware())
+        return urls_dict
 
     def collect_urls(self, pre_url, urls):
         for url, endpoint in urls.items():
@@ -137,6 +128,14 @@ class Panther:
                 self.urls[f'{pre_url}{url}'] = endpoint
         return urls
 
+    def collect_middlewares(self):
+        # TODO: is sub instance of BaseMiddleware
+        _middlewares = self.settings['Middlewares']
+        _first_middleware_path = _middlewares[0]
+        if _first_middleware_path.split('/')[-1] == 'db.py':
+            from panther.middlewares.db import Middleware as db_middleware
+            self.middlewares.append(db_middleware())
+
     def db_url(self) -> str:
         config = self.settings['DatabaseConfig']
         db_type = config['DATABASE_TYPE']
@@ -145,23 +144,13 @@ class Panther:
         username = config.get('USERNAME')
         password = config.get('PASSWORD')
         name = config.get('NAME')
-        """sqlite+aiosqlite:///file_path"""
-        # TODO: install aiosqlite if sqlite selected
-        # self.database_url = f'{db_type.lower()}://{username}:{password}@{host}:{port}/{name}'
-        # return f'sqlite+aiosqlite:///{name}.db'
-        # return f'sqlite:///{name}.db'
-        return 'sqlite:////home/ali/dev/panther/example/db.db'
-        # DBSession(database_url=self.database_url, database_type=db_type)
-        # create_session(database_url=self.database_url, database_type=db_type)
+        if db_type == 'SQLite':
+            return f'{db_type.lower()}:///{self.base_dir}/{name}.db'
+        else:
+            return f'{db_type.lower()}://{username}:{password}@{host}:{port}/{name}'
 
     def find_endpoint(self, path):
         # TODO: Fix it later, it does not support root url or something like ''
         for url in self.urls:
             if path == url:
                 return self.urls[url]
-
-
-
-
-
-
