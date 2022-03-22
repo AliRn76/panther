@@ -2,7 +2,7 @@ import orjson
 
 
 class Response:
-    def __init__(self, data: dict | list | str | bool, status_code: int = 200):
+    def __init__(self, data: dict | list | set  | tuple | str | bool, status_code: int = 200):
         """
         :param data: should be dict or str
         :param status_code: should be int
@@ -20,12 +20,10 @@ class Response:
 
     @property
     def data(self) -> bytes:
-        if isinstance(self._data, dict) or isinstance(self._data, list) or isinstance(self._data, bool):
+        if isinstance(self._data, dict) or isinstance(self._data, list) or isinstance(self._data, tuple):
             return orjson.dumps(self._data)
-        elif isinstance(self._data, str):
+        else:  # str, bool, set
             return orjson.dumps({'detail': self._data})
-        else:
-            raise TypeError(f"Response 'data' Should Be dict or str. ('{self._data}' -> {type(self._data)})")
 
     def set_data(self, data: dict) -> None:
         self._data = data

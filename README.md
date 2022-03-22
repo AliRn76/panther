@@ -71,7 +71,7 @@ $ panther run
 
 #### Database Connection:
 
-- [ ] SQLite Connection
+- [x] SQLite Connection
 - [ ] MySQL Connection
 - [ ] PostgreSQL Connection
 
@@ -86,8 +86,8 @@ $ panther run
 - [ ] Get or Create
 
 #### Middleware
-- [ ] Add Middlewares To Structure
-- [ ] Create BaseMiddleware
+- [x] Add Middlewares To Structure
+- [x] Create BaseMiddleware
 
 #### Authentication 
 - [ ] Choose Type of Authentication 
@@ -106,7 +106,7 @@ $ panther run
 - [ ] User Redis For Block His JWT
 
 #### Migration 
-- [ ] Add Alembic To Structure
+- [x] Add Alembic To Structure
 
 #### TUI (for Linux)
 - [ ] Create Project with Options

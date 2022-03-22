@@ -39,6 +39,11 @@ class Query:
             db.session.commit()
         return True
 
+    @classmethod
+    @query_logger
+    def last(cls, field='id'):
+        return db.session.query(cls).order_by(eval(f'cls.{field}.desc()')).first()
+
     # # # Advanced
 
     @classmethod

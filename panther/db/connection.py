@@ -17,7 +17,7 @@ class DBSession(Singleton):
     def __init__(self, db_url: str | None = None):
         if db_url:
             self.db_url = db_url
-            engine = create_engine(db_url, echo=True)
+            engine = create_engine(db_url)
             _Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
             self._session = _Session()
 
