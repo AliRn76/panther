@@ -1,6 +1,8 @@
+from panther.middlewares.db import db
+
 from panther.logger import logger
 
-from panther.db.connection import session
+# from panther.db.connection import session
 from panther.db.utils import query_logger
 
 
@@ -22,11 +24,14 @@ class Query:
         else:
             obj = cls(**kwargs)
         logger.info('Query after obj')
-        print(f'{session = }')
-        print(f'{hasattr(session, "add") = }')
-        print(f'{hasattr(session, "session") = }')
-        print(f'{dir(session) = }')
-        session.add(obj)
+
+        logger.info(f'{db = }')
+        logger.info(f'{db.session = }')
+        # print(f'{session = }')
+        # print(f'{hasattr(session, "add") = }')
+        # print(f'{hasattr(session, "session") = }')
+        # print(f'{dir(session) = }')
+        db.session.add(obj)
         logger.info('Query after db.session.add')
         return obj
 
