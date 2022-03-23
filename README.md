@@ -62,29 +62,33 @@ Python 3.10+
 - [ ] Handle File 
 - [ ] Handle Form-Data
 - [ ] Handle WS 
+- [ ] Handle GraphQL
 - [ ] Add py.typed 
 - [ ] Add Package Requirements
+- [ ] Refactor app __call__ 
 
 #### Database:
 - [x] Structure Of DB Connection
 - [x] SQLite Connection
 - [ ] MySQL Connection
 - [ ] PostgreSQL Connection
+- [ ] Set SQLite As Default
 
 #### Simple Query
 - [x] Get One 
 - [x] List  
-- [ ] List with Limit & Offset
 - [x] Create 
 - [x] Delete 
-- [ ] Update
-- [ ] Get or Raise
-- [ ] Get or Create
+- [x] Update
+- [x] Get or Raise
+- [x] Get or Create
+- [ ] Test Update
 
 #### Middleware
 - [x] Add Middlewares To Structure
 - [x] Create BaseMiddleware
-- [ ] Pass Custom Parameters To Middlewares
+- [x] Pass Custom Parameters To Middlewares
+- [ ] Import Custom Middlewares Of User
 
 #### Authentication 
 - [ ] Choose Type of Authentication 
@@ -95,7 +99,7 @@ Python 3.10+
 - [ ] Store JWT After Logout In Redis
 
 #### Cache
-- [ ] Add Redis To Structure
+- [x] Add Redis To Structure
 
 #### Throttling
 - [ ] Monitor Requests 
