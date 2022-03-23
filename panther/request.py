@@ -72,7 +72,7 @@ class Request:
     def data(self) -> dict:
         body = self._body.decode('utf-8') or {}
         if self.headers.content_type is None:
-            logger.error(f'request content-type is None.')
+            # logger.error(f'request content-type is None.')
             _data = body
         elif self.headers.content_type == 'application/json':
             _data = orjson.loads(body)
