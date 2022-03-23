@@ -1,4 +1,8 @@
-# Panther
+### Friendly, Fast Web Framework
+<br/>
+
+[![Downloads](https://static.pepy.tech/personalized-badge/panther?period=month&units=international_system&left_color=grey&right_color=brightgreen&left_text=Downloads)](https://pepy.tech/project/panther)  [![Downloads](https://pepy.tech/badge/panther/month)](https://pepy.tech/project/panther) [![Downloads](https://pepy.tech/badge/panther/week)](https://pepy.tech/project/panther)
+
 <hr/>
 
 ## Requirements
@@ -28,23 +32,48 @@ Python 3.10+
     </div>
 <hr/>
 
-## Usage
-- #### Create Project
-    <div class="termy">
-    
-    ```console
-    $ panther create
-    ```
-    </div>
-- #### Run Project
-    <div class="termy">
-    
-    ```console
-    $ panther run 
-    ```
-    </div>
+[//]: # (## Usage)
 
-<hr>
+[//]: # ()
+[//]: # (- #### Create Project)
+
+[//]: # (    <div class="termy">)
+
+[//]: # ()
+[//]: # (    )
+[//]: # (    ```console)
+
+[//]: # ()
+[//]: # (    $ panther create)
+
+[//]: # ()
+[//]: # (    ```)
+
+[//]: # ()
+[//]: # (    </div>)
+
+[//]: # ()
+[//]: # (- #### Run Project)
+
+[//]: # ()
+[//]: # (    <div class="termy">)
+
+[//]: # ()
+[//]: # (    )
+[//]: # (    ```console)
+
+[//]: # ()
+[//]: # (    $ panther run )
+
+[//]: # ()
+[//]: # (    ```)
+
+[//]: # ()
+[//]: # (    </div>)
+
+[//]: # ()
+[//]: # ()
+[//]: # (<hr>)
 
 ## TODO:
 
