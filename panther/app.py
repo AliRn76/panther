@@ -62,7 +62,7 @@ class API:
         return decorator
 
     @classmethod
-    def get(cls, output_model):
+    def get(cls, output_model=None):
         def decorator(func):
             async def wrapper(*args, **kwargs):
                 response = await func(*args, **kwargs)

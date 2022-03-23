@@ -2,52 +2,47 @@
 <hr/>
 
 ## Requirements
+<div class="termy">
 
+```console
 Python 3.10+
+```
+</div>
+
 <hr/>
 
 ## Installation
 
-### Create Virtual Environment
+- ### Create Virtual Environment
 
-* <a href="https://">Linux </a>
-* <a href="https://">Windows </a>
-* <a href="https://">Mac </a>
+  * <a href="https://">Linux </a>
+  * <a href="https://">Windows </a>
+  * <a href="https://">Mac </a>
 
-### Install Panther 
+- ### Install Panther 
+    <div class="termy">
 
-<div class="termy">
-
-```console
-$ pip install panter
-```
-</div>
+    ```console
+    $ pip install panter
+    ```
+    </div>
 <hr/>
 
 ## Usage
-#### Create Project
-<div class="termy">
-
-```console
-$ panther create
-```
-</div>
-
-#### Manage Project
-<div class="termy">
-
-```console
-$ panther manage
-```
-</div>
-
-#### Run Project
-<div class="termy">
-
-```console
-$ panther run 
-```
-</div>
+- #### Create Project
+    <div class="termy">
+    
+    ```console
+    $ panther create
+    ```
+    </div>
+- #### Run Project
+    <div class="termy">
+    
+    ```console
+    $ panther run 
+    ```
+    </div>
 
 <hr>
 
@@ -68,9 +63,10 @@ $ panther run
 - [ ] Handle Form-Data
 - [ ] Handle WS 
 - [ ] Add py.typed 
+- [ ] Add Package Requirements
 
-#### Database Connection:
-
+#### Database:
+- [x] Structure Of DB Connection
 - [x] SQLite Connection
 - [ ] MySQL Connection
 - [ ] PostgreSQL Connection
@@ -88,6 +84,7 @@ $ panther run
 #### Middleware
 - [x] Add Middlewares To Structure
 - [x] Create BaseMiddleware
+- [ ] Pass Custom Parameters To Middlewares
 
 #### Authentication 
 - [ ] Choose Type of Authentication 
@@ -107,6 +104,8 @@ $ panther run
 
 #### Migration 
 - [x] Add Alembic To Structure
+- [ ] Set Custom Name For Migrations 
+- [ ] Merge Migrations 
 
 #### TUI (for Linux)
 - [ ] Create Project with Options
@@ -124,3 +123,6 @@ $ panther run
 #### Documentation 
 - [ ] Read The Doc or MkDoc 
 - [ ] Framework Performance Ranking 
+
+#### Tests 
+- [ ] Add Test To Package
