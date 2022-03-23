@@ -1,6 +1,6 @@
-from panther.logger import logger
 from panther.db.connection import db
 from panther.db.utils import query_logger
+from panther.exceptions import APIException
 
 
 class Query:
@@ -21,6 +21,12 @@ class Query:
             obj = cls(**kwargs)
         db.session.add(obj)
         return obj
+
+    @query_logger
+    def update(self, **kwargs):
+        for field, value in kwargs.items():
+            setattr(self, field, value)
+        return self
 
     @classmethod
     @query_logger
@@ -59,3 +65,33 @@ class Query:
         obj = cls.create(body, **kwargs)
         db.session.flush()
         return obj
+
+    @query_logger
+    def update_and_commit(self, **kwargs):
+        self.update(**kwargs)
+        db.session.commit()
+        return self
+
+    @classmethod
+    def get_or_raise(cls, **kwargs):
+        obj = cls.get_one(**kwargs)
+        if obj:
+            return obj
+        else:
+            raise APIException(detail=f'{cls} Not Found.', status_code=404)
+
+    @classmethod
+    def get_or_create(cls, **kwargs):
+        obj = cls.get_one(**kwargs)
+        if obj:
+            return obj
+        else:
+            return cls.create(**kwargs)
+
+    @classmethod
+    def get_or_create_and_commit(cls, **kwargs):
+        obj = cls.get_one(**kwargs)
+        if obj:
+            return obj
+        else:
+            return cls.create_and_commit(**kwargs)
