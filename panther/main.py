@@ -1,4 +1,4 @@
-from panther.utils import read_body, send_404
+from panther.utils import read_body, send_404, send_405
 from panther.exceptions import APIException
 from panther.response import Response
 from panther.request import Request
@@ -27,13 +27,13 @@ class Panther:
         # Check Endpoint Method
         endpoint_method = str(endpoint).split('.')[1].upper()
         if endpoint_method != scope['method']:
-            return await send_404(send)
+            return await send_405(send)
 
         # Read Body & Create Request
         body = await read_body(receive)
         request = Request(scope=scope, body=body)
 
-        # Call Before Middlewares
+        # Call 'Before' Middlewares
         for middleware in self.middlewares:
             request = await middleware.before(request=request)
 
@@ -45,7 +45,7 @@ class Panther:
         if not isinstance(response, Response):
             return logger.error(f"Response Should Be Instance Of 'Response'.")
 
-        # Call After Middleware
+        # Call 'After' Middleware
         self.middlewares.reverse()
         for middleware in self.middlewares:
             response = await middleware.after(response=response)
