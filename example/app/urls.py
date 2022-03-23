@@ -9,8 +9,8 @@ async def test(*args, **kwargs):
     return Response(data={'detail': 'this is for test'})
 
 app_urls = {
-    '': test,
-    # 'single/': single_user,
+    # '': test,
+    'single/': single_user,
     # 'create/': create_user,
     # 'list/': None,
     # 'delete/': ...,

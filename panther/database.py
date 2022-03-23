@@ -1,3 +1,0 @@
-
-SupportedDatabase = ('MySQL', 'PostgreSQL', 'SQLite')
-

@@ -1,5 +1,3 @@
-# from panther.db.connection import create_session
-from panther.database import SupportedDatabase
 from panther.utils import read_body, send_404
 from panther.exceptions import APIException
 from panther.response import Response
@@ -35,7 +33,6 @@ class Panther:
         body = await read_body(receive)
         request = Request(scope=scope, body=body)
 
-        setattr(request, 'db_url', self.db_url())  # TODO: I think this is not the best place for db_url ?(
         # Call Before Middlewares
         for middleware in self.middlewares:
             request = await middleware.before(request=request)
@@ -94,14 +91,6 @@ class Panther:
         if 'URLs' not in self.settings:
             return logger.critical("configs.py Does Not Have 'URLs'")
 
-        # DB
-        if 'DatabaseConfig' not in self.settings:
-            return logger.critical("configs.py Does Not Have 'DatabaseConfig'")
-        if 'DATABASE_TYPE' not in self.settings['DatabaseConfig']:
-            return logger.critical("'DatabaseConfig' Does Not Have 'DATABASE'")
-        if self.settings['DatabaseConfig']['DATABASE_TYPE'] not in SupportedDatabase:
-            return logger.critical("'DATABASE_TYPE' Is Not In 'SupportedDatabase'")
-
     def check_urls(self) -> dict:
         urls_path = self.settings['URLs']
         try:
@@ -131,23 +120,21 @@ class Panther:
     def collect_middlewares(self):
         # TODO: is sub instance of BaseMiddleware
         _middlewares = self.settings['Middlewares']
-        _first_middleware_path = _middlewares[0]
-        if _first_middleware_path.split('/')[-1] == 'db.py':
-            from panther.middlewares.db import Middleware as db_middleware
-            self.middlewares.append(db_middleware())
+        for _middleware in _middlewares:
+            if _middleware[0].split('/')[0] == 'panther':
+                _middleware_name = _middleware[0].split('/')[-1]
+                if _middleware_name == 'db.py':
+                    from panther.middlewares.db import Middleware
+                elif _middleware_name == 'redis.py':
+                    from panther.middlewares.redis import Middleware
+                else:
+                    logger.error(f'{_middleware[0]} Does Not Found.')
+                    continue
+            else:
+                # TODO: Import From Example (Custom Middleware)
+                ...
 
-    def db_url(self) -> str:
-        config = self.settings['DatabaseConfig']
-        db_type = config['DATABASE_TYPE']
-        host = config.get('HOST', '127.0.0.1')
-        port = config.get('PORT') or 3306 if db_type == 'MySQL' else 5432 if db_type == 'postgresql' else None
-        username = config.get('USERNAME')
-        password = config.get('PASSWORD')
-        name = config.get('NAME')
-        if db_type == 'SQLite':
-            return f'{db_type.lower()}:///{self.base_dir}/{name}.db'
-        else:
-            return f'{db_type.lower()}://{username}:{password}@{host}:{port}/{name}'
+            self.middlewares.append(Middleware(**_middleware[1]))
 
     def find_endpoint(self, path):
         # TODO: Fix it later, it does not support root url or something like ''

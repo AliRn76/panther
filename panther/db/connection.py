@@ -1,3 +1,4 @@
+from redis import Redis
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -25,5 +26,13 @@ class DBSession(Singleton):
     def session(self) -> Session:
         return self._session
 
+class RedisConnection(Singleton, Redis):
+    def __init__(self, host: str | None = None, port: int | None = None, **kwargs):
+        if host and port:
+            super().__init__(host=host, port=port, **kwargs)
+
 
 db: DBSession = DBSession()
+redis: Redis = RedisConnection()
+
+
