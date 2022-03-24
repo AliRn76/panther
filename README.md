@@ -2,52 +2,47 @@
 <hr/>
 
 ## Requirements
+<div class="termy">
 
+```console
 Python 3.10+
+```
+</div>
+
 <hr/>
 
 ## Installation
 
-### Create Virtual Environment
+- ### Create Virtual Environment
 
-* <a href="https://">Linux </a>
-* <a href="https://">Windows </a>
-* <a href="https://">Mac </a>
+  * <a href="https://">Linux </a>
+  * <a href="https://">Windows </a>
+  * <a href="https://">Mac </a>
 
-### Install Panther 
+- ### Install Panther 
+    <div class="termy">
 
-<div class="termy">
-
-```console
-$ pip install panter
-```
-</div>
+    ```console
+    $ pip install panter
+    ```
+    </div>
 <hr/>
 
 ## Usage
-#### Create Project
-<div class="termy">
-
-```console
-$ panther create
-```
-</div>
-
-#### Manage Project
-<div class="termy">
-
-```console
-$ panther manage
-```
-</div>
-
-#### Run Project
-<div class="termy">
-
-```console
-$ panther run 
-```
-</div>
+- #### Create Project
+    <div class="termy">
+    
+    ```console
+    $ panther create
+    ```
+    </div>
+- #### Run Project
+    <div class="termy">
+    
+    ```console
+    $ panther run 
+    ```
+    </div>
 
 <hr>
 
@@ -67,27 +62,33 @@ $ panther run
 - [ ] Handle File 
 - [ ] Handle Form-Data
 - [ ] Handle WS 
+- [ ] Handle GraphQL
 - [ ] Add py.typed 
+- [ ] Add Package Requirements
+- [ ] Refactor app __call__ 
 
-#### Database Connection:
-
-- [ ] SQLite Connection
+#### Database:
+- [x] Structure Of DB Connection
+- [x] SQLite Connection
 - [ ] MySQL Connection
 - [ ] PostgreSQL Connection
+- [ ] Set SQLite As Default
 
 #### Simple Query
 - [x] Get One 
 - [x] List  
-- [ ] List with Limit & Offset
 - [x] Create 
 - [x] Delete 
-- [ ] Update
-- [ ] Get or Raise
-- [ ] Get or Create
+- [x] Update
+- [x] Get or Raise
+- [x] Get or Create
+- [ ] Test Update
 
 #### Middleware
-- [ ] Add Middlewares To Structure
-- [ ] Create BaseMiddleware
+- [x] Add Middlewares To Structure
+- [x] Create BaseMiddleware
+- [x] Pass Custom Parameters To Middlewares
+- [ ] Import Custom Middlewares Of User
 
 #### Authentication 
 - [ ] Choose Type of Authentication 
@@ -98,7 +99,7 @@ $ panther run
 - [ ] Store JWT After Logout In Redis
 
 #### Cache
-- [ ] Add Redis To Structure
+- [x] Add Redis To Structure
 
 #### Throttling
 - [ ] Monitor Requests 
@@ -106,7 +107,9 @@ $ panther run
 - [ ] User Redis For Block His JWT
 
 #### Migration 
-- [ ] Add Alembic To Structure
+- [x] Add Alembic To Structure
+- [ ] Set Custom Name For Migrations 
+- [ ] Merge Migrations 
 
 #### TUI (for Linux)
 - [ ] Create Project with Options
@@ -124,3 +127,6 @@ $ panther run
 #### Documentation 
 - [ ] Read The Doc or MkDoc 
 - [ ] Framework Performance Ranking 
+
+#### Tests 
+- [ ] Add Test To Package

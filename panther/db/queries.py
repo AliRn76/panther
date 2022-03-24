@@ -1,7 +1,6 @@
-from panther.logger import logger
-
-from panther.db.connection import session
+from panther.db.connection import db
 from panther.db.utils import query_logger
+from panther.exceptions import APIException
 
 
 class Query:
@@ -16,19 +15,18 @@ class Query:
     @query_logger
     def create(cls, body: dict = None, **kwargs):
         """ You can pass data as dict & as kwargs """
-        logger.info('Query create')
         if body:
             obj = cls(**body)
         else:
             obj = cls(**kwargs)
-        logger.info('Query after obj')
-        print(f'{session = }')
-        print(f'{hasattr(session, "add") = }')
-        print(f'{hasattr(session, "session") = }')
-        print(f'{dir(session) = }')
-        session.add(obj)
-        logger.info('Query after db.session.add')
+        db.session.add(obj)
         return obj
+
+    @query_logger
+    def update(self, **kwargs):
+        for field, value in kwargs.items():
+            setattr(self, field, value)
+        return self
 
     @classmethod
     @query_logger
@@ -47,6 +45,11 @@ class Query:
             db.session.commit()
         return True
 
+    @classmethod
+    @query_logger
+    def last(cls, field='id'):
+        return db.session.query(cls).order_by(eval(f'cls.{field}.desc()')).first()
+
     # # # Advanced
 
     @classmethod
@@ -62,3 +65,33 @@ class Query:
         obj = cls.create(body, **kwargs)
         db.session.flush()
         return obj
+
+    @query_logger
+    def update_and_commit(self, **kwargs):
+        self.update(**kwargs)
+        db.session.commit()
+        return self
+
+    @classmethod
+    def get_or_raise(cls, **kwargs):
+        obj = cls.get_one(**kwargs)
+        if obj:
+            return obj
+        else:
+            raise APIException(detail=f'{cls} Not Found.', status_code=404)
+
+    @classmethod
+    def get_or_create(cls, **kwargs):
+        obj = cls.get_one(**kwargs)
+        if obj:
+            return obj
+        else:
+            return cls.create(**kwargs)
+
+    @classmethod
+    def get_or_create_and_commit(cls, **kwargs):
+        obj = cls.get_one(**kwargs)
+        if obj:
+            return obj
+        else:
+            return cls.create_and_commit(**kwargs)

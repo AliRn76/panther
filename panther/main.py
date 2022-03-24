@@ -1,10 +1,9 @@
-from panther.db.connection import create_session
-from panther.database import SupportedDatabase
 from panther.utils import read_body, send_404
 from panther.exceptions import APIException
 from panther.response import Response
 from panther.request import Request
 from panther.logger import logger
+from runpy import run_path
 from pathlib import Path
 
 
@@ -13,9 +12,11 @@ class Panther:
     def __init__(self, name):
         import os
         os.system('clear')
-        del os
         self.base_dir = Path(name).resolve().parent
+        # TODO: Fix self.panther_dir
+        self.panther_dir = f"{os.environ['VIRTUAL_ENV']}/lib/python3.10/site-packages/panther"
         self.load_configs()
+        del os
 
     async def __call__(self, scope, receive, send) -> None:
         # Find Endpoint
@@ -31,6 +32,11 @@ class Panther:
         # Read Body & Create Request
         body = await read_body(receive)
         request = Request(scope=scope, body=body)
+
+        # Call Before Middlewares
+        for middleware in self.middlewares:
+            request = await middleware.before(request=request)
+
         # Call Endpoint
         try:
             response = await endpoint(request=request)
@@ -38,6 +44,12 @@ class Panther:
             response = Response(data=e.detail, status_code=e.status_code)
         if not isinstance(response, Response):
             return logger.error(f"Response Should Be Instance Of 'Response'.")
+
+        # Call After Middleware
+        self.middlewares.reverse()
+        for middleware in self.middlewares:
+            response = await middleware.after(response=response)
+
         # Return Response
         await send({
             'type': 'http.response.start',
@@ -51,40 +63,46 @@ class Panther:
             'body': response.data,
         })
 
+    def load_configs(self) -> None:
+        logger.debug(f'Base Directory: {self.base_dir}')
+
+        try:
+            logger.debug('Loading Configs ...')
+            configs_path = self.base_dir / 'core/configs.py'
+            self.settings = run_path(str(configs_path))
+        except FileNotFoundError:
+            return logger.critical('core/configs.py Not Found.')
+
+        # Check Configs
+        self.check_configs()
+        self.debug = self.settings.get('DEBUG', False)
+
+        # Check & Collect URLs
+        urls = self.check_urls()
+        self.urls = {}
+        self.collect_urls('', urls)
+
+        # Collect Middlewares
+        self.middlewares = []
+        self.collect_middlewares()
+
     def check_configs(self):
         # URLs
         if 'URLs' not in self.settings:
             return logger.critical("configs.py Does Not Have 'URLs'")
 
-        # DB
-        if 'DatabaseConfig' not in self.settings:
-            return logger.critical("configs.py Does Not Have 'DatabaseConfig'")
-        if 'DATABASE_TYPE' not in self.settings['DatabaseConfig']:
-            return logger.critical("'DatabaseConfig' Does Not Have 'DATABASE'")
-        if self.settings['DatabaseConfig']['DATABASE_TYPE'] not in SupportedDatabase:
-            return logger.critical("'DATABASE_TYPE' Is Not In 'SupportedDatabase'")
-
-    def load_configs(self) -> None:
-        logger.debug(f'Base Directory: {self.base_dir}')
-
+    def check_urls(self) -> dict:
+        urls_path = self.settings['URLs']
         try:
-            from runpy import run_path
-            logger.debug('Loading Configs ...')
-            urls_path = self.base_dir / 'core/configs.py'
-            self.settings = run_path(str(urls_path))
+            full_urls_path = self.base_dir / urls_path
+            urls_dict = run_path(str(full_urls_path))['urls']
         except FileNotFoundError:
-            return logger.critical('core/configs.py Not Found.')
-        finally:
-            del run_path
-
-        # Check Configs
-        self.check_configs()
-
-        # Set Configs
-        self.urls = {}
-        self.collect_urls('', self.settings['URLs'])
-        self.debug = self.settings.get('DEBUG', False)
-        self.set_database_url()
+            return logger.critical("Could Open 'URLs' Address.")
+        except KeyError:
+            return logger.critical("'URLs' Address Does Not Have 'urls'")
+        if not isinstance(urls_dict, dict):
+            return logger.critical("'urls' Of URLs Is Not dict.")
+        return urls_dict
 
     def collect_urls(self, pre_url, urls):
         for url, endpoint in urls.items():
@@ -99,29 +117,27 @@ class Panther:
                 self.urls[f'{pre_url}{url}'] = endpoint
         return urls
 
-    def set_database_url(self):
-        config = self.settings['DatabaseConfig']
-        db_type = config['DATABASE_TYPE']
-        host = config.get('HOST', '127.0.0.1')
-        port = config.get('PORT') or 3306 if db_type == 'MySQL' else 5432 if db_type == 'postgresql' else None
-        username = config.get('USERNAME')
-        password = config.get('PASSWORD')
-        name = config.get('NAME')
-        """sqlite+aiosqlite:///file_path"""
-        # TODO: install aiosqlite if sqlite selected
-        # self.database_url = f'{db_type.lower()}://{username}:{password}@{host}:{port}/{name}'
-        self.database_url = f'sqlite+aiosqlite:///{name}'
-        # DBSession(database_url=self.database_url, database_type=db_type)
-        create_session(database_url=self.database_url, database_type=db_type)
+    def collect_middlewares(self):
+        # TODO: is sub instance of BaseMiddleware
+        _middlewares = self.settings['Middlewares']
+        for _middleware in _middlewares:
+            if _middleware[0].split('/')[0] == 'panther':
+                _middleware_name = _middleware[0].split('/')[-1]
+                if _middleware_name == 'db.py':
+                    from panther.middlewares.db import Middleware
+                elif _middleware_name == 'redis.py':
+                    from panther.middlewares.redis import Middleware
+                else:
+                    logger.error(f'{_middleware[0]} Does Not Found.')
+                    continue
+            else:
+                # TODO: Import From Example (Custom Middleware)
+                ...
+
+            self.middlewares.append(Middleware(**_middleware[1]))
 
     def find_endpoint(self, path):
         # TODO: Fix it later, it does not support root url or something like ''
         for url in self.urls:
             if path == url:
                 return self.urls[url]
-
-
-
-
-
-
