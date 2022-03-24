@@ -1,10 +1,8 @@
-import argparse
 import os
 from argparse import ArgumentParser
 import uvicorn
 from os import getcwd
-from shutil import copytree
-from pathlib import Path
+import subprocess
 
 
 def parser(args):
@@ -21,15 +19,10 @@ def parser(args):
 
 
 def make_project(args):
-    try:
-        project_dir = os.path.join(args['path'], args['name'])
-        print(project_dir)
-        os.mkdir(project_dir)
-        project_files_dir = Path(__file__).resolve() / 'template/project'
-        print(project_files_dir)
-        copytree(project_files_dir, project_dir)
-    except FileExistsError:
-        print('Folder Exists.')
+    if os.name == 'nt':
+        subprocess.call(['windows.bat', 'p', args.get('path'), args.get('name')])
+    else:
+        subprocess.call(['sh', 'linux.sh', ''])
 
 
 def main():
@@ -53,3 +46,4 @@ def main():
 
 if __name__ == '__main__':
     parser(main().__dict__)
+    print(main().__dict__)
