@@ -3,6 +3,10 @@ from argparse import ArgumentParser
 import uvicorn
 from os import getcwd
 import subprocess
+from pathlib import Path
+
+ui_folder = Path(__file__).parent
+OS_name = os.name
 
 
 def parser(args):
@@ -12,24 +16,15 @@ def parser(args):
         case {'host': _, 'port': _}:
             uvicorn.run('main:app', host=args.get('host'), port=args.get('port'))
         case {'name': _, 'path': _}:
-            make_project(args)
+            if OS_name == 'nt':
+                subprocess.call([ui_folder / 'project.bat', 'p', args.get('path'), args.get('name')])
+            else:
+                subprocess.call(['sh', ui_folder / 'linux.sh'])
         case {'app': _, 'path': _}:
-            make_apps(args)
-    return 0
-
-
-def make_apps(args):
-    if os.name == 'nt':
-        subprocess.call(['app.bat', 'a', args.get('path'), args.get('app')])
-    else:
-        subprocess.call(['sh', 'linus.sh'])
-
-
-def make_project(args):
-    if os.name == 'nt':
-        subprocess.call(['project.bat', 'p', args.get('path'), args.get('name')])
-    else:
-        subprocess.call(['sh', 'linux.sh'])
+            if OS_name == 'nt':
+                subprocess.call([ui_folder / 'app.bat', 'a', args.get('path'), args.get('app')])
+            else:
+                subprocess.call(['sh', ui_folder / 'linux.sh'])
 
 
 def main():
@@ -49,9 +44,4 @@ def main():
     makeapp.add_argument('app', type=str, help='app names.')
     makeapp.add_argument('-path', default=getcwd(), help='path')
     args = arg_parser.parse_args()
-    return args
-
-
-if __name__ == '__main__':
-    parser(main().__dict__)
-    print(main().__dict__)
+    parser(args.__dict__)
