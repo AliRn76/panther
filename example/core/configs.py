@@ -22,6 +22,7 @@ DB_PASSWORD = env['DB_PASSWORD']
 
 # # Go To https://framework.org/Middlewares For More Options
 Middlewares = [
+    # TODO: change middleware
     # Go To https://framework.org/SupportedDatabase For More Options
     ('panther/middlewares/db.py', {'url': f'sqlite:///{BASE_DIR}/{DB_NAME}.db'}),
     # ('panther/middlewares/db.py', f'postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}') # Example
