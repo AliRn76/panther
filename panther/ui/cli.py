@@ -11,18 +11,25 @@ def parser(args):
             print('0.1.4')
         case {'host': _, 'port': _}:
             uvicorn.run('main:app', host=args.get('host'), port=args.get('port'))
-        case {'path': _}:
+        case {'name': _, 'path': _}:
             make_project(args)
-        case {'apps': _}:
-            ...
+        case {'app': _, 'path': _}:
+            make_apps(args)
     return 0
+
+
+def make_apps(args):
+    if os.name == 'nt':
+        subprocess.call(['app.bat', 'a', args.get('path'), args.get('app')])
+    else:
+        subprocess.call(['sh', 'linus.sh'])
 
 
 def make_project(args):
     if os.name == 'nt':
-        subprocess.call(['windows.bat', 'p', args.get('path'), args.get('name')])
+        subprocess.call(['project.bat', 'p', args.get('path'), args.get('name')])
     else:
-        subprocess.call(['sh', 'linux.sh', ''])
+        subprocess.call(['sh', 'linux.sh'])
 
 
 def main():
@@ -39,7 +46,8 @@ def main():
     make_project_parser.add_argument('-path', default=getcwd(), type=str, help='path')
     # makeapp command
     makeapp = sub_parser.add_parser('makeapp', help='make app files.')
-    makeapp.add_argument('-apps', default=[], nargs='*', help='app names.')
+    makeapp.add_argument('app', type=str, help='app names.')
+    makeapp.add_argument('-path', default=getcwd(), help='path')
     args = arg_parser.parse_args()
     return args
 
