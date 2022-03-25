@@ -13,8 +13,7 @@ class Panther:
         import os
         os.system('clear')
         self.base_dir = Path(name).resolve().parent
-        # TODO: Fix self.panther_dir
-        self.panther_dir = f"{os.environ['VIRTUAL_ENV']}/lib/python3.10/site-packages/panther"
+        self.panther_dir = Path(__file__).parent
         self.load_configs()
         del os
 
