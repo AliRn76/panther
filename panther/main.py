@@ -117,6 +117,7 @@ class Panther:
         return urls
 
     def collect_middlewares(self):
+        # TODO: use importlib
         # TODO: is sub instance of BaseMiddleware
         _middlewares = self.settings['Middlewares']
         for _middleware in _middlewares:
