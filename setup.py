@@ -30,6 +30,9 @@ setup(
         'Programming Language :: Python :: 3.10',
     ],
     packages=find_packages(where='.', exclude=(), include=('*',)),
+    entry_points={
+        'console_scripts': ['panther=panther.ui.cli:main'],
+    }
     # package_dir={'': 'panther'},
     # install_requires=[],
     # include_dirs=[],
