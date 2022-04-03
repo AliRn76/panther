@@ -34,7 +34,7 @@ setup(
         'console_scripts': ['panther=panther.ui.cli:main'],
     },
     package_data={
-        'panther': ['ui/**/**/*', 'ui/**/**/**/*', 'ui/*']
+        'panther': ['ui/*']
     },
     # package_dir={'': 'panther'},
     # install_requires=[],
