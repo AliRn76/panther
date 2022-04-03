@@ -9,6 +9,7 @@ ui_folder = Path(__file__).resolve().parent
 OS_name = os.name
 
 
+# TODO: write shell scrip for making app and project
 def parser(args):
     match args:
         case {'version': True}:
@@ -19,12 +20,12 @@ def parser(args):
             if OS_name == 'nt':
                 subprocess.call([ui_folder / 'project.bat', args.get('path'), args.get('name')])
             else:
-                subprocess.call(['sh', ui_folder / 'linux.sh'])
+                subprocess.call(['sh', ui_folder / 'linux.sh', args.get('path'), args.get('name')])
         case {'app': _, 'path': _}:
             if OS_name == 'nt':
                 subprocess.call([ui_folder / 'app.bat', args.get('path'), args.get('app')])
             else:
-                subprocess.call(['sh', ui_folder / 'linux.sh'])
+                subprocess.call(['sh', ui_folder / 'linux.sh', args.get('path'), args.get('name')])
 
 
 def main():
