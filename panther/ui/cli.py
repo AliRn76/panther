@@ -5,7 +5,7 @@ from os import getcwd
 import subprocess
 from pathlib import Path
 
-ui_folder = Path(__file__).parent
+ui_folder = Path(__file__).resolve().parent
 OS_name = os.name
 
 
@@ -17,12 +17,12 @@ def parser(args):
             uvicorn.run('main:app', host=args.get('host'), port=args.get('port'))
         case {'name': _, 'path': _}:
             if OS_name == 'nt':
-                subprocess.call([ui_folder / 'project.bat', 'p', args.get('path'), args.get('name')])
+                subprocess.call([ui_folder / 'project.bat', args.get('path'), args.get('name')])
             else:
                 subprocess.call(['sh', ui_folder / 'linux.sh'])
         case {'app': _, 'path': _}:
             if OS_name == 'nt':
-                subprocess.call([ui_folder / 'app.bat', 'a', args.get('path'), args.get('app')])
+                subprocess.call([ui_folder / 'app.bat', args.get('path'), args.get('app')])
             else:
                 subprocess.call(['sh', ui_folder / 'linux.sh'])
 

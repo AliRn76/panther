@@ -29,16 +29,14 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3.10',
     ],
-    packages=find_packages(where='.', exclude=(), include=('*',)),
+    packages=find_packages(where='.', exclude=(), include=('*', 'template/*')),
     entry_points={
         'console_scripts': ['panther=panther.ui.cli:main'],
-    }
+    },
+    package_data={
+        'panther': ['ui/**/**/*', 'ui/**/**/**/*', 'ui/*']
+    },
     # package_dir={'': 'panther'},
     # install_requires=[],
     # include_dirs=[],
 )
-
-
-
-
-
