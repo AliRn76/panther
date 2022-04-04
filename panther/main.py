@@ -119,15 +119,23 @@ class Panther:
         return urls
 
     def collect_middlewares(self):
+        # TODO: use importlib
         # TODO: is sub instance of BaseMiddleware
         _middlewares = self.settings['Middlewares']
         for _middleware in _middlewares:
-            if not _middleware == "":
-                import_module(_middleware)
+            if _middleware[0].split('/')[0] == 'panther':
+                _middleware_name = _middleware[0].split('/')[-1]
+                if _middleware_name == 'db.py':
+                    from panther.middlewares.db import Middleware
+                elif _middleware_name == 'redis.py':
+                    from panther.middlewares.redis import Middleware
+                else:
+                    logger.error(f'{_middleware[0]} Does Not Found.')
+                    continue
             else:
-                logger.error(f'{_middleware} Does Not Found.')
-                continue
-            # TODO: Import From Example (Custom Middleware)
+                # TODO: Import From Example (Custom Middleware)
+                ...
+
             self.middlewares.append(Middleware(**_middleware[1]))
 
     def find_endpoint(self, path):
