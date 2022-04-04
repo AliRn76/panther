@@ -5,6 +5,7 @@ from panther.request import Request
 from panther.logger import logger
 from runpy import run_path
 from pathlib import Path
+from importlib import import_module
 
 
 class Panther:
