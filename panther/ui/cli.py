@@ -1,4 +1,4 @@
-from argument import ArgParser, Mode
+from argument import ArgParser, Mode, Color
 
 
 APP = {
@@ -39,12 +39,17 @@ PROJECT = {
     """
 }
 
-def file_parser():
+def create_app(inp):
     ...
 
-def file_data():
+def create_project(inp: list | str):
     ...
 
-def main() -> None:
-
-    return None
+if __name__ == "__main__":
+    ap = ArgParser()
+    ap.add_arg(
+        name="app",
+        desc="create app template folder",
+        mode=Mode.INPUT,
+        func=create_app
+    )
