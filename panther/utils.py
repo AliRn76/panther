@@ -1,4 +1,4 @@
-import orjson
+import orjson as json
 
 
 async def send_404(send):
@@ -12,7 +12,19 @@ async def send_404(send):
     })
     return await send({
         'type': 'http.response.body',
-        'body': orjson.dumps({'detail': 'Not Found.'}),
+        'body': json.dumps({'detail': 'Not Found.'}),
+    })
+
+async def send_204(send):
+    await send({
+        'type': 'http.response.start',
+        'status': 204,
+        'headers': [
+            [b'content-type', b'application/json'],
+        ],
+    })
+    return await send({
+        'type': 'http.response.body',
     })
 
 async def send_405(send):
@@ -26,7 +38,7 @@ async def send_405(send):
     })
     return await send({
         'type': 'http.response.body',
-        'body': orjson.dumps({'detail': 'Method Not Allowed.'}),
+        'body': json.dumps({'detail': 'Method Not Allowed.'}),
     })
 
 

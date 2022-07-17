@@ -1,4 +1,4 @@
-import orjson
+import orjson as json
 from dataclasses import dataclass
 from panther.logger import logger
 
@@ -75,7 +75,7 @@ class Request:
             # logger.error(f'request content-type is None.')
             _data = body
         elif self.headers.content_type == 'application/json':
-            _data = orjson.loads(body)
+            _data = json.loads(body)
         elif self.headers.content_type[:19] == 'multipart/form-data':
             # TODO: Handle Multipart Form Data
             logger.error(f"We Don't Handle Multipart Request Yet.")

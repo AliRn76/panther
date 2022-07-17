@@ -1,6 +1,7 @@
 from panther.db import BaseModel
 from pydantic import ValidationError
 from panther.request import Request
+from panther.response import Response
 from panther.exceptions import APIException
 
 
@@ -41,7 +42,9 @@ class API:
             async def wrapper(*args, **kwargs):
                 request: Request = kwargs['request']
                 cls.validate_input(data=request.data, input_model=input_model)
-                response = await func(request=request)
+                response = await func(request) if Request in func.__annotations__.values() else await func()
+                if not isinstance(response, Response):
+                    response = Response(data=response)
                 data = cls.clean_output(data=response._data, output_model=output_model)
                 response.set_data(data)
                 return response
@@ -54,7 +57,9 @@ class API:
             async def wrapper(*args, **kwargs):
                 request: Request = kwargs['request']
                 cls.validate_input(data=request.data, input_model=input_model)
-                response = await func(request=request)
+                response = await func(request) if Request in func.__annotations__.values() else await func()
+                if not isinstance(response, Response):
+                    response = Response(data=response)
                 data = cls.clean_output(data=response._data, output_model=output_model)
                 response.set_data(data)
                 return response
@@ -66,6 +71,8 @@ class API:
         def decorator(func):
             async def wrapper(*args, **kwargs):
                 response = await func(*args, **kwargs)
+                if not isinstance(response, Response):
+                    response = Response(data=response)
                 data = cls.clean_output(data=response._data, output_model=output_model)
                 response.set_data(data)
                 return response
@@ -77,6 +84,8 @@ class API:
         def decorator(func):
             async def wrapper(*args, **kwargs):
                 response = await func(*args, **kwargs)
+                if not isinstance(response, Response):
+                    response = Response(data=response)
                 data = cls.clean_output(data=response._data, output_model=output_model)
                 response.set_data(data)
                 return response
