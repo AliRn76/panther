@@ -1,17 +1,17 @@
-from types import FunctionType
+from inspect import isfunction
 from rich.console import Console, OverflowMethod
 from rich import print as rprint
 from rich.panel import Panel
 from rich.text import Text
-import sys as _sys
-from typing import Any, TypedDict, Optional, Callable, Union
+import sys as sys
+from typing import Any, ItemsView, TypedDict, Optional, Callable, Union, NoReturn, overload
 
 __all__ = (
     "Mode",
     "ArgParser"
 )
 
-logo = r"""
+__logo = r"""
  ____                 __    __                      
 /\  _`\              /\ \__/\ \                     
 \ \ \L\ \ __      ___\ \ ,_\ \ \___      __   _ __  
@@ -21,7 +21,7 @@ logo = r"""
     \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/
 """
 
-console = Console(
+__console = Console(
     width=51
 )
 
@@ -44,33 +44,75 @@ class Arg(TypedDict):
     mode: Mode # argument mode: FLAG: -h | --help, TODO: Requiered typing python 3.11
     required: bool # default is False
     setting: Setting # setting dict use for rich style TODO: Requiered typing python 3.11
-    func: Callable[[str | list[str]], Union[str, None]] # if arg on INPUT or LIST mode pass input
+    func: Callable[[str | list[str]], Union[str, None]] | None # if arg on INPUT, LIST or SELECT mode pass input
 
 class ArgParser:
 
-    def __init__(self) -> None:
-        self.__args: list = []
+    def __init__(self) -> NoReturn:
+        self._args: dict = {}
 
-    def parser(self):
-        ...
+    def __str__(self) -> str:
+       pass
+    
+    def __repr__(self) -> str:
+        pass
 
-    def help(self):
-        print(logo)
-        console.rule("Commands")
-        for item in self.__args:
-            ...
+    def __simple_man(self) -> None:
+        print(__logo)
+        __console.rule("Info")
 
-    def style_name(name: str, mode: Mode) -> str | list:
-        ... 
+    def __help(self) -> None:
+        for item in self._args.values():
+            print(f"{item['name']}")
 
-    def add_arg(self, name: str, desc: str, mode: Mode, required=False, **setting: dict) -> None:
-        match mode:
-            case Mode.FLAG:
-                ...
-            case Mode.LIST:
-                ...
-            case Mode.SELECT:
-                ...
-            case Mode.INPUT:
-                ...
-        
+    @staticmethod
+    def __cli_style(name: str, mode: Mode) -> tuple:
+        if mode != Mode.SELECT:
+            return f"-{name[0]}", f"--{name}"
+        return tuple(name.split(" "))
+
+    @staticmethod
+    def proccess_command(command: dict, inp: str | list=None):
+        result = command.get('func')(inp)
+
+    def add_arg(self, name: str, desc: str, mode: Mode, func: Callable[[str | list[str]], Union[str, None]]=None, required=False, **setting: dict) -> None:
+        if isfunction(func) is False:
+            raise Exception("func is not callable")
+
+        name = self.__cli_style(name, mode)
+        self._args[(name, required, mode)] = Arg(
+            name=name,
+            desc=desc,
+            mode=mode,
+            func=func,
+            required=required,
+            setting=Setting(**setting)
+        )
+
+    def parser(self, argv: list):
+        try:
+            if argv[1] in ("-h", "--help"): self.__help(); return None
+        except IndexError:
+            self.__simple_man(); return None
+
+        for item in self._args.items():
+
+            name: tuple = item[0][0]
+            required: bool = item[0][1]
+            mode: Mode = item[0][2]
+
+            for val, arg in enumerate(argv):                    
+                if arg in name:
+                    match mode:
+                        case Mode.SELECT:
+                            self.proccess_command(item[1], arg)
+                            continue
+                        case Mode.INPUT | Mode.LIST:
+                            self.proccess_command(item[1], argv.pop(val+1))
+                            continue
+                        case Mode.FLAG:
+                            self.proccess_command(item[1])
+                            continue
+                # else:
+                    # if required is True:
+                    #     raise Exception(f"{name}")
