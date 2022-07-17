@@ -1,8 +1,8 @@
-import orjson
+import orjson as json
 
 
 class Response:
-    def __init__(self, data: dict | list | set  | tuple | str | bool, status_code: int = 200):
+    def __init__(self, data: dict | list | set  | tuple | str | bool = None, status_code: int = 200):
         """
         :param data: should be dict or str
         :param status_code: should be int
@@ -21,9 +21,9 @@ class Response:
     @property
     def data(self) -> bytes:
         if isinstance(self._data, dict) or isinstance(self._data, list) or isinstance(self._data, tuple):
-            return orjson.dumps(self._data)
+            return json.dumps(self._data)
         else:  # str, bool, set
-            return orjson.dumps({'detail': self._data})
+            return json.dumps({'detail': self._data})
 
     def set_data(self, data: dict) -> None:
         self._data = data
