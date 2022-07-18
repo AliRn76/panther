@@ -1,5 +1,5 @@
 from argument import ArgParser, Mode, Color
-
+import sys
 
 APP = {
     "apis": """
@@ -39,11 +39,12 @@ PROJECT = {
     """
 }
 
-def create_app(inp):
-    ...
+
+def create_app(inp: list | str):
+    print(inp)
 
 def create_project(inp: list | str):
-    ...
+    print(inp)
 
 if __name__ == "__main__":
     ap = ArgParser()
@@ -53,3 +54,10 @@ if __name__ == "__main__":
         mode=Mode.INPUT,
         func=create_app
     )
+    ap.add_arg(
+        name="project",
+        desc="create project template folder",
+        mode=Mode.INPUT,
+        func=create_project
+    )
+    ap.parser(sys.argv)
