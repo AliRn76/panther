@@ -33,15 +33,7 @@ Python 3.10+
     <div class="termy">
     
     ```console
-    $ panther makeproject
-    ```
-    </div>
-
-- #### Create App
-    <div class="termy">
-    
-    ```console
-    $ panther makeapp
+    $ panther create
     ```
     </div>
 - #### Run Project
@@ -51,8 +43,6 @@ Python 3.10+
     $ panther run 
     ```
     </div>
-
-<hr>
 
 ## TODO:
 

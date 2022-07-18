@@ -1,4 +1,8 @@
-from panther.utils import read_body, send_404
+from concurrent.futures import ProcessPoolExecutor
+
+import anyio
+
+from panther.utils import read_body, send_404, send_405, send_204
 from panther.exceptions import APIException
 from panther.response import Response
 from panther.request import Request
@@ -18,22 +22,24 @@ class Panther:
         self.load_configs()
         del os
 
-    async def __call__(self, scope, receive, send) -> None:
+    async def run(self, scope, receive, send):
         # Find Endpoint
         endpoint = self.find_endpoint(path=scope['path'])
         if endpoint is None:
             return await send_404(send)
 
         # Check Endpoint Method
-        endpoint_method = str(endpoint).split('.')[1].upper()
+        if endpoint.__module__ != 'panther.app':
+            raise TypeError(f'You have to use API decorator on {endpoint.__module__}.{endpoint.__name__}()')
+        endpoint_method = endpoint.__qualname__.split('.')[1].upper()
         if endpoint_method != scope['method']:
-            return await send_404(send)
+            return await send_405(send)
 
         # Read Body & Create Request
         body = await read_body(receive)
         request = Request(scope=scope, body=body)
 
-        # Call Before Middlewares
+        # Call 'Before' Middlewares
         for middleware in self.middlewares:
             request = await middleware.before(request=request)
 
@@ -45,12 +51,15 @@ class Panther:
         if not isinstance(response, Response):
             return logger.error(f"Response Should Be Instance Of 'Response'.")
 
-        # Call After Middleware
+        # Call 'After' Middleware
         self.middlewares.reverse()
         for middleware in self.middlewares:
             response = await middleware.after(response=response)
 
         # Return Response
+        if response._data is None or response.status_code == 204:
+            return await send_204(send)
+
         await send({
             'type': 'http.response.start',
             'status': response.status_code,
@@ -58,10 +67,19 @@ class Panther:
                 [b'content-type', b'application/json'],
             ],
         })
-        await send({
-            'type': 'http.response.body',
-            'body': response.data,
-        })
+        await send({'type': 'http.response.body', 'body': response.data})
+
+    async def __call__(self, scope, receive, send) -> None:
+        # await self.run(scope, receive, send)
+        async with anyio.create_task_group() as task_group:
+            task_group.start_soon(self.run, scope, receive, send)
+            # await anyio.to_thread.run_sync(self.run, scope, receive, send)
+        # if self.exc_info is not None:
+        #     raise self.exc_info[0].with_traceback(self.exc_info[1], self.exc_info[2])
+
+
+        # with ProcessPoolExecutor() as e:
+        #     e.submit(self.run, scope, receive, send)
 
     def load_configs(self) -> None:
         logger.debug(f'Base Directory: {self.base_dir}')
