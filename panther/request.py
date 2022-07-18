@@ -13,10 +13,12 @@ class Headers:
     accept: str
     host: str
 
+
 class Request:
     def __init__(self, scope: dict, body: bytes):
         self.scope = scope
         self._body = body
+        self._data = None
 
     @property
     def headers(self):
@@ -69,7 +71,10 @@ class Request:
         return self.scope['scheme']
 
     @property
-    def data(self) -> dict:
+    def data(self):
+        if self._data:
+            return self._data
+
         body = self._body.decode('utf-8') or {}
         if self.headers.content_type is None:
             # logger.error(f'request content-type is None.')
@@ -84,5 +89,8 @@ class Request:
             logger.error(f'{self.headers.content_type} Is Not Supported.')
             _data = None
 
-        return {'id': 1, 'username': 'ali', 'password': '1123'}  # TODO: For Testing ...
-        # return _data
+        # return {'id': 1, 'username': 'ali', 'password': '1123'}  # TODO: For Testing ...
+        return _data
+
+    def set_data(self, data) -> None:
+        self._data = data

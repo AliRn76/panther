@@ -7,30 +7,67 @@ from panther.response import Response
 from panther.request import Request
 from panther.app import API
 
+
 @API.post()
 async def return_none():
     return
-
 
 @API.post()
 async def return_dict():
     return {'detail': 'ok'}
 
-
 @API.post()
 async def return_list():
     return [1, 2, 3]
 
-# We Also Support set, str, bool, tuple
+@API.post()
+async def return_tuple():
+    return 1, 2, 3, 4
+
+@API.post()
+async def return_response_none():
+    return Response()
 
 @API.post()
 async def return_response_dict():
-    # return Response(data={'detail': 'ok'}, status_code=201)
-    # return Response(data={'detail': 'ok'}, status_code=201)
-    return
-# @API.post(input_model=UserInputSerializer)
-# @API.post(input_model=UserInputSerializer, output_model=UserOutputSerializer)
+    return Response(data={'detail': 'ok'}, status_code=201)
+
+@API.post()
+async def return_response_list():
+    return Response(data=['car', 'home', 'phone'], status_code=202)
+
+@API.post()
+async def return_response_tuple():
+    return Response(data=('car', 'home', 'phone', 'book'), status_code=202)
+
 @API.post(input_model=UserInputSerializer)
+async def res_request_data(request: Request):
+    return Response(data=request.data)
+
+@API.post(input_model=UserInputSerializer, output_model=UserOutputSerializer)
+async def res_request_data_with_output_model(request: Request):
+    return Response(data=request.data)
+
+@API.post(input_model=UserInputSerializer)
+async def using_redis(request: Request):
+    redis.set('ali', '1')
+    logger.debug(f"{redis.get('ali') = }")
+    return Response()
+
+@API.post(input_model=UserInputSerializer)
+async def using_sqlalchemy(request: Request):
+
+    print(type(request.data))
+    # del request.data['age']
+
+    user = User.create_and_commit(username=request.data.username, password=request.data.password)
+    print(f'{user = }')
+    print(f'{user.username = }')
+    print(f'{user.id = }')
+    get_user = User.get_one(username='ali2', password='123')
+    print(f'{get_user.id = }')
+    return Response()
+
 async def single_user(request: Request):
     # # print(f'{dir(request) = }')
     # print(f'{request.data = }')

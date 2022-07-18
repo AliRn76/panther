@@ -11,18 +11,15 @@ class API:
     def validate_input(cls, data: dict, input_model):
         if input_model:
             try:
-                input_model(**data)
+                return input_model(**data)
             except ValidationError as validation_error:
-                error = {}
-                for e in validation_error.errors():
-                    error[e['loc'][0]] = e['msg']
+                error = {e['loc'][0]: e['msg'] for e in validation_error.errors()}
                 raise APIException(status_code=400, detail=error)
 
     @classmethod
     def clean_output(cls, data, output_model):
-        if output_model is None:
+        if data is None or output_model is None:
             return data
-
         if issubclass(type(data), BaseModel):
             _data = output_model(**data.dict()).dict()
         elif isinstance(data, dict):
