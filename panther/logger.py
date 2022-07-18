@@ -6,7 +6,7 @@ import logging
 class LogConfig(BaseModel):
     """Logging configuration to be set for the server"""
 
-    LOGGER_NAME: str = 'user-app'
+    LOGGER_NAME: str = 'panther-logger'
     LOG_FORMAT: str = '%(levelprefix)s | %(asctime)s | %(message)s'
     LOG_LEVEL: str = 'DEBUG'
 
@@ -28,12 +28,12 @@ class LogConfig(BaseModel):
         },
     }
     loggers = {
-        'user-app': {'handlers': ['default'], 'level': LOG_LEVEL},
+        'panther-logger': {'handlers': ['default'], 'level': LOG_LEVEL},
     }
 
 
 dictConfig(LogConfig().dict())
-logger = logging.getLogger('user-app')
+logger = logging.getLogger('panther-logger')
 
 """
 [debug, info, warning, error, critical]
