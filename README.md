@@ -133,7 +133,7 @@ Python 3.10+
 - [ ] Monitor Migration Flow
     
 #### CLI (for Windows)
-- [ ] Create Project 
+- [x] Create Project 
 - [ ] Migration
 
 #### Documentation 
