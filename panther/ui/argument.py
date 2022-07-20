@@ -3,8 +3,9 @@ from rich import print as rprint
 from rich.panel import Panel
 from rich.text import Text
 import sys as sys
-from typing import Any, TypedDict, Callable, Union, NoReturn
-from exceptions import IsNotModeInstance, NotNotCallable , ArgumentIsRequired
+from typing import TypedDict, Callable, Union
+from exceptions import IsNotModeInstance, NotNotCallable , ArgumentIsRequired, InputRequired
+import os
 
 __all__ = (
     "Mode",
@@ -31,25 +32,25 @@ class Mode:
     LIST = "list" # -inp=[2'1','2'] 
     FLAG = "flag" # -h or --help
  
-class Color:
-    WHITE = "#"
-
 class Setting(TypedDict):
-    color: Color
+    color: str
     style: str
 
 class Arg(TypedDict):
-    name: list[str] | str # argument name TODO: Requiered typing python 3.11 
+    name: list[str] | str # argument name TODO: Requiered typing python 3.11
     desc: str # description for argument
     mode: Mode # argument mode: FLAG: -h | --help, TODO: Requiered typing python 3.11
     required: bool # default is False
     setting: Setting # setting dict use for rich style TODO: Requiered typing python 3.11
     func: Callable[[str | list[str]], None] # if arg on INPUT, LIST or SELECT mode pass input
+    default: str | list | None
 
+# TODO: clean code ArgParser
 class ArgParser:
 
-    def __init__(self) -> None:
+    def __init__(self, cwd: str) -> None:
         self._args: dict = {}
+        self.cwd = cwd
 
     def __str__(self) -> str:
        pass
@@ -57,11 +58,11 @@ class ArgParser:
     def __repr__(self) -> str:
         pass
 
-    def __simple_man(self) -> None:
+    def __simple_man(self) -> None: # TODO: fix simple help
         print(logo)
         console.rule("Info")
 
-    def __help(self) -> None:
+    def __help(self) -> None: # TODO: fix -h, --help
         for item in self._args.values():
             print(f"{item['name']}")
 
@@ -72,10 +73,20 @@ class ArgParser:
         return tuple(name.split(" "))
 
     @staticmethod
-    def proccess_command(command: dict, inp: str | list=None):
-        result = command.get('func')(inp)
+    def proccess_command(func: Callable, inp: str, path: str | list=None):
+        result = func(inp, path)
 
-    def add_arg(self, name: str, desc: str, mode: Mode, func: Callable[[str | list[str]], Union[str, None]]=None, required=False, **setting: dict) -> None:
+    def add_arg(
+        self, 
+        name: str, 
+        desc: str, 
+        mode: Mode, 
+        func: Callable[[str | list[str]], Union[str, None]]=None, 
+        required: bool =False,
+        default: list | str | None=None,
+        **setting: dict
+        ) -> None:
+
         if not callable(func):
             raise NotNotCallable(f"{func} is not callable")
         # if not isinstance(mode, Mode):
@@ -87,11 +98,13 @@ class ArgParser:
             desc=desc,
             mode=mode,
             func=func,
+            default=default,
             required=required,
             setting=Setting(**setting)
         )
 
     def parser(self, argv: list):
+
         try:
             if argv[1] in ("-h", "--help"):
                 self.__help()
@@ -106,18 +119,26 @@ class ArgParser:
             required: bool = item[0][1]
             mode: Mode = item[0][2]
 
-            for i, arg in enumerate(argv):                    
+            for i, arg in enumerate(argv):
+              
                 if arg in name:
                     match mode:
                         case Mode.SELECT:
                             self.proccess_command(item[1], arg)
                             continue
                         case Mode.INPUT | Mode.LIST:
-                            self.proccess_command(item[1], argv.pop(i+1))
+                            try:
+                                self.proccess_command(item[1]['func'], argv.pop(i+1), self.cwd)
+                            except IndexError:
+                                if item[1]['default'] != None:
+                                    self.proccess_command(item[1]['func'], item[1]['default'], self.cwd)
+                                else:
+                                    raise InputRequired("This Command Need Input.")
                             continue
                         case Mode.FLAG:
                             self.proccess_command(item[1])
                             continue
-                else:
-                    if required is True:
-                        raise ArgumentIsRequired(f"{' '.join(item[1].get())}")
+                # TODO: fix required True
+                # else:
+                #     if required is True:
+                #         raise ArgumentIsRequired(f"{' '.join(item[1].get())}")

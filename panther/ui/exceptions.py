@@ -9,3 +9,6 @@ class ArgumentIsRequired(ArgParserException):
 
 class IsNotModeInstance(ArgParserException):
     pass
+
+class InputRequired(ArgParserException):
+    pass
