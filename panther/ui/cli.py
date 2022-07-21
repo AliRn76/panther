@@ -1,5 +1,5 @@
 import os
-from argument import ArgParser, Mode
+from .argument import ArgParser, Mode
 import sys
 
 APP = {
@@ -107,7 +107,7 @@ def create_project(name: list | str, path: str):
             file.write(data.replace("{}", name))
             file.close()
 
-if __name__ == "__main__":
+def main():
     ap = ArgParser(os.getcwd())
     ap.add_arg(
         name="app",
