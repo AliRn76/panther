@@ -4,7 +4,7 @@ from rich.panel import Panel
 from rich.text import Text
 import sys as sys
 from typing import TypedDict, Callable, Union
-from exceptions import IsNotModeInstance, NotNotCallable , ArgumentIsRequired, InputRequired
+from .exceptions import IsNotModeInstance, NotNotCallable , ArgumentIsRequired, InputRequired
 import os
 
 __all__ = (
