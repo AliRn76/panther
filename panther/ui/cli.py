@@ -90,11 +90,12 @@ def create_app(name: list | str, path: str):
         file.write(data.replace("{}", "APPNAME"))
         file.close()
 
+
 def create_project(name: list | str, path: str):
     project_path = f"{path}/{name}"
     os.mkdir(project_path)
     for filename, data in PROJECT.items():
-        
+
         if isinstance(data, dict):
             sub_folder = f"{project_path}/{filename}"
             os.mkdir(sub_folder)
@@ -107,18 +108,19 @@ def create_project(name: list | str, path: str):
             file.write(data.replace("{}", name))
             file.close()
 
+
 def main():
-    ap = ArgParser(os.getcwd())
-    ap.add_arg(
+    parser = ArgParser(os.getcwd())
+    parser.add_arg(
         name="app",
         desc="create app template folder",
         mode=Mode.INPUT,
         func=create_app,
     )
-    ap.add_arg(
+    parser.add_arg(
         name="project",
         desc="create project template folder",
         mode=Mode.INPUT,
         func=create_project,
     )
-    ap.parser(sys.argv)
+    parser.parse(sys.argv)

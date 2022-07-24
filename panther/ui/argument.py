@@ -1,12 +1,13 @@
-from rich.console import Console
-from rich import print as rprint
-from rich.panel import Panel
-from rich.text import Text
-import sys as sys
-from typing import TypedDict, Callable, Union
-from .exceptions import IsNotModeInstance, NotNotCallable , ArgumentIsRequired, InputRequired
-import os
+from typing import TypedDict, Callable
+from .exceptions import (
+    IsNotModeInstance,
+    NotNotCallable,
+    ArgumentIsRequired,
+    InputRequired,
+    ArgvIsNotListOrTuple,
+)
 
+__author__ = 'Mahan Bakhshi'
 __all__ = (
     "Mode",
     "ArgParser"
@@ -22,123 +23,133 @@ logo = r"""
     \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/
 """
 
-console = Console(
-    width=51
-)
+descriptions = """Panther Library
+
+"""
+
 
 class Mode:
-    INPUT = "input" # inp="Hello World!", inp=., inp=~/project/panther
-    SELECT = "select" # run or makeapp or makeproject
-    LIST = "list" # -inp=[2'1','2'] 
-    FLAG = "flag" # -h or --help
- 
-class Setting(TypedDict):
-    color: str
-    style: str
+    """
+    list mode of Argparse Commands Mode
+    """
+
+    INPUT = "input"  # -inp "Hello World!", --inp ., inp ~/project/panther
+    SELECT = "select"  # run or makeapp or makeproject
+    LIST = "list"  # -inp=[2'1','2']
+    FLAG = "flag"  # -h or --help response True or False
+
 
 class Arg(TypedDict):
-    name: list[str] | str # argument name TODO: Requiered typing python 3.11
-    desc: str # description for argument
-    mode: Mode # argument mode: FLAG: -h | --help, TODO: Requiered typing python 3.11
-    required: bool # default is False
-    setting: Setting # setting dict use for rich style TODO: Requiered typing python 3.11
-    func: Callable[[str | list[str]], None] # if arg on INPUT, LIST or SELECT mode pass input
+    """
+    Argument fields
+    """
+
+    name: tuple  # argument name TODO: Required typing python 3.11
+    desc: str  # description for argument
+    mode: Mode  # argument mode: FLAG: -h | --help, TODO: Required typing python 3.11
+    required: bool  # default is False
+    setting: dict  # setting dict use for rich style TODO: NotRequired typing python 3.11
+    func: Callable[[str | list[str]], None]  # if arg on INPUT, LIST or SELECT mode pass input
     default: str | list | None
 
-# TODO: clean code ArgParser
-class ArgParser:
 
-    def __init__(self, cwd: str) -> None:
-        self._args: dict = {}
+class ArgParser:
+    """
+    class for argument parser Panther Mixed With Rich and Can use from client for create custom command.
+    """
+
+    def __init__(self, cwd):
+        self._args = {}
         self.cwd = cwd
 
-    def __str__(self) -> str:
-       pass
-    
-    def __repr__(self) -> str:
-        pass
+    def __str__(self):
+        return f"{self._args}"
 
-    def __simple_man(self) -> None: # TODO: fix simple help
-        print(logo)
-        console.rule("Info")
+    def __repr__(self):
+        return f"ArgParser({self._args})"
 
-    def __help(self) -> None: # TODO: fix -h, --help
-        for item in self._args.values():
-            print(f"{item['name']}")
+    def __help(self):
+        """
+        if -h, --help in argv run this function
+        """
+
+        print("#help")
 
     @staticmethod
-    def __cli_style(name: str, mode: Mode) -> tuple:
+    def __cli_style(name, mode):
+        """
+        change name of command to styled
+        """
+
         if mode != Mode.SELECT:
+            # and this for another modes
             return f"-{name[0]}", f"--{name}"
+        # this style for SELECT mode
         return tuple(name.split(" "))
 
     @staticmethod
-    def proccess_command(func: Callable, inp: str, path: str | list=None):
-        result = func(inp, path)
+    def __cmd_process(command, data):
+        """
+        after find commands send it here and run command function.
+        """
 
-    def add_arg(
-        self, 
-        name: str, 
-        desc: str, 
-        mode: Mode, 
-        func: Callable[[str | list[str]], Union[str, None]]=None, 
-        required: bool =False,
-        default: list | str | None=None,
-        **setting: dict
-        ) -> None:
+        try:
+            command['func'](data)
+        except TypeError:
+            command['func']()
 
+    def add_arg(self, name, desc, mode, func=None, required=False, default=None, **setting):
+        """
+        method for add Argument For parse
+        """
+
+        # add_arg Exception Handling
+        if mode not in ("input", "select", "list", "flag"):
+            raise IsNotModeInstance('mode in not Mode Class Instance.')
         if not callable(func):
             raise NotNotCallable(f"{func} is not callable")
-        # if not isinstance(mode, Mode):
-        #     raise IsNotModeInstance(f"{mode} is not Mode Instance")
 
         name = self.__cli_style(name, mode)
-        self._args[(name, required, mode)] = Arg(
+        # create command with Arg change data to dict
+        self._args[(name, required)] = Arg(
             name=name,
             desc=desc,
             mode=mode,
             func=func,
-            default=default,
             required=required,
-            setting=Setting(**setting)
+            default=default,
+            setting=setting
         )
+        return self
 
-    def parser(self, argv: list):
+    def parse(self, argv):
+        """
+        parse function send sys.argv to parse and fun command function
+        """
 
-        try:
-            if argv[1] in ("-h", "--help"):
-                self.__help()
-                return None
-        except IndexError:
-            self.__simple_man()
-            return None
+        # parse Exception Handling
+        if len(argv) <= 1 or '-h' in argv or '--help' in argv:
+            self.__help()
+            return
+        elif not isinstance(argv, list | tuple):
+            raise ArgvIsNotListOrTuple(f"{argv} is not tuple or list")
 
-        for item in self._args.items():
+        # find arguments
+        for inx, arg in enumerate(argv[1:]):
+            for key, value in self._args.items():
+                if arg in key[0]:
 
-            name: tuple = item[0][0]
-            required: bool = item[0][1]
-            mode: Mode = item[0][2]
-
-            for i, arg in enumerate(argv):
-              
-                if arg in name:
-                    match mode:
-                        case Mode.SELECT:
-                            self.proccess_command(item[1], arg)
-                            continue
-                        case Mode.INPUT | Mode.LIST:
-                            try:
-                                self.proccess_command(item[1]['func'], argv.pop(i+1), self.cwd)
-                            except IndexError:
-                                if item[1]['default'] != None:
-                                    self.proccess_command(item[1]['func'], item[1]['default'], self.cwd)
-                                else:
-                                    raise InputRequired("This Command Need Input.")
-                            continue
-                        case Mode.FLAG:
-                            self.proccess_command(item[1])
-                            continue
-                # TODO: fix required True
-                # else:
-                #     if required is True:
-                #         raise ArgumentIsRequired(f"{' '.join(item[1].get())}")
+                    if value["mode"] in ("input", "list"):
+                        try:
+                            self.__cmd_process(value, (self.cwd, argv[inx + 1]))
+                        except IndexError:
+                            InputRequired(f"{arg} need input.")
+                    elif value["mode"] == "select":
+                        self.__cmd_process(value, (self.cwd, arg))
+                    else:
+                        self.__cmd_process(value, None)
+                elif key[1]:
+                    raise ArgumentIsRequired(f"{' '.join(key[0])} This Command Is Required.")
+                else:
+                    print(f"{arg} Command Not Found.")  # TODO: change to rich
+                    return
