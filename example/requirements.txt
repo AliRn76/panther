@@ -1,9 +1,7 @@
 panther
-python-dotenv
-pydantic
-python-jose
-uvicorn
-orjson
-sqlalchemy
-anyio
-redis
+uvicorn[standard]
+orjson==3.7.12
+pydantic==1.9.2
+sqlalchemy==1.4.40
+redis==4.3.4
+rich==12.5.1

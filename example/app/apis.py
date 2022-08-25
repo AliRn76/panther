@@ -12,47 +12,58 @@ from panther.app import API
 async def return_none():
     return
 
+
 @API.post()
 async def return_dict():
     return {'detail': 'ok'}
+
 
 @API.post()
 async def return_list():
     return [1, 2, 3]
 
+
 @API.post()
 async def return_tuple():
     return 1, 2, 3, 4
+
 
 @API.post()
 async def return_response_none():
     return Response()
 
+
 @API.post()
 async def return_response_dict():
     return Response(data={'detail': 'ok'}, status_code=201)
+
 
 @API.post()
 async def return_response_list():
     return Response(data=['car', 'home', 'phone'], status_code=202)
 
+
 @API.post()
 async def return_response_tuple():
     return Response(data=('car', 'home', 'phone', 'book'), status_code=202)
+
 
 @API.post(input_model=UserInputSerializer)
 async def res_request_data(request: Request):
     return Response(data=request.data)
 
+
 @API.post(input_model=UserInputSerializer, output_model=UserOutputSerializer)
 async def res_request_data_with_output_model(request: Request):
     return Response(data=request.data)
+
 
 @API.post(input_model=UserInputSerializer)
 async def using_redis(request: Request):
     redis.set('ali', '1')
     logger.debug(f"{redis.get('ali') = }")
     return Response()
+
 
 @API.post(input_model=UserInputSerializer)
 async def using_sqlalchemy(request: Request):
@@ -67,6 +78,7 @@ async def using_sqlalchemy(request: Request):
     get_user = User.get_one(username='ali2', password='123')
     print(f'{get_user.id = }')
     return Response()
+
 
 async def single_user(request: Request):
     # # print(f'{dir(request) = }')
@@ -118,7 +130,6 @@ async def single_user(request: Request):
     e = True
     # return Response(status_code=200, data=a)
     return Response(status_code=200)
-
 
 
 # @API.post(input=UserInputSerializer, output_model=UserSerializer)

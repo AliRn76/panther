@@ -7,6 +7,7 @@ class UserInputSerializer(BaseModel):
     password: str
     age: int
 
+
 class UserOutputSerializer(BaseModel):
     id: int
     username: str

@@ -36,7 +36,12 @@ setup(
     package_data={
         'panther': ['ui/*']
     },
-    # package_dir={'': 'panther'},
-    # install_requires=[],
-    # include_dirs=[],
+    install_requires=[
+        'uvicorn[standard]',
+        'orjson>=3.7.12',
+        'pydantic==1.9.2',
+        'sqlalchemy>=1.4.20',
+        'redis==4.3.4',
+        'rich==12.5.1'
+    ],
 )

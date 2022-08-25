@@ -90,6 +90,7 @@ def create_app(name: list | str, path: str):
         file.write(data.replace("{}", "APPNAME"))
         file.close()
 
+
 def create_project(name: list | str, path: str):
     project_path = f"{path}/{name}"
     os.mkdir(project_path)
@@ -106,6 +107,7 @@ def create_project(name: list | str, path: str):
             file = open(f"{project_path}/{filename}", 'x')
             file.write(data.replace("{}", name))
             file.close()
+
 
 def main():
     ap = ArgParser(os.getcwd())
