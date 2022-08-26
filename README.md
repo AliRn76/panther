@@ -70,6 +70,8 @@ Python 3.10+
 - [x] Response Class 
 - [x] Validate Input 
 - [x] Custom Output Model 
+- [x] Log Queries
+- [] Custom Logging
 - [ ] Handle Cookie
 - [ ] Handle File 
 - [ ] Handle Form-Data
@@ -82,11 +84,13 @@ Python 3.10+
 #### Database:
 - [x] Structure Of DB Connection
 - [x] SQLite Connection
+- [x] MongoDB Connection
+- [ ] Create Custom BaseModel For All Type Of Databases
 - [ ] MySQL Connection
 - [ ] PostgreSQL Connection
 - [ ] Set SQLite As Default
 
-#### Simple Query
+#### Simple Queries
 - [x] Get One 
 - [x] List  
 - [x] Create 

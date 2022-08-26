@@ -4,17 +4,26 @@ import sys
 
 APP = {
     "apis.py": """
+from panther.app import API
 
+@API.post()
+async def hello_world():
+    return {'detail': 'hello world'}
+    
     """,
     "models.py": """
-    
+from panther.db import BaseModel
+
     """,
     "serializer.py": """
-    
+from pydantic import BaseModel
+
     """,
     "urls.py": """
-{}_urls = {
+from {}.apis import hello_world
 
+urls = {
+'': hello_world,
 }
     """,
 }
@@ -35,44 +44,37 @@ BASE_DIR = Path(__name__).resolve().parent
 env = dotenv_values(BASE_DIR / '.env')
 
 DB_NAME = env['DB_NAME']
-DB_HOST = env['DB_HOST']
-DB_PORT = env['DB_PORT']
 SECRET_KEY = env['SECRET_KEY']
-DB_USERNAME = env['DB_USERNAME']
-DB_PASSWORD = env['DB_PASSWORD']
 
+Middlewares = [
+('panther/middlewares/db.py', {'url': f'sqlite:///{BASE_DIR}/{DB_NAME}.db'}),
+]
 URLs = 'core/urls.py'
         """,
+
         "middlewares.py": """
 from panther.middlewares import BaseMiddleware
 
-
-class InitialMiddleware(BaseMiddleware):
-    ...
         """,
         "urls.py": """
-urls = {
+from {}.urls import urls as {}_urls
 
+urls = {
+    '': {}_urls, 
 }
+
         """,
     },
     ".env": """
-SECRET_KEY = "THIS IS MY SECRET SECRET KEY"
+SECRET_KEY = "THIS_IS_THE_SECRET_SECRET_KEY"
 
 DB_NAME = "panther"
-DB_HOST = "127.0.0.1"
-DB_PORT = "27017"
-DB_USERNAME = ""
-DB_PASSWORD = ""
     """,
 
-    "alembic.ini": """
-    
-    """,
 
     "main.py": """
-from panther import Panther
 import uvicorn
+from panther import Panther
 
 app = Panther(__name__)
 
@@ -87,7 +89,7 @@ def create_app(name: list | str, path: str):
     os.mkdir(f"{path}/{name}")
     for filename, data in APP.items():
         file = open(f"{path}/{name}/{filename}", 'x')
-        file.write(data.replace("{}", "APPNAME"))
+        file.write(data.replace("{}", name))
         file.close()
 
 

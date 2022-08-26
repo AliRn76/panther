@@ -7,7 +7,7 @@ from panther.response import Response
 async def test(*args, **kwargs):
     return Response(data={'detail': 'this is for test'})
 
-app_urls = {
+urls = {
     'none/': return_none,
     'dict/': return_dict,
     'list/': return_list,

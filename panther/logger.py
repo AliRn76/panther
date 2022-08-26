@@ -28,12 +28,15 @@ class LogConfig(BaseModel):
         },
     }
     loggers = {
-        'panther-logger': {'handlers': ['default'], 'level': LOG_LEVEL},
+        'panther': {
+            'handlers': ['default'],
+            'level': LOG_LEVEL,
+        },
     }
 
 
 dictConfig(LogConfig().dict())
-logger = logging.getLogger('panther-logger')
+logger = logging.getLogger('panther')
 
 """
 [debug, info, warning, error, critical]

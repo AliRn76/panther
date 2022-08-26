@@ -15,6 +15,7 @@ async def send_404(send):
         'body': json.dumps({'detail': 'Not Found.'}),
     })
 
+
 async def send_204(send):
     await send({
         'type': 'http.response.start',
@@ -26,6 +27,7 @@ async def send_204(send):
     return await send({
         'type': 'http.response.body',
     })
+
 
 async def send_405(send):
     # TODO: Work On This Func
