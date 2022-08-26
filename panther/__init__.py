@@ -1,3 +1,3 @@
 from .main import Panther
 
-__version__ = '0.1.9'
+__version__ = '1.0.0'

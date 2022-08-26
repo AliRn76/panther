@@ -1,6 +1,6 @@
 import os
 import re
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 def panther_version() -> str:
@@ -29,12 +29,11 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3.10',
     ],
-    packages=find_packages(where='.', exclude=(), include=('*', 'template/*')),
     entry_points={
-        'console_scripts': ['panther=panther.ui.cli:main'],
+        'console_scripts': ['panther=panther.cli.main:start'],
     },
     package_data={
-        'panther': ['ui/*']
+        'panther': ['cli/*']
     },
     install_requires=[
         'uvicorn[standard]',

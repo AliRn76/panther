@@ -22,8 +22,4 @@ urls = {
     'sql/': using_sqlalchemy,
     'test/': test,
     '': single_user,
-    # 'single/': single_user,
-    # 'create/': create_user,
-    # 'list/': None,
-    # 'delete/': ...,
 }

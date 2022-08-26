@@ -1,8 +1,4 @@
-### Friendly, Fast Web Framework
-<br/>
-
-[![Downloads](https://static.pepy.tech/personalized-badge/panther?period=month&units=international_system&left_color=grey&right_color=brightgreen&left_text=Downloads)](https://pepy.tech/project/panther)  [![Downloads](https://pepy.tech/badge/panther/month)](https://pepy.tech/project/panther) [![Downloads](https://pepy.tech/badge/panther/week)](https://pepy.tech/project/panther)
-
+# Panther
 <hr/>
 
 ## Requirements
@@ -37,15 +33,7 @@ Python 3.10+
     <div class="termy">
     
     ```console
-    $ panther makeproject
-    ```
-    </div>
-
-- #### Create App
-    <div class="termy">
-    
-    ```console
-    $ panther makeapp
+    $ panther create <project_name>
     ```
     </div>
 - #### Run Project
@@ -55,8 +43,6 @@ Python 3.10+
     $ panther run 
     ```
     </div>
-
-<hr>
 
 ## TODO:
 
