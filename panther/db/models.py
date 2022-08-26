@@ -5,6 +5,7 @@ from panther.db.queries import Query
 Base = declarative_base()
 
 
+# TODO: Make BaseModel dynamic with db.name ...
 class BaseModel(Base, Query):
     __abstract__ = True
 

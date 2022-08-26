@@ -77,7 +77,6 @@ class Panther:
         # if self.exc_info is not None:
         #     raise self.exc_info[0].with_traceback(self.exc_info[1], self.exc_info[2])
 
-
         # with ProcessPoolExecutor() as e:
         #     e.submit(self.run, scope, receive, send)
 

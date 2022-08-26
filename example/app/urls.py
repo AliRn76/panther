@@ -1,5 +1,3 @@
-from app.apis import single_user, create_user
-
 from app.apis import *
 from panther.app import API
 from panther.response import Response

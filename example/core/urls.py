@@ -4,7 +4,6 @@ from panther.app import API
 from panther.response import Response
 
 
-
 urls = {
     # '/': test,
     # '': None,
