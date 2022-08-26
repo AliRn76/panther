@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 from subprocess import Popen
 from panther.cli.template import Template
 
@@ -32,6 +33,8 @@ def error(message: str) -> None:
 
 
 def create(args: list):
+    base_dir = Path(__name__).resolve().parent
+
     if len(args) == 0:
         return error('Not Enough Parameters.')
     project_name = args[0]
@@ -51,6 +54,8 @@ def create(args: list):
                 with open(file_path, 'x') as file:
                     file.write(sub_data)
         else:
+            if file_name == 'alembic.ini':
+                data = data.replace('SQLALCHEMY_URL', f'sqlite:///{base_dir}/{project_name}/{project_name.lower()}.db')
             file_path = f'{project_name}/{file_name}'
             with open(file_path, 'x') as file:
                 file.write(data)
@@ -66,7 +71,7 @@ def run(args) -> None:
         pass
 
 
-def start() -> None:
+def main() -> None:
     if len(sys.argv) == 1 or sys.argv[1] in ['help', '-h', '--help']:
         print(help_message)
 

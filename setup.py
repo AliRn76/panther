@@ -41,7 +41,6 @@ setup(
         'pydantic>=1.9.2',
         'sqlalchemy>=1.4.20',
         'redis>=4.3.4',
-        'rich>=12.5.1',
         'alembic>=1.8.1',
     ],
 )
