@@ -57,6 +57,7 @@ Python 3.10+
 - [x] Validate Input 
 - [x] Custom Output Model 
 - [x] Log Queries
+- [x] Add Package Requirements
 - [ ] Custom Logging
 - [ ] Handle Cookie
 - [ ] Handle File 
@@ -64,14 +65,13 @@ Python 3.10+
 - [ ] Handle WS 
 - [ ] Handle GraphQL
 - [ ] Add py.typed 
-- [ ] Add Package Requirements
 - [ ] Refactor app __call__ 
 
 #### Database:
 - [x] Structure Of DB Connection
 - [x] SQLite Connection
 - [x] MongoDB Connection
-- [ ] Create Custom BaseModel For All Type Of Databases
+- [x] Create Custom BaseModel For All Type Of Databases
 - [ ] MySQL Connection
 - [ ] PostgreSQL Connection
 - [ ] Set SQLite As Default
@@ -84,6 +84,7 @@ Python 3.10+
 - [x] Update
 - [x] Get or Raise
 - [x] Get or Create
+- [x] List with Pagination
 - [ ] Test Update
 
 #### Middleware
@@ -124,6 +125,7 @@ Python 3.10+
     
 #### CLI (for Windows)
 - [x] Create Project 
+- [x] Run Project 
 - [ ] Migration
 
 #### Documentation 

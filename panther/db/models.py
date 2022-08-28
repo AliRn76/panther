@@ -40,7 +40,8 @@ class SQLBaseModel(Base, SQLiteQuery):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
-if config['db_engine'] == 'mongodb':
-    BaseModel = MongoBaseModel
-else:
+# TODO: Change the structure (ide doesnt suggest the queries but ctrl+b works purely)
+if config['db_engine'] != 'mongodb':
     BaseModel = SQLBaseModel
+else:
+    BaseModel = MongoBaseModel

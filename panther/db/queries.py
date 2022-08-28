@@ -58,7 +58,8 @@ class MongoQuery:
             _data['_id'] = to_object_id(_data['_id'])
         if '_id' in kwargs:
             kwargs['_id'] = to_object_id(kwargs['_id'])
-        return eval(f'db.session.{cls.__name__}.find(_data | kwargs)')
+        result = eval(f'db.session.{cls.__name__}.find(_data | kwargs)')
+        return [cls(**obj) for obj in result]
 
     @classmethod
     @query_logger

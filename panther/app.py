@@ -23,14 +23,17 @@ class API:
 
     @classmethod
     def clean_output(cls, data, output_model):
-        if data is None or output_model is None:
+        if data is None or data is [] or output_model is None:
             return data
-        if issubclass(type(data), BaseModel):
-            _data = output_model(**data.dict()).dict()
-        elif isinstance(data, dict):
+        if isinstance(data, dict):
             _data = output_model(**data).dict()
+        elif issubclass(type(data), BaseModel):  # TODO: Check, issubclass of type ?
+            _data = output_model(**data.dict()).dict()
         elif isinstance(data, list) or isinstance(data, tuple):
-            _data = [output_model(**d).dict() for d in data]
+            if isinstance(data[0], BaseModel):  # Worst Case
+                _data = [output_model(**d.dict()).dict() for d in data]
+            else:
+                _data = [output_model(**d).dict() for d in data]
         elif isinstance(data, str) or isinstance(data, bool) or isinstance(data, set):
             raise TypeError('Type of Response data is not match with output_model. '
                             '\n*hint: You may want to pass None to output_model')

@@ -3,8 +3,11 @@ from datetime import datetime
 
 apis_py = """from panther.app import API
 from panther.request import Request
+from panther.response import Response
+
 from app.models import User
-from app.serializers import UserInputSerializer, UserOutputSerializer 
+from app.serializers import UserInputSerializer, UserOutputSerializer, UserIDSerializer
+
 
 @API.post(input_model=UserInputSerializer)
 async def create_user(request: Request):
@@ -14,14 +17,33 @@ async def create_user(request: Request):
 
 
 @API.get(output_model=UserOutputSerializer)
-async def get_users(request: Request):
-    _users = User.list()
-    users = [User(**user).dict() for user in _users]
+async def get_users():
+    users = User.list()
     return Response(data=users)
+
+
+@API.put(input_model=UserIDSerializer, output_model=UserOutputSerializer)
+async def update_user(request: Request):
+    user = User.update_one(id=request.data.id)
+    user.update(password='Another-Secure-Password')
+    return Response(data={'detail': 'Updated Successfully.'}, status_code=202)
+
+
+@API.delete()
+async def delete_user(request: Request):
+    user = User.get_one(id=request.data.id)
+    if not user:
+        return Response(data={'detail': 'User Not Found.'}, status_code=404)
+
+    if user.delete():
+        return Response(status_code=204)
+    else:
+        return Response(data={'detail': "couldn't delete the user"}, status_code=409)
 
 """
 
 models_py = """from panther.db import BaseModel
+
 
 class User(BaseModel):
     username: str
@@ -30,6 +52,10 @@ class User(BaseModel):
 """
 
 serializers_py = """from pydantic import BaseModel, constr
+
+
+class UserIDSerializer(BaseModel):
+    id: str
 
 
 class UserInputSerializer(BaseModel):
@@ -43,11 +69,13 @@ class UserOutputSerializer(BaseModel):
 
 """
 
-app_urls_py = """from app.apis import create_user, get_users
+app_urls_py = """from app.apis import create_user, get_users, update_user, delete_user
 
 urls = {
     'create/': create_user,
     'list/': get_users,
+    'update/': update_user,
+    'delete/': delete_user,
 }
 
 """
@@ -74,12 +102,7 @@ Middlewares = [
 ]
 
 URLs = 'core/urls.py'
-
 """ % datetime.now().date().isoformat()
-
-middlewares_py = """from panther.middlewares import BaseMiddleware
-
-"""
 
 env = """
 SECRET_KEY = 'THIS_IS_THE_SECRET_SECRET_KEY'
@@ -162,10 +185,11 @@ Template = {
     },
     'core': {
         'configs.py': configs_py,
-        'middlewares.py': middlewares_py,
         'urls.py': urls_py,
     },
     '.env': env,
     'alembic.ini': alembic_ini,
     'main.py': main_py,
 }
+
+# TODO: Add core/middlewares.py to Template
