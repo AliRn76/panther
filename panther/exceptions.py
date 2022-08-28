@@ -8,8 +8,8 @@ class APIException(Exception):
 
 
 class UserNotFound(APIException):
-    detail: str = 'not found'
-    status_code: int = 403
+    detail = 'not found'
+    status_code = 403
 
 
 class MissingSessionError(APIException):

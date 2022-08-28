@@ -65,7 +65,7 @@ def create(args: list):
 
 
 def run(args) -> None:
-    command = ['uvicorn', 'main:app']
+    command = ['uvicorn', 'main:app', '--no-access-log']
     command.extend(args)
     sp = Popen(command)
     try:

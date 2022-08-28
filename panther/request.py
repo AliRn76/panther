@@ -16,6 +16,16 @@ class Headers:
 
 class Request:
     def __init__(self, scope: dict, body: bytes):
+        """
+        {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'},
+        'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'client': ('127.0.0.1', 35064),
+        'scheme': 'http', 'root_path': '', 'headers': [(b'content-type', b'application/json'),
+        (b'user-agent', b'PostmanRuntime/7.29.2'), (b'accept', b'*/*'),
+        (b'postman-token', b'3e78fbf3-df2f-41bd-bedc-cf6027fa4fe6'),
+        (b'host', b'127.0.0.1:8000'), (b'accept-encoding', b'gzip, deflate, br'),
+        (b'connection', b'keep-alive'), (b'content-length', b'55')],
+        'method': 'GET', 'path': '/list/', 'raw_path': b'/list/', 'query_string': b''}
+        """
         self.scope = scope
         self._body = body
         self._data = None

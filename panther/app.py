@@ -1,3 +1,5 @@
+from orjson.orjson import JSONDecodeError
+
 from panther.db import BaseModel
 from pydantic import ValidationError
 from panther.request import Request
@@ -8,13 +10,16 @@ from panther.exceptions import APIException
 class API:
 
     @classmethod
-    def validate_input(cls, data: dict, input_model):
+    def validate_input(cls, request: Request, input_model):
         if input_model:
             try:
-                return input_model(**data)
+                validated_data = input_model(**request.data)
+                request.set_data(validated_data)
             except ValidationError as validation_error:
                 error = {e['loc'][0]: e['msg'] for e in validation_error.errors()}
                 raise APIException(status_code=400, detail=error)
+            except JSONDecodeError:
+                raise APIException(status_code=400, detail={'detail': 'JSON Decode Error'})
 
     @classmethod
     def clean_output(cls, data, output_model):
@@ -38,7 +43,7 @@ class API:
         def decorator(func):
             async def wrapper(*args, **kwargs):
                 request: Request = kwargs['request']
-                cls.validate_input(data=request.data, input_model=input_model)
+                cls.validate_input(request=request, input_model=input_model)
                 response = await func(request) if Request in func.__annotations__.values() else await func()
                 if not isinstance(response, Response):
                     response = Response(data=response)
@@ -53,7 +58,7 @@ class API:
         def decorator(func):
             async def wrapper(*args, **kwargs):
                 request: Request = kwargs['request']
-                cls.validate_input(data=request.data, input_model=input_model)
+                cls.validate_input(request=request, input_model=input_model)
                 response = await func(request) if Request in func.__annotations__.values() else await func()
                 if not isinstance(response, Response):
                     response = Response(data=response)

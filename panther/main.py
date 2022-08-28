@@ -24,6 +24,18 @@ class Panther:
         del os
 
     async def run(self, scope, receive, send):
+        # Read Body & Create Request
+        body = await read_body(receive)
+        request = Request(scope=scope, body=body)
+        # TODO: put user_ip, method to Request
+
+        # TODO: put access_log to config
+
+        # Access Log
+        # TODO: use this log as a middleware so can have a response status too.(we should refactor the structure for this)
+        logger.info(f"[{scope['method']}] {scope['path']} | {scope['client'][0]}:{scope['client'][1]}")
+
+        # TODO: pass request.path to find_endpoint instead of scope[]
         # Find Endpoint
         endpoint = self.find_endpoint(path=scope['path'])
         if endpoint is None:
@@ -35,10 +47,6 @@ class Panther:
         endpoint_method = endpoint.__qualname__.split('.')[1].upper()
         if endpoint_method != scope['method']:
             return await send_405(send)
-
-        # Read Body & Create Request
-        body = await read_body(receive)
-        request = Request(scope=scope, body=body)
 
         # Call 'Before' Middlewares
         for middleware in config['middlewares']:

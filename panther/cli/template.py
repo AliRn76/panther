@@ -43,7 +43,7 @@ class UserOutputSerializer(BaseModel):
 
 """
 
-app_urls_py = """from app.apis import hello_world
+app_urls_py = """from app.apis import create_user, get_users
 
 urls = {
     'create/': create_user,
@@ -157,7 +157,7 @@ Template = {
     'app': {
         'apis.py': apis_py,
         'models.py': models_py,
-        'serializer.py': serializers_py,
+        'serializers.py': serializers_py,
         'urls.py': app_urls_py,
     },
     'core': {
