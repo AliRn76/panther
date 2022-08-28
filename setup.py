@@ -42,5 +42,6 @@ setup(
         'sqlalchemy>=1.4.20',
         'redis>=4.3.4',
         'alembic>=1.8.1',
+        'pymongo>=4.2.0',
     ],
 )

@@ -57,7 +57,7 @@ Python 3.10+
 - [x] Validate Input 
 - [x] Custom Output Model 
 - [x] Log Queries
-- [] Custom Logging
+- [ ] Custom Logging
 - [ ] Handle Cookie
 - [ ] Handle File 
 - [ ] Handle Form-Data

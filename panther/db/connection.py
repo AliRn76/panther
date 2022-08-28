@@ -16,8 +16,8 @@ class Singleton(object):
 
 class DBSession(Singleton):
     _session: Union[Session, Database]
+    _client: MongoClient
     _name: str
-    client: MongoClient
 
     def __init__(self, db_url: str | None = None):
         if db_url:
@@ -39,8 +39,8 @@ class DBSession(Singleton):
         return self._name
 
     def _create_mongo_session(self, db_url: str) -> None:
-        self.client = MongoClient(db_url)
-        self._session: Database = self.client.get_database()
+        self._client = MongoClient(db_url)
+        self._session: Database = self._client.get_database()
 
     def _create_sqlite_session(self, db_url: str):
         from sqlalchemy import create_engine
@@ -50,9 +50,9 @@ class DBSession(Singleton):
 
     def close(self):
         if self._name == 'mongodb':
-            self.client.close()
+            self._client.close()
         else:
-            self.session.close()
+            self._session.close()
 
 
 class RedisConnection(Singleton, Redis):

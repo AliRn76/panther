@@ -15,7 +15,7 @@ class Middleware(BaseMiddleware):
         return request
 
     async def after(self, response: Response):
-        self.db.session.close()
+        self.db.close()
         return response
 
 

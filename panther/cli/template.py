@@ -2,26 +2,52 @@ from datetime import datetime
 
 
 apis_py = """from panther.app import API
+from panther.request import Request
+from app.models import User
 
 
-@API.get()
-async def hello_world():
-    return {'detail': 'hello world'}
+@API.post(input_model=UserInputSerializer)
+async def create_user(request: Request):
+    obj: UserInputSerializer = request.data
+    User.create(username=obj.username, password=obj.password)
+    return Response(status_code=201)
+
+
+@API.get(output_model=UserOutputSerializer)
+async def get_users(request: Request):
+    _users = User.list()
+    users = [User(**user).dict() for user in _users]
+    return Response(data=users)
 
 """
 
 models_py = """from panther.db import BaseModel
 
+class User(BaseModel):
+    username: str
+    password: str
+
 """
 
-serializers_py = """from pydantic import BaseModel
+serializers_py = """from pydantic import BaseModel, constr
+
+
+class UserInputSerializer(BaseModel):
+    username: str
+    password: constr(min_length=8)
+
+
+class UserOutputSerializer(BaseModel):
+    id: str
+    username: str
 
 """
 
 app_urls_py = """from app.apis import hello_world
 
 urls = {
-    '': hello_world,
+    'create/': create_user,
+    'list/': get_users,
 }
 
 """
@@ -39,13 +65,15 @@ BASE_DIR = Path(__name__).resolve().parent
 env = dotenv_values(BASE_DIR / '.env')
 
 DB_NAME = env['DB_NAME']
+DB_PORT = env['DB_PORT']
 SECRET_KEY = env['SECRET_KEY']
 
 Middlewares = [
-    ('panther/middlewares/db.py', {'url': f'sqlite:///{BASE_DIR}/{DB_NAME}.db'}),
+    ('panther/middlewares/db.py', {'url': f'mongodb://{DB_HOST}:{DB_PORT}/{DB_NAME}'}),
 ]
 
 URLs = 'core/urls.py'
+
 """ % datetime.now().date().isoformat()
 
 middlewares_py = """from panther.middlewares import BaseMiddleware
@@ -56,6 +84,7 @@ env = """
 SECRET_KEY = 'THIS_IS_THE_SECRET_SECRET_KEY'
 
 DB_NAME = '{DATABASE_NAME}'
+DB_PORT = '27017'
 
 """
 

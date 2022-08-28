@@ -1,12 +1,12 @@
+from panther.configs import config
 from panther.logger import logger
+from bson import ObjectId, errors
 from time import perf_counter
 
 
 def query_logger(func):
     def log(*args, **kwargs):
-        # TODO: Log Only If Debug Is True
-        Debug = False
-        if Debug is False:
+        if config['debug'] is False:
             return func(*args, **kwargs)
         start = perf_counter()
         response = func(*args, **kwargs)
@@ -16,3 +16,11 @@ def query_logger(func):
         return response
     return log
 
+
+def to_object_id(_id: str) -> ObjectId:
+    if isinstance(_id, ObjectId):
+        return _id
+    try:
+        return ObjectId(_id)
+    except errors.InvalidId:
+        raise

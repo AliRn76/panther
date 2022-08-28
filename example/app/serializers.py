@@ -1,13 +1,12 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, constr
 
 
 class UserInputSerializer(BaseModel):
-    id: int
     username: str
-    password: str
-    age: int
+    password: constr(min_length=8)
 
 
 class UserOutputSerializer(BaseModel):
-    id: int
+    id: str
     username: str
+

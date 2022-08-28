@@ -6,7 +6,7 @@ from pathlib import Path
 from dotenv import dotenv_values
 
 
-DEBUG = False  # DEBUG default is False
+DEBUG = True  # DEBUG default is False
 BASE_DIR = Path(__name__).resolve().parent
 env = dotenv_values(BASE_DIR / '.env')
 

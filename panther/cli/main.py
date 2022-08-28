@@ -74,7 +74,7 @@ def run(args) -> None:
         pass
 
 
-def main() -> None:
+def start() -> None:
     if len(sys.argv) == 1 or sys.argv[1] in ['help', '-h', '--help']:
         print(help_message)
 

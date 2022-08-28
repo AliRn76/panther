@@ -2,6 +2,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 import anyio
 
+from panther.configs import config
 from panther.utils import read_body, send_404, send_405, send_204
 from panther.exceptions import APIException
 from panther.response import Response
@@ -40,7 +41,7 @@ class Panther:
         request = Request(scope=scope, body=body)
 
         # Call 'Before' Middlewares
-        for middleware in self.middlewares:
+        for middleware in config['middlewares']:
             request = await middleware.before(request=request)
 
         # Call Endpoint
@@ -52,8 +53,8 @@ class Panther:
             return logger.error(f"Response Should Be Instance Of 'Response'.")
 
         # Call 'After' Middleware
-        self.middlewares.reverse()
-        for middleware in self.middlewares:
+        config['middlewares'].reverse()
+        for middleware in config['middlewares']:
             response = await middleware.after(response=response)
 
         # Return Response
@@ -83,27 +84,25 @@ class Panther:
     def load_configs(self) -> None:
         logger.debug(f'Base Directory: {self.base_dir}')
 
+        # Check Configs
+        self.check_configs()
+        config['debug'] = self.settings.get('DEBUG', config['debug'])
+
+        # Collect Middlewares
+        self.collect_middlewares()
+        # Check & Collect URLs
+        # check_urls should be the last call in load_configs, because it will read all files and load them.
+        urls = self.check_urls()
+        self.collect_urls('', urls)
+        logger.debug('Configs Loaded.')
+
+    def check_configs(self):
         try:
-            logger.debug('Loading Configs ...')
             configs_path = self.base_dir / 'core/configs.py'
             self.settings = run_path(str(configs_path))
         except FileNotFoundError:
             return logger.critical('core/configs.py Not Found.')
 
-        # Check Configs
-        self.check_configs()
-        self.debug = self.settings.get('DEBUG', False)
-
-        # Check & Collect URLs
-        urls = self.check_urls()
-        self.urls = {}
-        self.collect_urls('', urls)
-
-        # Collect Middlewares
-        self.middlewares = []
-        self.collect_middlewares()
-
-    def check_configs(self):
         # URLs
         if 'URLs' not in self.settings:
             return logger.critical("configs.py Does Not Have 'URLs'")
@@ -114,7 +113,7 @@ class Panther:
             full_urls_path = self.base_dir / urls_path
             urls_dict = run_path(str(full_urls_path))['urls']
         except FileNotFoundError:
-            return logger.critical("Could Open 'URLs' Address.")
+            return logger.critical("Couldn't Open 'URLs' Address.")
         except KeyError:
             return logger.critical("'URLs' Address Does Not Have 'urls'")
         if not isinstance(urls_dict, dict):
@@ -131,7 +130,7 @@ class Panther:
             if isinstance(endpoint, dict):
                 self.collect_urls(f'{pre_url}/{url}', endpoint)
             else:
-                self.urls[f'{pre_url}{url}'] = endpoint
+                config['urls'][f'{pre_url}{url}'] = endpoint
         return urls
 
     def collect_middlewares(self):
@@ -142,6 +141,7 @@ class Panther:
             if _middleware[0].split('/')[0] == 'panther':
                 _middleware_name = _middleware[0].split('/')[-1]
                 if _middleware_name == 'db.py':
+                    config['db_engine'] = _middleware[1]['url'].split(':')[0]
                     from panther.middlewares.db import Middleware
                 elif _middleware_name == 'redis.py':
                     from panther.middlewares.redis import Middleware
@@ -152,10 +152,10 @@ class Panther:
                 # TODO: Import From Example (Custom Middleware)
                 ...
 
-            self.middlewares.append(Middleware(**_middleware[1]))
+            config['middlewares'].append(Middleware(**_middleware[1]))
 
     def find_endpoint(self, path):
         # TODO: Fix it later, it does not support root url or something like ''
-        for url in self.urls:
+        for url in config['urls']:
             if path == url:
-                return self.urls[url]
+                return config['urls'][url]
