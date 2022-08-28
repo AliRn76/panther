@@ -17,7 +17,7 @@ help_message = f"""
 {logo}
 
 usage: 
-    - panther create <project_name> <directory>
+    - panther create <project_name>
         Create your project in current directory
 
     - panther run [--reload]
@@ -77,6 +77,7 @@ def run(args) -> None:
 def start() -> None:
     if len(sys.argv) == 1 or sys.argv[1] in ['help', '-h', '--help']:
         print(help_message)
+        return
 
     if sys.argv[1] == 'create':
         create(sys.argv[2:])

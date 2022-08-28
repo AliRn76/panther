@@ -65,6 +65,7 @@ BASE_DIR = Path(__name__).resolve().parent
 env = dotenv_values(BASE_DIR / '.env')
 
 DB_NAME = env['DB_NAME']
+DB_HOST = env['DB_HOST']
 DB_PORT = env['DB_PORT']
 SECRET_KEY = env['SECRET_KEY']
 
@@ -84,6 +85,7 @@ env = """
 SECRET_KEY = 'THIS_IS_THE_SECRET_SECRET_KEY'
 
 DB_NAME = '{DATABASE_NAME}'
+DB_HOST = '127.0.0.1'
 DB_PORT = '27017'
 
 """
