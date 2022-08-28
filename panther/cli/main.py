@@ -81,6 +81,7 @@ def start() -> None:
 
     if sys.argv[1] == 'create':
         create(sys.argv[2:])
+        print('Project Created Successfully.')
     elif sys.argv[1] == 'run':
         run(sys.argv[2:])
     else:

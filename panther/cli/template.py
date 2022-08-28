@@ -4,7 +4,7 @@ from datetime import datetime
 apis_py = """from panther.app import API
 from panther.request import Request
 from app.models import User
-
+from app.serializers import UserInputSerializer, UserOutputSerializer 
 
 @API.post(input_model=UserInputSerializer)
 async def create_user(request: Request):
