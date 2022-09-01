@@ -192,4 +192,6 @@ Template = {
     'main.py': main_py,
 }
 
+# TODO: only create alembic.ini if it was on sql
+
 # TODO: Add core/middlewares.py to Template

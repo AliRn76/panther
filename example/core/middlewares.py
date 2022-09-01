@@ -1,5 +1,5 @@
-from panther.middlewares import BaseMiddleware
+# from panther.middlewares import BaseMiddleware
 
 
-class InitialMiddleware(BaseMiddleware):
-    ...
+# class InitialMiddleware(BaseMiddleware):
+#     ...

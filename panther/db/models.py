@@ -3,10 +3,8 @@ from pydantic import Field
 from typing import Optional
 from bson.errors import BSONError
 from sqlalchemy.orm import declarative_base
-from pydantic.main import BaseModel as PydanticBaseModel
-
 from panther.db.queries import MongoQuery, SQLiteQuery
-from panther.configs import config
+from pydantic.main import BaseModel as PydanticBaseModel
 
 
 Base = declarative_base()
@@ -32,16 +30,13 @@ class BsonObjectId(ObjectId):
 class MongoBaseModel(PydanticBaseModel, MongoQuery):
     id: Optional[BsonObjectId] = Field(alias='_id')
 
+    @property
+    def _id(self):
+        return ObjectId(self.id) if self.id else None
+
 
 class SQLBaseModel(Base, SQLiteQuery):
     __abstract__ = True
 
     def dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-
-
-# TODO: Change the structure (ide doesnt suggest the queries but ctrl+b works purely)
-if config['db_engine'] != 'mongodb':
-    BaseModel = SQLBaseModel
-else:
-    BaseModel = MongoBaseModel

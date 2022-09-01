@@ -1,7 +1,8 @@
 from orjson.orjson import JSONDecodeError
 
-from panther.db import BaseModel
 from pydantic import ValidationError
+from pydantic.main import BaseModel
+
 from panther.request import Request
 from panther.response import Response
 from panther.exceptions import APIException
@@ -23,14 +24,16 @@ class API:
 
     @classmethod
     def clean_output(cls, data, output_model):
-        if data is None or data is [] or output_model is None:
+        if data is None or output_model is None:
             return data
         if isinstance(data, dict):
             _data = output_model(**data).dict()
-        elif issubclass(type(data), BaseModel):  # TODO: Check, issubclass of type ?
+        elif issubclass(type(data), BaseModel):
             _data = output_model(**data.dict()).dict()
         elif isinstance(data, list) or isinstance(data, tuple):
-            if isinstance(data[0], BaseModel):  # Worst Case
+            if len(data) == 0:
+                return data
+            if isinstance(data[0], BaseModel):
                 _data = [output_model(**d.dict()).dict() for d in data]
             else:
                 _data = [output_model(**d).dict() for d in data]
@@ -75,7 +78,8 @@ class API:
     def get(cls, output_model=None):
         def decorator(func):
             async def wrapper(*args, **kwargs):
-                response = await func(*args, **kwargs)
+                request: Request = kwargs['request']
+                response = await func(request) if Request in func.__annotations__.values() else await func()
                 if not isinstance(response, Response):
                     response = Response(data=response)
                 data = cls.clean_output(data=response._data, output_model=output_model)
@@ -88,7 +92,8 @@ class API:
     def delete(cls, output_model=None):
         def decorator(func):
             async def wrapper(*args, **kwargs):
-                response = await func(*args, **kwargs)
+                request: Request = kwargs['request']
+                response = await func(request) if Request in func.__annotations__.values() else await func()
                 if not isinstance(response, Response):
                     response = Response(data=response)
                 data = cls.clean_output(data=response._data, output_model=output_model)

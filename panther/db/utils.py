@@ -2,6 +2,7 @@ from panther.configs import config
 from panther.logger import logger
 from bson import ObjectId, errors
 from time import perf_counter
+from typing import Union
 
 
 def query_logger(func):
@@ -17,7 +18,7 @@ def query_logger(func):
     return log
 
 
-def to_object_id(_id: str) -> ObjectId:
+def to_object_id(_id: Union[ObjectId, str]) -> ObjectId:
     if isinstance(_id, ObjectId):
         return _id
     try:
