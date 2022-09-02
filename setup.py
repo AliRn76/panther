@@ -43,5 +43,6 @@ setup(
         'redis>=4.3.4',
         'alembic>=1.8.1',
         'pymongo>=4.2.0',
+        'bpython>=0.23'
     ],
 )

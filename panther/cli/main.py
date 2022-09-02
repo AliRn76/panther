@@ -23,6 +23,9 @@ usage:
     - panther run [--reload]
         Run your project with uvicorn 
 
+    - panther shell
+        Run interactive python shell
+
     - panther [help | -h | --help]
         Show this message and exit
 """
@@ -71,7 +74,11 @@ def run(args) -> None:
     try:
         sp.wait()
     except KeyboardInterrupt:
-        pass
+        sp.kill()
+
+
+def shell() -> None:
+    os.system('bpython')
 
 
 def start() -> None:
@@ -84,5 +91,7 @@ def start() -> None:
         print('Project Created Successfully.')
     elif sys.argv[1] == 'run':
         run(sys.argv[2:])
+    elif sys.argv[1] == 'shell':
+        shell()
     else:
         error('Invalid Arguments.')
