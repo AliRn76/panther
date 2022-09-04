@@ -2,32 +2,35 @@ import os
 import sys
 from pathlib import Path
 from subprocess import Popen
+from rich import print as rprint
 from panther.cli.template import Template
 
-logo = r""" ____                 __    __                      
-/\  _`\              /\ \__/\ \                     
-\ \ \L\ \ __      ___\ \ ,_\ \ \___      __   _ __  
- \ \ ,__/'__`\  /' _ `\ \ \/\ \  _ `\  /'__`\/\`'__\
-  \ \ \/\ \L\.\_/\ \/\ \ \ \_\ \ \ \ \/\  __/\ \ \/ 
-   \ \_\ \__/.\_\ \_\ \_\ \__\\ \_\ \_\ \____\\ \_\ 
-    \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/
+
+logo = r"""│    ____                 __    __                         │
+│   /\  _`\              /\ \__/\ \                        │
+│   \ \ \L\ \ __      ___\ \ ,_\ \ \___      __   _ __     │
+│    \ \ ,__/'__`\  /' _ `\ \ \/\ \  _ `\  /'__`\/\`'__\   │
+│     \ \ \/\ \L\.\_/\ \/\ \ \ \_\ \ \ \ \/\  __/\ \ \/    │
+│      \ \_\ \__/.\_\ \_\ \_\ \__\\ \_\ \_\ \____\\ \_\    │
+│       \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/    │
 """
 
-help_message = f"""
-{logo}
-
-usage: 
-    - panther create <project_name>
-        Create your project in current directory
-
-    - panther run [--reload]
-        Run your project with uvicorn 
-
-    - panther shell
-        Run interactive python shell
-
-    - panther [help | -h | --help]
-        Show this message and exit
+help_message = f"""╭{58*'─'}╮
+{logo}│{58*' '}│
+│                                                          │
+│   usage:                                                 │
+│       - panther create <project_name>                    │
+│           Create your project in current directory       │
+│                                                          │
+│       - panther run [--reload]                           │
+│           Run your project with uvicorn                  │
+│                                                          │
+│       - panther shell                                    │
+│           Run interactive python shell                   │
+│                                                          │
+│       - panther [--help | -h | help]                     │
+│           Show this message and exit                     │
+╰{58*'─'}╯
 """
 
 
@@ -83,7 +86,7 @@ def shell() -> None:
 
 def start() -> None:
     if len(sys.argv) == 1 or sys.argv[1] in ['help', '-h', '--help']:
-        print(help_message)
+        rprint(help_message)
         return
 
     if sys.argv[1] == 'create':
