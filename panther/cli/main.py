@@ -2,9 +2,9 @@ import os
 import sys
 from pathlib import Path
 from subprocess import Popen
+from watchfiles import watch
 from rich import print as rprint
 from panther.cli.template import Template
-
 
 logo = r"""│    ____                 __    __                         │
 │   /\  _`\              /\ \__/\ \                        │
@@ -27,6 +27,9 @@ help_message = f"""╭{58*'─'}╮
 │                                                          │
 │       - panther shell                                    │
 │           Run interactive python shell                   │
+│                                                          │
+│       - panther monitor                                  │
+│           Show the monitor :)                            │
 │                                                          │
 │       - panther [--help | -h | help]                     │
 │           Show this message and exit                     │
@@ -96,5 +99,11 @@ def start() -> None:
         run(sys.argv[2:])
     elif sys.argv[1] == 'shell':
         shell()
+    elif sys.argv[1] == 'monitor':
+        # TODO: Is it only watch logs/monitoring.log or the whole directory ?
+        with open('logs/monitoring.log', 'r') as f:
+            f.readlines()
+            for _ in watch('logs/monitoring.log'):
+                print(f.readline())
     else:
         error('Invalid Arguments.')

@@ -1,6 +1,5 @@
 import orjson as json
 from dataclasses import dataclass
-from panther.logger import logger
 
 
 @dataclass(frozen=True)
@@ -82,6 +81,8 @@ class Request:
 
     @property
     def data(self):
+        from panther.logger import logger
+
         if self._data:
             return self._data
 

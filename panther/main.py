@@ -1,16 +1,12 @@
-from concurrent.futures import ProcessPoolExecutor
-
 import anyio
-
-from panther.configs import config
-from panther.utils import read_body, send_404, send_405, send_204
-from panther.exceptions import APIException
-from panther.response import Response
-from panther.request import Request
-from panther.logger import logger
-from runpy import run_path
 from pathlib import Path
-from importlib import import_module
+from runpy import run_path
+from panther.configs import config
+from panther.request import Request
+from panther.response import Response
+from panther.exceptions import APIException
+from panther.utils import read_body, send_404, send_405, send_204
+""" We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
 
 class Panther:
@@ -19,11 +15,13 @@ class Panther:
         import os
         os.system('clear')
         self.base_dir = Path(name).resolve().parent
+        config['base_dir'] = self.base_dir
         self.panther_dir = Path(__file__).parent
         self.load_configs()
         del os
 
     async def run(self, scope, receive, send):
+        from panther.logger import logger, monitoring
         # Read Body & Create Request
         body = await read_body(receive)
         request = Request(scope=scope, body=body)
@@ -33,7 +31,7 @@ class Panther:
 
         # Access Log
         # TODO: use this log as a middleware so can have a response status too.(we should refactor the structure for this)
-        logger.info(f"[{scope['method']}] {scope['path']} | {scope['client'][0]}:{scope['client'][1]}")
+        monitoring.info(f"[{scope['method']}] {scope['path']} | {scope['client'][0]}:{scope['client'][1]}")
 
         # TODO: pass request.path to find_endpoint instead of scope[]
         # Find Endpoint
@@ -90,6 +88,7 @@ class Panther:
         #     e.submit(self.run, scope, receive, send)
 
     def load_configs(self) -> None:
+        from panther.logger import logger
         logger.debug(f'Base Directory: {self.base_dir}')
 
         # Check Configs
@@ -105,6 +104,8 @@ class Panther:
         logger.debug('Configs Loaded.')
 
     def check_configs(self):
+        from panther.logger import logger
+
         try:
             configs_path = self.base_dir / 'core/configs.py'
             self.settings = run_path(str(configs_path))
@@ -116,6 +117,8 @@ class Panther:
             return logger.critical("configs.py Does Not Have 'URLs'")
 
     def check_urls(self) -> dict:
+        from panther.logger import logger
+
         urls_path = self.settings['URLs']
         try:
             full_urls_path = self.base_dir / urls_path
@@ -129,6 +132,8 @@ class Panther:
         return urls_dict
 
     def collect_urls(self, pre_url, urls):
+        from panther.logger import logger
+
         for url, endpoint in urls.items():
             if endpoint is ...:
                 logger.error(f"URL Can't Point To Ellipsis. ('{pre_url}{url}' -> ...)")
@@ -142,6 +147,8 @@ class Panther:
         return urls
 
     def collect_middlewares(self):
+        from panther.logger import logger
+
         # TODO: use importlib
         # TODO: is sub instance of BaseMiddleware
         _middlewares = self.settings['Middlewares']
