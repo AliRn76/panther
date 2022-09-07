@@ -15,8 +15,8 @@ logo = r"""│    ____                 __    __                         │
 │       \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/    │
 """
 
-help_message = f"""╭{58*'─'}╮
-{logo}│{58*' '}│
+help_message = f"""╭{58 * '─'}╮
+{logo}│{58 * ' '}│
 │                                                          │
 │   usage:                                                 │
 │       - panther create <project_name>                    │
@@ -33,7 +33,7 @@ help_message = f"""╭{58*'─'}╮
 │                                                          │
 │       - panther [--help | -h | help]                     │
 │           Show this message and exit                     │
-╰{58*'─'}╯
+╰{58 * '─'}╯
 """
 
 
@@ -64,7 +64,8 @@ def create(args: list):
                     file.write(sub_data)
         else:
             if file_name == 'alembic.ini':
-                data = data.replace('{SQLALCHEMY_URL}', f'sqlite:///{base_dir}/{project_name}/{project_name.lower()}.db')
+                data = data.replace('{SQLALCHEMY_URL}',
+                                    f'sqlite:///{base_dir}/{project_name}/{project_name.lower()}.db')
             elif file_name == '.env':
                 data = data.replace('{DATABASE_NAME}', project_name.lower())
 
@@ -87,6 +88,58 @@ def shell() -> None:
     os.system('bpython')
 
 
+def monitor() -> None:
+    # TODO: Is it only watch logs/monitoring.log or the whole directory ?
+    try:
+        from rich import box
+        from rich.table import Table
+        from rich.live import Live
+        from rich.layout import Layout
+        from datetime import datetime
+
+        from rich import box
+        from rich.align import Align
+        from rich.console import Console, Group
+        from rich.layout import Layout
+        from rich.panel import Panel
+        from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
+        from rich.syntax import Syntax
+        from rich.table import Table
+        from rich.text import Text
+
+        table = Table(box=box.MINIMAL_DOUBLE_HEAD)
+        table.add_column('Datetime', justify='right', style='magenta', no_wrap=True)
+        table.add_column('Message', style='cyan')
+        table.add_column('Response Time', justify='right', style='blue')
+
+        with open('logs/monitoring.log', 'r') as f:
+            f.readlines()
+
+            layout = Layout(name='root')
+            layout['root'].update(
+                Panel(
+                    Align.center(Group(table)),
+                    box=box.ROUNDED,
+                    padding=(1, 2),
+                    title='Monitoring',
+                    border_style='bright_blue',
+                )
+            )
+
+            with Live(layout, auto_refresh=False, vertical_overflow='visible') as live:
+                for _ in watch('logs/monitoring.log'):
+                    data = f.readline().split('|')
+                    table.add_row(*data)
+                    live.update(layout)
+                    live.refresh()
+
+    except FileNotFoundError:
+        error("Monitor Log File Does Not Exists.\n\nHint: Make sure 'Monitor' is True in 'core/configs' "
+              "or you are in a correct directory.")
+    except KeyboardInterrupt:
+        pass
+
+
 def start() -> None:
     if len(sys.argv) == 1 or sys.argv[1] in ['help', '-h', '--help']:
         rprint(help_message)
@@ -100,10 +153,7 @@ def start() -> None:
     elif sys.argv[1] == 'shell':
         shell()
     elif sys.argv[1] == 'monitor':
-        # TODO: Is it only watch logs/monitoring.log or the whole directory ?
-        with open('logs/monitoring.log', 'r') as f:
-            f.readlines()
-            for _ in watch('logs/monitoring.log'):
-                print(f.readline())
+        monitor()
+
     else:
         error('Invalid Arguments.')
