@@ -35,6 +35,10 @@ class BaseMongoQuery:
             _data['_id'] = to_object_id(_data['_id'])
         if '_id' in kwargs:
             kwargs['_id'] = to_object_id(kwargs['_id'])
+        if 'id' in _data:
+            _data['_id'] = to_object_id(_data['id'])
+        if 'id' in kwargs:
+            kwargs['_id'] = to_object_id(kwargs['id'])
         return eval(f'db.session.{cls.__name__}.count_documents(_data | kwargs)')
 
     @classmethod
@@ -48,13 +52,17 @@ class BaseMongoQuery:
             _data['_id'] = to_object_id(_data['_id'])
         if '_id' in kwargs:
             kwargs['_id'] = to_object_id(kwargs['_id'])
+        if 'id' in _data:
+            _data['_id'] = to_object_id(_data['id'])
+        if 'id' in kwargs:
+            kwargs['_id'] = to_object_id(kwargs['id'])
         result = eval(f'db.session.{cls.__name__}.find(_data | kwargs)')
         return [cls(**obj) for obj in result]
 
     @classmethod
     @query_logger
-    def create(cls, **kwargs) -> bson.objectid.ObjectId:
-        return eval(f'db.session.{cls.__name__}.insert_one({kwargs})').inserted_id
+    def create(cls, _data: dict = None, **kwargs) -> bson.objectid.ObjectId:
+        return eval(f'db.session.{cls.__name__}.insert_one({_data or kwargs})').inserted_id
 
     @query_logger
     def delete(self) -> bool:
@@ -67,6 +75,8 @@ class BaseMongoQuery:
     def delete_one(cls, **kwargs) -> bool:
         if '_id' in kwargs:
             kwargs['_id'] = to_object_id(kwargs['_id'])
+        if 'id' in kwargs:
+            kwargs['_id'] = to_object_id(kwargs['id'])
         result = eval(f'db.session.{cls.__name__}.delete_one(_data)')
         return bool(result.deleted_count)
 
@@ -77,8 +87,8 @@ class BaseMongoQuery:
         return result.deleted_count
 
     @query_logger
-    def update(self, **kwargs) -> dict:
-        for field, value in kwargs.items():
+    def update(self, _data: dict = None, **kwargs) -> dict:
+        for field, value in (_data or kwargs).items():
             if hasattr(self, field):
                 setattr(self, field, value)
         _filter = {'_id': self._id}
@@ -90,6 +100,8 @@ class BaseMongoQuery:
     def update_one(cls, _filter, _data: dict = None, /, **kwargs) -> dict:
         if '_id' in _filter:
             _filter['_id'] = to_object_id(_filter['_id'])
+        if 'id' in _filter:
+            _filter['_id'] = to_object_id(_filter['id'])
         if _data is None:
             _data = {}
         _data = {k: v for k, v in _data.items() if v is not None}

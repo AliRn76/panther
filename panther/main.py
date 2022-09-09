@@ -54,7 +54,11 @@ class Panther:
         try:
             response = await endpoint(request=request)
         except APIException as e:
-            response = Response(data=e.detail, status_code=e.status_code)
+            response = Response(
+                data=e.detail if isinstance(e.detail, dict) else {'detail': e.detail},
+                status_code=e.status_code
+            )
+
         if not isinstance(response, Response):
             return logger.error(f"Response Should Be Instance Of 'Response'.")
 

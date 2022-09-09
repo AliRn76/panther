@@ -6,6 +6,7 @@ from dataclasses import dataclass
 class Headers:
     accept_encoding: str
     content_length: int
+    authorization: str
     content_type: str
     user_agent: str
     connection: str
@@ -18,11 +19,16 @@ class Request:
         """
         {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'},
         'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'client': ('127.0.0.1', 35064),
-        'scheme': 'http', 'root_path': '', 'headers': [(b'content-type', b'application/json'),
-        (b'user-agent', b'PostmanRuntime/7.29.2'), (b'accept', b'*/*'),
-        (b'postman-token', b'3e78fbf3-df2f-41bd-bedc-cf6027fa4fe6'),
-        (b'host', b'127.0.0.1:8000'), (b'accept-encoding', b'gzip, deflate, br'),
-        (b'connection', b'keep-alive'), (b'content-length', b'55')],
+        'scheme': 'http', 'root_path': '', 'headers': [
+            (b'content-type', b'application/json'),
+            (b'user-agent', b'PostmanRuntime/7.29.2'),
+            (b'accept', b'*/*'),
+            (b'postman-token', b'3e78fbf3-df2f-41bd-bedc-cf6027fa4fe6'),
+            (b'host', b'127.0.0.1:8000'),
+            (b'accept-encoding', b'gzip, deflate, br'),
+            (b'connection', b'keep-alive'),
+            (b'content-length', b'55')
+        ],
         'method': 'GET', 'path': '/list/', 'raw_path': b'/list/', 'query_string': b''}
         """
         self.scope = scope
@@ -31,19 +37,19 @@ class Request:
 
     @property
     def headers(self):
-        _headers = {}
-        for header in self.scope['headers']:
-            key, value = header
-            _headers[key.decode('utf-8')] = value.decode('utf-8')
+        _headers = {header[0].decode('utf-8'): header[1].decode('utf-8') for header in self.scope['headers']}
+
         # logger.debug(_headers)
         return Headers(
-            accept_encoding=_headers.get('accept-encoding'),
-            content_length=_headers.get('content_length'),
-            content_type=_headers.get('content-type'),
-            user_agent=_headers.get('user-agent'),
-            connection=_headers.get('connection'),
-            accept=_headers.get('accept'),
-            host=_headers.get('host')
+            accept_encoding=_headers.pop('accept-encoding', None),
+            content_length=_headers.pop('content_length', None),
+            authorization=_headers.pop('authorization', None),
+            content_type=_headers.pop('content-type', None),
+            user_agent=_headers.pop('user-agent', None),
+            connection=_headers.pop('connection', None),
+            accept=_headers.pop('accept', None),
+            host=_headers.pop('host', None),
+            # TODO: Others ...
         )
 
     @property

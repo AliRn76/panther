@@ -66,12 +66,12 @@ class MongoQuery(BaseMongoQuery):
         return super().list(_data, **kwargs)
 
     @classmethod
-    def create(cls, **kwargs) -> ObjectId:
+    def create(cls, _data: dict = None, **kwargs) -> ObjectId:
         """
         example:
             User.create(name='ali', age=24, ...)
         """
-        return super().create(**kwargs)
+        return super().create(_data, **kwargs)
 
     def delete(self) -> bool:
         """

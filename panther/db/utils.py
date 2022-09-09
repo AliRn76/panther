@@ -12,8 +12,9 @@ def query_logger(func):
         start = perf_counter()
         response = func(*args, **kwargs)
         end = perf_counter()
-        logger.info(f'\033[1mQuery -->\033[0m  {args[0].__name__}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
-        # logger.info(f'Query --> {args[0].__name__}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
+        class_name = args[0].__name__ if hasattr(args[0], '__name__') else args[0].__class__.__name__
+        logger.info(f'\033[1mQuery -->\033[0m  {class_name}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
+        # logger.info(f'Query --> {class_name}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
         return response
     return log
 
