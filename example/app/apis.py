@@ -1,19 +1,27 @@
-from framework.api import API
-from framework.decorators import input_validation, output_serializer, validation
-from .serializer import UserInputSerializer, UserSerializer
-
-@API(input_serializer=UserInputSerializer, output_serializer=UserSerializer)
-def single_user(request, *args, **kwargs):
-    return {'detail': 'ok'}
+from app.serializers import UserInputSerializer, UserOutputSerializer
+from framework.app import API
+# from .serializer import UserInputSerializer, UserSerializer
 
 
-@validation(input=UserInputSerializer, output=UserSerializer)
-def single_user(request, *args, **kwargs):
-    return {'detail': 'ok'}
+# @API.get(output_model=UserSerializer)
+from typing import Tuple, Union
+
+from framework.response import Response
 
 
-@input_validation(UserInputSerializer)
-@output_serializer(UserSerializer)
-def single_user(request, *args, **kwargs):
+# async def single_user(request, body) -> Union[Tuple[int, dict], dict]:
+
+@API.post(input_model=UserInputSerializer, output_model=UserOutputSerializer)
+async def single_user(request) -> Response:
+    print(f'{request.data = }')
+    # print(f'{dir(request) = }')
+    # print(f'{request.query_params = }')
+    return Response(status_code=200, data=request.data)
+    # return 200, {'detail': 'ok'}
+    # return {'detail': 'ok'}
+
+
+# @API.post(input=UserInputSerializer, output_model=UserSerializer)
+def create_user(request, body):
     return {'detail': 'ok'}
 

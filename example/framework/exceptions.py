@@ -1,17 +1,7 @@
-
-class APIException(Exception):
-    pass
+from dataclasses import dataclass
 
 
-class JWTError(APIException):
-    pass
-
-
-class JWTClaimsError(APIException):
-    pass
-
-
-class ExpiredSignatureError(JWTError):
-    pass
-
-
+@dataclass
+class APIException(BaseException):
+    detail: str | dict | list
+    status_code: int = 400
