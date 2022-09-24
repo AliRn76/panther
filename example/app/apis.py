@@ -1,3 +1,4 @@
+from app.serializers import UserInputSerializer, UserOutputSerializer
 from framework.app import API
 # from .serializer import UserInputSerializer, UserSerializer
 
@@ -10,12 +11,12 @@ from framework.response import Response
 
 # async def single_user(request, body) -> Union[Tuple[int, dict], dict]:
 
-@API.get()
-async def single_user(request, body) -> Response:
-    # print(f'{request.data = }')
+@API.post(input_model=UserInputSerializer, output_model=UserOutputSerializer)
+async def single_user(request) -> Response:
+    print(f'{request.data = }')
     # print(f'{dir(request) = }')
     # print(f'{request.query_params = }')
-    return Response(status_code=200, data='ok')
+    return Response(status_code=200, data=request.data)
     # return 200, {'detail': 'ok'}
     # return {'detail': 'ok'}
 

@@ -72,11 +72,11 @@ class Request:
         return self.scope['scheme']
 
     @property
-    def data(self):
+    def data(self) -> dict:
         body = self._body.decode('utf-8')
         if self.headers.content_type == 'application/json':
             _data = orjson.loads(body)
-        elif self.headers.content_type.find('multipart/form-data') == 0:
+        elif self.headers.content_type[:19] == 'multipart/form-data':
             # TODO: Handle Multipart Form Data
             logger.error(f"We Don't Handle Multipart Request Yet.")
             _data = None

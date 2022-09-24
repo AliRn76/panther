@@ -1,29 +1,7 @@
-class BaseException:
-    """ Base class Exception """
-    pass
+from dataclasses import dataclass
 
 
-class HTTPException(BaseException):
-    """ HTTP Error base Exception """
-    pass
-
-
-class IsNotHTTPError(HTTPException):
-    """ for check HTTP method """
-    pass
-
-
+@dataclass
 class APIException(BaseException):
-    pass
-
-
-class JWTError(APIException):
-    pass
-
-
-class JWTClaimsError(APIException):
-    pass
-
-
-class ExpiredSignatureError(JWTError):
-    pass
+    detail: str | dict | list
+    status_code: int = 400

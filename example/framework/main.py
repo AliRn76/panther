@@ -1,3 +1,4 @@
+from framework.exceptions import APIException
 from framework.response import Response
 from framework.request import Request
 from framework.logger import logger
@@ -11,7 +12,7 @@ class Framework:
 
         try:
             from runpy import run_path
-            logger.debug('Loading Configs')
+            logger.debug('Loading Configs ...')
             urls_path = self.base_dir / 'core/configs.py'
             settings = run_path(f'{urls_path}')
         except FileNotFoundError:
@@ -42,6 +43,8 @@ class Framework:
         return urls
 
     def __init__(self, name):
+        import os
+        os.system('clear')
         self.base_dir = Path(name).resolve().parent
         self.load_configs()
 
@@ -91,17 +94,16 @@ class Framework:
         if endpoint_method != scope['method']:
             return await self._404(send)
 
-        # TODO: Input Validation
-
         # Read Body & Create Request
         body = await self.read_body(receive)
         request = Request(scope=scope, body=body)
         # Call Endpoint
-        response = await endpoint(request, body=receive)
+        try:
+            response = await endpoint(request=request)
+        except APIException as e:
+            response = Response(data=e.detail, status_code=e.status_code)
         if not isinstance(response, Response):
             return logger.error(f"Response Should Be Instance Of 'Response'.")
-
-        # TODO: Clean Output Data
         # Return Response
         await send({
             'type': 'http.response.start',
