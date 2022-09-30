@@ -3,11 +3,7 @@ from pydantic import Field
 from typing import Optional
 from bson.errors import BSONError
 from panther.db.queries import Query
-from sqlalchemy.orm import declarative_base
 from pydantic.main import BaseModel as PydanticBaseModel
-
-
-Base = declarative_base()
 
 
 class BsonObjectId(ObjectId):

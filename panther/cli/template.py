@@ -42,7 +42,7 @@ async def delete_user(request: Request):
 
 """
 
-models_py = """from panther.db import MongoBaseModel
+models_py = """from panther.db import BaseModel
 
 class User(BaseModel):
     username: str

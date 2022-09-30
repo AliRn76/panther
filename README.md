@@ -84,6 +84,7 @@ Python 3.10+
 - [ ] Get or Create
 - [ ] List with Pagination
 - [ ] Other Queries
+- [ ] Complete The TinyDB Queries
 
 #### Middleware
 - [x] Add Middlewares To Structure

@@ -43,5 +43,6 @@ setup(
         'pymongo>=4.2.0',
         'bpython>=0.23',
         'tinydb>=4.7.0',
+        'rich>=12.5.1',
     ],
 )
