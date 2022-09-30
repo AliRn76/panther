@@ -68,7 +68,7 @@ class Panther:
             response = await middleware.after(response=response)
 
         # Return Response
-        if response._data is None or response.status_code == 204:
+        if (response._data is None and response.status_code == 200) or response.status_code == 204:
             return await send_204(send)
 
         await send({

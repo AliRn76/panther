@@ -7,6 +7,5 @@ class UserInputSerializer(BaseModel):
 
 
 class UserOutputSerializer(BaseModel):
-    id: str
     username: str
 
