@@ -1,5 +1,6 @@
 from panther.logger import logger
 from panther.db.connection import db
+from tinydb import Query
 from panther.db.utils import query_logger
 
 
@@ -8,7 +9,6 @@ class BaseTinyDBQuery:
     @classmethod
     @query_logger
     def get_one(cls, _data: dict = None, /, **kwargs):
-        from tinydb import Query
         if _data is None:
             _data = {}
         _data = {k: v for k, v in _data.items() if v not in [None]}
@@ -27,7 +27,6 @@ class BaseTinyDBQuery:
     @classmethod
     @query_logger
     def list(cls, _data: dict = None, /, **kwargs):
-        from tinydb import Query
         if _data is None:
             _data = {}
         _data = {k: v for k, v in _data.items() if v not in [None]}
@@ -50,8 +49,13 @@ class BaseTinyDBQuery:
 
     @classmethod
     @query_logger
-    def delete_many(cls, **kwargs) -> None:
-        logger.critical('delete_many() is not supported while using TinyDB.')
+    def delete_many(cls, _data: dict = None, /, **kwargs) -> bool:
+        def _delete():
+            def transform(doc):
+                for field in doc.copy().keys():
+                    del doc[field]
+            return transform
+        return bool(db.session.update(_delete(), Query().fragment(cls.cleaned_kwargs(_data, kwargs))))
 
     @query_logger
     def update(self, **kwargs) -> None:
@@ -71,3 +75,12 @@ class BaseTinyDBQuery:
     @query_logger
     def increment(cls, _filter, **kwargs) -> None:
         logger.critical('increment() is not supported while using TinyDB.')
+
+    @classmethod
+    def cleaned_kwargs(cls, data, kwargs):
+        if data is None:
+            data = {}
+
+        data = {k: v for k, v in data.items() if v is not None}
+        kwargs = {k: v for k, v in kwargs.items() if v is not None}
+        return data | kwargs

@@ -1,4 +1,5 @@
 from bson.objectid import ObjectId
+
 from panther.configs import config
 from panther.db.queries.mongo_queries import BaseMongoDBQuery
 from panther.db.queries.tinydb_queries import BaseTinyDBQuery
@@ -17,6 +18,7 @@ class Query(BaseQuery):
     def get_one(cls, _data: dict = None, /, **kwargs):
         """
         example:
+            >>> from example.app.models import User
             if MongoDB:
                 >>> User.get_one(id=id)
             elif TinyDB:
@@ -28,6 +30,8 @@ class Query(BaseQuery):
     def count(cls, _data: dict = None, /, **kwargs) -> int:
         """
         example:
+            >>> from example.app.models import User
+            >>> from example.app.models import User
             if MongoDB:
                 >>> User.count(name='ali', age=24)
             elif TinyDB:
@@ -39,6 +43,7 @@ class Query(BaseQuery):
     def list(cls, _data: dict = None, /, **kwargs):
         """
         example:
+            >>> from example.app.models import User
             if MongoDB:
                 >>> User.list({'state': {'$eq': 'Confirmed'}}, name='ali', age=24)
             elif TinyDB:
@@ -50,6 +55,7 @@ class Query(BaseQuery):
     def create(cls, _data: dict = None, **kwargs) -> ObjectId:
         """
         example:
+            >>> from example.app.models import User
             if MongoDB:
                 >>> User.create(name='ali', age=24, ...)
             elif TinyDB:
@@ -60,6 +66,7 @@ class Query(BaseQuery):
     def delete(self) -> bool:
         """
         example:
+            >>> from example.app.models import User
             if MongoDB:
                 >>> user = User.get_one(name='ali')
                 >>> user.delete()
@@ -72,8 +79,9 @@ class Query(BaseQuery):
     def delete_one(cls, **kwargs) -> bool:
         """
         example:
+            >>> from example.app.models import User
             if MongoDB:
-                >>> User.delete_one(id=_id)
+                >>> User.delete_one(id=id)
             elif TinyDB:
                 ...
         """
@@ -83,6 +91,7 @@ class Query(BaseQuery):
     def delete_many(cls, **kwargs) -> int:
         """
         example:
+            >>> from example.app.models import User
             if MongoDB:
                 >>> User.delete_many(name='ali')
             elif TinyDB:
@@ -93,6 +102,7 @@ class Query(BaseQuery):
     def update(self, **kwargs) -> dict:
         """
         example:
+            >>> from example.app.models import User
             if MongoDB:
                 >>> user = User.get_one(name='ali')
                 >>> user.update(name='tom')
@@ -105,8 +115,9 @@ class Query(BaseQuery):
     def update_one(cls, _filter, _data: dict = None, /, **kwargs) -> dict:
         """
         example:
+            >>> from example.app.models import User
             if MongoDB:
-                >>> User.update_one({'id': _id}, name='ali')
+                >>> User.update_one({'id': id}, name='ali')
             elif TinyDB:
                 ...
         """
@@ -116,6 +127,7 @@ class Query(BaseQuery):
     def update_many(cls, _filter, **kwargs) -> dict:
         """
         example:
+            >>> from example.app.models import User
             if MongoDB:
                 >>> User.update_many({'name': 'mohsen'}, name='ali')
             elif TinyDB:
@@ -127,6 +139,7 @@ class Query(BaseQuery):
     def increment(cls, _filter, **kwargs):
         """
         example:
+            >>> from example.app.models import User
             if MongoDB:
                 >>> User.increment({'priority': {'$gt': ad.priority}}, score=1)
             elif TinyDB:
