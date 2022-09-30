@@ -5,4 +5,3 @@ panther.egg-info/
 dist/
 example/panther/
 build/
-db.db

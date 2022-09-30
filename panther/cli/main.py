@@ -63,10 +63,7 @@ def create(args: list):
                 with open(file_path, 'x') as file:
                     file.write(sub_data)
         else:
-            if file_name == 'alembic.ini':
-                data = data.replace('{SQLALCHEMY_URL}',
-                                    f'sqlite:///{base_dir}/{project_name}/{project_name.lower()}.db')
-            elif file_name == '.env':
+            if file_name == '.env':
                 data = data.replace('{DATABASE_NAME}', project_name.lower())
 
             file_path = f'{project_name}/{file_name}'

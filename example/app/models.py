@@ -1,15 +1,6 @@
-from panther.db import Column, String, Integer
-from panther.db.models import MongoBaseModel, SQLBaseModel
+from panther.db import BaseModel
 
 
-# class User(SQLBaseModel):
-#     __tablename__ = 'User'
-#
-#     id = Column(Integer, primary_key=True, index=True)
-#     username = Column(String)
-#     password = Column(String)
-
-
-class User(MongoBaseModel):
+class User(BaseModel):
     username: str
     password: str

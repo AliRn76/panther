@@ -39,10 +39,9 @@ setup(
         'uvicorn[standard]',
         'orjson>=3.7.12',
         'pydantic>=1.9.2',
-        'sqlalchemy>=1.4.20',
         'redis>=4.3.4',
-        'alembic>=1.8.1',
         'pymongo>=4.2.0',
-        'bpython>=0.23'
+        'bpython>=0.23',
+        'tinydb>=4.7.0',
     ],
 )

@@ -6,10 +6,10 @@ from panther.db.connection import db  # # # Do Not Delete This Import (Used in e
 
 
 # TODO: Not sure about this bounding
-T = TypeVar('T', bound='BaseMongoQuery')
+T = TypeVar('T', bound='BaseMongoDBQuery')
 
 
-class BaseMongoQuery:
+class BaseMongoDBQuery:
 
     @classmethod
     @query_logger

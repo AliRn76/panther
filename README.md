@@ -58,10 +58,10 @@ Python 3.10+
 - [x] Custom Output Model 
 - [x] Log Queries
 - [x] Add Package Requirements
-- [ ] Custom Logging
+- [x] Custom Logging
+- [ ] Handle Form-Data
 - [ ] Handle Cookie
 - [ ] Handle File 
-- [ ] Handle Form-Data
 - [ ] Handle WS 
 - [ ] Handle GraphQL
 - [ ] Add py.typed 
@@ -69,12 +69,10 @@ Python 3.10+
 
 #### Database:
 - [x] Structure Of DB Connection
-- [x] SQLite Connection
+- [x] TinyDB Connection
 - [x] MongoDB Connection
 - [x] Create Custom BaseModel For All Type Of Databases
-- [ ] MySQL Connection
-- [ ] PostgreSQL Connection
-- [ ] Set SQLite As Default
+- [ ] Set TinyDB As Default
 
 #### Simple Queries
 - [x] Get One 
@@ -82,10 +80,10 @@ Python 3.10+
 - [x] Create 
 - [x] Delete 
 - [x] Update
-- [x] Get or Raise
-- [x] Get or Create
-- [x] List with Pagination
-- [ ] Test Update
+- [ ] Get or Raise
+- [ ] Get or Create
+- [ ] List with Pagination
+- [ ] Other Queries
 
 #### Middleware
 - [x] Add Middlewares To Structure
@@ -118,15 +116,12 @@ Python 3.10+
 - [ ] Create Project with Options
 - [ ] Monitor Requests  
 - [ ] Monitor Query Performance (Time)
-- [ ] Monitor Response Time
+- [x] Monitor Response Time
 - [ ] Monitor Fastest & Slowest API
-- [ ] Migration
-- [ ] Monitor Migration Flow
     
 #### CLI (for Windows)
 - [x] Create Project 
 - [x] Run Project 
-- [ ] Migration
 
 #### Documentation 
 - [ ] Read The Doc or MkDoc 

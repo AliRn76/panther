@@ -2,8 +2,8 @@ from bson import ObjectId
 from pydantic import Field
 from typing import Optional
 from bson.errors import BSONError
+from panther.db.queries import Query
 from sqlalchemy.orm import declarative_base
-from panther.db.queries import MongoQuery, SQLiteQuery
 from pydantic.main import BaseModel as PydanticBaseModel
 
 
@@ -27,16 +27,9 @@ class BsonObjectId(ObjectId):
         return str(v)
 
 
-class MongoBaseModel(PydanticBaseModel, MongoQuery):
+class BaseModel(PydanticBaseModel, Query):
     id: Optional[BsonObjectId] = Field(alias='_id')
 
     @property
     def _id(self):
         return ObjectId(self.id) if self.id else None
-
-
-class SQLBaseModel(Base, SQLiteQuery):
-    __abstract__ = True
-
-    def dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}

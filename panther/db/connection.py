@@ -1,8 +1,8 @@
 from redis import Redis
 from typing import Union
+from tinydb import TinyDB
 from pymongo import MongoClient
 from pymongo.database import Database
-from sqlalchemy.orm import Session, sessionmaker
 
 
 class Singleton(object):
@@ -15,7 +15,7 @@ class Singleton(object):
 
 
 class DBSession(Singleton):
-    _session: Union[Session, Database]
+    _session: Union[TinyDB, Database]
     _client: MongoClient
     _name: str
 
@@ -24,29 +24,27 @@ class DBSession(Singleton):
             self._name = db_url[:db_url.find(':')]
             match self._name:
                 case 'mongodb':
-                    self._create_mongo_session(db_url)
-                case 'sqlite':
-                    self._create_sqlite_session(db_url)
+                    self._create_mongodb_session(db_url)
+                case 'tinydb':
+                    self._create_tinydb_session(db_url[9:])
                 case _:
+                    # TODO: self._name does not have a last character if only path passed
                     raise ValueError(f'We are support {self._name} Database yet')
 
     @property
-    def session(self) -> Union[Session, Database]:
+    def session(self) -> Union[TinyDB, Database]:
         return self._session
 
     @property
     def name(self) -> str:
         return self._name
 
-    def _create_mongo_session(self, db_url: str) -> None:
+    def _create_mongodb_session(self, db_url: str) -> None:
         self._client = MongoClient(db_url)
         self._session: Database = self._client.get_database()
 
-    def _create_sqlite_session(self, db_url: str):
-        from sqlalchemy import create_engine
-        engine = create_engine(db_url)
-        _Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-        self._session: Session = _Session()
+    def _create_tinydb_session(self, db_url: str):
+        self._session: TinyDB = TinyDB(db_url)
 
     def close(self):
         if self._name == 'mongodb':
