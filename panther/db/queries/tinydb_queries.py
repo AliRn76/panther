@@ -27,16 +27,12 @@ class BaseTinyDBQuery:
     @classmethod
     @query_logger
     def list(cls, _data: dict = None, /, **kwargs):
-        if _data is None:
-            _data = {}
-        _data = {k: v for k, v in _data.items() if v not in [None]}
-        kwargs = {k: v for k, v in kwargs.items() if v not in [None]}
-        return db.session.search(Query().fragment(_data | kwargs))
+        return db.session.search(Query().fragment(cls.cleaned_kwargs(_data, kwargs)))
 
     @classmethod
     @query_logger
     def create(cls, _data: dict = None, **kwargs) -> int:
-        return db.session.insert(_data | kwargs)
+        return db.session.insert(cls.cleaned_kwargs(_data, kwargs))
 
     @query_logger
     def delete(self) -> None:
