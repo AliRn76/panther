@@ -2,12 +2,9 @@
 <hr/>
 
 ## Requirements
-<div class="termy">
-
 ```console
 Python 3.10+
 ```
-</div>
 
 <hr/>
 
@@ -15,34 +12,53 @@ Python 3.10+
 
 - ### Create Virtual Environment
 
-  * <a href="https://">Linux </a>
-  * <a href="https://">Windows </a>
-  * <a href="https://">Mac </a>
+    ```concole
+    $ python -m venv .venv
+    ```
 
-- ### Install Panther 
-    <div class="termy">
+- ### Active The Environment
+
+    * Linux & Mac
+      ```concole
+      $ source .venv/bin/activate
+      ```
+      
+    * Windows
+      ```concole
+      $ .\.venv\Scripts\activate
+      ```
+
+- ### Install Panther
 
     ```console
     $ pip install panter
     ```
-    </div>
 <hr/>
 
 ## Usage
 - #### Create Project
-    <div class="termy">
-    
+
     ```console
     $ panther create <project_name>
     ```
-    </div>
+
 - #### Run Project
-    <div class="termy">
-    
+
     ```console
     $ panther run 
     ```
-    </div>
+  
+- #### Monitoring Requests
+
+    ```console
+    $ panther monitor 
+    ```
+
+- #### Python Shell
+
+    ```console
+    $ panther shell 
+    ```
 
 ## TODO:
 
