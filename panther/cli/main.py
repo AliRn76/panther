@@ -123,7 +123,7 @@ def monitor() -> None:
                 )
             )
 
-            with Live(layout, auto_refresh=False, vertical_overflow='visible') as live:
+            with Live(layout, auto_refresh=False, vertical_overflow='visible', screen=True) as live:
                 for _ in watch('logs/monitoring.log'):
                     data = f.readline().split('|')
                     table.add_row(*data)

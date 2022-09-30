@@ -6,7 +6,7 @@ from panther.request import Request
 from panther.response import Response
 
 from app.models import User
-from app.serializers import UserInputSerializer, UserOutputSerializer, UserIDSerializer
+from app.serializers import UserInputSerializer, UserOutputSerializer
 
 
 @API.post(input_model=UserInputSerializer)
@@ -21,25 +21,6 @@ async def get_users():
     users = User.list()
     return Response(data=users)
 
-
-@API.put(input_model=UserIDSerializer, output_model=UserOutputSerializer)
-async def update_user(request: Request):
-    user = User.update_one(id=request.data.id)
-    user.update(password='Another-Secure-Password')
-    return Response(data={'detail': 'Updated Successfully.'}, status_code=202)
-
-
-@API.delete()
-async def delete_user(request: Request):
-    user = User.get_one(id=request.data.id)
-    if not user:
-        return Response(data={'detail': 'User Not Found.'}, status_code=404)
-
-    if user.delete():
-        return Response(status_code=204)
-    else:
-        return Response(data={'detail': "couldn't delete the user"}, status_code=409)
-
 """
 
 models_py = """from panther.db import BaseModel
@@ -53,10 +34,6 @@ class User(BaseModel):
 serializers_py = """from pydantic import BaseModel, constr
 
 
-class UserIDSerializer(BaseModel):
-    id: str
-
-
 class UserInputSerializer(BaseModel):
     username: str
     password: constr(min_length=8)
@@ -68,13 +45,11 @@ class UserOutputSerializer(BaseModel):
 
 """
 
-app_urls_py = """from app.apis import create_user, get_users, update_user, delete_user
+app_urls_py = """from app.apis import create_user, get_users
 
 urls = {
     'create/': create_user,
     'list/': get_users,
-    'update/': update_user,
-    'delete/': delete_user,
 }
 
 """
@@ -95,7 +70,7 @@ DB_NAME = env['DB_NAME']
 SECRET_KEY = env['SECRET_KEY']
 
 Middlewares = [
-    ('panther/middlewares/db.py', {'url': f'tinydb:///{BASE_DIR}/{DB_NAME}.json'}),
+    ('panther/middlewares/db.py', {'url': f'tinydb://{BASE_DIR}/{DB_NAME}.json'}),
 ]
 
 URLs = 'core/urls.py'
@@ -122,6 +97,14 @@ urls = {
 
 """
 
+git_ignore = """__pycache__/
+.idea/
+.venv/
+__pycache__/
+.env
+
+"""
+
 Template = {
     'app': {
         'apis.py': apis_py,
@@ -133,8 +116,9 @@ Template = {
         'configs.py': configs_py,
         'urls.py': urls_py,
     },
-    '.env': env,
     'main.py': main_py,
+    '.env': env,
+    '.gitignore': git_ignore,
 }
 
 # TODO: Add .gitignore
