@@ -5,8 +5,10 @@ from orjson.orjson import JSONDecodeError
 
 from panther.caching import get_cached_response_data, set_cache_response
 from panther.exceptions import APIException
+from panther.utils import import_class
 from panther.response import Response
 from panther.request import Request
+from panther.configs import config
 from panther.logger import logger
 
 
@@ -47,10 +49,20 @@ class API:
         return _data
 
     @classmethod
-    def post(cls, input_model=None, output_model=None):
+    def handle_authentications(cls, request: Request) -> None:
+        if _auth_class := config['authentication']:
+            auth_class = import_class(_auth_class)
+            user = auth_class.authentication(request)
+            request.set_user(user=user)
+
+    @classmethod
+    def post(cls, input_model=None, output_model=None, auth: bool = False):
         def decorator(func):
             async def wrapper(*args, **kwargs):
                 request: Request = kwargs['request']
+                if auth:
+                    cls.handle_authentications(request=request)
+
                 cls.validate_input(request=request, input_model=input_model)
                 response = await func(request) if Request in func.__annotations__.values() else await func()
                 if not isinstance(response, Response):
@@ -62,10 +74,12 @@ class API:
         return decorator
 
     @classmethod
-    def put(cls, input_model=None, output_model=None):
+    def put(cls, input_model=None, output_model=None, auth: bool = False):
         def decorator(func):
             async def wrapper(*args, **kwargs):
                 request: Request = kwargs['request']
+                if auth:
+                    cls.handle_authentications(request=request)
                 cls.validate_input(request=request, input_model=input_model)
                 response = await func(request) if Request in func.__annotations__.values() else await func()
                 if not isinstance(response, Response):
@@ -77,10 +91,13 @@ class API:
         return decorator
 
     @classmethod
-    def get(cls, output_model=None, cache: bool = False, cache_exp_time: timedelta | int = None):
+    def get(cls, output_model=None, cache: bool = False, cache_exp_time: timedelta | int = None, auth: bool = False):
         def decorator(func):
             async def wrapper(*args, **kwargs):
                 request: Request = kwargs['request']
+                if auth:
+                    cls.handle_authentications(request=request)
+
                 if cache:
                     if cached := get_cached_response_data(request=request):
                         return Response(data=cached.data, status_code=cached.status_code)
@@ -101,10 +118,12 @@ class API:
         return decorator
 
     @classmethod
-    def delete(cls, output_model=None):
+    def delete(cls, output_model=None, auth: bool = False):
         def decorator(func):
             async def wrapper(*args, **kwargs):
                 request: Request = kwargs['request']
+                if auth:
+                    cls.handle_authentications(request=request)
                 response = await func(request) if Request in func.__annotations__.values() else await func()
                 if not isinstance(response, Response):
                     response = Response(data=response)

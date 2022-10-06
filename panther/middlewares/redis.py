@@ -28,11 +28,11 @@ class Middleware(BaseMiddleware):
         else:
             self.kwargs['port'] = '6379'
 
-    async def before(self, request: Request):
+    async def before(self, request: Request) -> Request:
         self.redis = RedisConnection(**self.kwargs)
         return request
 
-    async def after(self, response: Response):
+    async def after(self, response: Response) -> Response:
         self.redis.close()
         return response
 

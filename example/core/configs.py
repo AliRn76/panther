@@ -23,9 +23,9 @@ DB_PASSWORD = env['DB_PASSWORD']
 Middlewares = [
     # TODO: change middleware
     # Go To https://framework.org/SupportedDatabase For More Options
-    ('panther/middlewares/db.py', {'url': f'tinydb://{BASE_DIR}/{DB_NAME}.json'}),
+    ('panther.middlewares.db.Middleware', {'url': f'tinydb://{BASE_DIR}/{DB_NAME}.json'}),
     # ('panther/middlewares/db.py', {'url': f'mongodb://{DB_HOST}:27017/{DB_NAME}'}),
-    ('panther/middlewares/redis.py', {}),
+    ('panther.middlewares.redis.Middleware', {}),
 ]
 
 # Go To https://framework.org/Authentications For More Options

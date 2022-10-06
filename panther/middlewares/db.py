@@ -10,12 +10,15 @@ class Middleware(BaseMiddleware):
     def __init__(self, **kwargs):
         self.url = kwargs['url']
 
-    async def before(self, request: Request):
+    async def before(self, request: Request) -> Request:
         self.db = DBSession(db_url=self.url)
         return request
 
-    async def after(self, response: Response):
+    async def after(self, response: Response) -> Response:
         self.db.close()
         return response
 
+    @property
+    def db_engine(self) -> str:
+        return self.url.split(':')[0]
 

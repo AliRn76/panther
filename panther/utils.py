@@ -1,3 +1,4 @@
+import importlib
 import orjson as json
 
 
@@ -58,3 +59,8 @@ async def read_body(receive) -> bytes:
 
     return body
 
+
+def import_class(_klass: str, /):
+    seperator = _klass.rfind('.')
+    module = importlib.import_module(_klass[:seperator])
+    return getattr(module, _klass[seperator + 1:])

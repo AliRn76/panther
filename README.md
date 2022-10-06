@@ -112,7 +112,8 @@ Python 3.10+
 
 #### Authentication 
 - [x] JWT 
-- [ ] Separate Auth For Every API
+- [x] Separate Auth For Every API
+- [ ] Handle Permissions
 - [ ] Choose Type of Authentication 
 - [ ] Token Storage 
 - [ ] Cookie 
@@ -144,7 +145,8 @@ Python 3.10+
 - [x] Run Project 
 
 #### Documentation 
-- [ ] Read The Doc or MkDoc 
+- [x] Implement The MkDoc 
+- [ ] Complete The MkDoc 
 - [ ] Framework Performance Ranking 
 
 #### Tests 

@@ -7,10 +7,12 @@ from runpy import run_path
 from pydantic.main import ModelMetaclass
 
 from panther.configs import config, JWTConfig
+from panther.middlewares.base import BaseMiddleware
 from panther.request import Request
 from panther.response import Response
 from panther.exceptions import APIException
-from panther.utils import read_body, send_404, send_405, send_204
+from panther.utils import read_body, send_404, send_405, send_204, import_class
+
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
 
@@ -57,13 +59,6 @@ class Panther:
             for middleware in config['middlewares']:
                 request = await middleware.before(request=request)
 
-            # Authentication
-            if auth_class := config['authentication']:
-                if auth_class.endswith('JWTAuthentication'):  # TODO: Make it dynamic
-                    from panther.authentications import JWTAuthentication
-                    user = JWTAuthentication.authentication(request)
-                    request.set_user(user=user)
-
             # Call Endpoint
             response = await endpoint(request=request)
         except APIException as e:
@@ -109,10 +104,7 @@ class Panther:
         )
 
     def load_user_model(self) -> ModelMetaclass:
-        _user_model = self.settings.get('USER_MODEL')
-        seperator = _user_model.rfind('.')
-        module = importlib.import_module(_user_model[:seperator])
-        return getattr(module, _user_model[seperator + 1:])
+        return import_class(self.settings.get('USER_MODEL'))
 
     def load_configs(self) -> None:
         from panther.logger import logger
@@ -188,25 +180,17 @@ class Panther:
     def collect_middlewares(self):
         from panther.logger import logger
 
-        # TODO: use importlib
-        # TODO: is sub instance of BaseMiddleware
-        _middlewares = self.settings['Middlewares']
-        for _middleware in _middlewares:
-            if _middleware[0].split('/')[0] == 'panther':
-                _middleware_name = _middleware[0].split('/')[-1]
-                if _middleware_name == 'db.py':
-                    config['db_engine'] = _middleware[1]['url'].split(':')[0]
-                    from panther.middlewares.db import Middleware
-                elif _middleware_name == 'redis.py':
-                    from panther.middlewares.redis import Middleware
-                else:
-                    logger.error(f'{_middleware[0]} Does Not Found.')
-                    continue
-            else:
-                # TODO: Import From Example (Custom Middleware)
-                ...
+        middlewares = self.settings['Middlewares']
+        for path, data in middlewares:
+            middleware = import_class(path)
+            if hasattr(middleware, 'db_engine'):
+                config['db_engine'] = middleware.db_engine
 
-            config['middlewares'].append(Middleware(**_middleware[1]))
+            if not issubclass(middleware, BaseMiddleware):
+                logger.critical(f'{middleware} is not a sub class of BaseMiddleware.')
+                continue
+
+            config['middlewares'].append(middleware(**data))
 
     def find_endpoint(self, path):
         # TODO: Fix it later, it does not support root url or something like ''
