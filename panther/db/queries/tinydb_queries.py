@@ -1,6 +1,6 @@
+from tinydb import Query
 from panther.logger import logger
 from panther.db.connection import db
-from tinydb import Query
 from panther.db.utils import query_logger
 
 
@@ -9,11 +9,7 @@ class BaseTinyDBQuery:
     @classmethod
     @query_logger
     def get_one(cls, _data: dict = None, /, **kwargs):
-        if _data is None:
-            _data = {}
-        _data = {k: v for k, v in _data.items() if v not in [None]}
-        kwargs = {k: v for k, v in kwargs.items() if v not in [None]}
-        result = db.session.search(Query().fragment(_data | kwargs))
+        result = db.session.table(cls.__name__).search(Query().fragment(cls.merge(_data, kwargs)))
         if len(result) < 1:
             return None
         else:
@@ -21,18 +17,18 @@ class BaseTinyDBQuery:
 
     @classmethod
     @query_logger
-    def count(cls, _data: dict = None, /, **kwargs) -> None:
-        logger.critical('count() is not supported while using TinyDB.')
+    def count(cls, _data: dict = None, /, **kwargs) -> int:
+        return len(db.session.table(cls.__name__).search(Query().fragment(cls.merge(_data, kwargs))))
 
     @classmethod
     @query_logger
     def list(cls, _data: dict = None, /, **kwargs):
-        return db.session.search(Query().fragment(cls.cleaned_kwargs(_data, kwargs)))
+        return db.session.table(cls.__name__).search(Query().fragment(cls.merge(_data, kwargs)))
 
     @classmethod
     @query_logger
     def create(cls, _data: dict = None, **kwargs) -> int:
-        return db.session.insert(cls.cleaned_kwargs(_data, kwargs))
+        return db.session.table(cls.__name__).insert(cls.merge(_data, kwargs))
 
     @query_logger
     def delete(self) -> None:
@@ -45,13 +41,8 @@ class BaseTinyDBQuery:
 
     @classmethod
     @query_logger
-    def delete_many(cls, _data: dict = None, /, **kwargs) -> bool:
-        def _delete():
-            def transform(doc):
-                for field in doc.copy().keys():
-                    del doc[field]
-            return transform
-        return bool(db.session.update(_delete(), Query().fragment(cls.cleaned_kwargs(_data, kwargs))))
+    def delete_many(cls, _data: dict = None, /, **kwargs) -> int:
+        return len(db.session.table(cls.__name__).remove(Query().fragment(kwargs)))
 
     @query_logger
     def update(self, **kwargs) -> None:
@@ -73,10 +64,5 @@ class BaseTinyDBQuery:
         logger.critical('increment() is not supported while using TinyDB.')
 
     @classmethod
-    def cleaned_kwargs(cls, data, kwargs):
-        if data is None:
-            data = {}
-
-        data = {k: v for k, v in data.items() if v is not None}
-        kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        return data | kwargs
+    def merge(cls, data, kwargs):
+        return (data or {}) | kwargs
