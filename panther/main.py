@@ -98,6 +98,7 @@ class Panther:
         # Check Configs
         self.check_configs()
         config['debug'] = self.settings.get('DEBUG', config['debug'])
+        config['default_cache_exp'] = self.settings.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
 
         # Collect Middlewares
         self.collect_middlewares()

@@ -54,9 +54,12 @@ class DBSession(Singleton):
 
 
 class RedisConnection(Singleton, Redis):
+    is_connected: bool = False
+
     def __init__(self, host: str | None = None, port: int | None = None, **kwargs):
         if host and port:
             super().__init__(host=host, port=port, **kwargs)
+            self.is_connected = True
 
 
 db: DBSession = DBSession()

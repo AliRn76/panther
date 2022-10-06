@@ -75,6 +75,8 @@ Python 3.10+
 - [x] Log Queries
 - [x] Add Package Requirements
 - [x] Custom Logging
+- [x] Caching
+- [ ] Handle Path Variable
 - [ ] Handle Form-Data
 - [ ] Handle Cookie
 - [ ] Handle File 

@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from app.models import User
 from app.serializers import UserInputSerializer, UserOutputSerializer
 
@@ -8,7 +10,7 @@ from panther.request import Request
 from panther.app import API
 
 
-@API.post()
+@API.get(cache=True, cache_exp_time=timedelta(hours=1))
 async def return_none():
     return
 

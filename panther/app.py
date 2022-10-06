@@ -1,11 +1,13 @@
+from datetime import timedelta
+from pydantic.main import BaseModel
+from pydantic import ValidationError
 from orjson.orjson import JSONDecodeError
 
-from pydantic import ValidationError
-from pydantic.main import BaseModel
-
-from panther.request import Request
-from panther.response import Response
+from panther.caching import get_cached_response_data, set_cache_response
 from panther.exceptions import APIException
+from panther.response import Response
+from panther.request import Request
+from panther.logger import logger
 
 
 class API:
@@ -75,15 +77,25 @@ class API:
         return decorator
 
     @classmethod
-    def get(cls, output_model=None):
+    def get(cls, output_model=None, cache: bool = False, cache_exp_time: timedelta | int = None):
         def decorator(func):
             async def wrapper(*args, **kwargs):
                 request: Request = kwargs['request']
+                if cache:
+                    if cached := get_cached_response_data(request=request):
+                        return Response(data=cached.data, status_code=cached.status_code)
+
                 response = await func(request) if Request in func.__annotations__.values() else await func()
                 if not isinstance(response, Response):
                     response = Response(data=response)
                 data = cls.clean_output(data=response._data, output_model=output_model)
                 response.set_data(data)
+                if cache:
+                    if not (isinstance(cache_exp_time, timedelta) or isinstance(cache_exp_time, int)):
+                        raise TypeError('cache_exp_time should be datetime.timedelta or int')
+                    set_cache_response(request=request, response=response, cache_exp_time=cache_exp_time)
+                if cache_exp_time and cache is False:
+                    logger.warning('"cache_exp_time" won\'t work while "cache" is False')
                 return response
             return wrapper
         return decorator

@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 import orjson as json
 from dataclasses import dataclass
 
@@ -12,6 +14,9 @@ class Headers:
     connection: str
     accept: str
     host: str
+
+
+Client = namedtuple('Client', ['ip', 'port'])
 
 
 class Request:
@@ -75,7 +80,7 @@ class Request:
 
     @property
     def client(self):
-        return self.scope['client']
+        return Client(*self.scope['client'])
 
     @property
     def http_version(self):

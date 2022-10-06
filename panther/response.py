@@ -29,6 +29,6 @@ class Response:
         # else:  # str, bool
         #     return json.dumps({'detail': self._data})
 
-    def set_data(self, data: dict) -> None:
+    def set_data(self, data) -> None:
         self._data = data
 
