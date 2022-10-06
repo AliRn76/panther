@@ -29,3 +29,9 @@ class BaseModel(PydanticBaseModel, Query):
     @property
     def _id(self):
         return ObjectId(self.id) if self.id else None
+
+
+class User(BaseModel):
+    first_name: str | None
+    last_name: str | None
+

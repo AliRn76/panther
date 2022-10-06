@@ -5,7 +5,6 @@ from datetime import timedelta
 from pathlib import Path
 from dotenv import dotenv_values
 
-
 DEBUG = True  # DEBUG default is False
 BASE_DIR = Path(__name__).resolve().parent
 env = dotenv_values(BASE_DIR / '.env')
@@ -29,17 +28,19 @@ Middlewares = [
     ('panther/middlewares/redis.py', {}),
 ]
 
-# # Go To https://framework.org/Authentications For More Options
-# Authentication = JWTAuthentication
-#
-# # Only If Authentication Set To JWT
-# JWTConfig = {
-#     'Algorithm': 'HSA256',
-#     'TokenLifeTime': timedelta(days=2),
-#     'Key': SECRET_KEY
-# }
+# Go To https://framework.org/Authentications For More Options
+Authentication = 'panther.authentications.JWTAuthentication'
+
+# Only If Authentication Set To JWT
+JWTConfig = {
+    'algorithm': 'HS256',
+    'life_time': timedelta(days=2),
+    'key': SECRET_KEY
+}
 
 
 URLs = 'core/urls.py'
+
+USER_MODEL = 'app.models.User'
 
 DEFAULT_CACHE_EXP = timedelta(seconds=10)

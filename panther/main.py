@@ -1,7 +1,12 @@
+import importlib
+
 import anyio
 from pathlib import Path
 from runpy import run_path
-from panther.configs import config
+
+from pydantic.main import ModelMetaclass
+
+from panther.configs import config, JWTConfig
 from panther.request import Request
 from panther.response import Response
 from panther.exceptions import APIException
@@ -30,7 +35,8 @@ class Panther:
         # TODO: put access_log to config
 
         # Access Log
-        # TODO: use this log as a middleware so can have a response status too.(we should refactor the structure for this)
+        # TODO: use this log as a middleware so can have a response status too.
+        #  ** (we should refactor the structure for this) **
         monitoring.info(f"[{scope['method']}] {scope['path']} | {scope['client'][0]}:{scope['client'][1]}")
 
         # TODO: pass request.path to find_endpoint instead of scope[]
@@ -46,26 +52,30 @@ class Panther:
         if endpoint_method != scope['method']:
             return await send_405(send)
 
-        # Call 'Before' Middlewares
-        for middleware in config['middlewares']:
-            request = await middleware.before(request=request)
-
-        # Call Endpoint
         try:
+            # Call 'Before' Middlewares
+            for middleware in config['middlewares']:
+                request = await middleware.before(request=request)
+
+            # Authentication
+            if auth_class := config['authentication']:
+                if auth_class.endswith('JWTAuthentication'):  # TODO: Make it dynamic
+                    from panther.authentications import JWTAuthentication
+                    user = JWTAuthentication.authentication(request)
+                    request.set_user(user=user)
+
+            # Call Endpoint
             response = await endpoint(request=request)
         except APIException as e:
-            response = Response(
-                data=e.detail if isinstance(e.detail, dict) else {'detail': e.detail},
-                status_code=e.status_code
-            )
-
-        if not isinstance(response, Response):
-            return logger.error(f"Response Should Be Instance Of 'Response'.")
+            response = self.handle_exceptions(e)
 
         # Call 'After' Middleware
         config['middlewares'].reverse()
         for middleware in config['middlewares']:
-            response = await middleware.after(response=response)
+            try:
+                response = await middleware.after(response=response)
+            except APIException as e:
+                response = self.handle_exceptions(e)
 
         # Return Response
         if (response._data is None and response.status_code == 200) or response.status_code == 204:
@@ -91,6 +101,19 @@ class Panther:
         # with ProcessPoolExecutor() as e:
         #     e.submit(self.run, scope, receive, send)
 
+    @classmethod
+    def handle_exceptions(cls, e, /) -> Response:
+        return Response(
+            data=e.detail if isinstance(e.detail, dict) else {'detail': e.detail},
+            status_code=e.status_code
+        )
+
+    def load_user_model(self) -> ModelMetaclass:
+        _user_model = self.settings.get('USER_MODEL')
+        seperator = _user_model.rfind('.')
+        module = importlib.import_module(_user_model[:seperator])
+        return getattr(module, _user_model[seperator + 1:])
+
     def load_configs(self) -> None:
         from panther.logger import logger
         logger.debug(f'Base Directory: {self.base_dir}')
@@ -99,14 +122,25 @@ class Panther:
         self.check_configs()
         config['debug'] = self.settings.get('DEBUG', config['debug'])
         config['default_cache_exp'] = self.settings.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
+        config['secret_key'] = self.settings.get('SECRET_KEY', config['secret_key'])
+        config['user_model'] = self.load_user_model()
+
+        config['authentication'] = self.settings.get('Authentication', config['authentication'])
+        # TODO: Only call this if Authentication is with JWT
+        self.set_jwt_config()
 
         # Collect Middlewares
         self.collect_middlewares()
         # Check & Collect URLs
-        # check_urls should be the last call in load_configs, because it will read all files and load them.
+        #   check_urls should be the last call in load_configs, because it will read all files and load them.
         urls = self.check_urls()
         self.collect_urls('', urls)
         logger.debug('Configs Loaded.')
+
+    def set_jwt_config(self):
+        user_config = self.settings.get('JWTConfig')
+        jwt_config = JWTConfig(**user_config) if user_config else JWTConfig(key=config['secret_key'])
+        config['jwt_config'] = jwt_config
 
     def check_configs(self):
         from panther.logger import logger

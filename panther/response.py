@@ -24,10 +24,6 @@ class Response:
     @property
     def data(self) -> bytes:
         return json.dumps(self._data)
-        # if isinstance(self._data, dict) or isinstance(self._data, list) or isinstance(self._data, tuple):
-        #     return json.dumps(self._data)
-        # else:  # str, bool
-        #     return json.dumps({'detail': self._data})
 
     def set_data(self, data) -> None:
         self._data = data

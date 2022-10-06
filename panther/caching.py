@@ -13,9 +13,8 @@ Cached = namedtuple('Cached', ['data', 'status_code'])
 
 
 def cache_key(request: Request, /):
-    user = None  # TODO: request.user
-    if user:
-        key = f'{user.id}-{request.path}'
+    if request.user:
+        key = f'{request.user.id}-{request.path}'
     else:
         key = f'{request.client.ip}-{request.path}'
     return key
@@ -29,7 +28,6 @@ def get_cached_response_data(*, request: Request) -> Cached | None:
         Get Cached Data From Memory
     """
     key = cache_key(request)
-
     # noinspection PyUnresolvedReferences
     if redis.is_connected:
         data = (redis.get(key) or b'{}').decode()

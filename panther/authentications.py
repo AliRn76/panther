@@ -1,37 +1,70 @@
-from jose import JWTError, jwt
 from datetime import datetime
-from panther.configs import JWTConfig
-from example.core.configs import JWTConfig
-from panther.exceptions import CredentialsException
+from jose import JWTError, jwt
+from panther.configs import config
+from panther.db.models import User
+from panther.request import Request
+from panther.exceptions import AuthenticationException
+
+
+JWTConfig = config['jwt_config']
 
 
 class JWTAuthentication:
-    def __init__(self, token: str):
-        self.token = token
-        self.user_id = self.decode_jwt(token)
+    model = User
+    keyword = 'Bearer'
+    algorithm = 'HS256'
+    HTTP_HEADER_ENCODING = 'iso-8859-1'  # Header encoding (see RFC5987)
 
-    def __str__(self):
-        return f'Authentication(user_id={self.user_id}, token={self.token[:20]}...)'
+    @staticmethod
+    def get_authorization_header(request: Request):
+        auth = request.headers.authorization
+        if isinstance(auth, str):
+            auth = auth.encode(JWTAuthentication.HTTP_HEADER_ENCODING)
+        return auth
+
+    @classmethod
+    def authentication(cls, request: Request):
+        auth = cls.get_authorization_header(request).split()
+        if not auth or auth[0].lower() != cls.keyword.lower().encode():
+            raise AuthenticationException
+
+        if len(auth) != 2:
+            raise AuthenticationException
+
+        try:
+            token = auth[1].decode()
+        except UnicodeError:
+            raise AuthenticationException
+
+        payload = cls.decode_jwt(token)
+        return cls.get_user(payload)
+
+    @classmethod
+    def get_user(cls, payload: dict):
+        user_id = payload.get('user_id')
+        if user_id is None:
+            raise AuthenticationException
+        user_model = config['user_model'] or cls.model
+        user = user_model.get_one(id=user_id)
+        if user is None:
+            raise AuthenticationException
+        return user
 
     @staticmethod
     def encode_jwt(user_id: int) -> str:
         """ Encode JWT from user_id """
-        expire = datetime.utcnow() + JWTConfig['TokenLifeTime']
+        expire = datetime.utcnow() + JWTConfig.life_time
         access_payload = {
             'token_type': 'access',
             'user_id': user_id,
             'exp': expire
         }
-        return jwt.encode(access_payload, JWTConfig['Key'], algorithm=JWTConfig['Algorithm'])
+        return jwt.encode(access_payload, JWTConfig.key, algorithm=JWTConfig.algorithm)
 
     @staticmethod
-    def decode_jwt(token: str) -> int:
+    def decode_jwt(token: str) -> dict:
         """ Decode JWT token to user_id (it can return multiple variable ... ) """
         try:
-            payload = jwt.decode(token, JWTConfig['Key'], algorithms=[JWTConfig['Algorithm']])
-            user_id: int = payload.get('user_id')
-            if user_id is None:
-                raise CredentialsException
+            return jwt.decode(token, JWTConfig.key, algorithms=[JWTConfig.algorithm])
         except JWTError:
-            raise CredentialsException
-        return user_id
+            raise AuthenticationException

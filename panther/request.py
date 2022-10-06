@@ -39,6 +39,7 @@ class Request:
         self.scope = scope
         self._body = body
         self._data = None
+        self._user = None
 
     @property
     def headers(self):
@@ -48,7 +49,7 @@ class Request:
         return Headers(
             accept_encoding=_headers.pop('accept-encoding', None),
             content_length=_headers.pop('content_length', None),
-            authorization=_headers.pop('authorization', None),
+            authorization=_headers.pop('authorization',  b''),
             content_type=_headers.pop('content-type', None),
             user_agent=_headers.pop('user-agent', None),
             connection=_headers.pop('connection', None),
@@ -116,3 +117,10 @@ class Request:
 
     def set_data(self, data) -> None:
         self._data = data
+
+    @property
+    def user(self):
+        return self._user
+
+    def set_user(self, user) -> None:
+        self._user = user

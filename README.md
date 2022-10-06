@@ -111,8 +111,9 @@ Python 3.10+
 - [ ] Import Custom Middlewares Of User
 
 #### Authentication 
+- [x] JWT 
+- [ ] Separate Auth For Every API
 - [ ] Choose Type of Authentication 
-- [ ] JWT 
 - [ ] Token Storage 
 - [ ] Cookie 
 - [ ] Query Param
