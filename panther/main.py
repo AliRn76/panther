@@ -9,7 +9,7 @@ from panther.response import Response
 from panther.exceptions import APIException
 from panther.configs import config, JWTConfig
 from panther.middlewares.base import BaseMiddleware
-from panther.utils import read_body, import_class, http_response
+from panther.utils import read_body, import_class, http_response, builtin_http_response
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
@@ -50,14 +50,14 @@ class Panther:
         # Find Endpoint
         endpoint = self.find_endpoint(path=request.path)
         if endpoint is None:
-            return await http_response(send, status_code=status.HTTP_404_NOT_FOUND)
+            return await builtin_http_response(send, status_code=status.HTTP_404_NOT_FOUND)
 
         # Check Endpoint Method
         if endpoint.__module__ != 'panther.app':
             raise TypeError(f'You have to use API decorator on {endpoint.__module__}.{endpoint.__name__}()')
         endpoint_method = endpoint.__qualname__.split('.')[1].upper()
         if endpoint_method != scope['method']:
-            return await http_response(send, status_code=status.HTTP_405_METHOD_NOT_ALLOWED)
+            return await builtin_http_response(send, status_code=status.HTTP_405_METHOD_NOT_ALLOWED)
 
         try:
             # Call 'Before' Middlewares
@@ -65,6 +65,7 @@ class Panther:
                 request = await middleware.before(request=request)
 
             # Call Endpoint
+            # TODO: Maybe we should move the caching here ...
             response = await endpoint(request=request)
         except APIException as e:
             response = self.handle_exceptions(e)

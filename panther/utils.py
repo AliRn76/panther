@@ -14,21 +14,25 @@ async def _http_response_start(send, /, status_code: int):
 
 
 async def _http_response_body(send, /, body: any = None):
-    if body:
-        await send({'type': 'http.response.body', 'body': body})
-    else:
+    if body is None:
         await send({'type': 'http.response.body'})
+    else:
+        await send({'type': 'http.response.body', 'body': body})
+
+
+async def builtin_http_response(send, /, *, status_code: int):
+    body = json.dumps({'detail': status_text[status_code]})
+    await http_response(send, status_code=status_code, body=body)
 
 
 async def http_response(send, /, *, status_code: int, body: bytes = None):
-    await _http_response_start(send, status_code=status_code)
     if status_code == 204:
         body = None
-    elif body is None:
-        if is_client_error(status_code) or is_server_error(status_code):
-            body = json.dumps({'detail': status_text[status_code]})
-        else:
-            body = None
+    elif body == b'null':
+        body = None
+        if is_success(status_code):
+            status_code = 204
+    await _http_response_start(send, status_code=status_code)
     await _http_response_body(send, body=body)
 
 

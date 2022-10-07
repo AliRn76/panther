@@ -124,6 +124,7 @@ Python 3.10+
 - [x] Create Cache Decorator
 - [x] Handle In Memory Caching 
 - [x] Handle In Redis Caching 
+- [ ] Write Async LRU_Caching With TTL (Replace it with in memory ...)
 
 
 #### CLI
