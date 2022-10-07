@@ -82,8 +82,8 @@ Python 3.10+
 - [ ] Handle File 
 - [ ] Handle WS 
 - [ ] Handle GraphQL
-- [ ] Add py.typed 
-- [ ] Refactor app __call__ 
+- [ ] Handle Throttling
+- [ ] Handle Testing
 
 #### Database:
 - [x] Structure Of DB Connection
@@ -92,7 +92,7 @@ Python 3.10+
 - [x] Create Custom BaseModel For All Type Of Databases
 - [ ] Set TinyDB As Default
 
-#### Simple Queries
+#### Custom ORM
 - [x] Get One 
 - [x] List  
 - [x] Create 
@@ -101,53 +101,47 @@ Python 3.10+
 - [ ] Get or Raise
 - [ ] Get or Create
 - [ ] List with Pagination
-- [ ] Other Queries
-- [ ] Complete The TinyDB Queries
+- [ ] Other Queries In TinyDB
+- [ ] Other Queries In MongoDB
 
 #### Middleware
 - [x] Add Middlewares To Structure
 - [x] Create BaseMiddleware
 - [x] Pass Custom Parameters To Middlewares
-- [ ] Import Custom Middlewares Of User
+- [x] Import Custom Middlewares Of User
 
 #### Authentication 
-- [x] JWT 
+- [x] JWT Authentication
 - [x] Separate Auth For Every API
-- [ ] Handle Permissions
-- [ ] Choose Type of Authentication 
-- [ ] Token Storage 
-- [ ] Cookie 
-- [ ] Query Param
-- [ ] Store JWT After Logout In Redis
+- [ ] Handle Permissions 
+- [ ] Token Storage Authentication
+- [ ] Cookie Authentication
+- [ ] Query Param Authentication
+- [ ] Store JWT After Logout In Redis/ Memory
 
 #### Cache
 - [x] Add Redis To Structure
+- [x] Create Cache Decorator
+- [x] Handle In Memory Caching 
+- [x] Handle In Redis Caching 
 
-#### Throttling
-- [ ] Monitor Requests 
-- [ ] Ban User 
-- [ ] User Redis For Block His JWT
 
-#### Migration 
-- [x] Add Alembic To Structure
-- [ ] Set Custom Name For Migrations 
-- [ ] Merge Migrations 
-
-#### TUI (for Linux)
-- [ ] Create Project with Options
-- [ ] Monitor Requests  
-- [ ] Monitor Query Performance (Time)
-- [x] Monitor Response Time
-- [ ] Monitor Fastest & Slowest API
-    
-#### CLI (for Windows)
+#### CLI
 - [x] Create Project 
 - [x] Run Project 
-
+- [x] Monitor Requests Response Time
+- [ ] Create Project with Options (TUI)
+- [ ] Monitor Query Performance (Time)
+- [ ] Monitor Fastest & Slowest API
+- [ ] Complete The CLI With Textual ...
+    
 #### Documentation 
-- [x] Implement The MkDoc 
-- [ ] Complete The MkDoc 
-- [ ] Framework Performance Ranking 
+- [x] Create MkDocs For Project 
+- [ ] Benchmarks
+- [ ] Release Notes
+- [ ] Features
+- [ ] Complete The MkDoc
 
 #### Tests 
-- [ ] Add Test To Package
+- [ ] Write Test For Panther 
+- [ ] Test ...

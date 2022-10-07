@@ -1,18 +1,14 @@
-import importlib
-
 import anyio
 from pathlib import Path
 from runpy import run_path
-
 from pydantic.main import ModelMetaclass
 
-from panther.configs import config, JWTConfig
-from panther.middlewares.base import BaseMiddleware
 from panther.request import Request
 from panther.response import Response
 from panther.exceptions import APIException
+from panther.configs import config, JWTConfig
+from panther.middlewares.base import BaseMiddleware
 from panther.utils import read_body, send_404, send_405, send_204, import_class
-
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
 
@@ -32,9 +28,6 @@ class Panther:
         # Read Body & Create Request
         body = await read_body(receive)
         request = Request(scope=scope, body=body)
-        # TODO: put user_ip, method to Request
-
-        # TODO: put access_log to config
 
         # Access Log
         # TODO: use this log as a middleware so can have a response status too.
@@ -115,24 +108,21 @@ class Panther:
         config['debug'] = self.settings.get('DEBUG', config['debug'])
         config['default_cache_exp'] = self.settings.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
         config['secret_key'] = self.settings.get('SECRET_KEY', config['secret_key'])
-        config['user_model'] = self.load_user_model()
-
         config['authentication'] = self.settings.get('Authentication', config['authentication'])
         # TODO: Only call this if Authentication is with JWT
-        self.set_jwt_config()
+        config['jwt_config'] = self.load_jwt_config()
+        config['middlewares'] = self.load_middlewares()
+        config['user_model'] = self.load_user_model()
 
-        # Collect Middlewares
-        self.collect_middlewares()
         # Check & Collect URLs
         #   check_urls should be the last call in load_configs, because it will read all files and load them.
-        urls = self.check_urls()
+        urls = self.check_urls() or {}
         self.collect_urls('', urls)
         logger.debug('Configs Loaded.')
 
-    def set_jwt_config(self):
+    def load_jwt_config(self) -> JWTConfig:
         user_config = self.settings.get('JWTConfig')
-        jwt_config = JWTConfig(**user_config) if user_config else JWTConfig(key=config['secret_key'])
-        config['jwt_config'] = jwt_config
+        return JWTConfig(**user_config) if user_config else JWTConfig(key=config['secret_key'])
 
     def check_configs(self):
         from panther.logger import logger
@@ -143,12 +133,12 @@ class Panther:
         except FileNotFoundError:
             return logger.critical('core/configs.py Not Found.')
 
-        # URLs
-        if 'URLs' not in self.settings:
-            return logger.critical("configs.py Does Not Have 'URLs'")
-
-    def check_urls(self) -> dict:
+    def check_urls(self) -> dict | None:
         from panther.logger import logger
+
+        # URLs
+        if self.settings.get('URLs') is None:
+            return logger.critical("configs.py Does Not Have 'URLs'")
 
         urls_path = self.settings['URLs']
         try:
@@ -177,20 +167,21 @@ class Panther:
                 config['urls'][f'{pre_url}{url}'] = endpoint
         return urls
 
-    def collect_middlewares(self):
+    def load_middlewares(self) -> list:
         from panther.logger import logger
+        middlewares = list()
 
-        middlewares = self.settings['Middlewares']
-        for path, data in middlewares:
-            middleware = import_class(path)
-            if hasattr(middleware, 'db_engine'):
-                config['db_engine'] = middleware.db_engine
+        for path, data in self.settings.get('Middlewares', []):
+            if path.find('panther.middlewares.db.Middleware') != -1:
+                config['db_engine'] = data['url'].split(':')[0]
 
-            if not issubclass(middleware, BaseMiddleware):
-                logger.critical(f'{middleware} is not a sub class of BaseMiddleware.')
+            Middleware = import_class(path)
+            if not issubclass(Middleware, BaseMiddleware):
+                logger.critical(f'{Middleware} is not a sub class of BaseMiddleware.')
                 continue
+            middlewares.append(Middleware(**data))
 
-            config['middlewares'].append(middleware(**data))
+        return middlewares
 
     def find_endpoint(self, path):
         # TODO: Fix it later, it does not support root url or something like ''

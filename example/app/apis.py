@@ -10,7 +10,7 @@ from panther.request import Request
 from panther.app import API
 
 
-@API.get(cache=False, cache_exp_time=timedelta(hours=1), auth=False)
+@API.get(cache=False, cache_exp_time=timedelta(hours=1), auth=True)
 async def return_none(request: Request):
     print(f"{request.user=}")
     return

@@ -1,4 +1,3 @@
-from panther.logger import logger
 from panther.middlewares.base import BaseMiddleware
 from panther.db.connection import DBSession
 from panther.response import Response
@@ -17,8 +16,3 @@ class Middleware(BaseMiddleware):
     async def after(self, response: Response) -> Response:
         self.db.close()
         return response
-
-    @property
-    def db_engine(self) -> str:
-        return self.url.split(':')[0]
-
