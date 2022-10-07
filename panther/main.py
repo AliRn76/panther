@@ -3,12 +3,14 @@ from pathlib import Path
 from runpy import run_path
 from pydantic.main import ModelMetaclass
 
+from panther import status
 from panther.request import Request
 from panther.response import Response
 from panther.exceptions import APIException
 from panther.configs import config, JWTConfig
 from panther.middlewares.base import BaseMiddleware
-from panther.utils import read_body, send_404, send_405, send_204, import_class
+from panther.utils import read_body, import_class, http_response
+
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
 
@@ -38,14 +40,14 @@ class Panther:
         # Find Endpoint
         endpoint = self.find_endpoint(path=scope['path'])
         if endpoint is None:
-            return await send_404(send)
+            return await http_response(send, status_code=status.HTTP_404_NOT_FOUND)
 
         # Check Endpoint Method
         if endpoint.__module__ != 'panther.app':
             raise TypeError(f'You have to use API decorator on {endpoint.__module__}.{endpoint.__name__}()')
         endpoint_method = endpoint.__qualname__.split('.')[1].upper()
         if endpoint_method != scope['method']:
-            return await send_405(send)
+            return await http_response(send, status_code=status.HTTP_405_METHOD_NOT_ALLOWED)
 
         try:
             # Call 'Before' Middlewares
@@ -65,18 +67,7 @@ class Panther:
             except APIException as e:
                 response = self.handle_exceptions(e)
 
-        # Return Response
-        if (response._data is None and response.status_code == 200) or response.status_code == 204:
-            return await send_204(send)
-
-        await send({
-            'type': 'http.response.start',
-            'status': response.status_code,
-            'headers': [
-                [b'content-type', b'application/json'],
-            ],
-        })
-        await send({'type': 'http.response.body', 'body': response.data})
+        await http_response(send, status_code=response.status_code, body=response.data)
 
     async def __call__(self, scope, receive, send) -> None:
         # await self.run(scope, receive, send)

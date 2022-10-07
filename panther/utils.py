@@ -1,48 +1,35 @@
 import importlib
 import orjson as json
+from panther.status import status_text, is_client_error, is_server_error
 
 
-async def send_404(send):
-    # TODO: Work On This Func
+async def _http_response_start(send, /, status_code: int):
     await send({
         'type': 'http.response.start',
-        'status': 404,
+        'status': status_code,
         'headers': [
             [b'content-type', b'application/json'],
         ],
     })
-    return await send({
-        'type': 'http.response.body',
-        'body': json.dumps({'detail': 'Not Found.'}),
-    })
 
 
-async def send_204(send):
-    await send({
-        'type': 'http.response.start',
-        'status': 204,
-        'headers': [
-            [b'content-type', b'application/json'],
-        ],
-    })
-    return await send({
-        'type': 'http.response.body',
-    })
+async def _http_response_body(send, /, body: any = None):
+    if body:
+        await send({'type': 'http.response.body', 'body': body})
+    else:
+        await send({'type': 'http.response.body'})
 
 
-async def send_405(send):
-    # TODO: Work On This Func
-    await send({
-        'type': 'http.response.start',
-        'status': 405,
-        'headers': [
-            [b'content-type', b'application/json'],
-        ],
-    })
-    return await send({
-        'type': 'http.response.body',
-        'body': json.dumps({'detail': 'Method Not Allowed.'}),
-    })
+async def http_response(send, /, *, status_code: int, body: bytes = None):
+    await _http_response_start(send, status_code=status_code)
+    if status_code == 204:
+        body = None
+    elif body is None:
+        if is_client_error(status_code) or is_server_error(status_code):
+            body = json.dumps({'detail': status_text[status_code]})
+        else:
+            body = None
+    await _http_response_body(send, body=body)
 
 
 async def read_body(receive) -> bytes:
@@ -51,12 +38,10 @@ async def read_body(receive) -> bytes:
     """
     body = b''
     more_body = True
-
     while more_body:
         message = await receive()
         body += message.get('body', b'')
         more_body = message.get('more_body', False)
-
     return body
 
 
