@@ -25,6 +25,17 @@ class Panther:
         self.load_configs()
         del os
 
+    async def __call__(self, scope, receive, send) -> None:
+        # await self.run(scope, receive, send)
+        async with anyio.create_task_group() as task_group:
+            task_group.start_soon(self.run, scope, receive, send)
+            # await anyio.to_thread.run_sync(self.run, scope, receive, send)
+        # if self.exc_info is not None:
+        #     raise self.exc_info[0].with_traceback(self.exc_info[1], self.exc_info[2])
+
+        # with ProcessPoolExecutor() as e:
+        #     e.submit(self.run, scope, receive, send)
+
     async def run(self, scope, receive, send):
         from panther.logger import logger, monitoring
         # Read Body & Create Request
@@ -36,9 +47,8 @@ class Panther:
         #  ** (we should refactor the structure for this) **
         monitoring.info(f"[{scope['method']}] {scope['path']} | {scope['client'][0]}:{scope['client'][1]}")
 
-        # TODO: pass request.path to find_endpoint instead of scope[]
         # Find Endpoint
-        endpoint = self.find_endpoint(path=scope['path'])
+        endpoint = self.find_endpoint(path=request.path)
         if endpoint is None:
             return await http_response(send, status_code=status.HTTP_404_NOT_FOUND)
 
@@ -68,17 +78,6 @@ class Panther:
                 response = self.handle_exceptions(e)
 
         await http_response(send, status_code=response.status_code, body=response.data)
-
-    async def __call__(self, scope, receive, send) -> None:
-        # await self.run(scope, receive, send)
-        async with anyio.create_task_group() as task_group:
-            task_group.start_soon(self.run, scope, receive, send)
-            # await anyio.to_thread.run_sync(self.run, scope, receive, send)
-        # if self.exc_info is not None:
-        #     raise self.exc_info[0].with_traceback(self.exc_info[1], self.exc_info[2])
-
-        # with ProcessPoolExecutor() as e:
-        #     e.submit(self.run, scope, receive, send)
 
     @classmethod
     def handle_exceptions(cls, e, /) -> Response:
@@ -122,7 +121,7 @@ class Panther:
             configs_path = self.base_dir / 'core/configs.py'
             self.settings = run_path(str(configs_path))
         except FileNotFoundError:
-            return logger.critical('core/configs.py Not Found.')
+            logger.critical('core/configs.py Not Found.')
 
     def check_urls(self) -> dict | None:
         from panther.logger import logger
@@ -166,12 +165,13 @@ class Panther:
             if path.find('panther.middlewares.db.Middleware') != -1:
                 config['db_engine'] = data['url'].split(':')[0]
 
+            # noinspection PyPep8Naming
             Middleware = import_class(path)
             if not issubclass(Middleware, BaseMiddleware):
                 logger.critical(f'{Middleware} is not a sub class of BaseMiddleware.')
                 continue
+            # noinspection PyArgumentList
             middlewares.append(Middleware(**data))
-
         return middlewares
 
     def find_endpoint(self, path):

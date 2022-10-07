@@ -5,3 +5,6 @@ panther.egg-info/
 dist/
 example/panther/
 build/
+panther.json
+monitoring.log
+example.log

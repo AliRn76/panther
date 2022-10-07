@@ -25,7 +25,6 @@ class Config(TypedDict):
     user_model: ModelMetaclass | None
 
 
-# TODO: make it class or something that we can access to the attr with dot
 config: Config = {
     'base_dir': Path(),
     'debug': False,
