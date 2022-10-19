@@ -50,6 +50,11 @@ async def read_body(receive) -> bytes:
 
 
 def import_class(_klass: str, /):
+    """
+    Example:
+        Input: panther.db.models.User
+        Output: User (The Class)
+    """
     seperator = _klass.rfind('.')
     module = importlib.import_module(_klass[:seperator])
     return getattr(module, _klass[seperator + 1:])

@@ -88,7 +88,7 @@ class Panther:
         )
 
     def load_user_model(self) -> ModelMetaclass:
-        return import_class(self.settings.get('USER_MODEL'))
+        return import_class(self.settings.get('USER_MODEL', 'panther.db.models.User'))
 
     def load_configs(self) -> None:
         from panther.logger import logger

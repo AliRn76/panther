@@ -60,11 +60,11 @@ def create(args: list):
             os.makedirs(sub_directory)
             for sub_file_name, sub_data in data.items():
                 file_path = f'{sub_directory}/{sub_file_name}'
+                sub_data = sub_data.replace('{PROJECT_NAME}', project_name.lower())
                 with open(file_path, 'x') as file:
                     file.write(sub_data)
         else:
-            if file_name == '.env':
-                data = data.replace('{DATABASE_NAME}', project_name.lower())
+            data = data.replace('{PROJECT_NAME}', project_name.lower())
 
             file_path = f'{project_name}/{file_name}'
             with open(file_path, 'x') as file:

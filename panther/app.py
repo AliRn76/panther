@@ -19,6 +19,7 @@ class API:
         if input_model:
             try:
                 validated_data = input_model(**request.data)
+                # TODO: how should we set_data on request here, what if it was form-data ?!?!
                 request.set_data(validated_data)
             except ValidationError as validation_error:
                 error = {e['loc'][0]: e['msg'] for e in validation_error.errors()}
