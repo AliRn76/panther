@@ -69,7 +69,8 @@ def create(args: list):
             file_path = f'{project_name}/{file_name}'
             with open(file_path, 'x') as file:
                 file.write(data)
-
+    else:
+        print('Project Created Successfully.')
 
 def run(args) -> None:
     command = ['uvicorn', 'main:app', '--no-access-log']
@@ -144,7 +145,6 @@ def start() -> None:
 
     if sys.argv[1] == 'create':
         create(sys.argv[2:])
-        print('Project Created Successfully.')
     elif sys.argv[1] == 'run':
         run(sys.argv[2:])
     elif sys.argv[1] == 'shell':

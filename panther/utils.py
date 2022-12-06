@@ -30,8 +30,6 @@ async def http_response(send, /, *, status_code: int, body: bytes = None):
         body = None
     elif body == b'null':
         body = None
-        if is_success(status_code):
-            status_code = 204
     await _http_response_start(send, status_code=status_code)
     await _http_response_body(send, body=body)
 
