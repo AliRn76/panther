@@ -1,7 +1,6 @@
 import bson
-from typing import Tuple
 from typing import Type, TypeVar
-from panther.db.utils import query_logger, to_object_id
+from panther.db.utils import query_logger, merge_dicts, clean_object_id_in_dicts
 from panther.db.connection import db  # # # Do Not Delete This Import (Used in eval)
 
 
@@ -14,55 +13,31 @@ class BaseMongoDBQuery:
     @classmethod
     @query_logger
     def get_one(cls: Type[T], _data: dict = None, /, **kwargs) -> T:
-        if _data is None:
-            _data = {}
-        if '_id' in _data:
-            _data['_id'] = to_object_id(_data['_id'])
-        if '_id' in kwargs:
-            kwargs['_id'] = to_object_id(kwargs['_id'])
-        obj = eval(f'db.session.{cls.__name__}.find_one(_data | kwargs)')
+        clean_object_id_in_dicts(_data, kwargs)
+        _query = merge_dicts(_data, kwargs)
+        obj = eval(f'db.session.{cls.__name__}.find_one(_query)')
         return cls(**obj) if obj else None
 
     @classmethod
     @query_logger
     def count(cls, _data: dict = None, /, **kwargs) -> int:
-        if _data is None:
-            _data = {}
-
-        _data = {k: v for k, v in _data.items() if v not in [None]}
-        kwargs = {k: v for k, v in kwargs.items() if v not in [None]}
-        if '_id' in _data:
-            _data['_id'] = to_object_id(_data['_id'])
-        if '_id' in kwargs:
-            kwargs['_id'] = to_object_id(kwargs['_id'])
-        if 'id' in _data:
-            _data['_id'] = to_object_id(_data['id'])
-        if 'id' in kwargs:
-            kwargs['_id'] = to_object_id(kwargs['id'])
-        return eval(f'db.session.{cls.__name__}.count_documents(_data | kwargs)')
+        clean_object_id_in_dicts(_data, kwargs)
+        _query = merge_dicts(_data, kwargs)
+        return eval(f'db.session.{cls.__name__}.count_documents(_query)')
 
     @classmethod
     @query_logger
     def list(cls, _data: dict = None, /, **kwargs):
-        if _data is None:
-            _data = {}
-        _data = {k: v for k, v in _data.items() if v not in [None]}
-        kwargs = {k: v for k, v in kwargs.items() if v not in [None]}
-        if '_id' in _data:
-            _data['_id'] = to_object_id(_data['_id'])
-        if '_id' in kwargs:
-            kwargs['_id'] = to_object_id(kwargs['_id'])
-        if 'id' in _data:
-            _data['_id'] = to_object_id(_data['id'])
-        if 'id' in kwargs:
-            kwargs['_id'] = to_object_id(kwargs['id'])
-        result = eval(f'db.session.{cls.__name__}.find(_data | kwargs)')
+        clean_object_id_in_dicts(_data, kwargs)
+        _query = merge_dicts(_data, kwargs)
+        result = eval(f'db.session.{cls.__name__}.find(_query)')
         return [cls(**obj) for obj in result]
 
     @classmethod
     @query_logger
     def create(cls, _data: dict = None, **kwargs) -> bson.objectid.ObjectId:
-        return eval(f'db.session.{cls.__name__}.insert_one({_data or kwargs})').inserted_id
+        _query = merge_dicts(_data, kwargs)
+        return eval(f'db.session.{cls.__name__}.insert_one(_query)').inserted_id
 
     @query_logger
     def delete(self) -> bool:
@@ -73,16 +48,14 @@ class BaseMongoDBQuery:
     @classmethod
     @query_logger
     def delete_one(cls, **kwargs) -> bool:
-        if '_id' in kwargs:
-            kwargs['_id'] = to_object_id(kwargs['_id'])
-        if 'id' in kwargs:
-            kwargs['_id'] = to_object_id(kwargs['id'])
-        result = eval(f'db.session.{cls.__name__}.delete_one(_data)')
+        clean_object_id_in_dicts(kwargs)
+        result = eval(f'db.session.{cls.__name__}.delete_one(kwargs)')
         return bool(result.deleted_count)
 
     @classmethod
     @query_logger
     def delete_many(cls, **kwargs) -> int:
+        clean_object_id_in_dicts(kwargs)
         result = eval(f'db.session.{cls.__name__}.delete_many(kwargs)')
         return result.deleted_count
 
@@ -98,15 +71,11 @@ class BaseMongoDBQuery:
     @classmethod
     @query_logger
     def update_one(cls, _filter, _data: dict = None, /, **kwargs) -> dict:
-        if '_id' in _filter:
-            _filter['_id'] = to_object_id(_filter['_id'])
-        if 'id' in _filter:
-            _filter['_id'] = to_object_id(_filter['id'])
-        if _data is None:
-            _data = {}
-        _data = {k: v for k, v in _data.items() if v is not None}
-        kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        _update = {'$set': kwargs}
+        clean_object_id_in_dicts(_filter)
+
+        _update = {'$set': kwargs | {}}
+        if isinstance(_data, dict):
+            _data['$set'] = _data.get('$set', {}) | (kwargs or {})
 
         return eval(f'db.session.{cls.__name__}.update_one(_filter, _data | _update)')
 
@@ -124,7 +93,7 @@ class BaseMongoDBQuery:
 
     @classmethod
     @query_logger
-    def get_or_create(cls, **kwargs) -> Tuple[bool, any]:
+    def get_or_create(cls, **kwargs) -> tuple[bool, any]:
         obj = cls.get_one(**kwargs)
         if obj:
             return False, obj

@@ -1,7 +1,7 @@
 from tinydb import Query
 from panther.logger import logger
 from panther.db.connection import db
-from panther.db.utils import query_logger
+from panther.db.utils import query_logger, merge_dicts
 
 
 class BaseTinyDBQuery:
@@ -9,7 +9,7 @@ class BaseTinyDBQuery:
     @classmethod
     @query_logger
     def get_one(cls, _data: dict = None, /, **kwargs):
-        result = db.session.table(cls.__name__).search(Query().fragment(cls.merge(_data, kwargs)))
+        result = db.session.table(cls.__name__).search(Query().fragment(merge_dicts(_data, kwargs)))
         if len(result) < 1:
             return None
         else:
@@ -18,17 +18,17 @@ class BaseTinyDBQuery:
     @classmethod
     @query_logger
     def count(cls, _data: dict = None, /, **kwargs) -> int:
-        return len(db.session.table(cls.__name__).search(Query().fragment(cls.merge(_data, kwargs))))
+        return len(db.session.table(cls.__name__).search(Query().fragment(merge_dicts(_data, kwargs))))
 
     @classmethod
     @query_logger
     def list(cls, _data: dict = None, /, **kwargs):
-        return db.session.table(cls.__name__).search(Query().fragment(cls.merge(_data, kwargs)))
+        return db.session.table(cls.__name__).search(Query().fragment(merge_dicts(_data, kwargs)))
 
     @classmethod
     @query_logger
     def create(cls, _data: dict = None, **kwargs) -> int:
-        return db.session.table(cls.__name__).insert(cls.merge(_data, kwargs))
+        return db.session.table(cls.__name__).insert(merge_dicts(_data, kwargs))
 
     @query_logger
     def delete(self) -> None:
@@ -63,6 +63,3 @@ class BaseTinyDBQuery:
     def increment(cls, _filter, **kwargs) -> None:
         logger.critical('increment() is not supported while using TinyDB.')
 
-    @classmethod
-    def merge(cls, data, kwargs):
-        return (data or {}) | kwargs
