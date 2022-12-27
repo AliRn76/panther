@@ -13,6 +13,7 @@ Cached = namedtuple('Cached', ['data', 'status_code'])
 
 
 def cache_key(request: Request, /):
+    # TODO: Add request.data and ... to key
     if request.user:
         key = f'{request.user.id}-{request.path}'
     else:

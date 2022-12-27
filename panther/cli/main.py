@@ -72,6 +72,7 @@ def create(args: list):
     else:
         print('Project Created Successfully.')
 
+
 def run(args) -> None:
     command = ['uvicorn', 'main:app', '--no-access-log']
     command.extend(args)
