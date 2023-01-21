@@ -1,54 +1,38 @@
 from datetime import datetime
 
 
-apis_py = """from panther.app import API
+apis_py = """from panther import __version__
+from panther.app import API
 from panther.request import Request
 from panther.response import Response
-
-from app.models import User
-from app.serializers import UserInputSerializer, UserOutputSerializer
+from panther.configs import config
 
 
-@API.post(input_model=UserInputSerializer)
-async def create_user(request: Request):
-    obj: UserInputSerializer = request.data
-    User.create(username=obj.username, password=obj.password)
-    return Response(status_code=201)
-
-
-@API.get(output_model=UserOutputSerializer)
-async def get_users():
-    users = User.list()
-    return Response(data=users)
+@API.get()
+async def hello_world(request: Request):
+    data = {
+        'version': __version__ ,
+        'debug': config['debug'],
+        'db_engine': config['db_engine'],
+        'default_cache_exp': config['default_cache_exp'],
+        'authentication': config['authentication'],
+    }
+    return Response(data=data, status_code=200)
 
 """
 
 models_py = """from panther.db import BaseModel
 
-class User(BaseModel):
-    username: str
-    password: str
+"""
+
+serializers_py = """from pydantic import BaseModel
 
 """
 
-serializers_py = """from pydantic import BaseModel, constr
-
-
-class UserInputSerializer(BaseModel):
-    username: str
-    password: constr(min_length=8)
-
-
-class UserOutputSerializer(BaseModel):
-    username: str
-
-"""
-
-app_urls_py = """from app.apis import create_user, get_users
+app_urls_py = """from app.apis import hello_world
 
 urls = {
-    'create/': create_user,
-    'list/': get_users,
+    '': hello_world,
 }
 
 """
@@ -75,9 +59,6 @@ Middlewares = [
 
 URLs = 'core/urls.py'
 
-# Default is panther.db.models.User
-USER_MODEL = 'app.models.User'
-
 """ % datetime.now().date().isoformat()
 
 env = """
@@ -96,15 +77,14 @@ app = Panther(__name__)
 urls_py = """from app.urls import urls as app_urls
 
 urls = {
-    '': app_urls, 
+    '/': app_urls, 
 }
 
 """
 
 git_ignore = """__pycache__/
-.idea/
 .venv/
-__pycache__/
+.idea/
 .env
 
 """
