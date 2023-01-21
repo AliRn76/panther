@@ -1,8 +1,6 @@
 import importlib
-from typing import Callable
-
 import orjson as json
-from panther.status import status_text, is_client_error, is_server_error
+from panther.status import status_text
 
 
 async def _http_response_start(send, /, status_code: int):
