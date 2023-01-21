@@ -108,8 +108,11 @@ def monitor() -> None:
 
         table = Table(box=box.MINIMAL_DOUBLE_HEAD)
         table.add_column('Datetime', justify='right', style='magenta', no_wrap=True)
-        table.add_column('Message', style='cyan')
+        table.add_column('Method', style='cyan')
+        table.add_column('Path', style='cyan')
+        table.add_column('Client', style='cyan')
         table.add_column('Response Time', justify='right', style='blue')
+        table.add_column('Status Code', justify='right', style='blue')
 
         with open('logs/monitoring.log', 'r') as f:
             f.readlines()

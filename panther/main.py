@@ -9,7 +9,8 @@ from panther.response import Response
 from panther.exceptions import APIException
 from panther.configs import config, JWTConfig
 from panther.middlewares.base import BaseMiddleware
-from panther.utils import read_body, import_class, http_response, builtin_http_response
+from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
+from panther.utils import read_body, import_class, http_response
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
@@ -42,22 +43,26 @@ class Panther:
         body = await read_body(receive)
         request = Request(scope=scope, body=body)
 
-        # Access Log
-        # TODO: use this log as a middleware so can have a response status too.
-        #  ** (we should refactor the structure for this) **
-        monitoring.info(f"[{scope['method']}] {scope['path']} | {scope['client'][0]}:{scope['client'][1]}")
+        # Monitoring Middleware
+        # TODO: Make it dynamic, only call if user wants monitoring
+        monitoring_middleware = MonitoringMiddleware()
+        await monitoring_middleware.before(request=request)
 
         # Find Endpoint
         endpoint = self.find_endpoint(path=request.path)
         if endpoint is None:
-            return await builtin_http_response(send, status_code=status.HTTP_404_NOT_FOUND)
+            return await http_response(
+                send, status_code=status.HTTP_404_NOT_FOUND, monitoring=monitoring_middleware, exception=True
+            )
 
         # Check Endpoint Method
         if endpoint.__module__ != 'panther.app':
             raise TypeError(f'You have to use API decorator on {endpoint.__module__}.{endpoint.__name__}()')
         endpoint_method = endpoint.__qualname__.split('.')[1].upper()
         if endpoint_method != scope['method']:
-            return await builtin_http_response(send, status_code=status.HTTP_405_METHOD_NOT_ALLOWED)
+            return await http_response(
+                send, status_code=status.HTTP_405_METHOD_NOT_ALLOWED, monitoring=monitoring_middleware, exception=True
+            )
 
         try:
             # Call 'Before' Middlewares
@@ -69,6 +74,14 @@ class Panther:
             response = await endpoint(request=request)
         except APIException as e:
             response = self.handle_exceptions(e)
+        except Exception as e:
+            logger.critical(e)
+            return await http_response(
+                send,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                monitoring=monitoring_middleware,
+                exception=True
+            )
 
         # Call 'After' Middleware
         config['middlewares'].reverse()
@@ -78,7 +91,9 @@ class Panther:
             except APIException as e:
                 response = self.handle_exceptions(e)
 
-        await http_response(send, status_code=response.status_code, body=response.data)
+        await http_response(
+            send, status_code=response.status_code, monitoring=monitoring_middleware, body=response.data
+        )
 
     @classmethod
     def handle_exceptions(cls, e, /) -> Response:

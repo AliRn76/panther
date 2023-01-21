@@ -1,4 +1,6 @@
 import importlib
+from typing import Callable
+
 import orjson as json
 from panther.status import status_text, is_client_error, is_server_error
 
@@ -20,16 +22,13 @@ async def _http_response_body(send, /, body: any = None):
         await send({'type': 'http.response.body', 'body': body})
 
 
-async def builtin_http_response(send, /, *, status_code: int):
-    body = json.dumps({'detail': status_text[status_code]})
-    await http_response(send, status_code=status_code, body=body)
-
-
-async def http_response(send, /, *, status_code: int, body: bytes = None):
-    if status_code == 204:
+async def http_response(send, /, *, status_code: int, monitoring: any, body: bytes = None, exception: bool = False):
+    # TODO: Handle MonitoringMiddleware type (we should move it not fix :) Think about it later)
+    if exception:
+        body = json.dumps({'detail': status_text[status_code]})
+    elif status_code == 204 or body == b'null':
         body = None
-    elif body == b'null':
-        body = None
+    await monitoring.after(status_code=status_code)
     await _http_response_start(send, status_code=status_code)
     await _http_response_body(send, body=body)
 
