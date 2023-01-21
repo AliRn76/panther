@@ -1,10 +1,21 @@
 import os
 import sys
+
 from pathlib import Path
+from collections import deque
 from subprocess import Popen
 from watchfiles import watch
 from rich import print as rprint
 from panther.cli.template import Template
+
+from rich.console import Console, Group
+from rich.layout import Layout
+from rich.table import Table
+from rich.align import Align
+from rich.panel import Panel
+from rich.live import Live
+from rich import box
+
 
 logo = r"""│    ____                 __    __                         │
 │   /\  _`\              /\ \__/\ \                        │
@@ -88,51 +99,52 @@ def shell() -> None:
 
 
 def monitor() -> None:
-    # TODO: Is it only watch logs/monitoring.log or the whole directory ?
+    def generate_table(rows):
+        layout = Layout()
+        console = Console()
+
+        rows = list(rows)
+        n_rows = os.get_terminal_size()[1]
+
+        while n_rows >= 0:
+            table = Table(box=box.MINIMAL_DOUBLE_HEAD)
+            table.add_column('Datetime', justify='center', style='magenta', no_wrap=True)
+            table.add_column('Method', justify='center', style='cyan')
+            table.add_column('Path', justify='center', style='cyan')
+            table.add_column('Client', justify='center', style='cyan')
+            table.add_column('Response Time', justify='center', style='blue')
+            table.add_column('Status Code', justify='center', style='blue')
+
+            for row in rows[-n_rows:]:
+                table.add_row(*row)
+            layout.update(table)
+            render_map = layout.render(console, console.options)
+
+            if len(render_map[layout].render[-1]) > 2:
+                n_rows -= 1  # The table is overflowing
+            else:
+                break
+
+        return Panel(
+            Align.center(Group(table)),
+            box=box.ROUNDED,
+            padding=(1, 2),
+            title='Monitoring',
+            border_style='bright_blue',
+        )
+
     try:
-        from rich import box
-        from rich.table import Table
-        from rich.live import Live
-        from rich.layout import Layout
-        from datetime import datetime
-
-        from rich import box
-        from rich.align import Align
-        from rich.console import Console, Group
-        from rich.layout import Layout
-        from rich.panel import Panel
-        from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
-        from rich.syntax import Syntax
-        from rich.table import Table
-        from rich.text import Text
-
-        table = Table(box=box.MINIMAL_DOUBLE_HEAD)
-        table.add_column('Datetime', justify='right', style='magenta', no_wrap=True)
-        table.add_column('Method', style='cyan')
-        table.add_column('Path', style='cyan')
-        table.add_column('Client', style='cyan')
-        table.add_column('Response Time', justify='right', style='blue')
-        table.add_column('Status Code', justify='right', style='blue')
-
         with open('logs/monitoring.log', 'r') as f:
             f.readlines()
+            width, height = os.get_terminal_size()
+            messages = deque(maxlen=height - 8)  # Save space for header and footer
 
-            layout = Layout(name='root')
-            layout['root'].update(
-                Panel(
-                    Align.center(Group(table)),
-                    box=box.ROUNDED,
-                    padding=(1, 2),
-                    title='Monitoring',
-                    border_style='bright_blue',
-                )
-            )
-
-            with Live(layout, auto_refresh=False, vertical_overflow='visible', screen=True) as live:
+            with Live(generate_table(messages), auto_refresh=False, vertical_overflow='visible', screen=True) as live:
+                # TODO: Is it only watch logs/monitoring.log or the whole directory ?
                 for _ in watch('logs/monitoring.log'):
                     data = f.readline().split('|')
-                    table.add_row(*data)
-                    live.update(layout)
+                    messages.append(data)
+                    live.update(generate_table(messages))
                     live.refresh()
 
     except FileNotFoundError:
