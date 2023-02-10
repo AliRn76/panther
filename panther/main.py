@@ -74,15 +74,8 @@ class Panther:
                 exception=True
             )
 
-        # User didn't use the @API() on the endpoint
-        # TODO: Check this condition in urls (while collecting)
-        if response is None:
-            return await http_response(
-                send,
-                status_code=status.HTTP_204_NO_CONTENT,
-                monitoring=monitoring_middleware,
-                exception=True
-            )
+        # TODO: User didn't use the @API() on the endpoint
+        #   Check this condition in urls (while collecting)
 
         # Call 'After' Middleware
         # TODO: Save the reversed middlewares in config

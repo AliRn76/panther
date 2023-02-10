@@ -1,5 +1,9 @@
+try:
+    from jose import JWTError, jwt
+except ImportError:
+    # TODO: Should we install the package ourself?
+    raise ImportError('Try to install python-jose with "pip install python-jose"')
 from datetime import datetime
-from jose import JWTError, jwt
 from panther.configs import config
 from panther.db.models import User
 from panther.request import Request
