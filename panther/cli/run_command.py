@@ -20,24 +20,24 @@ def _handle_boolean_commands(args: dict[str, str | None]) -> dict:
     if 'reload' in args:
         _command['reload'] = bool(args.pop('reload', None))
 
-    _command['access-log'] = False  # Default
+    _command['access_log'] = False  # Default
     if 'access-log' in args:
-        _command['access-log'] = bool(args.pop('access-log', None))
+        _command['access_log'] = bool(args.pop('access-log', None))
 
     if 'no-access-log' in args:
-        _command['access-log'] = not bool(args.pop('no-access-log', None))
+        _command['access_log'] = not bool(args.pop('no-access-log', None))
 
     if 'use-colors' in args:
-        _command['use-colors'] = bool(args.pop('use-colors', None))
+        _command['use_colors'] = bool(args.pop('use-colors', None))
 
     if 'no-use-colors' in args:
-        _command['use-colors'] = not bool(args.pop('no-use-colors', None))
+        _command['use_colors'] = not bool(args.pop('no-use-colors', None))
 
     if 'server-header' in args:
-        _command['server-header'] = bool(args.pop('server-header', None))
+        _command['server_header'] = bool(args.pop('server-header', None))
 
     if 'no-server-header' in args:
-        _command['server-header'] = not bool(args.pop('no-server-header', None))
+        _command['server_header'] = not bool(args.pop('no-server-header', None))
 
     return _command
 

@@ -24,7 +24,8 @@ def create(args: list):
         return error(f'"{existence}" Directory Already Exists.')
 
     # Create Base Directory
-    os.makedirs(base_directory)
+    if base_directory != '.':
+        os.makedirs(base_directory)
 
     for file_name, data in Template.items():
         if isinstance(data, dict):
@@ -57,29 +58,30 @@ def check_all_directories(base_directory: str) -> str | None:
             return base_directory
 
     for file_name, data in Template.items():
+        sub_directory = f'{base_directory}/{file_name}'
+        if os.path.exists(sub_directory):
+            return sub_directory
+
         if isinstance(data, dict):
-            sub_directory = f'{base_directory}/{file_name}'
-            if os.path.isdir(sub_directory):
-                return sub_directory
+            for sub_file_name, sub_data in data.items():
+                file_path = f'{sub_directory}/{sub_file_name}'
+                if os.path.exists(file_path):
+                    return file_path
 
 
 def load_animation1():
     animation = [
-        "■□□□□□□□□□□□□□□",
-        "■■□□□□□□□□□□□□□",
-        "■■■□□□□□□□□□□□□",
-        "■■■■□□□□□□□□□□□",
-        "■■■■■□□□□□□□□□□",
-        "■■■■■■□□□□□□□□□",
-        "■■■■■■■□□□□□□□□",
-        "■■■■■■■■□□□□□□□",
-        "■■■■■■■■■□□□□□□",
-        "■■■■■■■■■■□□□□□",
-        "■■■■■■■■■■■□□□□",
-        "■■■■■■■■■■■■□□□",
-        "■■■■■■■■■■■■■□□",
-        "■■■■■■■■■■■■■■□",
-        "■■■■■■■■■■■■■■■",
+        "■□□□□□□□□□□",
+        "■■□□□□□□□□□",
+        "■■■□□□□□□□□",
+        "■■■■□□□□□□□",
+        "■■■■■□□□□□□",
+        "■■■■■■□□□□□",
+        "■■■■■■■□□□□",
+        "■■■■■■■■□□□",
+        "■■■■■■■■■□□",
+        "■■■■■■■■■■□",
+        "■■■■■■■■■■■",
     ]
 
     for i in range(len(animation)):

@@ -108,7 +108,7 @@ class Panther:
 
     def load_configs(self) -> None:
         from panther.logger import logger
-        logger.debug(f'Base Directory: {self.base_dir}')
+        logger.debug(f'Base directory: {self.base_dir}')
 
         # Check Configs
         self.check_configs()
@@ -125,7 +125,8 @@ class Panther:
         #   check_urls should be the last call in load_configs, because it will read all files and load them.
         urls = self.check_urls() or {}
         self.collect_urls('', urls)
-        logger.debug('Configs Loaded.')
+        logger.debug('Configs loaded.')
+        logger.info('Run "panther monitor" in another session for Monitoring.')
 
     def load_jwt_config(self) -> JWTConfig:
         user_config = self.settings.get('JWTConfig')

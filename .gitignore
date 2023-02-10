@@ -4,7 +4,6 @@ __pycache__/
 panther.egg-info/
 dist/
 example/panther/
+logs/
 build/
 panther.json
-monitoring.log
-example.log

@@ -1,5 +1,1 @@
 panther
-uvicorn[standard]
-orjson==3.7.12
-pydantic==1.9.2
-redis==4.3.4

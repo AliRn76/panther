@@ -1,7 +1,8 @@
+from panther import version
 from datetime import datetime
 
 
-apis_py = """from panther import __version__
+apis_py = """from panther import version
 from panther.app import API
 from panther.request import Request
 from panther.response import Response
@@ -11,7 +12,7 @@ from panther.configs import config
 @API()
 async def hello_world(request: Request):
     data = {
-        'version': __version__,
+        'version': version(),
         'debug': config['debug'],
         'db_engine': config['db_engine'],
         'default_cache_exp': config['default_cache_exp'],
@@ -56,6 +57,9 @@ Middlewares = [
 URLs = 'core/urls.py'
 """ % datetime.now().date().isoformat()
 
+middlewares = """from panther.middlewares import BaseMiddleware
+"""
+
 env = """
 SECRET_KEY = 'THIS_IS_THE_SECRET_SECRET_KEY'
 
@@ -78,6 +82,10 @@ git_ignore = """__pycache__/
 .venv/
 .idea/
 .env
+logs/
+"""
+
+requirements = f"""panther=={version()}
 """
 
 Template = {
@@ -89,12 +97,11 @@ Template = {
     },
     'core': {
         'configs.py': configs_py,
+        'middlewares.py': middlewares,
         'urls.py': urls_py,
     },
     'main.py': main_py,
     '.env': env,
     '.gitignore': git_ignore,
+    'requirements.txt': requirements,
 }
-
-
-# TODO: Add core/middlewares.py to Template
