@@ -8,25 +8,22 @@ from panther.response import Response
 from panther.configs import config
 
 
-@API.get()
+@API()
 async def hello_world(request: Request):
     data = {
-        'version': __version__ ,
+        'version': __version__,
         'debug': config['debug'],
         'db_engine': config['db_engine'],
         'default_cache_exp': config['default_cache_exp'],
         'authentication': config['authentication'],
     }
     return Response(data=data, status_code=200)
-
 """
 
 models_py = """from panther.db import BaseModel
-
 """
 
 serializers_py = """from pydantic import BaseModel
-
 """
 
 app_urls_py = """from app.apis import hello_world
@@ -34,7 +31,6 @@ app_urls_py = """from app.apis import hello_world
 urls = {
     '': hello_world,
 }
-
 """
 
 configs_py = """\"""
@@ -58,20 +54,17 @@ Middlewares = [
 ]
 
 URLs = 'core/urls.py'
-
 """ % datetime.now().date().isoformat()
 
 env = """
 SECRET_KEY = 'THIS_IS_THE_SECRET_SECRET_KEY'
 
 DB_NAME = '{PROJECT_NAME}'
-
 """
 
 main_py = """from panther import Panther
 
 app = Panther(__name__)
-
 """
 
 urls_py = """from app.urls import urls as app_urls
@@ -79,14 +72,12 @@ urls_py = """from app.urls import urls as app_urls
 urls = {
     '/': app_urls, 
 }
-
 """
 
 git_ignore = """__pycache__/
 .venv/
 .idea/
 .env
-
 """
 
 Template = {

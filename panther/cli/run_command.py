@@ -20,6 +20,7 @@ def _handle_boolean_commands(args: dict[str, str | None]) -> dict:
     if 'reload' in args:
         _command['reload'] = bool(args.pop('reload', None))
 
+    _command['access-log'] = False  # Default
     if 'access-log' in args:
         _command['access-log'] = bool(args.pop('access-log', None))
 

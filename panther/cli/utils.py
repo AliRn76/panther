@@ -12,7 +12,7 @@ help_message = f"""╭{58 * '─'}╮
 {logo}│{58 * ' '}│
 │                                                          │
 │   usage:                                                 │
-│       - panther create <project_name>                    │
+│       - panther create <project_name> <directory>        │
 │           Create your project in current directory       │
 │                                                          │
 │       - panther run [--reload | --help]                  │
@@ -120,7 +120,7 @@ run_help_message = """
 
 
 def error(message: str | TypeError) -> None:
-    print(f'Error: {message}\n\nuse panther -h for more help')
+    print(f'Error: {message}\n\nUse panther -h for more help')
 
 
 def clean_args(args: list[str]):

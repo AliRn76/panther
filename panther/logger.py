@@ -43,6 +43,7 @@ class LogConfig(BaseModel):
         },
         'file': {
             'formatter': 'file_formatter',
+            # TODO: Don't know but base_dir.name will return '.' here :\
             'filename': LOGS_DIR / f'{config["base_dir"].name}.log',
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1024 * 1024 * 100,  # 100 MB,
