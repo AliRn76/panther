@@ -35,5 +35,3 @@ class Middleware(BaseMiddleware):
     async def after(self, response: Response) -> Response:
         self.redis.close()
         return response
-
-
