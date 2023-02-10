@@ -20,7 +20,7 @@ class Config(TypedDict):
     db_engine: str
     default_cache_exp: timedelta | None
     secret_key: str
-    authentication: str | None
+    authentication: ModelMetaclass | None
     jwt_config: JWTConfig | None
     user_model: ModelMetaclass | None
 

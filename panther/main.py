@@ -55,16 +55,7 @@ class Panther:
                 send, status_code=status.HTTP_404_NOT_FOUND, monitoring=monitoring_middleware, exception=True
             )
 
-        # Check Endpoint Method
-        if endpoint.__module__ != 'panther.app':
-            raise TypeError(f'You have to use API decorator on {endpoint.__module__}.{endpoint.__name__}()')
-        endpoint_method = endpoint.__qualname__.split('.')[1].upper()
-        if endpoint_method != scope['method']:
-            return await http_response(
-                send, status_code=status.HTTP_405_METHOD_NOT_ALLOWED, monitoring=monitoring_middleware, exception=True
-            )
-
-        try:
+        try:  # They Both Have The Save Exception (APIException)
             # Call 'Before' Middlewares
             for middleware in config['middlewares']:
                 request = await middleware.before(request=request)
@@ -83,7 +74,18 @@ class Panther:
                 exception=True
             )
 
+        # User didn't use the @API() on the endpoint
+        # TODO: Check this condition in urls (while collecting)
+        if response is None:
+            return await http_response(
+                send,
+                status_code=status.HTTP_204_NO_CONTENT,
+                monitoring=monitoring_middleware,
+                exception=True
+            )
+
         # Call 'After' Middleware
+        # TODO: Save the reversed middlewares in config
         config['middlewares'].reverse()
         for middleware in config['middlewares']:
             try:
@@ -105,6 +107,12 @@ class Panther:
     def load_user_model(self) -> ModelMetaclass:
         return import_class(self.settings.get('USER_MODEL', 'panther.db.models.User'))
 
+    def load_authentication(self) -> ModelMetaclass | None:
+        if self.settings.get('Authentication'):
+            return import_class(self.settings['Authentication'])
+        else:
+            return None
+
     def load_configs(self) -> None:
         from panther.logger import logger
         logger.debug(f'Base Directory: {self.base_dir}')
@@ -114,8 +122,8 @@ class Panther:
         config['debug'] = self.settings.get('DEBUG', config['debug'])
         config['default_cache_exp'] = self.settings.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
         config['secret_key'] = self.settings.get('SECRET_KEY', config['secret_key'])
-        config['authentication'] = self.settings.get('Authentication', config['authentication'])
-        # TODO: Only call this if Authentication is with JWT
+
+        config['authentication'] = self.load_authentication()
         config['jwt_config'] = self.load_jwt_config()
         config['middlewares'] = self.load_middlewares()
         config['user_model'] = self.load_user_model()

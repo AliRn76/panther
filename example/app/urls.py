@@ -3,7 +3,7 @@ from panther.app import API
 from panther.response import Response
 
 
-@API.get()
+@API()
 async def test(*args, **kwargs):
     return Response(data={'detail': 'this is for test'})
 
