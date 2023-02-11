@@ -1,36 +1,45 @@
 from panther import version
 from datetime import datetime
 
+from panther.utils import generate_secret_key
 
-apis_py = """from panther import version
+
+apis_py = """from panther import version, status
 from panther.app import API
+from panther.configs import config
 from panther.request import Request
 from panther.response import Response
-from panther.configs import config
 
 
 @API()
-async def hello_world(request: Request):
+async def hello_world():
+    return {'detail': 'Hello World'}
+
+
+@API()
+async def info(request: Request):
     data = {
         'version': version(),
         'debug': config['debug'],
         'db_engine': config['db_engine'],
         'default_cache_exp': config['default_cache_exp'],
-        'authentication': config['authentication'],
+        'user_agent': request.headers.user_agent,
+        'content_length': request.headers.content_length,
     }
-    return Response(data=data, status_code=200)
+    return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 """
 
-models_py = """from panther.db import BaseModel
+models_py = """from panther.db import BaseModel as Serializer
 """
 
 serializers_py = """from pydantic import BaseModel
 """
 
-app_urls_py = """from app.apis import hello_world
+app_urls_py = """from app.apis import hello_world, info
 
 urls = {
     '': hello_world,
+    'info/': info,
 }
 """
 
@@ -39,12 +48,12 @@ configs_py = """\"""
 \"""
 
 from pathlib import Path
-from dotenv import dotenv_values
+from panther.utils import load_env
 
 
 DEBUG = True 
 BASE_DIR = Path(__name__).resolve().parent
-env = dotenv_values(BASE_DIR / '.env')
+env = load_env(BASE_DIR / '.env')
 
 DB_NAME = env['DB_NAME']
 SECRET_KEY = env['SECRET_KEY']
@@ -61,10 +70,10 @@ middlewares = """from panther.middlewares import BaseMiddleware
 """
 
 env = """
-SECRET_KEY = 'THIS_IS_THE_SECRET_SECRET_KEY'
+SECRET_KEY = '%s'
 
 DB_NAME = '{PROJECT_NAME}'
-"""
+""" % generate_secret_key()
 
 main_py = """from panther import Panther
 
@@ -85,8 +94,8 @@ git_ignore = """__pycache__/
 logs/
 """
 
-requirements = f"""panther=={version()}
-"""
+requirements = f"""panther==%s
+""" % version()
 
 Template = {
     'app': {

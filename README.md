@@ -39,7 +39,7 @@ Python 3.10+
 - #### Create Project
 
     ```console
-    $ panther create <project_name>
+    $ panther create <project_name> <directory>
     ```
 
 - #### Run Project

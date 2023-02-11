@@ -1,9 +1,11 @@
 import os
-from pathlib import PosixPath
-
-from panther.logger import logger
+import random
+import string
 import importlib
 import orjson as json
+from pathlib import Path
+
+from panther.logger import logger
 from panther.status import status_text
 
 
@@ -59,7 +61,7 @@ def import_class(_klass: str, /):
     return getattr(module, _klass[seperator + 1:])
 
 
-def load_env(env_file: str | PosixPath, /) -> dict[str, str]:
+def load_env(env_file: str | Path, /) -> dict[str, str]:
     variables = dict()
 
     if env_file is None or not os.path.isfile(env_file):
@@ -75,3 +77,9 @@ def load_env(env_file: str | PosixPath, /) -> dict[str, str]:
                 value = value.strip().strip('"\'')
                 variables[key] = value
     return variables
+
+
+def generate_secret_key(length: int = 10):
+    chars = string.ascii_letters + string.digits
+    return ''.join(random.choice(chars) for _ in range(length))
+
