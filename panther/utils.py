@@ -1,3 +1,7 @@
+import os
+from pathlib import PosixPath
+
+from panther.logger import logger
 import importlib
 import orjson as json
 from panther.status import status_text
@@ -53,3 +57,21 @@ def import_class(_klass: str, /):
     seperator = _klass.rfind('.')
     module = importlib.import_module(_klass[:seperator])
     return getattr(module, _klass[seperator + 1:])
+
+
+def load_env(env_file: str | PosixPath, /) -> dict[str, str]:
+    variables = dict()
+
+    if env_file is None or not os.path.isfile(env_file):
+        logger.critical(f'"{env_file}" is not valid file for load_env()')
+        return variables
+
+    with open(env_file) as file:
+        for line in file.readlines():
+            line = line.strip()
+            if '=' in line and not line.startswith('#'):
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip().strip('"\'')
+                variables[key] = value
+    return variables

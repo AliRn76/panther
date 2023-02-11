@@ -45,8 +45,7 @@ class JWTAuthentication:
 
     @classmethod
     def get_user(cls, payload: dict):
-        user_id = payload.get('user_id')
-        if user_id is None:
+        if user_id := payload.get('user_id') is None:
             raise AuthenticationException
         user_model = config['user_model'] or cls.model
         user = user_model.get_one(id=user_id)

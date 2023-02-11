@@ -118,6 +118,7 @@ class Query(BaseQuery):
             >>> from example.app.models import User
             if MongoDB:
                 >>> User.update_one({'id': id}, name='ali')
+                >>> User.update_one({'id': id}, {'name': 'ali', 'age': 25})
             elif TinyDB:
                 ...
         """
