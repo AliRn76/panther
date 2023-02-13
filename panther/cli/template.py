@@ -1,8 +1,7 @@
-from panther import version
 from datetime import datetime
 
+from panther import version
 from panther.utils import generate_secret_key
-
 
 apis_py = """from panther import version, status
 from panther.app import API
@@ -94,7 +93,7 @@ git_ignore = """__pycache__/
 logs/
 """
 
-requirements = f"""panther==%s
+requirements = """panther==%s
 """ % version()
 
 Template = {

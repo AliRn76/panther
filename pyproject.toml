@@ -4,3 +4,24 @@ requires = [
 	"wheel"
 ]
 build-backend = "setuptools.build_meta"
+
+
+[tool.ruff]
+exclude = [
+    ".venv",
+	"build",
+    ".git",
+]
+select = [
+    "ALL"
+]
+unfixable = ["F401"]
+line-length = 120
+[tool.ruff.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+[tool.ruff.flake8-annotations]
+mypy-init-return = false

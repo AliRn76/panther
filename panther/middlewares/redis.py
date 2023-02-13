@@ -1,8 +1,8 @@
+from panther.db.connection import RedisConnection
 from panther.logger import logger
 from panther.middlewares.base import BaseMiddleware
-from panther.db.connection import RedisConnection
-from panther.response import Response
 from panther.request import Request
+from panther.response import Response
 
 
 class Middleware(BaseMiddleware):

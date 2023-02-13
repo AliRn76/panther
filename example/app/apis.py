@@ -3,16 +3,16 @@ from datetime import timedelta
 from app.models import User
 from app.serializers import UserInputSerializer, UserOutputSerializer
 
+from panther.app import API
 from panther.db.connection import redis
 from panther.logger import logger
-from panther.response import Response
 from panther.request import Request
-from panther.app import API
+from panther.response import Response
 
 
 @API(cache=False, cache_exp_time=timedelta(hours=1), auth=False)
 async def return_none(request: Request):
-    print(f"{request.user=}")
+    print(f'{request.user=}')
     return
 
 
@@ -72,7 +72,6 @@ async def using_redis(request: Request):
 async def using_sqlalchemy(request: Request):
 
     print(type(request.data))
-    # del request.data['age']
 
     user = User.create_and_commit(username=request.data.username, password=request.data.password)
     print(f'{user = }')

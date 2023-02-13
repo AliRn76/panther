@@ -1,1 +1,1 @@
-from panther.db.models import BaseModel
+from panther.db.models import BaseModel  # NOQA: F401

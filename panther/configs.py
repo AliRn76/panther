@@ -1,8 +1,9 @@
-from pydantic.main import ModelMetaclass
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import TypedDict
 from pathlib import Path
+from typing import TypedDict
+
+from pydantic.main import ModelMetaclass
 
 
 @dataclass(frozen=True)

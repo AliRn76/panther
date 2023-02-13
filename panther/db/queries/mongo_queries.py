@@ -1,8 +1,9 @@
-import bson
-from typing import Type, TypeVar
-from panther.db.utils import query_logger, merge_dicts, clean_object_id_in_dicts
-from panther.db.connection import db  # # # Do Not Delete This Import (Used in eval)
+from typing import TypeVar
 
+import bson
+
+from panther.db.connection import db  # NOQA: F401
+from panther.db.utils import clean_object_id_in_dicts, merge_dicts, query_logger
 
 # TODO: Not sure about this bounding
 T = TypeVar('T', bound='BaseMongoDBQuery')
@@ -12,7 +13,7 @@ class BaseMongoDBQuery:
 
     @classmethod
     @query_logger
-    def get_one(cls: Type[T], _data: dict = None, /, **kwargs) -> T:
+    def get_one(cls: type[T], _data: dict = None, /, **kwargs) -> T:
         clean_object_id_in_dicts(_data, kwargs)
         _query = merge_dicts(_data, kwargs)
         obj = eval(f'db.session.{cls.__name__}.find_one(_query)')

@@ -1,7 +1,7 @@
-from panther.middlewares.base import BaseMiddleware
 from panther.db.connection import DBSession
-from panther.response import Response
+from panther.middlewares.base import BaseMiddleware
 from panther.request import Request
+from panther.response import Response
 
 
 class Middleware(BaseMiddleware):

@@ -1,13 +1,13 @@
 import os
 from collections import deque
 
+from rich import box
+from rich.align import Align
 from rich.console import Console, Group
 from rich.layout import Layout
-from rich.table import Table
-from rich.align import Align
-from rich.panel import Panel
 from rich.live import Live
-from rich import box
+from rich.panel import Panel
+from rich.table import Table
 from watchfiles import watch
 
 from panther.cli.utils import error
@@ -49,7 +49,7 @@ def monitor() -> None:
         )
 
     try:
-        with open('logs/monitoring.log', 'r') as f:
+        with open('logs/monitoring.log') as f:
             f.readlines()
             width, height = os.get_terminal_size()
             messages = deque(maxlen=height - 8)  # Save space for header and footer

@@ -1,13 +1,15 @@
 from time import perf_counter
-from panther.request import Request
+
 from panther.logger import monitoring
 from panther.middlewares.base import BaseMiddleware
+from panther.request import Request
 
 
 class Middleware(BaseMiddleware):
     """Create Log Message Like Below:
     [method] path | ip:port | response_time ms | status_code
     """
+
     async def before(self, request: Request) -> Request:
         ip, port = request.client
         self.log = f'{request.method} | {request.path} | {ip}:{port}'
@@ -15,8 +17,7 @@ class Middleware(BaseMiddleware):
         return request
 
     async def after(self, status_code: int):
-        """
-        We handled Monitoring Middle manually,
+        """We handled Monitoring Middle manually,
         but we should put in middlewares chain later ...
         """
         response_time = (perf_counter() - self.start_time) * 1_000

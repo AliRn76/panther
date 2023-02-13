@@ -1,7 +1,7 @@
 from collections import namedtuple
+from dataclasses import dataclass
 
 import orjson as json
-from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -21,8 +21,7 @@ Client = namedtuple('Client', ['ip', 'port'])
 
 class Request:
     def __init__(self, scope: dict, body: bytes):
-        """
-        {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'},
+        """{'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'},
         'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'client': ('127.0.0.1', 35064),
         'scheme': 'http', 'root_path': '', 'headers': [
             (b'content-type', b'application/json'),
@@ -34,7 +33,7 @@ class Request:
             (b'connection', b'keep-alive'),
             (b'content-length', b'55')
         ],
-        'method': 'GET', 'path': '/list/', 'raw_path': b'/list/', 'query_string': b''}
+        'method': 'GET', 'path': '/list/', 'raw_path': b'/list/', 'query_string': b''}.
         """
         self.scope = scope
         self._body = body
@@ -45,7 +44,6 @@ class Request:
     def headers(self):
         _headers = {header[0].decode('utf-8'): header[1].decode('utf-8') for header in self.scope['headers']}
 
-        # logger.debug(_headers)
         return Headers(
             accept_encoding=_headers.pop('accept-encoding', None),
             content_length=_headers.pop('content_length', None),
@@ -100,19 +98,17 @@ class Request:
 
         body = self._body.decode('utf-8') or {}
         if self.headers.content_type is None:
-            # logger.error(f'request content-type is None.')
             _data = body
         elif self.headers.content_type == 'application/json':
             _data = json.loads(body)
         elif self.headers.content_type[:19] == 'multipart/form-data':
             # TODO: Handle Multipart Form Data
-            logger.error(f"We Don't Handle Multipart Request Yet.")
+            logger.error("We Don't Handle Multipart Request Yet.")
             _data = None
         else:
             logger.error(f'{self.headers.content_type} Is Not Supported.')
             _data = None
 
-        # return {'id': 1, 'username': 'ali', 'password': '1123'}  # TODO: For Testing ...
         return _data
 
     def set_data(self, data) -> None:

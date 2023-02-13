@@ -1,5 +1,6 @@
 import os
 import re
+
 from setuptools import setup
 
 
@@ -34,7 +35,7 @@ setup(
         'console_scripts': ['panther=panther.cli.main:start'],
     },
     package_data={
-        'panther': ['cli/*']
+        'panther': ['cli/*'],
     },
     install_requires=[
         'uvicorn[standard]',

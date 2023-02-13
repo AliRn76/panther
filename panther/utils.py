@@ -1,9 +1,10 @@
+import importlib
 import os
 import random
 import string
-import importlib
-import orjson as json
 from pathlib import Path
+
+import orjson as json
 
 from panther.logger import logger
 from panther.status import status_text
@@ -38,9 +39,7 @@ async def http_response(send, /, *, status_code: int, monitoring: any, body: byt
 
 
 async def read_body(receive) -> bytes:
-    """
-    Read and return the entire body from an incoming ASGI message.
-    """
+    """Read and return the entire body from an incoming ASGI message."""
     body = b''
     more_body = True
     while more_body:
@@ -72,7 +71,7 @@ def load_env(env_file: str | Path, /) -> dict[str, str]:
         for line in file.readlines():
             line = line.strip()
             if '=' in line and not line.startswith('#'):
-                key, value = line.split("=", 1)
+                key, value = line.split('=', 1)
                 key = key.strip()
                 value = value.strip().strip('"\'')
                 variables[key] = value

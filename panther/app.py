@@ -1,16 +1,16 @@
 import functools
 from datetime import timedelta
-from pydantic.main import BaseModel
-from pydantic import ValidationError
+
 from orjson.orjson import JSONDecodeError
+from pydantic import ValidationError
+from pydantic.main import BaseModel
 
 from panther.caching import get_cached_response_data, set_cache_response
-from panther.exceptions import APIException
-from panther.utils import import_class
-from panther.response import Response
-from panther.request import Request
 from panther.configs import config
+from panther.exceptions import APIException
 from panther.logger import logger
+from panther.request import Request
+from panther.response import Response
 
 
 class API:
@@ -102,7 +102,7 @@ class API:
             _data = self.output_model(**data.dict()).dict()
 
         # List | Tuple
-        elif isinstance(data, list) or isinstance(data, tuple):
+        elif isinstance(data, (list, tuple)):
             # Empty
             if len(data) == 0:
                 return data
@@ -118,12 +118,12 @@ class API:
             # TODO: We didn't handle List | Tuple of List | Tuple | Bool | Str | ... (Recursive)
 
         # Str | Bool | Set
-        elif isinstance(data, str) or isinstance(data, bool) or isinstance(data, set):
+        elif isinstance(data, (str, bool, set)):
             raise TypeError('Type of Response data is not match with output_model. '
                             '\n*hint: You may want to pass None to output_model')
 
         # Unknown
         else:
-            raise TypeError(f"Type of Response 'data' is not valid.")
+            raise TypeError("Type of Response 'data' is not valid.")
 
         return _data

@@ -1,8 +1,10 @@
+from time import perf_counter
+
+from bson import ObjectId
+from bson.errors import InvalidId
+
 from panther.configs import config
 from panther.logger import logger
-from bson.errors import InvalidId
-from bson import ObjectId
-from time import perf_counter
 
 
 def query_logger(func):
@@ -14,7 +16,6 @@ def query_logger(func):
         end = perf_counter()
         class_name = args[0].__name__ if hasattr(args[0], '__name__') else args[0].__class__.__name__
         logger.info(f'\033[1mQuery -->\033[0m  {class_name}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
-        # logger.info(f'Query --> {class_name}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
         return response
     return log
 

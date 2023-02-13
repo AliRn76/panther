@@ -4,11 +4,11 @@ except ImportError:
     # TODO: Should we install the package ourselves?
     raise ImportError('Try to install python-jose with "pip install python-jose"')
 from datetime import datetime
+
 from panther.configs import config
 from panther.db.models import User
-from panther.request import Request
 from panther.exceptions import AuthenticationException
-
+from panther.request import Request
 
 JWTConfig = config['jwt_config']
 
@@ -55,18 +55,18 @@ class JWTAuthentication:
 
     @staticmethod
     def encode_jwt(user_id: int) -> str:
-        """ Encode JWT from user_id """
+        """Encode JWT from user_id."""
         expire = datetime.utcnow() + JWTConfig.life_time
         access_payload = {
             'token_type': 'access',
             'user_id': user_id,
-            'exp': expire
+            'exp': expire,
         }
         return jwt.encode(access_payload, JWTConfig.key, algorithm=JWTConfig.algorithm)
 
     @staticmethod
     def decode_jwt(token: str) -> dict:
-        """ Decode JWT token to user_id (it can return multiple variable ... ) """
+        """Decode JWT token to user_id (it can return multiple variable ... )"""
         try:
             return jwt.decode(token, JWTConfig.key, algorithms=[JWTConfig.algorithm])
         except JWTError:

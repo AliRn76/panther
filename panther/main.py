@@ -1,16 +1,17 @@
-import anyio
 from pathlib import Path
 from runpy import run_path
+
+import anyio
 from pydantic.main import ModelMetaclass
 
 from panther import status
-from panther.request import Request
-from panther.response import Response
+from panther.configs import JWTConfig, config
 from panther.exceptions import APIException
-from panther.configs import config, JWTConfig
 from panther.middlewares.base import BaseMiddleware
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
-from panther.utils import read_body, import_class, http_response
+from panther.request import Request
+from panther.response import Response
+from panther.utils import http_response, import_class, read_body
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
@@ -38,7 +39,7 @@ class Panther:
         #     e.submit(self.run, scope, receive, send)
 
     async def run(self, scope, receive, send):
-        from panther.logger import logger, monitoring
+        from panther.logger import logger
         # Read Body & Create Request
         body = await read_body(receive)
         request = Request(scope=scope, body=body)
@@ -52,7 +53,7 @@ class Panther:
         endpoint = self.find_endpoint(path=request.path)
         if endpoint is None:
             return await http_response(
-                send, status_code=status.HTTP_404_NOT_FOUND, monitoring=monitoring_middleware, exception=True
+                send, status_code=status.HTTP_404_NOT_FOUND, monitoring=monitoring_middleware, exception=True,
             )
 
         try:  # They Both Have The Save Exception (APIException)
@@ -71,7 +72,7 @@ class Panther:
                 send,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 monitoring=monitoring_middleware,
-                exception=True
+                exception=True,
             )
 
         # TODO: User didn't use the @API() on the endpoint
@@ -87,14 +88,14 @@ class Panther:
                 response = self.handle_exceptions(e)
 
         await http_response(
-            send, status_code=response.status_code, monitoring=monitoring_middleware, body=response.data
+            send, status_code=response.status_code, monitoring=monitoring_middleware, body=response.data,
         )
 
     @classmethod
     def handle_exceptions(cls, e, /) -> Response:
         return Response(
             data=e.detail if isinstance(e.detail, dict) else {'detail': e.detail},
-            status_code=e.status_code
+            status_code=e.status_code,
         )
 
     def load_user_model(self) -> ModelMetaclass:

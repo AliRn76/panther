@@ -4,7 +4,6 @@ from panther.configs import config
 from panther.db.queries.mongo_queries import BaseMongoDBQuery
 from panther.db.queries.tinydb_queries import BaseTinyDBQuery
 
-
 BaseQuery = BaseTinyDBQuery if config['db_engine'] == 'tinydb' else BaseMongoDBQuery
 
 __all__ = (

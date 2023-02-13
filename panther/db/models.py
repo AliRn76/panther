@@ -1,9 +1,9 @@
 from bson import ObjectId
-from pydantic import Field
-from typing import Optional
 from bson.errors import BSONError
-from panther.db.queries import Query
+from pydantic import Field
 from pydantic.main import BaseModel as PydanticBaseModel
+
+from panther.db.queries import Query
 
 
 class BsonObjectId(ObjectId):
@@ -24,7 +24,7 @@ class BsonObjectId(ObjectId):
 
 
 class BaseModel(PydanticBaseModel, Query):
-    id: Optional[BsonObjectId] = Field(alias='_id')
+    id: BsonObjectId | None = Field(alias='_id')
 
     @property
     def _id(self):

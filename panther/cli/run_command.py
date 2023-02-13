@@ -1,4 +1,5 @@
 import os
+
 import uvicorn
 from rich import print as rprint
 
@@ -6,7 +7,7 @@ from panther.cli.utils import error, run_help_message
 
 
 def _handle_boolean_commands(args: dict[str, str | None]) -> dict:
-    """ Boolean Commands:
+    """Boolean Commands:
     - reload
     - access-log
     - no-access-log

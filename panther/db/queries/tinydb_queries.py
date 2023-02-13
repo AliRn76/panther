@@ -1,7 +1,8 @@
 from tinydb import Query
-from panther.logger import logger
+
 from panther.db.connection import db
-from panther.db.utils import query_logger, merge_dicts
+from panther.db.utils import merge_dicts, query_logger
+from panther.logger import logger
 
 
 class BaseTinyDBQuery:

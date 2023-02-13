@@ -1,9 +1,10 @@
-import os
 import logging
-from pydantic import BaseModel
-from panther.configs import config
+import os
 from logging.config import dictConfig
 
+from pydantic import BaseModel
+
+from panther.configs import config
 
 LOGS_DIR = config['base_dir'] / 'logs'
 if not os.path.exists(LOGS_DIR):
@@ -11,7 +12,7 @@ if not os.path.exists(LOGS_DIR):
 
 
 class LogConfig(BaseModel):
-    """Logging configuration to be set for the server"""
+    """Logging configuration to be set for the server."""
 
     LOGGER_NAME: str = 'panther-logger'
     DEFAULT_LOG_FORMAT: str = '%(levelprefix)s | %(asctime)s | %(message)s'
@@ -36,10 +37,10 @@ class LogConfig(BaseModel):
     handlers = {
         'monitoring_file': {
             'formatter': 'file_formatter',
-            'filename': LOGS_DIR / f'monitoring.log',
+            'filename': LOGS_DIR / 'monitoring.log',
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1024 * 1024 * 100,  # 100 MB,
-            'backupCount': 3
+            'backupCount': 3,
         },
         'file': {
             'formatter': 'file_formatter',
@@ -47,7 +48,7 @@ class LogConfig(BaseModel):
             'filename': LOGS_DIR / f'{config["base_dir"].name}.log',
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1024 * 1024 * 100,  # 100 MB,
-            'backupCount': 3
+            'backupCount': 3,
         },
         'default': {
             'formatter': 'default',
