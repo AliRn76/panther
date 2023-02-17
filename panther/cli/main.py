@@ -10,7 +10,12 @@ from panther.cli.utils import clean_args, help_message, error
 
 
 def shell() -> None:
-    os.system('bpython')
+    try:
+        os.system('bpython')
+    except Exception as e:
+        # TODO: I had bpython so I couldn't Fix this part ...
+        #   Check bpython ...
+        os.system('python')
 
 
 def start() -> None:

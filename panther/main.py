@@ -1,7 +1,6 @@
+import asyncio
 from pathlib import Path
 from runpy import run_path
-
-import anyio
 from pydantic.main import ModelMetaclass
 
 from panther import status
@@ -28,13 +27,17 @@ class Panther:
         del os
 
     async def __call__(self, scope, receive, send) -> None:
+        # We Used Python3.11 For asyncio.TaskGroup()
+        # 1.
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(self.run(scope, receive, send))
+        # 2.
         # await self.run(scope, receive, send)
-        async with anyio.create_task_group() as task_group:
-            task_group.start_soon(self.run, scope, receive, send)
-            # await anyio.to_thread.run_sync(self.run, scope, receive, send)
-        # if self.exc_info is not None:
-        #     raise self.exc_info[0].with_traceback(self.exc_info[1], self.exc_info[2])
-
+        # 3.
+        # async with anyio.create_task_group() as task_group:
+        #     task_group.start_soon(self.run, scope, receive, send)
+        #     await anyio.to_thread.run_sync(self.run, scope, receive, send)
+        # 4.
         # with ProcessPoolExecutor() as e:
         #     e.submit(self.run, scope, receive, send)
 

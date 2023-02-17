@@ -26,6 +26,7 @@ edit_uri: edit/master/docs/
 
 nav:
   - Introduction: 'index.md'
+  - Configs: 'configs.md'
   - Features: 'features.md'
   - Benchmarks: 'benchmarks.md'
   - Release Notes: 'release_notes.md'

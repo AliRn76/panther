@@ -24,6 +24,7 @@ class DBSession(Singleton):
             self._name = db_url[:db_url.find(':')]
             match self._name:
                 case 'mongodb':
+                    # TODO: Check pymongo installed or not
                     self._create_mongodb_session(db_url)
                 case 'tinydb':
                     self._create_tinydb_session(db_url[9:])
@@ -57,6 +58,7 @@ class RedisConnection(Singleton, Redis):
     is_connected: bool = False
 
     def __init__(self, host: str | None = None, port: int | None = None, **kwargs):
+        # TODO: Check redis installed or not
         if host and port:
             super().__init__(host=host, port=port, **kwargs)
             self.is_connected = True

@@ -7,8 +7,6 @@ from panther.cli.utils import error
 
 
 def create(args: list):
-    load_animation1()
-
     # Get Project Name
     if len(args) == 0:
         return error('Not Enough Parameters.')
@@ -23,6 +21,8 @@ def create(args: list):
     existence = check_all_directories(base_directory)
     if existence:
         return error(f'"{existence}" Directory Already Exists.')
+
+    load_animation1()
 
     # Create Base Directory
     if base_directory != '.':
@@ -88,62 +88,3 @@ def load_animation1():
         sys.stdout.flush()
 
     print('\n')
-
-
-def load_animation2():
-    # String to be displayed when the application is loading
-    load_str = 'creating your project ...    '
-    ls_len = len(load_str)
-
-    # String for creating the rotating line
-    animation = '|/-\\'
-    ani_count = 0
-
-    # used to keep the track of
-    # the duration of animation
-    count_time = 0
-
-    # pointer for travelling the loading string
-    i = 0
-
-    while count_time != 30:
-
-        # used to change the animation speed
-        # smaller the value, faster will be the animation
-        time.sleep(0.09)
-
-        # converting the string to list
-        # as string is immutable
-        load_str_list = list(load_str)
-
-        # x->obtaining the ASCII code
-        x = ord(load_str_list[i])
-
-        # y->for storing altered ASCII code
-        y = 0
-
-        # if the character is '.' or ' ', keep it unaltered
-        # switch uppercase to lowercase and vice-versa
-        if x != 32 and x != 46:
-            y = x - 32 if x > 90 else x + 32
-            load_str_list[i] = chr(y)
-
-        # for storing the resultant string
-        res = ''
-        for j in range(ls_len):
-            res = res + load_str_list[j]
-
-        # displaying the resultant string
-        sys.stdout.write('\r' + res + animation[ani_count])
-        sys.stdout.flush()
-
-        # Assigning loading string
-        # to the resultant string
-        load_str = res
-
-        ani_count = (ani_count + 1) % 4
-        i = (i + 1) % ls_len
-        count_time = count_time + 1
-
-    sys.stdout.write('\r')
-    sys.stdout.flush()
