@@ -10,7 +10,7 @@ from panther.middlewares.base import BaseMiddleware
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
 from panther.request import Request
 from panther.response import Response
-from panther.routings import find_endpoint, check_urls, collect_urls
+from panther.routings import find_endpoint, check_urls, collect_urls, finalize_urls
 from panther._utils import http_response, import_class, read_body
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
@@ -125,7 +125,9 @@ class Panther:
         # Check & Collect URLs
         #   check_urls should be the last call in load_configs, because it will read all files and load them.
         urls = check_urls(self.settings.get('URLs')) or {}
-        config['urls'] = collect_urls(urls)
+        collected_urls = dict()
+        collect_urls('', urls, collected_urls)
+        config['urls'] = finalize_urls(collected_urls)
         logger.debug('Configs loaded.')
         logger.info('Run "panther monitor" in another session for Monitoring.')
 
