@@ -76,12 +76,10 @@ class API:
             self.request.set_user(user=user)
 
     def validate_input(self):
-        # Should we handle validate_input in GET & DELETE ?
         if self.input_model:
             try:
-                validated_data = self.input_model(**self.request.data)
-                # TODO: how should we set_data on request here, what if it was form-data ?!?!
-                self.request.set_data(validated_data)
+                validated_data = self.input_model(**self.request.pure_data)
+                self.request.set_validated_data(validated_data)
             except ValidationError as validation_error:
                 error = {e['loc'][0]: e['msg'] for e in validation_error.errors()}
                 raise APIException(status_code=400, detail=error)

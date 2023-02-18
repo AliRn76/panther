@@ -10,7 +10,8 @@ from panther.middlewares.base import BaseMiddleware
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
 from panther.request import Request
 from panther.response import Response
-from panther.utils import http_response, import_class, read_body
+from panther.routings import find_endpoint, check_urls, collect_urls
+from panther._utils import http_response, import_class, read_body
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
@@ -48,12 +49,13 @@ class Panther:
         request = Request(scope=scope, body=body)
 
         # Monitoring Middleware
-        # TODO: Make it dynamic, only call if user wants monitoring
-        monitoring_middleware = MonitoringMiddleware()
-        await monitoring_middleware.before(request=request)
+        monitoring_middleware = None
+        if config['monitoring']:
+            monitoring_middleware = MonitoringMiddleware()
+            await monitoring_middleware.before(request=request)
 
         # Find Endpoint
-        endpoint = self.find_endpoint(path=request.path)
+        endpoint = find_endpoint(path=request.path)
         if endpoint is None:
             return await http_response(
                 send, status_code=status.HTTP_404_NOT_FOUND, monitoring=monitoring_middleware, exception=True,
@@ -83,8 +85,7 @@ class Panther:
 
         # Call 'After' Middleware
         # TODO: Save the reversed middlewares in config
-        config['middlewares'].reverse()
-        for middleware in config['middlewares']:
+        for middleware in config['reversed_middlewares']:
             try:
                 response = await middleware.after(response=response)
             except APIException as e:
@@ -101,85 +102,56 @@ class Panther:
             status_code=e.status_code,
         )
 
-    def load_user_model(self) -> ModelMetaclass:
-        return import_class(self.settings.get('USER_MODEL', 'panther.db.models.User'))
-
-    def load_authentication(self) -> ModelMetaclass | None:
-        if self.settings.get('Authentication'):
-            return import_class(self.settings['Authentication'])
-        else:
-            return None
-
     def load_configs(self) -> None:
         from panther.logger import logger
         logger.debug(f'Base directory: {self.base_dir}')
 
-        # Check Configs
-        self.check_configs()
+        # Check & Read The Configs File
+        self._check_configs()
+
+        # Put Variables In "config"
         config['debug'] = self.settings.get('DEBUG', config['debug'])
+        config['monitoring'] = self.settings.get('MONITORING', config['monitoring'])
         config['default_cache_exp'] = self.settings.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
         config['secret_key'] = self.settings.get('SECRET_KEY', config['secret_key'])
 
-        config['authentication'] = self.load_authentication()
-        config['jwt_config'] = self.load_jwt_config()
-        config['middlewares'] = self.load_middlewares()
-        config['user_model'] = self.load_user_model()
+        config['authentication'] = self._get_authentication_class()
+        config['jwt_config'] = self._get_jwt_config()
+
+        config['middlewares'] = self._get_middlewares()
+        config['reversed_middlewares'] = config['middlewares'][::-1]
+        config['user_model'] = self._get_user_model()
 
         # Check & Collect URLs
         #   check_urls should be the last call in load_configs, because it will read all files and load them.
-        urls = self.check_urls() or {}
-        self.collect_urls('', urls)
+        urls = check_urls(self.settings.get('URLs')) or {}
+        collect_urls('', urls)
         logger.debug('Configs loaded.')
         logger.info('Run "panther monitor" in another session for Monitoring.')
 
-    def load_jwt_config(self) -> JWTConfig:
-        user_config = self.settings.get('JWTConfig')
-        return JWTConfig(**user_config) if user_config else JWTConfig(key=config['secret_key'])
-
-    def check_configs(self):
+    def _check_configs(self):
         from panther.logger import logger
-
+        """Read the config file and put it as dict in self.settings"""
         try:
             configs_path = self.base_dir / 'core/configs.py'
             self.settings = run_path(str(configs_path))
         except FileNotFoundError:
             logger.critical('core/configs.py Not Found.')
 
-    def check_urls(self) -> dict | None:
-        from panther.logger import logger
+    def _get_authentication_class(self) -> ModelMetaclass | None:
+        return self.settings.get('Authentication') and import_class(self.settings['Authentication'])
 
-        # URLs
-        if self.settings.get('URLs') is None:
-            return logger.critical("configs.py Does Not Have 'URLs'")
+    def _get_user_model(self) -> ModelMetaclass:
+        return import_class(self.settings.get('USER_MODEL', 'panther.db.models.User'))
 
-        urls_path = self.settings['URLs']
-        try:
-            full_urls_path = self.base_dir / urls_path
-            urls_dict = run_path(str(full_urls_path))['urls']
-        except FileNotFoundError:
-            return logger.critical("Couldn't Open 'URLs' Address.")
-        except KeyError:
-            return logger.critical("'URLs' Address Does Not Have 'urls'")
-        if not isinstance(urls_dict, dict):
-            return logger.critical("'urls' Of URLs Is Not dict.")
-        return urls_dict
+    def _get_jwt_config(self) -> JWTConfig:
+        """Only Collect JWT Config If Authentication Is JWTAuthentication"""
+        if getattr(config['authentication'], '__name__', None) == 'JWTAuthentication':
+            user_config = self.settings.get('JWTConfig')
+            return JWTConfig(**user_config) if user_config else JWTConfig(key=config['secret_key'])
 
-    def collect_urls(self, pre_url, urls):
-        from panther.logger import logger
-
-        for url, endpoint in urls.items():
-            if endpoint is ...:
-                logger.error(f"URL Can't Point To Ellipsis. ('{pre_url}{url}' -> ...)")
-            if endpoint is None:
-                logger.error(f"URL Can't Point To None. ('{pre_url}{url}' -> None)")
-
-            if isinstance(endpoint, dict):
-                self.collect_urls(f'{pre_url}/{url}', endpoint)
-            else:
-                config['urls'][f'{pre_url}{url}'] = endpoint
-        return urls
-
-    def load_middlewares(self) -> list:
+    def _get_middlewares(self) -> list:
+        """Collect The Middlewares & Set db_engine If One Of Middlewares Was For DB"""
         from panther.logger import logger
         middlewares = list()
 
@@ -195,9 +167,3 @@ class Panther:
             # noinspection PyArgumentList
             middlewares.append(Middleware(**data))
         return middlewares
-
-    def find_endpoint(self, path):
-        # TODO: Fix it later, it does not support root url or something like ''
-        for url in config['urls']:
-            if path == url:
-                return config['urls'][url]

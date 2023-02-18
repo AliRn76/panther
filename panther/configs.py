@@ -16,8 +16,10 @@ class JWTConfig:
 class Config(TypedDict):
     base_dir: Path
     debug: bool
+    monitoring: bool
     urls: dict
     middlewares: list
+    reversed_middlewares: list
     db_engine: str
     default_cache_exp: timedelta | None
     secret_key: str
@@ -29,9 +31,11 @@ class Config(TypedDict):
 config: Config = {
     'base_dir': Path(),
     'debug': False,
+    'monitoring': True,
     'secret_key': '',
     'urls': {},
     'middlewares': [],
+    'reversed_middlewares': [],
     'db_engine': '',
     'default_cache_exp': None,
     'jwt_config': None,

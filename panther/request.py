@@ -1,5 +1,6 @@
 from collections import namedtuple
 from dataclasses import dataclass
+from typing import Literal
 
 import orjson as json
 
@@ -16,7 +17,7 @@ class Headers:
     host: str
 
 
-Client = namedtuple('Client', ['ip', 'port'])
+Address = namedtuple('Client', ['ip', 'port'])
 
 
 class Request:
@@ -38,81 +39,93 @@ class Request:
         self.scope = scope
         self._body = body
         self._data = None
+        self._validated_data = None
         self._user = None
+        self._headers: Headers | None = None
+        self._params: dict | None = None
 
     @property
     def headers(self):
         _headers = {header[0].decode('utf-8'): header[1].decode('utf-8') for header in self.scope['headers']}
-
-        return Headers(
-            accept_encoding=_headers.pop('accept-encoding', None),
-            content_length=_headers.pop('content_length', None),
-            authorization=_headers.pop('authorization',  b''),
-            content_type=_headers.pop('content-type', None),
-            user_agent=_headers.pop('user-agent', None),
-            connection=_headers.pop('connection', None),
-            accept=_headers.pop('accept', None),
-            host=_headers.pop('host', None),
-            # TODO: Others ...
-        )
+        if self._headers is None:
+            self._headers = Headers(
+                accept_encoding=_headers.pop('accept-encoding', None),
+                content_length=_headers.pop('content_length', None),
+                authorization=_headers.pop('authorization',  b''),
+                content_type=_headers.pop('content-type', None),
+                user_agent=_headers.pop('user-agent', None),
+                connection=_headers.pop('connection', None),
+                accept=_headers.pop('accept', None),
+                host=_headers.pop('host', None),
+                # TODO: Others ...
+            )
+        return self._headers
 
     @property
     def query_params(self):
         query_string = self.scope['query_string'].decode('utf-8').split('&')
-        params = {}
-        for param in query_string:
-            k, *_, v = param.split('=')
-            params[k] = v
-        return params
+        if self._params is None:
+            self._params = dict()
+            for param in query_string:
+                k, *_, v = param.split('=')
+                self._params[k] = v
+        return self._params
 
     @property
-    def method(self):
+    def method(self) -> Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']:
         return self.scope['method']
 
     @property
-    def path(self):
+    def path(self) -> str:
         return self.scope['path']
 
     @property
-    def server(self):
-        return self.scope['server']
+    def server(self) -> Address:
+        return Address(*self.scope['server'])
 
     @property
-    def client(self):
-        return Client(*self.scope['client'])
+    def client(self) -> Address:
+        return Address(*self.scope['client'])
 
     @property
-    def http_version(self):
+    def http_version(self) -> str:
         return self.scope['http_version']
 
     @property
-    def scheme(self):
+    def scheme(self) -> str:
         return self.scope['scheme']
 
     @property
     def data(self):
+        """Return The Validated Data
+        It has been set on API.validate_input() while request is happening
+        """
+        return self._validated_data
+
+    @property
+    def pure_data(self) -> dict:
+        """This is the data before validation"""
         from panther.logger import logger
 
-        if self._data:
-            return self._data
+        # We only calculate it once
+        if self._data is None:
+            body = self._body.decode('utf-8') or {}
+            if self.headers.content_type is None:
+                self._data = body
+            elif self.headers.content_type == 'application/json':
+                self._data = json.loads(body)
+            elif self.headers.content_type[:19] == 'multipart/form-data':
+                # TODO: Handle Multipart Form Data
+                logger.error("We Don't Handle Multipart Request Yet.")
+                self._data = {}
+            else:
+                logger.error(f'{self.headers.content_type} Is Not Supported.')
+                self._data = {}
 
-        body = self._body.decode('utf-8') or {}
-        if self.headers.content_type is None:
-            _data = body
-        elif self.headers.content_type == 'application/json':
-            _data = json.loads(body)
-        elif self.headers.content_type[:19] == 'multipart/form-data':
-            # TODO: Handle Multipart Form Data
-            logger.error("We Don't Handle Multipart Request Yet.")
-            _data = None
-        else:
-            logger.error(f'{self.headers.content_type} Is Not Supported.')
-            _data = None
+        return self._data
 
-        return _data
-
-    def set_data(self, data) -> None:
-        self._data = data
+    def set_validated_data(self, validated_data) -> None:
+        self._validated_data = validated_data
 
     @property
     def user(self):
