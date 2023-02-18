@@ -125,7 +125,7 @@ class Panther:
         # Check & Collect URLs
         #   check_urls should be the last call in load_configs, because it will read all files and load them.
         urls = check_urls(self.settings.get('URLs')) or {}
-        collect_urls('', urls)
+        config['urls'] = collect_urls(urls)
         logger.debug('Configs loaded.')
         logger.info('Run "panther monitor" in another session for Monitoring.')
 
