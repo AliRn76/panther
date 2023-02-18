@@ -1,5 +1,9 @@
+import re
 import importlib
+
 import orjson as json
+
+from panther.logger import logger
 from panther.status import status_text
 
 
@@ -61,3 +65,39 @@ def import_class(_klass: str, /):
     seperator = _klass.rfind('.')
     module = importlib.import_module(_klass[:seperator])
     return getattr(module, _klass[seperator + 1:])
+
+
+def read_multipart_form_data(content_type: str, body: str) -> dict:
+    """
+    content_type = 'application/json'
+    content_type = 'multipart/form-data; boundary=--------------------------984465134948354357674418'
+    """
+    boundary = content_type[30:]
+
+    per_pattern = r'(.*\r\nContent-Disposition: form-data; name=")(.*)'  # (Junk)(FieldName)
+    value_pattern = r'(\r\n\r\n)(.*)'  # (Junk)(Value)
+
+    # (Junk)(FieldName) (Junk)(Value)(Junk)
+    field_pattern = per_pattern + value_pattern + r'(\r\n.*)'
+
+    # (Junk)(FieldName) (Junk)(FileName)(Junk)(ContentType) (Junk)(Value)
+    file_pattern = per_pattern + r'("; filename=")(.*)("\r\nContent-Type: )(.*)' + value_pattern
+
+    fields = dict()
+    for field in body.split(boundary):
+        if match := re.match(pattern=field_pattern, string=field):
+            _, field_name, _, value, _ = match.groups()
+            fields[field_name] = value
+
+        if match := re.match(pattern=file_pattern, string=field):
+            # TODO: It works but it is not profitable, So comment it for later
+            #   We should handle it while we are reading the body in _utils.read_body()
+            # _, field_name, _, file_name, _, content_type, _, value = match.groups()
+            # data = {
+            #     'filename': file_name,
+            #     'Content-Type': content_type,
+            #     'value': value
+            # }
+            # fields[field_name] = data
+            logger.error("We Don't Handle Files In Multipart Request Yet.")
+    return fields

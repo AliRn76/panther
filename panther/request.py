@@ -1,8 +1,10 @@
-from collections import namedtuple
-from dataclasses import dataclass
 from typing import Literal
+from dataclasses import dataclass
+from collections import namedtuple
 
 import orjson as json
+
+from panther._utils import read_multipart_form_data
 
 
 @dataclass(frozen=True)
@@ -51,8 +53,8 @@ class Request:
             self._headers = Headers(
                 accept_encoding=_headers.pop('accept-encoding', None),
                 content_length=_headers.pop('content_length', None),
-                authorization=_headers.pop('authorization',  b''),
-                content_type=_headers.pop('content-type', None),
+                authorization=_headers.pop('authorization', b''),
+                content_type=_headers.pop('content-type', None),  # Handle content-type & boundary together
                 user_agent=_headers.pop('user-agent', None),
                 connection=_headers.pop('connection', None),
                 accept=_headers.pop('accept', None),
@@ -107,17 +109,15 @@ class Request:
         """This is the data before validation"""
         from panther.logger import logger
 
-        # We only calculate it once
         if self._data is None:
-            body = self._body.decode('utf-8') or {}
+
+            body = self._body.decode('utf-8', errors='replace') or {}
             if self.headers.content_type is None:
                 self._data = body
             elif self.headers.content_type == 'application/json':
                 self._data = json.loads(body)
             elif self.headers.content_type[:19] == 'multipart/form-data':
-                # TODO: Handle Multipart Form Data
-                logger.error("We Don't Handle Multipart Request Yet.")
-                self._data = {}
+                self._data = read_multipart_form_data(content_type=self.headers.content_type, body=body)
             else:
                 logger.error(f'{self.headers.content_type} Is Not Supported.')
                 self._data = {}
