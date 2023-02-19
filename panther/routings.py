@@ -37,7 +37,7 @@ def collect_urls(pre_url: str, urls: dict, final: dict):
             logger.error(f"URL Can't Point To Ellipsis. ('{pre_url}{url}' -> ...)")
         elif endpoint is None:
             logger.error(f"URL Can't Point To None. ('{pre_url}{url}' -> None)")
-        elif not re.match(r'[a-zA-Z<>0-9]', url):
+        elif not re.match(r'[a-zA-Z<>0-9/-_]', url):
             logger.error(f"URL Is Not Valid. --> '{pre_url}{url}'")
         else:
             if not url.endswith('/'):
