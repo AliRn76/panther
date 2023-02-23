@@ -40,7 +40,7 @@ def collect_urls(pre_url: str, urls: dict, final: dict):
         elif url and not re.match(r'[a-zA-Z<>0-9_/-]', url):
             logger.error(f"URL Is Not Valid. --> '{pre_url}{url}'")
         else:
-            if not url.endswith('/'):
+            if url and not url.endswith('/'):
                 url = f'{url}/'
             if isinstance(endpoint, dict):
                 if pre_url:
