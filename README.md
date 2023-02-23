@@ -3,7 +3,7 @@
 
 ## Requirements
 ```console
-Python 3.10+
+Python 3.11+
 ```
 
 <hr/>
@@ -131,9 +131,8 @@ Python 3.10+
 - [x] Create Project 
 - [x] Run Project 
 - [x] Monitor Requests Response Time
-- [ ] Create Project with Options (TUI)
-- [ ] Monitor Query Performance (Time)
-- [ ] Monitor Fastest & Slowest API
+- [x] Create Project with Options
+- [x] Monitoring
 - [ ] Complete The CLI With Textual ...
     
 #### Documentation 

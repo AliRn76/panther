@@ -1,10 +1,10 @@
-import logging
 import os
+import logging
+from pydantic import BaseModel
 from logging.config import dictConfig
 
-from pydantic import BaseModel
-
 from panther.configs import config
+
 
 LOGS_DIR = config['base_dir'] / 'logs'
 if not os.path.exists(LOGS_DIR):

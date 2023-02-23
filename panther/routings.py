@@ -37,7 +37,7 @@ def collect_urls(pre_url: str, urls: dict, final: dict):
             logger.error(f"URL Can't Point To Ellipsis. ('{pre_url}{url}' -> ...)")
         elif endpoint is None:
             logger.error(f"URL Can't Point To None. ('{pre_url}{url}' -> None)")
-        elif not re.match(r'[a-zA-Z<>0-9/-_]', url):
+        elif url and not re.match(r'[a-zA-Z<>0-9_/-]', url):
             logger.error(f"URL Is Not Valid. --> '{pre_url}{url}'")
         else:
             if not url.endswith('/'):
@@ -52,20 +52,58 @@ def collect_urls(pre_url: str, urls: dict, final: dict):
     return urls
 
 
-def find_endpoint(path: str) -> Callable | None:
+def find_endpoint(path: str) -> tuple[Callable | None, str]:
     if (location := path.find('?')) != -1:
         path = path[:location]
-    path.removesuffix('/')
-    paths = path.split('/')[1:]
+    path = path.removesuffix('/').removeprefix('/')  # 'user/list'
+    paths = path.split('/')  # ['user', 'list']
+    paths_len = len(paths)
     sub = config['urls']
-    for split_path in paths:
-        sub = sub.get(split_path)
-        if callable(sub):
-            return sub
-        elif isinstance(sub, dict):
+    # sub = {
+    #     'user': {
+    #         '<id>': <function users at 0x7f579d060220>,
+    #         '': <function single_user at 0x7f579d060e00>
+    #     }
+    # }
+    found_path = ''
+    for i, split_path in enumerate(paths):
+        last_path = bool((i + 1) == paths_len)
+        found = sub.get(split_path)
+        if callable(found):
+            found_path += f'{split_path}/'
+            return found, found_path
+        if isinstance(found, dict):
+            found_path += f'{split_path}/'
+
+            if last_path and callable(endpoint := found.get('')):
+                return endpoint, found_path
+
+            sub = found
             continue
-        else:
-            return None
+
+        # found = None
+        # sub = {'<id>': <function return_list at 0x7f0757baff60>} (Example)
+        _continue = False
+        for key, value in sub.items():
+            if key.startswith('<'):
+                if callable(value):
+                    if last_path:
+                        found_path += f'{key}/'
+                        return value, found_path
+                    else:
+                        return None, ''
+                if last_path:
+                    return None, ''
+
+                sub = value
+                found_path += f'{key}/'
+                _continue = True
+                break
+
+        if _continue:
+            continue
+
+    return None, ''
 
 
 def is_recursive_merge(a, b):
@@ -86,7 +124,8 @@ def deepmerge(dst, src):
     return dst
 
 
-def merge(destination: MutableMapping, *sources: Mapping) -> MutableMapping:
+def merge(destination: MutableMapping, *sources) -> MutableMapping:
+    """Credit to Travis Clarke --> https://github.com/clarketm/mergedeep"""
     return reduce(partial(deepmerge), sources, destination)
 
 

@@ -11,7 +11,7 @@ from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
 from panther.request import Request
 from panther.response import Response
 from panther.routings import find_endpoint, check_urls, collect_urls, finalize_urls
-from panther._utils import http_response, import_class, read_body
+from panther._utils import http_response, import_class, read_body, collect_path_variables
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
@@ -28,19 +28,23 @@ class Panther:
         del os
 
     async def __call__(self, scope, receive, send) -> None:
-        # We Used Python3.11 For asyncio.TaskGroup()
-        # 1.
+        """
+        We Used Python3.11 For asyncio.TaskGroup()
+        1.
+            async with asyncio.TaskGroup() as tg:
+                tg.create_task(self.run(scope, receive, send))
+        2.
+            await self.run(scope, receive, send)
+        3.
+            async with anyio.create_task_group() as task_group:
+                task_group.start_soon(self.run, scope, receive, send)
+                await anyio.to_thread.run_sync(self.run, scope, receive, send)
+        4.
+            with ProcessPoolExecutor() as e:
+                e.submit(self.run, scope, receive, send)
+        """
         async with asyncio.TaskGroup() as tg:
             tg.create_task(self.run(scope, receive, send))
-        # 2.
-        # await self.run(scope, receive, send)
-        # 3.
-        # async with anyio.create_task_group() as task_group:
-        #     task_group.start_soon(self.run, scope, receive, send)
-        #     await anyio.to_thread.run_sync(self.run, scope, receive, send)
-        # 4.
-        # with ProcessPoolExecutor() as e:
-        #     e.submit(self.run, scope, receive, send)
 
     async def run(self, scope, receive, send):
         from panther.logger import logger
@@ -55,7 +59,9 @@ class Panther:
             await monitoring_middleware.before(request=request)
 
         # Find Endpoint
-        endpoint = find_endpoint(path=request.path)
+        endpoint, found_path = find_endpoint(path=request.path)
+        path_variables = collect_path_variables(request_path=request.path, found_path=found_path)
+
         if endpoint is None:
             return await http_response(
                 send, status_code=status.HTTP_404_NOT_FOUND, monitoring=monitoring_middleware, exception=True,
@@ -68,7 +74,7 @@ class Panther:
 
             # Call Endpoint
             # TODO: Maybe we should move the caching here ...
-            response = await endpoint(request=request)
+            response = await endpoint(request=request, **path_variables)
         except APIException as e:
             response = self.handle_exceptions(e)
         except Exception as e:

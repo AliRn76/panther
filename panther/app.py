@@ -7,7 +7,7 @@ from pydantic.main import BaseModel
 
 from panther.caching import get_cached_response_data, set_cache_response
 from panther.configs import config
-from panther.exceptions import APIException
+from panther.exceptions import APIException, InvalidPathVariableException
 from panther.logger import logger
 from panther.request import Request
 from panther.response import Response
@@ -32,7 +32,7 @@ class API:
     def __call__(self, func):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
-            self.request: Request = kwargs['request']  # NOQA: Non-self attribute could not be type hinted
+            self.request: Request = kwargs.pop('request')  # NOQA: Non-self attribute could not be type hinted
 
             # Handle Authentication
             self.handle_authentications()
@@ -40,13 +40,20 @@ class API:
             # Validate Input
             self.validate_input()
 
+            # Validate Path Variables
+            self.validate_path_variables(func, kwargs)
+
             # Get Cached Response
             if self.cache and self.request.method == 'GET':
                 if cached := get_cached_response_data(request=self.request):
                     return Response(data=cached.data, status_code=cached.status_code)
 
+            # Put Request In kwargs
+            if req_arg := [k for k, v in func.__annotations__.items() if v == Request]:
+                kwargs[req_arg[0]] = self.request
+
             # Call Endpoint
-            response = await func(self.request) if Request in func.__annotations__.values() else await func()
+            response = await func(**kwargs)
 
             # Clean Output
             if not isinstance(response, Response):
@@ -125,3 +132,17 @@ class API:
             raise TypeError("Type of Response 'data' is not valid.")
 
         return _data
+
+    @staticmethod
+    def validate_path_variables(func, variables):
+        for user_var, value in variables.items():
+            for func_var, _type in func.__annotations__.items():
+                if user_var == func_var:
+                    if _type is bool:
+                        variables[user_var] = value.lower() not in ['false', '0']
+                    elif _type is int:
+                        try:
+                            variables[user_var] = int(value)
+                        except ValueError:
+                            raise InvalidPathVariableException(value=value, arg_type=_type)
+                    break
