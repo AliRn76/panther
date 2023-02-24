@@ -15,7 +15,6 @@ class JWTConfig:
 
 class Config(TypedDict):
     base_dir: Path
-    debug: bool
     monitoring: bool
     urls: dict
     middlewares: list
@@ -30,7 +29,6 @@ class Config(TypedDict):
 
 config: Config = {
     'base_dir': Path(),
-    'debug': False,
     'monitoring': True,
     'secret_key': '',
     'urls': {},

@@ -116,7 +116,6 @@ class Panther:
         self._check_configs()
 
         # Put Variables In "config"
-        config['debug'] = self.settings.get('DEBUG', config['debug'])
         config['monitoring'] = self.settings.get('MONITORING', config['monitoring'])
         config['default_cache_exp'] = self.settings.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
         config['secret_key'] = self.settings.get('SECRET_KEY', config['secret_key'])
@@ -147,7 +146,7 @@ class Panther:
             logger.critical('core/configs.py Not Found.')
 
     def _get_authentication_class(self) -> ModelMetaclass | None:
-        return self.settings.get('Authentication') and import_class(self.settings['Authentication'])
+        return self.settings.get('AUTHENTICATION') and import_class(self.settings['AUTHENTICATION'])
 
     def _get_user_model(self) -> ModelMetaclass:
         return import_class(self.settings.get('USER_MODEL', 'panther.db.models.User'))
@@ -163,7 +162,7 @@ class Panther:
         from panther.logger import logger
         middlewares = list()
 
-        for path, data in self.settings.get('Middlewares', []):
+        for path, data in self.settings.get('MIDDLEWARES', []):
             if path.find('panther.middlewares.db.Middleware') != -1:
                 config['db_engine'] = data['url'].split(':')[0]
 

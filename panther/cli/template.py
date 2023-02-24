@@ -50,7 +50,6 @@ from pathlib import Path
 from panther.utils import load_env
 
 
-DEBUG = True 
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
@@ -58,7 +57,7 @@ DB_NAME = env['DB_NAME']
 SECRET_KEY = env['SECRET_KEY']
 
 
-Middlewares = [
+MIDDLEWARES = [
     ('panther.middlewares.db.Middleware', {'url': f'tinydb://{BASE_DIR}/{DB_NAME}.json'}),
 ]
 

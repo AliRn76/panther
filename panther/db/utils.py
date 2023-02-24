@@ -9,7 +9,7 @@ from panther.logger import logger
 
 def query_logger(func):
     def log(*args, **kwargs):
-        if config['debug'] is False:
+        if config['monitoring'] is False:
             return func(*args, **kwargs)
         start = perf_counter()
         response = func(*args, **kwargs)
