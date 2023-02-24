@@ -1,8 +1,16 @@
 import os
 import logging
 from pydantic import BaseModel
-from logging.config import dictConfig
+from panther.cli.utils import error
 
+try:
+    import uvicorn
+    del uvicorn
+except ImportError:
+    error('No module named "uvicorn"\n\nHint: Try to install with "pip install uvicorn[standard]"')
+    exit()
+
+from logging.config import dictConfig
 from panther.configs import config
 
 

@@ -1,14 +1,15 @@
+from datetime import datetime
+from panther.configs import config
+from panther.db.models import User
+from panther.cli.utils import error
+from panther.request import Request
+from panther.exceptions import AuthenticationException
 try:
     from jose import JWTError, jwt
 except ImportError:
-    # TODO: Should we install the package ourselves?
-    raise ImportError('Try to install python-jose with "pip install python-jose"')
-from datetime import datetime
+    error('No module named "python-jose"\n\nHint: Try to install with "pip install python-jose"')
+    exit()
 
-from panther.configs import config
-from panther.db.models import User
-from panther.exceptions import AuthenticationException
-from panther.request import Request
 
 JWTConfig = config['jwt_config']
 
