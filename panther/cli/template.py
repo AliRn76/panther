@@ -62,6 +62,8 @@ Middlewares = [
     ('panther.middlewares.db.Middleware', {'url': f'tinydb://{BASE_DIR}/{DB_NAME}.json'}),
 ]
 
+MONITORING = True
+
 URLs = 'core/urls.py'
 """ % datetime.now().date().isoformat()
 
