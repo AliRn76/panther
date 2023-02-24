@@ -40,15 +40,18 @@ def collect_urls(pre_url: str, urls: dict, final: dict):
         elif url and not re.match(r'[a-zA-Z<>0-9_/-]', url):
             logger.error(f"URL Is Not Valid. --> '{pre_url}{url}'")
         else:
-            if url and not url.endswith('/'):
+            if not url.endswith('/'):
                 url = f'{url}/'
             if isinstance(endpoint, dict):
-                if pre_url:
-                    collect_urls(f'{pre_url}/{url}', endpoint, final)
-                else:
-                    collect_urls(url, endpoint, final)
+                if url != '/':
+                    if pre_url:
+                        pre_url = f'{pre_url}/{url}'
+                    else:
+                        pre_url = url
+                collect_urls(pre_url, endpoint, final)
             else:
                 final[f'{pre_url}{url}'] = endpoint
+
     return urls
 
 
@@ -69,12 +72,11 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
     for i, split_path in enumerate(paths):
         last_path = bool((i + 1) == paths_len)
         found = sub.get(split_path)
-        if callable(found):
+        if last_path and callable(found):
             found_path += f'{split_path}/'
             return found, found_path
         if isinstance(found, dict):
             found_path += f'{split_path}/'
-
             if last_path and callable(endpoint := found.get('')):
                 return endpoint, found_path
 
@@ -86,14 +88,12 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
         _continue = False
         for key, value in sub.items():
             if key.startswith('<'):
-                if callable(value):
-                    if last_path:
+                if last_path:
+                    if callable(value):
                         found_path += f'{key}/'
                         return value, found_path
                     else:
                         return None, ''
-                if last_path:
-                    return None, ''
 
                 sub = value
                 found_path += f'{key}/'
