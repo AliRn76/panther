@@ -1,6 +1,6 @@
 
 ## Panther 
-<b>is a fast &  friendly, web framework for building async APIs with Python 3.11+</b> 
+<b>Is A Fast &  Friendly, Web Framework For Building Async APIs With Python 3.11+</b> 
 
 <hr/>
 
@@ -11,12 +11,33 @@
 - Built-in Authentication Classes (Customizable)
 - Built-in Permission Classes (Customizable)
 - Handle Custom Middlewares
+---
 
+### Benchmark
+We implemented most of the Python frameworks and sent 
+`2_000` requests per second 
+for a total of `10` seconds
+(Total `200_000` requeusts)
+in the same environment
+with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and here's the result:
 
-<hr/>
+> we won't rate other frameworks with throughput, so the names are censored.
+
+| Framework   | Request Handled |
+|-------------|-----------------|
+| Framework 1 | x               |
+| Panther     | x               |
+| Framework 2 | x               |
+| Framework 3 | x               |
+| Framework 4 | x               |
+| Framework 5 | x               |
+| Framework 6 | x               |
+| Framework 7 | x               |
+
+test source codes: [here](https://pantherpy.github.io/benchmark/codes)
+---
 
 ### Installation
-
 
 - #### Create a Virtual Environment
   ```console
@@ -116,7 +137,6 @@
     ```python
     from panther import version, status
     from panther.app import API
-    from panther.configs import config
     from panther.request import Request
     from panther.response import Response
     
@@ -130,9 +150,6 @@
     async def info(request: Request):
         data = {
             'version': version(),
-            'debug': config['debug'],
-            'db_engine': config['db_engine'],
-            'default_cache_exp': config['default_cache_exp'],
             'user_agent': request.headers.user_agent,
             'content_length': request.headers.content_length,
         }
