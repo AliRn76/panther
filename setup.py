@@ -14,8 +14,6 @@ DESCRIPTION = open('README.md').read()
 
 EXTRAS_REQUIRE = {
     'full': [
-        'redis>=4.5.1',
-        'pymongo>=4.3.3',
         'python-jose>=3.3.0',
         'bpython>=0.24',
     ]
@@ -51,6 +49,8 @@ setup(
         'tinydb>=4.7.1',
         'orjson>=3.8.6',
         'rich>=13.3.1',
+        'pymongo>=4.3.3',
+        'redis>=4.0.2',
     ],
     extras_require=EXTRAS_REQUIRE,
 )
