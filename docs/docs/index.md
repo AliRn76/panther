@@ -1,10 +1,10 @@
 
 ## Panther 
-#### is a fast &  friendly, web framework for building async APIs with Python 3.11+ 
+<b>is a fast &  friendly, web framework for building async APIs with Python 3.11+</b> 
 
 <hr/>
 
-### Features:
+### Features
 - Document-oriented Databases ORM (TinyDB, MongoDB)
 - Visual API Monitoring (In Terminal)
 - Cache APIs (In Memory, In Redis)
@@ -13,75 +13,75 @@
 - Handle Custom Middlewares
 
 
-
-### Requirements
-```console
-Python 3.11+
-```
-
 <hr/>
 
 ### Installation
 
-- <details>
-  <summary>Create a Virtual Environment</summary>
-  <pre>$ python -m venv .venv</pre>
-  </details>
 
+- #### Create a Virtual Environment
+  ```console
+  $ python -m venv .venv
+  ```
 
-- <details>
-  <summary>Active The Environment</summary></br>
-  * Linux & Mac
-    <pre>$ source .venv/bin/activate</pre>
-  * Windows
-    <pre>$ .\.venv\Scripts\activate</pre>   
-  </details>
+- #### Active The Environment
+    * Linux & Mac
+    ```console
+    $ source .venv/bin/activate
+    ```
+    * Windows
+    ```console
+    $ .\.venv\Scripts\activate
+    ```
 
-
-- <details open>
-  <summary>Install Panther</summary></br>
-  <pre>$ pip install panter</pre>
-  or 
-  <pre>$ pip install panter[full] # include JWT Authentication</pre>
-  </details>
+- #### Install Panther
+  ```console
+  $ pip install panter
+  ```
+    or
+    ```console
+    $ pip install panter[full] # include JWT Authentication
+    ```
 
 <hr/>
 
 ### Usage
 
+- #### Create Project
 
-- <details open>
-  <summary>Create Project</summary>
-  <pre>$ panther create &lt;project_name&gt; &lt;directory&gt;</pre>
-  </details>
+    ```console
+    $ panther create <project_name> <directory>
+    ```
 
-
-- <details open>
-  <summary>Monitoring Requests</summary>
-  <pre>$ panther monitor</pre>
-  </details>
-
-
-- <details>
-  <summary>Run Project</summary></br>
+- #### Run Project
   Panther needs Uvicorn as ASGI (Asynchronous Server Gateway Interface)
-  <pre>$ pip install uvicorn[standard]</pre>
+  ```console
+  $ pip install uvicorn[standard]
+  ```
   Then
-  <pre>$ panther run </pre>
-  </details>
+  ```console
+  $ panther run 
+  ```
 
+- #### Monitoring Requests
 
-- <details>
-  <summary>Python Shell</summary>
-  <pre>$ panther shell</pre>
-  </details>
+    ```console
+    $ panther monitor 
+    ```
 
+- #### Python Shell
+ 
+    ```console
+    $ panther shell 
+    ```
+  
 ### Example
 
 - #### You can create project with
-  ```console 
-  $ panther create myproject
-  ``` 
+ 
+    ```console 
+    $ panther create myproject
+    ``` 
+  
 - #### or create it yourself:
 
     **core/configs.py**:
@@ -138,8 +138,8 @@ Python 3.11+
         }
         return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
     ```
-    
-- #### Then run (`$ panther run`) the project, now you can see these two urls:
+
+- <b> Then run (`$ panther run`) the project, now you can see these two urls:</b>
 
   * [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 

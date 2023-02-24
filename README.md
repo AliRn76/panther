@@ -1,6 +1,6 @@
 
-## Panther 
-#### is a fast &  friendly, web framework for building async APIs with Python 3.11+ 
+### Panther 
+<b>is a fast &  friendly, web framework for building async APIs with Python 3.11+</b> 
 
 <hr/>
 
@@ -12,12 +12,6 @@
 - Built-in Permission Classes (Customizable)
 - Handle Custom Middlewares
 
-
-
-### Requirements
-```console
-Python 3.11+
-```
 
 <hr/>
 
