@@ -15,24 +15,24 @@
 
 ### Benchmark
 We implemented most of the Python frameworks and sent 
-`2_000` requests per second 
-for a total of `10` seconds
-(Total `200_000` requeusts)
+`60_000` requests per second 
+for a total of `15` seconds
+(Total `600_000` requeusts)
 in the same environment
 with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and here's the result:
 
 > we won't rate other frameworks with throughput, so the names are censored.
 
-| Framework   | Request Handled |
-|-------------|-----------------|
-| Framework 1 | x               |
-| Panther     | x               |
-| Framework 2 | x               |
-| Framework 3 | x               |
-| Framework 4 | x               |
-| Framework 5 | x               |
-| Framework 6 | x               |
-| Framework 7 | x               |
+| Framework            | Request Handled | Max Latencies |
+|----------------------|-----------------|---------------|
+| Framework 1          | 275060          | 270.3ms       |
+| Framework 3          | 188016          | 195.6ms       |
+| Panther              | 156743          | 214.7ms       |
+| Framework 4          | 66274           | 476.2ms       |
+| Framework 2          | 52350           | 1.2924s       |
+| Framework 5          | 32944           | 30.00ms       |
+| Framework 6          | 31336           | 30.03ms       |
+| Framework 7          | 19820           | 30.0s         |
 
 test source codes: [here](https://pantherpy.github.io/benchmark/codes)
 ---
