@@ -10,8 +10,9 @@ It should be `True` if you want to use `panther monitor` command
 and see the monitoring logs
 
 If `True` it will:
-- Log Every Request
-- Calculate Every Query Perf Time
+
+- Log every request
+- Calculate every query perf time
 
 ---
 ### MIDDLEWARES
@@ -25,7 +26,9 @@ List of middlewares you want to use
 ### AUTHENTICATION
 > <b>Type:</b> `str | None` (<b>Default:</b> `None`)
 
-Every request go through `authentication` method of this `class`
+Every request go through `authentication()` method of this `class`
+
+_Example:_ `AUTHENTICATION = 'panther.authentications.JWTAuthentication'`
 
 [read more ...](https://pantherpy.github.io/authentication)
 
@@ -34,6 +37,8 @@ Every request go through `authentication` method of this `class`
 > <b>Type:</b> `str` (<b>Required</b>)
 
 It should be the address of your `urls` `dict`
+
+_Example:_ `URLS = 'configs/urls.py'`
 
 [read more ...](https://pantherpy.github.io/urls)
 

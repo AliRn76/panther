@@ -15,55 +15,54 @@
 
 ### Benchmark
 We implemented most of the Python frameworks and sent 
-`2_000` requests per second 
+`60_000` requests per second 
 for a total of `10` seconds
-(Total `200_000` requeusts)
+(Total `600_000` requests)
 in the same environment
 with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and here's the result:
 
 > we won't rate other frameworks with throughput, so the names are censored.
+> but you can find the detailed results & source codes [[here]](https://pantherpy.github.io/benchmark/codes)
 
-| Framework   | Request Handled |
-|-------------|-----------------|
-| Framework 1 | x               |
-| Panther     | x               |
-| Framework 2 | x               |
-| Framework 3 | x               |
-| Framework 4 | x               |
-| Framework 5 | x               |
-| Framework 6 | x               |
-| Framework 7 | x               |
 
-test source codes: [here](https://pantherpy.github.io/benchmark/codes)
+| Framework | Request Handled | Max Latencies |
+|-----------|-----------------|---------------|
+| ...       | 275,060         | 270.3ms       |
+| ...       | 188,016         | 195.6ms       |
+| Panther   | 156,743         | 214.7ms       |
+| ...       | 66,274          | 476.2ms       |
+| ...       | 52,350          | 1.2924s       |
+| ...       | 32,944          | 30.00ms       |
+| ...       | 31,336          | 30.03ms       |
+| ...       | 19,820          | 30.0s         |
+
 ---
 
 ### Installation
-
-- #### Create a Virtual Environment
-  ```console
-  $ python -m venv .venv
-  ```
-
-- #### Active The Environment
+- <details>
+    <summary>Create a Virtual Environment</summary>
+    <pre>$ python -m venv .venv</pre>
+  
+  </details>
+  
+- <details>
+    <summary>Active The Environment</summary>
     * Linux & Mac
-    ```console
-    $ source .venv/bin/activate
-    ```
+      <pre>$ source .venv/bin/activate</pre>
     * Windows
-    ```console
-    $ .\.venv\Scripts\activate
-    ```
-
-- #### Install Panther
-  ```console
-  $ pip install panter
-  ```
-    or
-    ```console
-    $ pip install panter[full] # include JWT Authentication
-    ```
-
-<hr/>
+      <pre>$ .\\.venv\Scripts\activate</pre>
+  
+  </details>
+ 
+- <details open>
+    <summary>Install Panther</summary>
+    * Normal
+      <pre>$ pip install panther</pre>
+    * Include JWT Authentication
+      <pre>$ pip install panther[full]</pre>
+  </details>
+  
+---
 
 ### Usage
 

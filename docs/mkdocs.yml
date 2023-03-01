@@ -27,9 +27,11 @@ edit_uri: edit/master/docs/
 nav:
   - Introduction: 'index.md'
   - Configs: 'configs.md'
-  - Features: 'features.md'
-  - Benchmarks: 'benchmarks.md'
+  - Tutorials:
+      - Create Project: 'tutorials/create_project.md'
+      - First API: 'tutorials/first_api.md'
   - Release Notes: 'release_notes.md'
+  - TODOs: 'todos.md'
 
 markdown_extensions:
   - pymdownx.superfences
