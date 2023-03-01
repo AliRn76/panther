@@ -2,7 +2,7 @@
 ## Panther 
 <b>Is A Fast &  Friendly, Web Framework For Building Async APIs With Python 3.11+</b> 
 
-<hr/>
+---
 
 ### Features
 - Document-oriented Databases ORM (TinyDB, MongoDB)

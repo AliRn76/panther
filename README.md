@@ -2,7 +2,11 @@
 ## Panther 
 <b>Is A Fast &  Friendly, Web Framework For Building Async APIs With Python 3.11+</b> 
 
-<hr/>
+>_Full Documentation_ -> [https://pantherpy.github.io](https://pantherpy.github.io)
+> 
+>_PyPI_ -> [https://pypi.org/project/panther/](https://pypi.org/project/panther/)
+
+---
 
 ### Features
 - Document-oriented Databases ORM (TinyDB, MongoDB)
@@ -50,7 +54,7 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
     * Linux & Mac
       <pre>$ source .venv/bin/activate</pre>
     * Windows
-      <pre>$ .\\.venv\Scripts\activate</pre>
+      <pre>$ .\.venv\Scripts\activate</pre>
   
   </details>
  
