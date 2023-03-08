@@ -1,3 +1,7 @@
+### 1.2.5
+- Fix install_requires issue
+- Add benchmarks to docs
+
 ### 1.2.4
 - Remove Uvicorn From install_requires
 - Working on Docs
