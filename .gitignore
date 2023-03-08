@@ -7,3 +7,4 @@ example/panther/
 logs/
 build/
 panther.json
+.ruff_cache/

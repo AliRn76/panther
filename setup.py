@@ -49,6 +49,7 @@ setup(
         'pymongo>=4.3.3',
         'redis>=4.0.2',
         'bpython>=0.24',
+        'watchfiles>=0.18.1'
     ],
     extras_require=EXTRAS_REQUIRE,
 )

@@ -30,6 +30,7 @@ nav:
   - Tutorials:
       - Create Project: 'tutorials/create_project.md'
       - First API: 'tutorials/first_api.md'
+  - Benchmarks: 'benchmarks.md'
   - Release Notes: 'release_notes.md'
   - TODOs: 'todos.md'
 
