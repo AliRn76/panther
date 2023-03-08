@@ -9,7 +9,7 @@
 ---
 
 ### Features
-- Document-oriented Databases ORM (TinyDB, MongoDB)
+- Document-oriented Databases ORM ([SlarkDB](https://pypi.org/project/slark/), MongoDB)
 - Visual API Monitoring (In Terminal)
 - Cache APIs (In Memory, In Redis)
 - Built-in Authentication Classes (Customizable)
@@ -19,26 +19,26 @@
 
 ### Benchmark
 We implemented most of the Python frameworks and sent 
-`60_000` requests per second 
-for a total of `10` seconds
-(Total `600_000` requests)
+`25,000` requests per second 
+for `10` seconds
+(Total `250,000` requests)
 in the same environment
 with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and here's the result:
 
-> we won't rate other frameworks with throughput, so the names are censored.
-> but you can find the detailed results & source codes [[here]](https://pantherpy.github.io/benchmark/codes)
+> you can find the detailed results & source codes here --> [benchmarks](https://pantherpy.github.io/benchmarks/)
 
 
-| Framework | Request Handled | Max Latencies |
-|-----------|-----------------|---------------|
-| ...       | 275,060         | 270.3ms       |
-| ...       | 188,016         | 195.6ms       |
-| Panther   | 156,743         | 214.7ms       |
-| ...       | 66,274          | 476.2ms       |
-| ...       | 52,350          | 1.2924s       |
-| ...       | 32,944          | 30.00ms       |
-| ...       | 31,336          | 30.03ms       |
-| ...       | 19,820          | 30.0s         |
+| Framework  | Throughput  | Request Handled  | Max Latencies |
+|------------|-------------|------------------|---------------|
+| Sanic      | 23,326      | 233,842          | 268.8ms       |
+| Panther    | 14,719      | 147,595          | 113.1ms       |
+| FastAPI    | 14,573      | 146,467          | 155.1ms       |
+| Tornado    | 4,969       | 50.585           | 426.5ms       |
+| Flask      | 3,555       | 36,396           | 1.2s          |
+| Django     | 2,188       | 22,814           | 526.3ms       |
+| Bottle     | 1,226       | 39,650           | 30.0s         |
+| Pyramid    | 1,023       | 30,912           | 30.0s         |
+| Cherrypy   | 639         | 24,944           | 30.0s         |
 
 ---
 

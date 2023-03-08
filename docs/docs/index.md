@@ -21,7 +21,7 @@ for `10` seconds
 in the same environment
 with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and here's the result:
 
-> you can find the detailed results & source codes here --> [https://pantherpy.github.io/benchmarks/](https://pantherpy.github.io/benchmarks/)
+> you can find the detailed results & source codes here --> [benchmarks](https://pantherpy.github.io/benchmarks/)
 
 
 | Framework  | Throughput  | Request Handled  | Max Latencies |
