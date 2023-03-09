@@ -120,12 +120,12 @@ class Panther:
         config['default_cache_exp'] = self.settings.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
         config['secret_key'] = self.settings.get('SECRET_KEY', config['secret_key'])
 
-        config['authentication'] = self._get_authentication_class()
-        config['jwt_config'] = self._get_jwt_config()
-
         config['middlewares'] = self._get_middlewares()
         config['reversed_middlewares'] = config['middlewares'][::-1]
         config['user_model'] = self._get_user_model()
+
+        config['authentication'] = self._get_authentication_class()
+        config['jwt_config'] = self._get_jwt_config()
 
         # Check & Collect URLs
         #   check_urls should be the last call in load_configs, because it will read all files and load them.

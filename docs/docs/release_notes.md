@@ -1,3 +1,9 @@
+### 1.2.7
+- Fix a bug while using tinydb
+
+### 1.2.6
+- Update Readme
+
 ### 1.2.5
 - Fix install_requires issue
 - Add benchmarks to docs
