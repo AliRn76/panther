@@ -1,3 +1,5 @@
+import operator
+from functools import reduce
 from time import perf_counter
 
 from bson import ObjectId
@@ -39,5 +41,5 @@ def clean_object_id_in_dicts(*args):
             d['id'] = clean_object_id(d['id'])
 
 
-def merge_dicts(data: dict | None, kwargs: dict | None) -> dict:
-    return (data or {}) | (kwargs or {})
+def merge_dicts(*args) -> dict:
+    return reduce(operator.ior, filter(None, args), {})

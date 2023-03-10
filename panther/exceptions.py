@@ -1,6 +1,10 @@
 from panther import status
 
 
+class DBException(Exception):
+    pass
+
+
 class APIException(Exception):
     detail: str | dict | list = 'Internal Server Error'
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR

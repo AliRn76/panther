@@ -1,8 +1,5 @@
+from pantherdb import PantherDB
 from redis import Redis
-from typing import Union
-from tinydb import TinyDB
-from pymongo import MongoClient
-from pymongo.database import Database
 
 
 class Singleton(object):
@@ -15,40 +12,40 @@ class Singleton(object):
 
 
 class DBSession(Singleton):
-    _session: Union[TinyDB, Database]
-    _client: MongoClient
-    _name: str
+    _db_name: str
 
     def __init__(self, db_url: str | None = None):
         if db_url:
-            self._name = db_url[:db_url.find(':')]
-            match self._name:
-                case 'mongodb':
-                    # TODO: Check pymongo installed or not
-                    self._create_mongodb_session(db_url)
-                case 'tinydb':
-                    self._create_tinydb_session(db_url[9:])
+            self._db_name = db_url[:db_url.find(':')]
+            match self._db_name:
+                # case 'mongodb':
+                #     # TODO: Check pymongo installed or not
+                #     self._create_mongodb_session(db_url)
+                case 'pantherdb':
+                    self._create_pantherdb_session(db_url[12:])
                 case _:
                     # TODO: self._name does not have a last character if only path passed
-                    raise ValueError(f'We are support {self._name} Database yet')
+                    raise ValueError(f'We are not support "{self._db_name}" database yet')
 
     @property
-    def session(self) -> Union[TinyDB, Database]:
+    def session(self):
         return self._session
 
     @property
     def name(self) -> str:
-        return self._name
+        return self._db_name
 
     def _create_mongodb_session(self, db_url: str) -> None:
-        self._client = MongoClient(db_url)
+        from pymongo import MongoClient
+        from pymongo.database import Database
+        self._client: MongoClient = MongoClient(db_url)
         self._session: Database = self._client.get_database()
 
-    def _create_tinydb_session(self, db_url: str):
-        self._session: TinyDB = TinyDB(db_url)
+    def _create_pantherdb_session(self, db_url: str):
+        self._session: PantherDB = PantherDB(db_url, return_dict=True)
 
     def close(self):
-        if self._name == 'mongodb':
+        if self._db_name == 'mongodb':
             self._client.close()
         else:
             self._session.close()

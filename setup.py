@@ -15,6 +15,7 @@ DESCRIPTION = open('README.md').read()
 EXTRAS_REQUIRE = {
     'full': [
         'python-jose>=3.3.0',
+        'pymongo>=4.3.3',
     ]
 }
 
@@ -43,10 +44,9 @@ setup(
     },
     install_requires=[
         'pydantic>=1.10.5',
-        'tinydb>=4.7.1',
-        'orjson>=3.8.6',
         'rich>=13.3.1',
-        'pymongo>=4.3.3',
+        'bson>=0.5.10',
+        'pantherdb>=1.1.2',
         'redis>=4.0.2',
         'bpython>=0.24',
         'watchfiles>=0.18.1'
