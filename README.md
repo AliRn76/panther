@@ -9,7 +9,7 @@
 ---
 
 ### Features
-- Document-oriented Databases ORM ([SlarkDB](https://pypi.org/project/slark/), MongoDB)
+- Document-oriented Databases ORM ([PantherDB](https://pypi.org/project/pantherdb/), MongoDB)
 - Visual API Monitoring (In Terminal)
 - Cache APIs (In Memory, In Redis)
 - Built-in Authentication Classes (Customizable)
@@ -138,8 +138,11 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
     **app/apis.py**:
     
     ```python
-    from panther import version, status
+    from datetime import timedelta, datetime
+
     from panther.app import API
+    from panther.configs import config
+    from panther import version, status
     from panther.request import Request
     from panther.response import Response
     
@@ -149,12 +152,15 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
         return {'detail': 'Hello World'}
     
     
-    @API()
+    @API(cache=True, cache_exp_time=timedelta(minutes=2))
     async def info(request: Request):
         data = {
             'version': version(),
+            'datetime_now': datetime.now().isoformat(),
             'user_agent': request.headers.user_agent,
-            'content_length': request.headers.content_length,
+            'middlewares': config['middlewares'],
+            'db_engine': config['db_engine'],
+            'urls': config['urls'],
         }
         return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
     ```

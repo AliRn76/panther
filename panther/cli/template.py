@@ -3,10 +3,11 @@ from datetime import datetime
 from panther import version
 from panther.utils import generate_secret_key
 
-apis_py = """from datetime import datetime
-from panther import version, status
+apis_py = """from datetime import datetime, timedelta
+
 from panther.app import API
 from panther.configs import config
+from panther import version, status
 from panther.request import Request
 from panther.response import Response
 
