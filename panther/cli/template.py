@@ -3,7 +3,8 @@ from datetime import datetime
 from panther import version
 from panther.utils import generate_secret_key
 
-apis_py = """from panther import version, status
+apis_py = """from datetime import datetime
+from panther import version, status
 from panther.app import API
 from panther.configs import config
 from panther.request import Request
@@ -15,15 +16,15 @@ async def hello_world():
     return {'detail': 'Hello World'}
 
 
-@API()
+@API(cache=True, cache_exp_time=timedelta(minutes=2))
 async def info(request: Request):
     data = {
         'version': version(),
-        'debug': config['debug'],
-        'db_engine': config['db_engine'],
-        'default_cache_exp': config['default_cache_exp'],
+        'datetime_now': datetime.now().isoformat(),
         'user_agent': request.headers.user_agent,
-        'content_length': request.headers.content_length,
+        'middlewares': config['middlewares'],
+        'db_engine': config['db_engine'],
+        'urls': config['urls'],
     }
     return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 """
@@ -58,8 +59,10 @@ SECRET_KEY = env['SECRET_KEY']
 
 
 MIDDLEWARES = [
-    ('panther.middlewares.db.Middleware', {'url': f'tinydb://{BASE_DIR}/{DB_NAME}.json'}),
+    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.json'}),
 ]
+
+USER_MODEL = 'panther.db.models.User'
 
 MONITORING = True
 
