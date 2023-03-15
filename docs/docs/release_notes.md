@@ -1,3 +1,7 @@
+### 1.3.0
+- Add PantherDB to Panther
+- Remove tinydb
+
 ### 1.2.7
 - Fix a bug while using tinydb
 
