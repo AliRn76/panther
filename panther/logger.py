@@ -18,6 +18,7 @@ class LogConfig(BaseModel):
     DEFAULT_LOG_FORMAT: str = '%(levelprefix)s | %(asctime)s | %(message)s'
     FILE_LOG_FORMAT: str = '%(asctime)s | %(message)s'
     LOG_LEVEL: str = 'DEBUG'
+    MAX_FILE_SIZE: int = 1024 * 1024 * 100  # 100 MB
 
     version = 1
     disable_existing_loggers = False
@@ -39,15 +40,21 @@ class LogConfig(BaseModel):
             'formatter': 'file_formatter',
             'filename': LOGS_DIR / 'monitoring.log',
             'class': 'logging.handlers.RotatingFileHandler',
-            'maxBytes': 1024 * 1024 * 100,  # 100 MB,
+            'maxBytes': MAX_FILE_SIZE,  # 100 MB,
+            'backupCount': 3,
+        },
+        'query_file': {
+            'formatter': 'file_formatter',
+            'filename': LOGS_DIR / 'query.log',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': MAX_FILE_SIZE,  # 100 MB,
             'backupCount': 3,
         },
         'file': {
             'formatter': 'file_formatter',
-            # TODO: Don't know but base_dir.name will return '.' here :\
-            'filename': LOGS_DIR / f'{config["base_dir"].name}.log',
+            'filename': LOGS_DIR / f'main.log',
             'class': 'logging.handlers.RotatingFileHandler',
-            'maxBytes': 1024 * 1024 * 100,  # 100 MB,
+            'maxBytes': MAX_FILE_SIZE,  # 100 MB,
             'backupCount': 3,
         },
         'default': {
@@ -65,13 +72,14 @@ class LogConfig(BaseModel):
             'handlers': ['monitoring_file'],
             'level': LOG_LEVEL,
         },
+        'query': {
+            'handlers': ['default', 'query_file'],
+            'level': LOG_LEVEL,
+        },
     }
 
 
 dictConfig(LogConfig().dict())
 logger = logging.getLogger('panther')
-monitoring = logging.getLogger('monitoring')
-
-"""
-[debug, info, warning, error, critical]
-"""
+query_logger = logging.getLogger('query')
+monitoring_logger = logging.getLogger('monitoring')

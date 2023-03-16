@@ -65,6 +65,8 @@ USER_MODEL = 'panther.db.models.User'
 
 MONITORING = True
 
+LOG_QUERIES = True
+
 URLs = 'core/urls.py'
 """ % datetime.now().date().isoformat()
 

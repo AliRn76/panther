@@ -4,7 +4,7 @@ Panther  stores all the configs in the `core/configs.py`
 
 
 ### MONITORING
-> <b>Type:</b> `bool` (<b>Default:</b> `True`)
+> <b>Type:</b> `bool` (<b>Default:</b> `False`)
  
 It should be `True` if you want to use `panther monitor` command
 and see the monitoring logs
@@ -12,6 +12,13 @@ and see the monitoring logs
 If `True` it will:
 
 - Log every request
+
+
+### LOG_QUERIES
+> <b>Type:</b> `bool` (<b>Default:</b> `False`)
+
+If `True` it will:
+
 - Calculate every query perf time
 
 ---

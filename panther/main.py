@@ -117,6 +117,7 @@ class Panther:
 
         # Put Variables In "config"
         config['monitoring'] = self.settings.get('MONITORING', config['monitoring'])
+        config['log_queries'] = self.settings.get('LOG_QUERIES', config['log_queries'])
         config['default_cache_exp'] = self.settings.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
         config['secret_key'] = self._get_secret_key()
 

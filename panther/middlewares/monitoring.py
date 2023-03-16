@@ -1,8 +1,8 @@
 from time import perf_counter
 
-from panther.logger import monitoring
-from panther.middlewares.base import BaseMiddleware
 from panther.request import Request
+from panther.logger import monitoring_logger
+from panther.middlewares.base import BaseMiddleware
 
 
 class Middleware(BaseMiddleware):
@@ -21,4 +21,4 @@ class Middleware(BaseMiddleware):
         but we should put in middlewares chain later ...
         """
         response_time = (perf_counter() - self.start_time) * 1_000
-        monitoring.info(f'{self.log} | {response_time: .3} ms | {status_code}')
+        monitoring_logger.info(f'{self.log} | {response_time: .3} ms | {status_code}')

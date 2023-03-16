@@ -1,9 +1,8 @@
-import operator
-from functools import reduce
 from typing import Self
 from pydantic import ValidationError
 
 from panther.db.connection import db
+from panther.db.utils import merge_dicts
 from panther.exceptions import DBException
 
 
@@ -32,7 +31,7 @@ class BasePantherDBQuery:
     @classmethod
     def _merge(cls, *args) -> dict:
         # TODO: Convert "id" to "_id"
-        return reduce(operator.ior, filter(None, args), {})
+        return merge_dicts(*args)
 
     # # # # # Find # # # # #
     @classmethod

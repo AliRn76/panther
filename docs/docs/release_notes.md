@@ -1,3 +1,6 @@
+### 1.4.0
+- Add QUERY_LOG
+
 ### 1.3.2
 - Add Uvicorn to the setup requirements
 - Update Readme

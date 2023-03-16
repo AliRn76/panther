@@ -1,8 +1,9 @@
 from typing import Self
 
+from panther.configs import config
+from panther.db.utils import log_query
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
-from panther.configs import config
 
 if config['db_engine'] == 'pantherdb':
     BaseQuery = BasePantherDBQuery
@@ -18,6 +19,7 @@ class Query(BaseQuery):
 
     # # # # # Find # # # # #
     @classmethod
+    @log_query
     def find_one(cls, _data: dict = None, /, **kwargs) -> Self | None:
         """
         example:
@@ -27,6 +29,7 @@ class Query(BaseQuery):
         return super().find_one(_data, **kwargs)
 
     @classmethod
+    @log_query
     def find(cls, _data: dict = None, /, **kwargs) -> list[Self]:
         """
         example:
@@ -37,6 +40,7 @@ class Query(BaseQuery):
 
     # # # # # Insert # # # # #
     @classmethod
+    @log_query
     def insert_one(cls, _data: dict = None, /, **kwargs) -> Self:
         """
         example:
@@ -46,10 +50,12 @@ class Query(BaseQuery):
         return super().insert_one(_data, **kwargs)
 
     @classmethod
+    @log_query
     def insert_many(cls, _data: dict = None, **kwargs):
         return super().insert_many(_data, **kwargs)
 
     # # # # # Delete # # # # #
+    @log_query
     def delete(self) -> None:
         """
         example:
@@ -60,6 +66,7 @@ class Query(BaseQuery):
         return super().delete()
 
     @classmethod
+    @log_query
     def delete_one(cls, **kwargs) -> bool:
         """
         example:
@@ -69,6 +76,7 @@ class Query(BaseQuery):
         return super().delete_one(**kwargs)
 
     @classmethod
+    @log_query
     def delete_many(cls, **kwargs) -> int:
         """
         example:
@@ -78,6 +86,7 @@ class Query(BaseQuery):
         return super().delete_many(**kwargs)
 
     # # # # # Update # # # # #
+    @log_query
     def update(self, **kwargs) -> None:
         """
         example:
@@ -88,6 +97,7 @@ class Query(BaseQuery):
         return super().update(**kwargs)
 
     @classmethod
+    @log_query
     def update_one(cls, _filter, _data: dict = None, /, **kwargs) -> bool:
         """
         example:
@@ -98,6 +108,7 @@ class Query(BaseQuery):
         return super().update_one(_filter, _data, **kwargs)
 
     @classmethod
+    @log_query
     def update_many(cls, _filter, **kwargs) -> int:
         """
         example:
@@ -108,6 +119,7 @@ class Query(BaseQuery):
 
     # # # # # Other # # # # #
     @classmethod
+    @log_query
     def first(cls, _data: dict = None, /, **kwargs) -> Self | None:
         """
         It works same as find_one()
@@ -118,6 +130,7 @@ class Query(BaseQuery):
         return super().first(_data, **kwargs)
 
     @classmethod
+    @log_query
     def last(cls, _data: dict = None, /, **kwargs) -> Self | None:
         """
         example:
@@ -127,6 +140,7 @@ class Query(BaseQuery):
         return super().last(_data, **kwargs)
 
     @classmethod
+    @log_query
     def count(cls, _data: dict = None, /, **kwargs) -> int:
         """
         example:

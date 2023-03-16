@@ -15,6 +15,7 @@ class JWTConfig:
 class Config(TypedDict):
     base_dir: Path
     monitoring: bool
+    log_queries: bool
     urls: dict
     middlewares: list
     reversed_middlewares: list
@@ -28,7 +29,8 @@ class Config(TypedDict):
 
 config: Config = {
     'base_dir': Path(),
-    'monitoring': True,
+    'monitoring': False,
+    'log_queries': False,
     'secret_key': None,
     'urls': {},
     'middlewares': [],

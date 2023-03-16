@@ -9,6 +9,8 @@ env = dotenv_values(BASE_DIR / '.env')
 
 MONITORING = True
 
+LOG_QUERIES = True
+
 # Load Env Variables
 DB_NAME = env['DB_NAME']
 DB_HOST = env['DB_HOST']

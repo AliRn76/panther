@@ -4,18 +4,18 @@ from functools import reduce
 from time import perf_counter
 
 from panther.configs import config
-from panther.logger import logger
+from panther.logger import query_logger
 
 
-def query_logger(func):
+def log_query(func):
     def log(*args, **kwargs):
-        if config['monitoring'] is False:
+        if config['log_queries'] is False:
             return func(*args, **kwargs)
         start = perf_counter()
         response = func(*args, **kwargs)
         end = perf_counter()
         class_name = args[0].__name__ if hasattr(args[0], '__name__') else args[0].__class__.__name__
-        logger.info(f'\033[1mQuery -->\033[0m  {class_name}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
+        query_logger.info(f'\033[1mQuery -->\033[0m  {class_name}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
         return response
     return log
 
