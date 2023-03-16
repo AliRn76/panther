@@ -9,7 +9,7 @@
 ---
 
 ### Features
-- Document-oriented Databases ORM ([PantherDB](https://pypi.org/project/pantherdb/), MongoDB)
+- Document-oriented Databases ODM ([PantherDB](https://pypi.org/project/pantherdb/), MongoDB)
 - Visual API Monitoring (In Terminal)
 - Cache APIs (In Memory, In Redis)
 - Built-in Authentication Classes (Customizable)

@@ -1,3 +1,7 @@
+### 1.5.0
+- Refactor Mongodb ODM
+- Minor Improvement
+
 ### 1.4.0
 - Add QUERY_LOG
 

@@ -1,6 +1,7 @@
 from redis import Redis
 from pantherdb import PantherDB
 from panther.configs import config
+from panther.cli.utils import error
 
 
 class Singleton(object):
@@ -19,9 +20,8 @@ class DBSession(Singleton):
         if db_url:
             self._db_name = db_url[:db_url.find(':')]
             match self._db_name:
-                # case 'mongodb':
-                #     # TODO: Check pymongo installed or not
-                #     self._create_mongodb_session(db_url)
+                case 'mongodb':
+                    self._create_mongodb_session(db_url)
                 case 'pantherdb':
                     self._create_pantherdb_session(db_url[12:])
                 case _:
@@ -37,8 +37,12 @@ class DBSession(Singleton):
         return self._db_name
 
     def _create_mongodb_session(self, db_url: str) -> None:
-        from pymongo import MongoClient
-        from pymongo.database import Database
+        try:
+            from pymongo import MongoClient
+            from pymongo.database import Database
+        except ImportError:
+            error('No module named "pymongo"\n\nHint: Try to install with "pip install pymongo"')
+            raise ImportError(error)
         self._client: MongoClient = MongoClient(db_url)
         self._session: Database = self._client.get_database()
 
@@ -56,7 +60,6 @@ class RedisConnection(Singleton, Redis):
     is_connected: bool = False
 
     def __init__(self, host: str | None = None, port: int | None = None, **kwargs):
-        # TODO: Check redis installed or not
         if host and port:
             super().__init__(host=host, port=port, **kwargs)
             self.is_connected = True

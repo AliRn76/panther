@@ -2,10 +2,10 @@
 from datetime import timedelta
 from pathlib import Path
 
-from dotenv import dotenv_values
+from panther.utils import load_env
 
 BASE_DIR = Path(__name__).resolve().parent
-env = dotenv_values(BASE_DIR / '.env')
+env = load_env(BASE_DIR / '.env')
 
 MONITORING = True
 
@@ -24,13 +24,18 @@ DB_PASSWORD = env['DB_PASSWORD']
 MIDDLEWARES = [
     # TODO: change middleware
     # Go To https://framework.org/SupportedDatabase For More Options
-    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.json'}),
-    # ('panther/middlewares/db.py', {'url': f'mongodb://{DB_HOST}:27017/{DB_NAME}'}),
+    # ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.json'}),
+    ('panther.middlewares.db.Middleware', {'url': f'mongodb://{DB_HOST}:27017/{DB_NAME}'}),
     ('panther.middlewares.redis.Middleware', {}),
 ]
+"""
+mongodb://[Username:Password(optional)]@HostName:Port/?aruguments
+note: if your password has special characters, you would need to URL-Encode.
 
+ex : monodb://my-name:my-pass@localhost:27017/?authSource=users
+"""
 # Go To https://framework.org/Authentications For More Options
-AUTHENTICATION = 'panther.authentications.JWTAuthentication'
+# AUTHENTICATION = 'panther.authentications.JWTAuthentication'
 
 # Only If Authentication Set To JWT
 JWTConfig = {
