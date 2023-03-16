@@ -3,7 +3,7 @@ from datetime import datetime
 from panther import version
 from panther.utils import generate_secret_key
 
-apis_py = """from datetime import datetime, timedelta
+apis_py = """from datetime import datetime
 
 from panther.app import API
 from panther.configs import config
@@ -17,23 +17,21 @@ async def hello_world():
     return {'detail': 'Hello World'}
 
 
-@API(cache=True, cache_exp_time=timedelta(minutes=2))
+@API(cache=True)
 async def info(request: Request):
     data = {
         'version': version(),
         'datetime_now': datetime.now().isoformat(),
         'user_agent': request.headers.user_agent,
-        'middlewares': config['middlewares'],
         'db_engine': config['db_engine'],
-        'urls': config['urls'],
     }
     return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 """
 
-models_py = """from panther.db import BaseModel as Serializer
+models_py = """from panther.db import BaseModel
 """
 
-serializers_py = """from pydantic import BaseModel
+serializers_py = """from pydantic import BaseModel as Serializer
 """
 
 app_urls_py = """from app.apis import hello_world, info
@@ -60,7 +58,7 @@ SECRET_KEY = env['SECRET_KEY']
 
 
 MIDDLEWARES = [
-    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.json'}),
+    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pantherdb'}),
 ]
 
 USER_MODEL = 'panther.db.models.User'
@@ -96,6 +94,7 @@ git_ignore = """__pycache__/
 .idea/
 .env
 logs/
+*.pantherdb
 """
 
 requirements = """panther==%s

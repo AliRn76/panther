@@ -1,3 +1,7 @@
+### 1.3.1
+- Fix a bug in project creation template
+- Fix a bug in caching
+
 ### 1.3.0
 - Add PantherDB to Panther
 - Remove tinydb

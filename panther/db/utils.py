@@ -1,9 +1,7 @@
+import bson
 import operator
 from functools import reduce
 from time import perf_counter
-
-from bson import ObjectId
-from bson.errors import InvalidId
 
 from panther.configs import config
 from panther.logger import logger
@@ -22,13 +20,13 @@ def query_logger(func):
     return log
 
 
-def clean_object_id(_id: ObjectId | str) -> ObjectId:
-    if isinstance(_id, ObjectId):
+def clean_object_id(_id: bson.ObjectId | str) -> bson.ObjectId:
+    if isinstance(_id, bson.ObjectId):
         return _id
     try:
-        return ObjectId(_id)
-    except InvalidId:
-        raise
+        return bson.ObjectId(_id)
+    except Exception:
+        raise bson.errors.InvalidId
 
 
 def clean_object_id_in_dicts(*args):

@@ -118,7 +118,7 @@ class Panther:
         # Put Variables In "config"
         config['monitoring'] = self.settings.get('MONITORING', config['monitoring'])
         config['default_cache_exp'] = self.settings.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
-        config['secret_key'] = self.settings.get('SECRET_KEY', config['secret_key'])
+        config['secret_key'] = self._get_secret_key()
 
         config['middlewares'] = self._get_middlewares()
         config['reversed_middlewares'] = config['middlewares'][::-1]
@@ -144,6 +144,11 @@ class Panther:
             self.settings = run_path(str(configs_path))
         except FileNotFoundError:
             logger.critical('core/configs.py Not Found.')
+
+    def _get_secret_key(self) -> bytes | None:
+        if secret_key := self.settings.get('SECRET_KEY'):
+            return secret_key.encode()
+        return None
 
     def _get_authentication_class(self) -> ModelMetaclass | None:
         return self.settings.get('AUTHENTICATION') and import_class(self.settings['AUTHENTICATION'])

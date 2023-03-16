@@ -1,13 +1,14 @@
-from collections import namedtuple
-from datetime import timedelta
-
 import orjson as json
+from types import NoneType
+from datetime import timedelta
+from collections import namedtuple
 
-from panther.configs import config
-from panther.db.connection import redis
+
 from panther.logger import logger
+from panther.configs import config
 from panther.request import Request
-from panther.response import Response
+from panther.db.connection import redis
+from panther.response import Response, ResponseDataType
 
 
 caches = dict()
@@ -31,8 +32,7 @@ def get_cached_response_data(*, request: Request) -> Cached | None:
         Get Cached Data From Memory
     """
     key = cache_key(request)
-    # noinspection PyUnresolvedReferences
-    if redis.is_connected:
+    if redis.is_connected:  # NOQA: Unresolved References
         data = (redis.get(key) or b'{}').decode()
         if cached := json.loads(data):
             return Cached(*cached)
@@ -55,12 +55,15 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
         Cache The Data In Memory
     """
     key = cache_key(request)
-    cache_data = (response._data, response.status_code)
+    cache_data: tuple[ResponseDataType, int] = (response._data, response.status_code)
 
-    # noinspection PyUnresolvedReferences
-    if redis.is_connected:
+    if redis.is_connected:  # NOQA: Unresolved References
         cache_exp_time = cache_exp_time or config['default_cache_exp']
-        cache_data = json.dumps(cache_data)
+        cache_data: bytes = json.dumps(cache_data)
+
+        if not isinstance(cache_exp_time, (timedelta, int, NoneType)):
+            raise TypeError('cache_exp_time should be "datetime.timedelta" or "int" or "None"')
+
         if cache_exp_time is None:
             logger.warning(
                 'your response are going to cache in redis forever '

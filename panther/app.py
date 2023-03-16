@@ -26,7 +26,7 @@ class API:
         self.output_model = output_model
         self.auth = auth
         self.cache = cache
-        self.cache_exp_time = cache_exp_time
+        self.cache_exp_time = cache_exp_time or config['default_cache_exp']
         self.request: Request | None = None
 
     def __call__(self, func):
@@ -58,13 +58,11 @@ class API:
             # Clean Output
             if not isinstance(response, Response):
                 response = Response(data=response)
-            data = self.clean_output(data=response._data)
+            data = self.serialize_response_data(data=response._data)
             response.set_data(data)
 
             # Set New Response To Cache
             if self.cache and self.request.method == 'GET':
-                if not (isinstance(self.cache_exp_time, timedelta) or isinstance(self.cache_exp_time, int)):
-                    raise TypeError('cache_exp_time should be datetime.timedelta or int')
                 set_cache_response(request=self.request, response=response, cache_exp_time=self.cache_exp_time)
 
             # Warning CacheExpTime
@@ -93,32 +91,32 @@ class API:
             except JSONDecodeError:
                 raise APIException(status_code=400, detail={'detail': 'JSON Decode Error'})
 
-    def clean_output(self, data):
-        # None
+    def serialize_response_data(self, data):
+        # None or Unchanged
         if data is None or self.output_model is None:
-            return data
+            serialized_data = data
 
         # Dict
-        if isinstance(data, dict):
-            _data = self.output_model(**data).dict()
+        elif isinstance(data, dict):
+            serialized_data = self.output_model(**data).dict()
 
         # BaseModel
         elif issubclass(type(data), BaseModel):
-            _data = self.output_model(**data.dict()).dict()
+            serialized_data = self.output_model(**data.dict()).dict()
 
         # List | Tuple
         elif isinstance(data, (list, tuple)):
             # Empty
             if len(data) == 0:
-                return data
+                serialized_data = data
 
             # List | Tuple of BaseModel
-            if isinstance(data[0], BaseModel):
-                _data = [self.output_model(**d.dict()).dict() for d in data]
+            elif isinstance(data[0], BaseModel):
+                serialized_data = [self.output_model(**d.dict()).dict() for d in data]
 
             # List | Tuple of Dict
             else:
-                _data = [self.output_model(**d).dict() for d in data]
+                serialized_data = [self.output_model(**d).dict() for d in data]
 
             # TODO: We didn't handle List | Tuple of List | Tuple | Bool | Str | ... (Recursive)
 
@@ -131,7 +129,7 @@ class API:
         else:
             raise TypeError("Type of Response 'data' is not valid.")
 
-        return _data
+        return serialized_data
 
     @staticmethod
     def validate_path_variables(func, variables):

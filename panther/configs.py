@@ -1,8 +1,7 @@
-from dataclasses import dataclass
-from datetime import timedelta
 from pathlib import Path
 from typing import TypedDict
-
+from datetime import timedelta
+from dataclasses import dataclass
 from pydantic.main import ModelMetaclass
 
 
@@ -21,7 +20,7 @@ class Config(TypedDict):
     reversed_middlewares: list
     db_engine: str
     default_cache_exp: timedelta | None
-    secret_key: str
+    secret_key: bytes | None
     authentication: ModelMetaclass | None
     jwt_config: JWTConfig | None
     user_model: ModelMetaclass | None
@@ -30,7 +29,7 @@ class Config(TypedDict):
 config: Config = {
     'base_dir': Path(),
     'monitoring': True,
-    'secret_key': '',
+    'secret_key': None,
     'urls': {},
     'middlewares': [],
     'reversed_middlewares': [],

@@ -1,6 +1,4 @@
 import os
-import random
-import string
 from pathlib import Path
 from panther.logger import logger
 
@@ -23,7 +21,7 @@ def load_env(env_file: str | Path, /) -> dict[str, str]:
     return variables
 
 
-def generate_secret_key(length: int = 10):
-    chars = string.ascii_letters + string.digits
-    return ''.join(random.choice(chars) for _ in range(length))
+def generate_secret_key() -> str:
+    from cryptography.fernet import Fernet
+    return Fernet.generate_key().decode()
 

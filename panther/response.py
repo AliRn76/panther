@@ -1,16 +1,20 @@
+import orjson as json
 from types import NoneType
 
-import orjson as json
+
+ResponseDataType = dict | list | tuple | str | bool | NoneType
 
 
 class Response:
-    def __init__(self, data: dict | list | tuple | str | bool = None, status_code: int = 200):
+    def __init__(self, data: ResponseDataType = None, status_code: int = 200):
         """
         :param data: should be dict, list, tuple, str, bool
         :param status_code: should be int
         """
-        if type(data) not in [dict, list, tuple, str, bool, NoneType]:
+        # TODO: Handle bytes data
+        if not isinstance(data, ResponseDataType):
             raise TypeError(f"Response data can't be '{type(data).__name__}'")
+
         self._status_code = status_code
         self._data = data
         # TODO: Add Header To Response

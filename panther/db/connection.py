@@ -1,5 +1,6 @@
-from pantherdb import PantherDB
 from redis import Redis
+from pantherdb import PantherDB
+from panther.configs import config
 
 
 class Singleton(object):
@@ -42,7 +43,7 @@ class DBSession(Singleton):
         self._session: Database = self._client.get_database()
 
     def _create_pantherdb_session(self, db_url: str):
-        self._session: PantherDB = PantherDB(db_url, return_dict=True)
+        self._session: PantherDB = PantherDB(db_url, return_dict=True, secret_key=config['secret_key'])
 
     def close(self):
         if self._db_name == 'mongodb':

@@ -43,13 +43,13 @@ setup(
         'panther': ['cli/*'],
     },
     install_requires=[
+        'pantherdb>=1.2.0',
         'pydantic>=1.10.5',
-        'rich>=13.3.1',
-        'bson>=0.5.10',
-        'pantherdb>=1.1.2',
-        'redis>=4.0.2',
+        'watchfiles>=0.18.1',
         'bpython>=0.24',
-        'watchfiles>=0.18.1'
+        'bson>=0.5.10',
+        'redis>=4.0.2',
+        'rich>=13.3.1',
     ],
     extras_require=EXTRAS_REQUIRE,
 )
