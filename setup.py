@@ -45,7 +45,7 @@ setup(
     install_requires=[
         'pantherdb>=1.2.0',
         'pydantic>=1.10.5',
-        'watchfiles>=0.18.1',
+        'uvicorn==0.20.0',
         'bpython>=0.24',
         'bson>=0.5.10',
         'redis>=4.0.2',

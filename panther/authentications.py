@@ -49,10 +49,11 @@ class JWTAuthentication:
         if user_id := payload.get('user_id') is None:
             raise AuthenticationException
         user_model = config['user_model'] or cls.model
-        user = user_model.get_one(id=user_id)
-        if user is None:
-            raise AuthenticationException
-        return user
+
+        if user := user_model.get_one(id=user_id):
+            return user
+
+        raise AuthenticationException
 
     @staticmethod
     def encode_jwt(user_id: int) -> str:

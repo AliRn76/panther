@@ -1,3 +1,7 @@
+### 1.3.2
+- Add Uvicorn to the setup requirements
+- Update Readme
+
 ### 1.3.1
 - Fix a bug in project creation template
 - Fix a bug in caching

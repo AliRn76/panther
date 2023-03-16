@@ -77,14 +77,10 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
     ```
 
 - #### Run Project
-  Panther needs Uvicorn as ASGI (Asynchronous Server Gateway Interface)
-  ```console
-  $ pip install uvicorn[standard]
-  ```
-  Then
-  ```console
-  $ panther run 
-  ```
+    Panther Uses [Uvicorn](https://github.com/encode/uvicorn) as ASGI (Asynchronous Server Gateway Interface)
+    ```console
+    $ panther run 
+    ```
 
 - #### Monitoring Requests
 
@@ -93,7 +89,7 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
     ```
 
 - #### Python Shell
- 
+    Panther Uses [bpython](https://bpython-interpreter.org) for shell
     ```console
     $ panther shell 
     ```
@@ -138,7 +134,7 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
     **app/apis.py**:
     
     ```python
-    from datetime import timedelta, datetime
+    from datetime import datetime
 
     from panther.app import API
     from panther.configs import config
@@ -152,15 +148,13 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
         return {'detail': 'Hello World'}
     
     
-    @API(cache=True, cache_exp_time=timedelta(minutes=2))
+    @API(cache=True)
     async def info(request: Request):
         data = {
             'version': version(),
             'datetime_now': datetime.now().isoformat(),
             'user_agent': request.headers.user_agent,
-            'middlewares': config['middlewares'],
             'db_engine': config['db_engine'],
-            'urls': config['urls'],
         }
         return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
     ```

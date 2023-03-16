@@ -2,6 +2,10 @@
 ## Panther 
 <b>Is A Fast &  Friendly, Web Framework For Building Async APIs With Python 3.11+</b> 
 
+>_Full Documentation_ -> [https://pantherpy.github.io](https://pantherpy.github.io)
+> 
+>_Github_ -> [https://github.com/AliRn76/panther/](https://github.com/AliRn76/panther/)
+
 ---
 
 ### Features
@@ -58,7 +62,7 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
     <summary>Install Panther</summary>
     * Normal
       <pre>$ pip install panther</pre>
-    * Include JWT Authentication
+    * Include JWT Authentication & MongoDB Requirements
       <pre>$ pip install panther[full]</pre>
   </details>
   
@@ -73,14 +77,10 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
     ```
 
 - #### Run Project
-  Panther needs Uvicorn as ASGI (Asynchronous Server Gateway Interface)
-  ```console
-  $ pip install uvicorn[standard]
-  ```
-  Then
-  ```console
-  $ panther run 
-  ```
+    Panther uses [Uvicorn](https://github.com/encode/uvicorn) as ASGI (Asynchronous Server Gateway Interface)
+    ```console
+    $ panther run 
+    ```
 
 - #### Monitoring Requests
 
@@ -89,7 +89,7 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
     ```
 
 - #### Python Shell
- 
+    Panther Uses [bpython](https://bpython-interpreter.org) for shell
     ```console
     $ panther shell 
     ```
@@ -134,7 +134,7 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
     **app/apis.py**:
     
     ```python
-    from datetime import timedelta, datetime
+    from datetime import datetime
 
     from panther.app import API
     from panther.configs import config
@@ -148,15 +148,13 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
         return {'detail': 'Hello World'}
     
     
-    @API(cache=True, cache_exp_time=timedelta(minutes=2))
+    @API(cache=True)
     async def info(request: Request):
         data = {
             'version': version(),
             'datetime_now': datetime.now().isoformat(),
             'user_agent': request.headers.user_agent,
-            'middlewares': config['middlewares'],
             'db_engine': config['db_engine'],
-            'urls': config['urls'],
         }
         return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
     ```
