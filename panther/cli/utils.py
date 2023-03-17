@@ -1,3 +1,4 @@
+from panther.logger import logger
 
 logo = r"""│    ____                 __    __                         │
 │   /\  _`\              /\ \__/\ \                        │
@@ -119,11 +120,19 @@ run_help_message = """
     """
 
 
-def error(message: str | TypeError) -> None:
-    print(f'Error: {message}\n\nUse panther -h for more help')
+def cli_error(message: str | TypeError) -> None:
+    logger.error(f'Error: {message}\n\nUse panther -h for more help')
 
 
-def clean_args(args: list[str]):
+def import_error_message(module_name: str) -> str:
+    return f'No module named "{module_name}"\n\t    Hint: Try to install with "pip install {module_name}"'
+
+
+def import_error(module_name: str) -> None:
+    logger.critical(import_error_message(module_name))
+
+
+def clean_args(args: list[str]) -> dict:
     """
     Input: ['--reload', '--host', '127.0.0.1', ...]
     Output: {'--reload: None, 'host': '127.0.0.1', ...}

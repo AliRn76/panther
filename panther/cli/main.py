@@ -6,7 +6,7 @@ from rich import print as rprint
 from panther.cli.run_command import run
 from panther.cli.create_command import create
 from panther.cli.monitor_command import monitor
-from panther.cli.utils import clean_args, help_message, error
+from panther.cli.utils import clean_args, help_message, cli_error
 
 
 def shell() -> None:
@@ -34,4 +34,4 @@ def start() -> None:
         case 'monitor':
             monitor()
         case _:
-            error('Invalid Arguments.')
+            cli_error('Invalid Arguments.')

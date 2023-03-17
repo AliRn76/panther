@@ -1,7 +1,7 @@
 from redis import Redis
 from pantherdb import PantherDB
 from panther.configs import config
-from panther.cli.utils import error
+from panther.cli.utils import import_error_message
 
 
 class Singleton(object):
@@ -41,8 +41,8 @@ class DBSession(Singleton):
             from pymongo import MongoClient
             from pymongo.database import Database
         except ImportError:
-            error('No module named "pymongo"\n\nHint: Try to install with "pip install pymongo"')
-            raise ImportError(error)
+            raise ImportError(import_error_message('pymongo'))
+
         self._client: MongoClient = MongoClient(db_url)
         self._session: Database = self._client.get_database()
 

@@ -1,7 +1,7 @@
 import os
 import uvicorn
 from rich import print as rprint
-from panther.cli.utils import error, run_help_message
+from panther.cli.utils import cli_error, run_help_message
 
 
 def _handle_boolean_commands(args: dict[str, str | None]) -> dict:
@@ -52,4 +52,4 @@ def run(args: dict[str, str | None]) -> None:
     try:
         uvicorn.run('main:app', **command)
     except TypeError as e:
-        error(e)
+        cli_error(e)

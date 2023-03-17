@@ -10,7 +10,7 @@ from rich.panel import Panel
 from rich.table import Table
 from watchfiles import watch
 
-from panther.cli.utils import error
+from panther.cli.utils import cli_error
 
 
 def monitor() -> None:
@@ -63,7 +63,7 @@ def monitor() -> None:
                     live.refresh()
 
     except FileNotFoundError:
-        error("Monitor Log File Does Not Exists.\n\nHint: Make sure 'Monitor' is True in 'core/configs' "
-              "or you are in a correct directory.")
+        cli_error("Monitor Log File Does Not Exists.\n\nHint: Make sure 'Monitor' is True in 'core/configs' "
+                  "or you are in a correct directory.")
     except KeyboardInterrupt:
         pass

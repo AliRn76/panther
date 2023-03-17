@@ -3,13 +3,13 @@ import sys
 import time
 
 from panther.cli.template import Template
-from panther.cli.utils import error
+from panther.cli.utils import cli_error
 
 
 def create(args: list):
     # Get Project Name
     if len(args) == 0:
-        return error('Not Enough Parameters.')
+        return cli_error('Not Enough Parameters.')
     project_name = args[0]
 
     # Get Base Directory
@@ -20,7 +20,7 @@ def create(args: list):
     # Check All The Directories Existence
     existence = check_all_directories(base_directory)
     if existence:
-        return error(f'"{existence}" Directory Already Exists.')
+        return cli_error(f'"{existence}" Directory Already Exists.')
 
     load_animation1()
 

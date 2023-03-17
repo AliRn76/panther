@@ -1,13 +1,13 @@
 from datetime import datetime
 from panther.configs import config
 from panther.db.models import User
-from panther.cli.utils import error
 from panther.request import Request
+from panther.cli.utils import import_error
 from panther.exceptions import AuthenticationException
 try:
     from jose import JWTError, jwt
 except ImportError:
-    error('No module named "python-jose"\n\nHint: Try to install with "pip install python-jose"')
+    import_error('python-jose')
     exit()
 
 

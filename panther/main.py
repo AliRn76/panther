@@ -161,7 +161,7 @@ class Panther:
         """Only Collect JWT Config If Authentication Is JWTAuthentication"""
         if getattr(config['authentication'], '__name__', None) == 'JWTAuthentication':
             user_config = self.settings.get('JWTConfig')
-            return JWTConfig(**user_config) if user_config else JWTConfig(key=config['secret_key'])
+            return JWTConfig(**user_config) if user_config else JWTConfig(key=config['secret_key'].decode())
 
     def _get_middlewares(self) -> list:
         """Collect The Middlewares & Set db_engine If One Of Middlewares Was For DB"""

@@ -1,3 +1,6 @@
+### 1.5.1
+- Fix error messages
+
 ### 1.5.0
 - Refactor Mongodb ODM
 - Minor Improvement
