@@ -35,7 +35,7 @@ note: if your password has special characters, you would need to URL-Encode.
 ex : monodb://my-name:my-pass@localhost:27017/?authSource=users
 """
 # Go To https://framework.org/Authentications For More Options
-# AUTHENTICATION = 'panther.authentications.JWTAuthentication'
+AUTHENTICATION = 'panther.authentications.JWTAuthentication'
 
 # Only If Authentication Set To JWT
 JWTConfig = {

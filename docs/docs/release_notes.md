@@ -1,3 +1,7 @@
+### 1.5.2
+- Improve Response data serialization
+- Fix a bug in JWTAuthentication
+
 ### 1.5.1
 - Fix error messages
 

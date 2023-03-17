@@ -30,13 +30,14 @@ def clean_object_id(_id: bson.ObjectId | str) -> bson.ObjectId:
 
 
 def clean_object_id_in_dicts(*args):
+    # TODO: Refactor this func
     for d in args:
         if d is None:
             continue
         if '_id' in d:
             d['_id'] = clean_object_id(d['_id'])
         if 'id' in d:
-            d['id'] = clean_object_id(d['id'])
+            d['_id'] = clean_object_id(d.pop('id'))
 
 
 def merge_dicts(*args) -> dict:

@@ -98,7 +98,7 @@ class Panther:
                 response = self.handle_exceptions(e)
 
         await http_response(
-            send, status_code=response.status_code, monitoring=monitoring_middleware, body=response.data,
+            send, status_code=response.status_code, monitoring=monitoring_middleware, body=response.body,
         )
 
     @classmethod

@@ -1,19 +1,21 @@
 import orjson as json
 from types import NoneType
+from pydantic.main import BaseModel as PydanticBaseModel
 
-
-ResponseDataType = dict | list | tuple | str | bool | NoneType
+ResponseDataTypes = int | dict | list | tuple | set | str | bool | NoneType
+IterableDataTypes = list | tuple | set
 
 
 class Response:
-    def __init__(self, data: ResponseDataType = None, status_code: int = 200):
+    def __init__(self, data: ResponseDataTypes = None, status_code: int = 200):
         """
-        :param data: should be dict, list, tuple, str, bool
+        :param data: should be dict, list, tuple, str, bool, NoneType, subclass of PydanticBaseModel
+            or iterable of them
         :param status_code: should be int
         """
         # TODO: Handle bytes data
-        if not isinstance(data, ResponseDataType):
-            raise TypeError(f"Response data can't be '{type(data).__name__}'")
+        data = self.clean_data_type(data)
+        self.check_status_code(status_code)
 
         self._status_code = status_code
         self._data = data
@@ -21,15 +23,31 @@ class Response:
 
     @property
     def status_code(self) -> int:
-        if isinstance(self._status_code, int):
-            return self._status_code
-        else:
-            raise TypeError(f"Response 'status_code' Should Be int. ('{self._status_code}' -> {type(self._status_code)})")
+        return self._status_code
 
     @property
-    def data(self) -> bytes:
+    def body(self) -> bytes:
         return json.dumps(self._data)
 
     def set_data(self, data) -> None:
         self._data = data
 
+    @classmethod
+    def check_status_code(cls, status_code: any):
+        if not isinstance(status_code, int):
+            error = f'Response "status_code" Should Be "int". ("{status_code}" -> {type(status_code)})'
+            raise TypeError(error)
+
+    @classmethod
+    def clean_data_type(cls, data: any):
+        """
+        Make sure the response data is only ResponseDataTypes
+        """
+        if issubclass(type(data), PydanticBaseModel):
+            return data.dict()
+
+        elif isinstance(data, IterableDataTypes):
+            return [cls.clean_data_type(d) for d in data]
+
+        else:
+            return data

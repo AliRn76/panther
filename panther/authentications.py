@@ -1,4 +1,5 @@
 from datetime import datetime
+from panther.logger import logger
 from panther.configs import config
 from panther.db.models import User
 from panther.request import Request
@@ -9,9 +10,6 @@ try:
 except ImportError:
     import_error('python-jose')
     exit()
-
-
-JWTConfig = config['jwt_config']
 
 
 class JWTAuthentication:
@@ -31,14 +29,15 @@ class JWTAuthentication:
     def authentication(cls, request: Request):
         auth = cls.get_authorization_header(request).split()
         if not auth or auth[0].lower() != cls.keyword.lower().encode():
+            logger.error(f'JWT Authentication Error: "token keyword is not valid"')
             raise AuthenticationException
-
         if len(auth) != 2:
+            logger.error(f'JWT Authentication Error: "len of token should be 2"')
             raise AuthenticationException
-
         try:
             token = auth[1].decode()
         except UnicodeError:
+            logger.error(f'JWT Authentication Error: "Unicode Error"')
             raise AuthenticationException
 
         payload = cls.decode_jwt(token)
@@ -46,30 +45,33 @@ class JWTAuthentication:
 
     @classmethod
     def get_user(cls, payload: dict):
-        if user_id := payload.get('user_id') is None:
+        if (user_id := payload.get('user_id')) is None:
+            logger.error(f'JWT Authentication Error: "Payload does not have user_id"')
             raise AuthenticationException
-        user_model = config['user_model'] or cls.model
 
-        if user := user_model.get_one(id=user_id):
+        user_model = config['user_model'] or cls.model
+        if user := user_model.find_one(id=user_id):
             return user
 
+        logger.error(f'JWT Authentication Error: "User not found"')
         raise AuthenticationException
 
     @staticmethod
     def encode_jwt(user_id: int) -> str:
         """Encode JWT from user_id."""
-        expire = datetime.utcnow() + JWTConfig.life_time
+        expire = datetime.utcnow() + config['jwt_config'].life_time
         access_payload = {
             'token_type': 'access',
             'user_id': user_id,
             'exp': expire,
         }
-        return jwt.encode(access_payload, JWTConfig.key, algorithm=JWTConfig.algorithm)
+        return jwt.encode(access_payload, config['jwt_config'].key, algorithm=config['jwt_config'].algorithm)
 
     @staticmethod
     def decode_jwt(token: str) -> dict:
         """Decode JWT token to user_id (it can return multiple variable ... )"""
         try:
-            return jwt.decode(token, JWTConfig.key, algorithms=[JWTConfig.algorithm])
-        except JWTError:
+            return jwt.decode(token, config['jwt_config'].key, algorithms=[config['jwt_config'].algorithm])
+        except JWTError as e:
+            logger.error(f'JWT Authentication Error: "{e}"')
             raise AuthenticationException

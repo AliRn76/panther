@@ -8,7 +8,7 @@ from panther.logger import logger
 from panther.configs import config
 from panther.request import Request
 from panther.db.connection import redis
-from panther.response import Response, ResponseDataType
+from panther.response import Response, ResponseDataTypes
 
 
 caches = dict()
@@ -55,7 +55,7 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
         Cache The Data In Memory
     """
     key = cache_key(request)
-    cache_data: tuple[ResponseDataType, int] = (response._data, response.status_code)
+    cache_data: tuple[ResponseDataTypes] = (response._data, response.status_code)
 
     if redis.is_connected:  # NOQA: Unresolved References
         cache_exp_time = cache_exp_time or config['default_cache_exp']

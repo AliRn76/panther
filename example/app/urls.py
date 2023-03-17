@@ -20,7 +20,8 @@ urls = {
     'res-req-data/': res_request_data,
     'res-req-data-output/': res_request_data_with_output_model,
     'redis/': using_redis,
-    'sql/': using_sqlalchemy,
+    'login/': login,
+    'auth/': auth_true,
     'test/': test,
     '': single_user,
 }

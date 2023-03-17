@@ -1,16 +1,15 @@
 import functools
 from datetime import timedelta
 
-from orjson.orjson import JSONDecodeError
 from pydantic import ValidationError
-from pydantic.main import BaseModel
+from orjson.orjson import JSONDecodeError
 
-from panther.caching import get_cached_response_data, set_cache_response
 from panther.configs import config
-from panther.exceptions import APIException, InvalidPathVariableException
 from panther.logger import logger
 from panther.request import Request
-from panther.response import Response
+from panther.response import Response, IterableDataTypes
+from panther.caching import get_cached_response_data, set_cache_response
+from panther.exceptions import APIException, InvalidPathVariableException
 
 
 class API:
@@ -76,7 +75,7 @@ class API:
         auth_class = config['authentication']
         if self.auth:
             if not auth_class:
-                raise TypeError('Authentication has not set in your configs.')
+                raise TypeError('"AUTHENTICATION" has not been set in core/configs')
             user = auth_class.authentication(self.request)
             self.request.set_user(user=user)
 
@@ -92,44 +91,29 @@ class API:
                 raise APIException(status_code=400, detail={'detail': 'JSON Decode Error'})
 
     def serialize_response_data(self, data):
+        """
+        We serializer the response here instead of response.py file
+        because we don't have access to the "output_model" there
+        """
+
         # None or Unchanged
         if data is None or self.output_model is None:
-            serialized_data = data
+            return data
 
+        return self.serialize_with_output_model(data)
+
+    def serialize_with_output_model(self, data: any):
         # Dict
-        elif isinstance(data, dict):
-            serialized_data = self.output_model(**data).dict()
+        if isinstance(data, dict):
+            return self.output_model(**data).dict()
 
-        # BaseModel
-        elif issubclass(type(data), BaseModel):
-            serialized_data = self.output_model(**data.dict()).dict()
+        # Iterable
+        elif isinstance(data, IterableDataTypes):
+            return [self.serialize_with_output_model(d) for d in data]
 
-        # List | Tuple
-        elif isinstance(data, (list, tuple)):
-            # Empty
-            if len(data) == 0:
-                serialized_data = data
-
-            # List | Tuple of BaseModel
-            elif isinstance(data[0], BaseModel):
-                serialized_data = [self.output_model(**d.dict()).dict() for d in data]
-
-            # List | Tuple of Dict
-            else:
-                serialized_data = [self.output_model(**d).dict() for d in data]
-
-            # TODO: We didn't handle List | Tuple of List | Tuple | Bool | Str | ... (Recursive)
-
-        # Str | Bool | Set
-        elif isinstance(data, (str, bool, set)):
-            raise TypeError('Type of Response data is not match with output_model. '
-                            '\n*hint: You may want to pass None to output_model')
-
-        # Unknown
-        else:
-            raise TypeError("Type of Response 'data' is not valid.")
-
-        return serialized_data
+        # Str | Bool
+        raise TypeError('Type of Response data is not match with output_model. '
+                        '\n*hint: You may want to pass None to output_model')
 
     @staticmethod
     def validate_path_variables(func, variables):

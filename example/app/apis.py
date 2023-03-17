@@ -1,22 +1,20 @@
-from datetime import timedelta
-
-from app.models import User
-from app.serializers import UserInputSerializer, UserOutputSerializer
-
 from panther.app import API
-from panther.db.connection import redis
+from panther.authentications import JWTAuthentication
 from panther.logger import logger
 from panther.request import Request
 from panther.response import Response
+from panther.db.connection import redis
 
-
-@API(cache=False, cache_exp_time=timedelta(hours=1), auth=False)
-async def return_none(request: Request):
-    print(f'{request.user=}')
-    return
+from app.serializers import UserInputSerializer, UserOutputSerializer
+from app.models import User
 
 
 @API()
+async def return_none():
+    return None
+
+
+@API(cache=True)
 async def return_dict():
     return {'detail': 'ok'}
 
@@ -68,18 +66,16 @@ async def using_redis(request: Request):
     return Response()
 
 
-@API(input_model=UserInputSerializer)
-async def using_sqlalchemy(request: Request):
+@API()
+async def login():
+    user = User.insert_one(username='Ali', password='xxxx')
+    token = JWTAuthentication.encode_jwt(user.id)
+    return Response(token)
 
-    print(type(request.data))
 
-    user = User.create_and_commit(username=request.data.username, password=request.data.password)
-    print(f'{user = }')
-    print(f'{user.username = }')
-    print(f'{user.id = }')
-    get_user = User.get_one(username='ali2', password='123')
-    print(f'{get_user.id = }')
-    return Response()
+@API(auth=True)
+async def auth_true(request: Request):
+    return Response(request.user)
 
 
 async def single_user(request: Request):

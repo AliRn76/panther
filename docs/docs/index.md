@@ -78,6 +78,7 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
 
 - #### Run Project
     Panther uses [Uvicorn](https://github.com/encode/uvicorn) as ASGI (Asynchronous Server Gateway Interface)
+    
     ```console
     $ panther run 
     ```
@@ -90,6 +91,7 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
 
 - #### Python Shell
     Panther Uses [bpython](https://bpython-interpreter.org) for shell
+    
     ```console
     $ panther shell 
     ```
