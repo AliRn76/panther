@@ -22,6 +22,7 @@ urls = {
     'redis/': using_redis,
     'login/': login,
     'auth/': auth_true,
+    'perm/': check_permission,
     'test/': test,
     '': single_user,
 }

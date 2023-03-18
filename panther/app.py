@@ -4,12 +4,13 @@ from datetime import timedelta
 from pydantic import ValidationError
 from orjson.orjson import JSONDecodeError
 
-from panther.configs import config
+from panther import status
 from panther.logger import logger
+from panther.configs import config
 from panther.request import Request
 from panther.response import Response, IterableDataTypes
 from panther.caching import get_cached_response_data, set_cache_response
-from panther.exceptions import APIException, InvalidPathVariableException
+from panther.exceptions import APIException, InvalidPathVariableException, AuthorizationException, JsonDecodeException
 
 
 class API:
@@ -18,14 +19,16 @@ class API:
             input_model=None,
             output_model=None,
             auth: bool = False,
+            permissions: list | None = None,
             cache: bool = False,
             cache_exp_time: timedelta | int | None = None,
     ):
         self.input_model = input_model
         self.output_model = output_model
         self.auth = auth
+        self.permissions = permissions or []
         self.cache = cache
-        self.cache_exp_time = cache_exp_time or config['default_cache_exp']
+        self.cache_exp_time = cache_exp_time
         self.request: Request | None = None
 
     def __call__(self, func):
@@ -35,6 +38,9 @@ class API:
 
             # Handle Authentication
             self.handle_authentications()
+
+            # Handle Authentication
+            self.handle_permissions()
 
             # Validate Input
             self.validate_input()
@@ -57,7 +63,7 @@ class API:
             # Clean Output
             if not isinstance(response, Response):
                 response = Response(data=response)
-            data = self.serialize_response_data(data=response._data)
+            data = self.serialize_response_data(data=response._data)  # NOQA: Access to a protected member
             response.set_data(data)
 
             # Set New Response To Cache
@@ -79,6 +85,14 @@ class API:
             user = auth_class.authentication(self.request)
             self.request.set_user(user=user)
 
+    def handle_permissions(self) -> None:
+        for perm in self.permissions:
+            if type(perm.authorization).__name__ != 'method':
+                logger.error(f'{perm.__name__}.authorization should be "classmethod"')
+                continue
+            if perm.authorization(request=self.request) is False:
+                raise AuthorizationException
+
     def validate_input(self):
         if self.input_model:
             try:
@@ -86,9 +100,9 @@ class API:
                 self.request.set_validated_data(validated_data)
             except ValidationError as validation_error:
                 error = {e['loc'][0]: e['msg'] for e in validation_error.errors()}
-                raise APIException(status_code=400, detail=error)
+                raise APIException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
             except JSONDecodeError:
-                raise APIException(status_code=400, detail={'detail': 'JSON Decode Error'})
+                raise JsonDecodeException
 
     def serialize_response_data(self, data):
         """

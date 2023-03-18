@@ -19,6 +19,16 @@ class AuthenticationException(APIException):
     status_code = status.HTTP_401_UNAUTHORIZED
 
 
+class AuthorizationException(APIException):
+    detail = 'Permission Denied'
+    status_code = status.HTTP_403_FORBIDDEN
+
+
+class JsonDecodeException(APIException):
+    detail = 'JSON Decode Error'
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
 class InvalidPathVariableException(APIException):
     def __init__(self, value: str, arg_type: type):
         detail = f"Path variable '{value}' should be '{arg_type.__name__}'"

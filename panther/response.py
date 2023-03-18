@@ -9,8 +9,7 @@ IterableDataTypes = list | tuple | set
 class Response:
     def __init__(self, data: ResponseDataTypes = None, status_code: int = 200):
         """
-        :param data: should be dict, list, tuple, str, bool, NoneType, subclass of PydanticBaseModel
-            or iterable of them
+        :param data: should be int | dict | list | tuple | set | str | bool or NoneType
         :param status_code: should be int
         """
         # TODO: Handle bytes data
@@ -41,7 +40,7 @@ class Response:
     @classmethod
     def clean_data_type(cls, data: any):
         """
-        Make sure the response data is only ResponseDataTypes
+        Make sure the response data is only ResponseDataTypes or Iterable of ResponseDataTypes
         """
         if issubclass(type(data), PydanticBaseModel):
             return data.dict()

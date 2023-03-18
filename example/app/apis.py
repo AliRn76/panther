@@ -7,6 +7,7 @@ from panther.db.connection import redis
 
 from app.serializers import UserInputSerializer, UserOutputSerializer
 from app.models import User
+from core.permissions import UserPermission
 
 
 @API()
@@ -75,6 +76,11 @@ async def login():
 
 @API(auth=True)
 async def auth_true(request: Request):
+    return Response(request.user)
+
+
+@API(auth=True, permissions=[UserPermission])
+async def check_permission(request: Request):
     return Response(request.user)
 
 
