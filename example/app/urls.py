@@ -23,6 +23,7 @@ urls = {
     'login/': login,
     'auth/': auth_true,
     'perm/': check_permission,
+    'rate-limit/': rate_limit,
     'test/': test,
     '': single_user,
 }

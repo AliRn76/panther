@@ -29,6 +29,11 @@ class JsonDecodeException(APIException):
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
+class ThrottlingException(APIException):
+    detail = 'Too Many Request'
+    status_code = status.HTTP_429_TOO_MANY_REQUESTS
+
+
 class InvalidPathVariableException(APIException):
     def __init__(self, value: str, arg_type: type):
         detail = f"Path variable '{value}' should be '{arg_type.__name__}'"

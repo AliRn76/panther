@@ -1,9 +1,12 @@
+from datetime import timedelta
+
 from panther.app import API
 from panther.authentications import JWTAuthentication
 from panther.logger import logger
 from panther.request import Request
 from panther.response import Response
 from panther.db.connection import redis
+from panther.throttlings import Throttling
 
 from app.serializers import UserInputSerializer, UserOutputSerializer
 from app.models import User
@@ -82,6 +85,11 @@ async def auth_true(request: Request):
 @API(auth=True, permissions=[UserPermission])
 async def check_permission(request: Request):
     return Response(request.user)
+
+
+@API(throttling=Throttling(rate=5, duration=timedelta(minutes=1)))
+async def rate_limit():
+    return Response(data=('car', 'home', 'phone', 'book'), status_code=202)
 
 
 async def single_user(request: Request):

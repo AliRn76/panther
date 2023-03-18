@@ -16,12 +16,8 @@ Cached = namedtuple('Cached', ['data', 'status_code'])
 
 
 def cache_key(request: Request, /):
-    # TODO: Add request.data and ... to key
-    if request.user:
-        key = f'{request.user.id}-{request.path}'
-    else:
-        key = f'{request.client.ip}-{request.path}'
-    return key
+    client = request.user and request.user.id or request.client.ip
+    return f'{client}-{request.path}-{request.data}'
 
 
 def get_cached_response_data(*, request: Request) -> Cached | None:

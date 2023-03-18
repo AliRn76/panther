@@ -4,6 +4,8 @@ from datetime import timedelta
 from dataclasses import dataclass
 from pydantic.main import ModelMetaclass
 
+from panther.throttlings import Throttling
+
 
 @dataclass(frozen=True)
 class JWTConfig:
@@ -25,6 +27,7 @@ class Config(TypedDict):
     authentication: ModelMetaclass | None
     jwt_config: JWTConfig | None
     user_model: ModelMetaclass | None
+    throttling: Throttling | None
 
 
 config: Config = {
@@ -40,4 +43,5 @@ config: Config = {
     'jwt_config': None,
     'authentication': None,
     'user_model': None,
+    'throttling': None,
 }

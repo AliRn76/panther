@@ -1,3 +1,6 @@
+### 1.7.0
+- Add Throttling
+
 ### 1.6.1
 - Add AdminPermission
 

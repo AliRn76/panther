@@ -56,3 +56,13 @@ _Example:_ `URLS = 'configs/urls.py'`
 It uses while you are using `cache=True` in `@API` decorator
 
 [read more ...](https://pantherpy.github.io/cache)
+
+---
+### THROTTLING
+> <b>Type:</b> `Throttling | None` (<b>Default:</b> `None`)
+
+We use it as default `throttling` you can overwrite it in your `@API` too
+
+_Example:_ `THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))`
+
+[read more ...](https://pantherpy.github.io/cache)

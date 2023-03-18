@@ -2,6 +2,7 @@
 from datetime import timedelta
 from pathlib import Path
 
+from panther.throttlings import Throttling
 from panther.utils import load_env
 
 BASE_DIR = Path(__name__).resolve().parent
@@ -50,3 +51,5 @@ URLs = 'core/urls.py'
 USER_MODEL = 'app.models.User'
 
 DEFAULT_CACHE_EXP = timedelta(seconds=10)
+
+THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))

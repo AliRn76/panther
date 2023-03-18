@@ -1,5 +1,5 @@
 import functools
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from pydantic import ValidationError
 from orjson.orjson import JSONDecodeError
@@ -8,9 +8,12 @@ from panther import status
 from panther.logger import logger
 from panther.configs import config
 from panther.request import Request
+from panther.throttlings import Throttling, throttling_storage
 from panther.response import Response, IterableDataTypes
-from panther.caching import get_cached_response_data, set_cache_response
-from panther.exceptions import APIException, InvalidPathVariableException, AuthorizationException, JsonDecodeException
+from panther.caching import get_cached_response_data, set_cache_response, cache_key
+from panther.exceptions import APIException, InvalidPathVariableException, AuthorizationException, JsonDecodeException, \
+    ThrottlingException
+from panther.utils import round_datetime
 
 
 class API:
@@ -20,6 +23,7 @@ class API:
             output_model=None,
             auth: bool = False,
             permissions: list | None = None,
+            throttling: Throttling = None,
             cache: bool = False,
             cache_exp_time: timedelta | int | None = None,
     ):
@@ -27,6 +31,7 @@ class API:
         self.output_model = output_model
         self.auth = auth
         self.permissions = permissions or []
+        self.throttling = throttling
         self.cache = cache
         self.cache_exp_time = cache_exp_time
         self.request: Request | None = None
@@ -38,6 +43,9 @@ class API:
 
             # Handle Authentication
             self.handle_authentications()
+
+            # Handle Throttling
+            self.handle_throttling()
 
             # Handle Authentication
             self.handle_permissions()
@@ -84,6 +92,16 @@ class API:
                 raise TypeError('"AUTHENTICATION" has not been set in core/configs')
             user = auth_class.authentication(self.request)
             self.request.set_user(user=user)
+
+    def handle_throttling(self) -> None:
+        if throttling := self.throttling or config['throttling']:
+            key = cache_key(self.request)
+            time = round_datetime(datetime.now(), throttling.duration)
+            throttling_key = f'{time}-{key}'
+            if throttling_storage[throttling_key] > throttling.rate:
+                raise ThrottlingException
+
+            throttling_storage[throttling_key] += 1
 
     def handle_permissions(self) -> None:
         for perm in self.permissions:

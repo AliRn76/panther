@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timedelta
 from pathlib import Path
 from panther.logger import logger
 
@@ -25,3 +26,6 @@ def generate_secret_key() -> str:
     from cryptography.fernet import Fernet
     return Fernet.generate_key().decode()
 
+
+def round_datetime(dt: datetime, delta: timedelta):
+    return datetime.min + round((dt - datetime.min) / delta) * delta
