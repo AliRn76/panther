@@ -1,3 +1,6 @@
+### 1.6.1
+- Add AdminPermission
+
 ### 1.6.0
 - Handle Permissions
 
