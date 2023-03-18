@@ -75,3 +75,15 @@ class JWTAuthentication:
         except JWTError as e:
             logger.error(f'JWT Authentication Error: "{e}"')
             raise AuthenticationException
+
+    @classmethod
+    def login(cls, user_id: int) -> str:
+        """alias of encode_jwt()"""
+        return cls.encode_jwt(user_id=user_id)
+
+    @staticmethod
+    def logout(user_id: int):
+        # TODO:
+        #   1. Save the token in cache
+        #   2. Check logout cached token in authentication()
+        pass

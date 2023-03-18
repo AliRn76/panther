@@ -18,14 +18,16 @@ class DBSession(Singleton):
 
     def __init__(self, db_url: str | None = None):
         if db_url:
-            self._db_name = db_url[:db_url.find(':')]
+            if (seperator := db_url.find(':')) == -1:
+                # ex: db_url = 'some_db' (or something without ':')
+                seperator = None
+            self._db_name = db_url[:seperator]
             match self._db_name:
                 case 'mongodb':
                     self._create_mongodb_session(db_url)
                 case 'pantherdb':
                     self._create_pantherdb_session(db_url[12:])
                 case _:
-                    # TODO: self._name does not have a last character if only path passed
                     raise ValueError(f'We are not support "{self._db_name}" database yet')
 
     @property
@@ -67,5 +69,3 @@ class RedisConnection(Singleton, Redis):
 
 db: DBSession = DBSession()
 redis: Redis = RedisConnection()
-
-

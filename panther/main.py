@@ -72,12 +72,22 @@ class Panther:
             for middleware in config['middlewares']:
                 request = await middleware.before(request=request)
 
+            # User Didn't Use API Decorator
+            if not hasattr(endpoint, '__wrapped__'):
+                logger.critical(f'You may have forgotten to use @API on the {endpoint.__name__}()')
+                return await http_response(
+                    send,
+                    status_code=status.HTTP_510_NOT_EXTENDED,
+                    monitoring=monitoring_middleware,
+                    exception=True,
+                )
+
             # Call Endpoint
-            # TODO: Maybe we should move the caching here ...
             response = await endpoint(request=request, **path_variables)
         except APIException as e:
             response = self.handle_exceptions(e)
         except Exception as e:
+            # Every unhandled exception in Panther or code will catch here
             logger.critical(e)
             return await http_response(
                 send,
@@ -86,11 +96,7 @@ class Panther:
                 exception=True,
             )
 
-        # TODO: User didn't use the @API() on the endpoint
-        #   Check this condition in urls (while collecting)
-
         # Call 'After' Middleware
-        # TODO: Save the reversed middlewares in config
         for middleware in config['reversed_middlewares']:
             try:
                 response = await middleware.after(response=response)
@@ -135,7 +141,8 @@ class Panther:
         collect_urls('', urls, collected_urls)
         config['urls'] = finalize_urls(collected_urls)
         logger.debug('Configs loaded.')
-        logger.info('Run "panther monitor" in another session for Monitoring.')
+        if config['monitoring']:
+            logger.info('Run "panther monitor" in another session for Monitoring.')
 
     def _check_configs(self):
         from panther.logger import logger
