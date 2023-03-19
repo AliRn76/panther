@@ -8,7 +8,7 @@ from panther import status
 from panther.logger import logger
 from panther.configs import config
 from panther.request import Request
-from panther.throttlings import Throttling, throttling_storage
+from panther.throttling import Throttling, throttling_storage
 from panther.response import Response, IterableDataTypes
 from panther.caching import get_cached_response_data, set_cache_response, cache_key
 from panther.exceptions import APIException, InvalidPathVariableException, AuthorizationException, JsonDecodeException, \

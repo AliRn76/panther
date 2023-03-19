@@ -1,6 +1,6 @@
-from panther.db import BaseModel
+from panther.db import Model
 
 
-class User(BaseModel):
+class User(Model):
     username: str
     password: str

@@ -6,7 +6,7 @@ from panther.logger import logger
 from panther.request import Request
 from panther.response import Response
 from panther.db.connection import redis
-from panther.throttlings import Throttling
+from panther.throttling import Throttling
 
 from app.serializers import UserInputSerializer, UserOutputSerializer
 from app.models import User

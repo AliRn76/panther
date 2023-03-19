@@ -1,3 +1,7 @@
+### 1.7.1
+- Rename db BaseModel to Model 
+- Add more docs
+
 ### 1.7.0
 - Add Throttling
 

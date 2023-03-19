@@ -28,7 +28,7 @@ async def info(request: Request):
     return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 """
 
-models_py = """from panther.db import BaseModel
+models_py = """from panther.db import Model
 """
 
 serializers_py = """from pydantic import BaseModel as Serializer

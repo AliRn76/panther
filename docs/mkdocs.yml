@@ -30,6 +30,13 @@ nav:
   - Tutorials:
       - Create Project: 'tutorials/create_project.md'
       - First API: 'tutorials/first_api.md'
+  - Monitoring: 'monitoring.md'
+  - Log Queries: 'log_queries.md'
+  - Middlewares: 'middlewares.md'
+  - Authentications: 'authentications.md'
+  - URLs: 'urls.md'
+  - Throttling: 'throttling.md'
+  - Caching: 'caching.md'
   - Benchmarks: 'benchmarks.md'
   - Release Notes: 'release_notes.md'
   - TODOs: 'todos.md'

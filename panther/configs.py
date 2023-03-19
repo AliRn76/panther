@@ -4,7 +4,7 @@ from datetime import timedelta
 from dataclasses import dataclass
 from pydantic.main import ModelMetaclass
 
-from panther.throttlings import Throttling
+from panther.throttling import Throttling
 
 
 @dataclass(frozen=True)

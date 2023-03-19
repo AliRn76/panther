@@ -22,7 +22,7 @@ def create(args: list):
     if existence:
         return cli_error(f'"{existence}" Directory Already Exists.')
 
-    load_animation1()
+    load_animation()
 
     # Create Base Directory
     if base_directory != '.':
@@ -67,7 +67,7 @@ def check_all_directories(base_directory: str) -> str | None:
                     return file_path
 
 
-def load_animation1():
+def load_animation():
     animation = [
         '■□□□□□□□□□□',
         '■■□□□□□□□□□',

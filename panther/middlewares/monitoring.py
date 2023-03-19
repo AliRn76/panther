@@ -6,7 +6,8 @@ from panther.middlewares.base import BaseMiddleware
 
 
 class Middleware(BaseMiddleware):
-    """Create Log Message Like Below:
+    """
+    Create Log Message Like Below:
     [method] path | ip:port | response_time ms | status_code
     """
 
@@ -17,8 +18,9 @@ class Middleware(BaseMiddleware):
         return request
 
     async def after(self, status_code: int):
-        """We handled Monitoring Middle manually,
-        but we should put in middlewares chain later ...
+        """
+        We handled Monitoring Middle manually,
+        cause of that we only have "status_code" here
         """
         response_time = (perf_counter() - self.start_time) * 1_000
         monitoring_logger.info(f'{self.log} | {response_time: .3} ms | {status_code}')

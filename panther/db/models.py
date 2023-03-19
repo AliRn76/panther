@@ -29,7 +29,7 @@ else:
     IDType = BsonObjectId
 
 
-class BaseModel(PydanticBaseModel, Query):
+class Model(PydanticBaseModel, Query):
     id: IDType | None = Field(alias='_id')
 
     @property
@@ -40,6 +40,6 @@ class BaseModel(PydanticBaseModel, Query):
             return bson.ObjectId(self.id) if self.id else None
 
 
-class User(BaseModel):
+class User(Model):
     first_name: str | None
     last_name: str | None

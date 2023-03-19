@@ -2,7 +2,9 @@ from panther.request import Request
 
 
 class BasePermission:
-
+    """
+    Just for demonstration
+    """
     @classmethod
     def authorization(cls, request: Request) -> bool:
         return True
