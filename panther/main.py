@@ -180,11 +180,10 @@ class Panther:
             if path.find('panther.middlewares.db.Middleware') != -1:
                 config['db_engine'] = data['url'].split(':')[0]
 
-            # noinspection PyPep8Naming
-            Middleware = import_class(path)
+            Middleware = import_class(path)  # NOQA: Py Pep8 Naming
             if not issubclass(Middleware, BaseMiddleware):
                 logger.critical(f'{Middleware} is not a sub class of BaseMiddleware.')
                 continue
-            # noinspection PyArgumentList
-            middlewares.append(Middleware(**data))
+
+            middlewares.append(Middleware(**data))  # NOQA: Py Argument List
         return middlewares

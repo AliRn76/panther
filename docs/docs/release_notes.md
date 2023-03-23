@@ -1,3 +1,8 @@
+### 1.7.2
+- Add Throttling to example
+- Customize install_requires in setup.py
+- Improve monitoring cli command
+
 ### 1.7.1
 - Rename db BaseModel to Model 
 - Add more docs

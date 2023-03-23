@@ -10,15 +10,16 @@ from panther.configs import config
 from panther import version, status
 from panther.request import Request
 from panther.response import Response
+from app.throttling import InfoThrottling
 
 
 @API()
-async def hello_world():
+async def hello_world_api():
     return {'detail': 'Hello World'}
 
 
-@API(cache=True)
-async def info(request: Request):
+@API(cache=True, throttling=InfoThrottling)
+async def info_api(request: Request):
     data = {
         'version': version(),
         'datetime_now': datetime.now().isoformat(),
@@ -34,11 +35,18 @@ models_py = """from panther.db import Model
 serializers_py = """from pydantic import BaseModel as Serializer
 """
 
-app_urls_py = """from app.apis import hello_world, info
+throttling_py = """from datetime import timedelta
+from panther.throttling import Throttling
+
+
+InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
+"""
+
+app_urls_py = """from app.apis import hello_world_api, info_api
 
 urls = {
-    '': hello_world,
-    'info/': info,
+    '': hello_world_api,
+    'info/': info_api,
 }
 """
 

@@ -41,44 +41,44 @@ class API:
         async def wrapper(*args, **kwargs):
             self.request: Request = kwargs.pop('request')  # NOQA: Non-self attribute could not be type hinted
 
-            # Handle Authentication
+            # 1. Authentication
             self.handle_authentications()
 
-            # Handle Throttling
+            # 2. Throttling
             self.handle_throttling()
 
-            # Handle Authentication
+            # 3. Permissions
             self.handle_permissions()
 
-            # Validate Input
+            # 4. Validate Input
             self.validate_input()
 
-            # Validate Path Variables
+            # 5. Validate Path Variables
             self.validate_path_variables(func, kwargs)
 
-            # Get Cached Response
+            # 6. Get Cached Response
             if self.cache and self.request.method == 'GET':
                 if cached := get_cached_response_data(request=self.request):
                     return Response(data=cached.data, status_code=cached.status_code)
 
-            # Put Request In kwargs
+            # 7. Put Request In kwargs
             if req_arg := [k for k, v in func.__annotations__.items() if v == Request]:
                 kwargs[req_arg[0]] = self.request
 
-            # Call Endpoint
+            # 8. Call Endpoint
             response = await func(**kwargs)
 
-            # Clean Output
+            # 9. Clean Output
             if not isinstance(response, Response):
                 response = Response(data=response)
             data = self.serialize_response_data(data=response._data)  # NOQA: Access to a protected member
             response.set_data(data)
 
-            # Set New Response To Cache
+            # 10. Set New Response To Cache
             if self.cache and self.request.method == 'GET':
                 set_cache_response(request=self.request, response=response, cache_exp_time=self.cache_exp_time)
 
-            # Warning CacheExpTime
+            # 11. Warning CacheExpTime
             if self.cache_exp_time and self.cache is False:
                 logger.warning('"cache_exp_time" won\'t work while "cache" is False')
 

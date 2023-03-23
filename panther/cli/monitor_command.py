@@ -1,44 +1,36 @@
 import os
 from collections import deque
 
-from rich import box
-from rich.align import Align
-from rich.console import Console, Group
+from rich.console import Group
 from rich.layout import Layout
-from rich.live import Live
+from rich.align import Align
 from rich.panel import Panel
 from rich.table import Table
 from watchfiles import watch
-
-from panther.cli.utils import cli_error
+from rich.live import Live
+from rich import box
 
 
 def monitor() -> None:
-    def _generate_table(rows):
+    monitoring_log_file = 'logs/monitoring.log'
+
+    def _generate_table(rows: deque):
         layout = Layout()
-        console = Console()
 
         rows = list(rows)
-        n_rows = os.get_terminal_size()[1]
+        _, lines = os.get_terminal_size()
 
-        while n_rows >= 0:
-            table = Table(box=box.MINIMAL_DOUBLE_HEAD)
-            table.add_column('Datetime', justify='center', style='magenta', no_wrap=True)
-            table.add_column('Method', justify='center', style='cyan')
-            table.add_column('Path', justify='center', style='cyan')
-            table.add_column('Client', justify='center', style='cyan')
-            table.add_column('Response Time', justify='center', style='blue')
-            table.add_column('Status Code', justify='center', style='blue')
+        table = Table(box=box.MINIMAL_DOUBLE_HEAD)
+        table.add_column('Datetime', justify='center', style='magenta', no_wrap=True)
+        table.add_column('Method', justify='center', style='cyan')
+        table.add_column('Path', justify='center', style='cyan')
+        table.add_column('Client', justify='center', style='cyan')
+        table.add_column('Response Time', justify='center', style='blue')
+        table.add_column('Status Code', justify='center', style='blue')
 
-            for row in rows[-n_rows:]:
-                table.add_row(*row)
-            layout.update(table)
-            render_map = layout.render(console, console.options)
-
-            if len(render_map[layout].render[-1]) > 2:
-                n_rows -= 1  # The table is overflowing
-            else:
-                break
+        for row in rows[-lines:]:  # It will give us "lines" last lines of "rows"
+            table.add_row(*row)
+        layout.update(table)
 
         return Panel(
             Align.center(Group(table)),
@@ -48,22 +40,19 @@ def monitor() -> None:
             border_style='bright_blue',
         )
 
-    try:
-        with open('logs/monitoring.log') as f:
-            f.readlines()
-            width, height = os.get_terminal_size()
-            messages = deque(maxlen=height - 8)  # Save space for header and footer
+    with open(monitoring_log_file) as f:
+        f.readlines()  # Set cursor at the end of file
 
-            with Live(_generate_table(messages), auto_refresh=False, vertical_overflow='visible', screen=True) as live:
-                # TODO: Is it only watch logs/monitoring.log or the whole directory ?
-                for _ in watch('logs/monitoring.log'):
+        _, init_lines_count = os.get_terminal_size()
+        messages = deque(maxlen=init_lines_count - 10)  # Save space for header and footer
+
+        with Live(_generate_table(messages), auto_refresh=False, vertical_overflow='visible', screen=True) as live:
+            try:
+                for _ in watch(monitoring_log_file):
                     data = f.readline().split('|')
+                    # 2023-03-24 01:42:52 | GET | /user/317/ | 127.0.0.1:48856 |  0.0366 ms | 200
                     messages.append(data)
                     live.update(_generate_table(messages))
                     live.refresh()
-
-    except FileNotFoundError:
-        cli_error("Monitor Log File Does Not Exists.\n\nHint: Make sure 'Monitor' is True in 'core/configs' "
-                  "or you are in a correct directory.")
-    except KeyboardInterrupt:
-        pass
+            except KeyboardInterrupt:
+                pass

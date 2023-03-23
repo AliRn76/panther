@@ -26,7 +26,7 @@ def clean_object_id(_id: bson.ObjectId | str) -> bson.ObjectId:
     try:
         return bson.ObjectId(_id)
     except Exception:
-        raise bson.errors.InvalidId
+        raise bson.errors.InvalidId  # NOQA: Py Unresolved References
 
 
 def clean_object_id_in_dicts(*args):

@@ -8,13 +8,14 @@
 
 ---
 
-### Features
+### Why Use Panther ?
 - Document-oriented Databases ODM ([PantherDB](https://pypi.org/project/pantherdb/), MongoDB)
 - Visual API Monitoring (In Terminal)
 - Cache APIs (In Memory, In Redis)
 - Built-in Authentication Classes (Customizable)
 - Built-in Permission Classes (Customizable)
 - Handle Custom Middlewares
+- Handle Custom Throttling 
 ---
 
 ### Benchmark
@@ -77,6 +78,7 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
     ```
 
 - #### Run Project
+
     Panther uses [Uvicorn](https://github.com/encode/uvicorn) as ASGI (Asynchronous Server Gateway Interface)
     
     ```console
@@ -90,6 +92,7 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
     ```
 
 - #### Python Shell
+
     Panther Uses [bpython](https://bpython-interpreter.org) for shell
     
     ```console
@@ -136,21 +139,24 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
     **app/apis.py**:
     
     ```python
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
     from panther.app import API
     from panther.configs import config
     from panther import version, status
     from panther.request import Request
     from panther.response import Response
+    from panther.throttling import Throttling
     
     
+    InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
+  
     @API()
     async def hello_world():
         return {'detail': 'Hello World'}
     
     
-    @API(cache=True)
+    @API(cache=True, throttling=InfoThrottling)
     async def info(request: Request):
         data = {
             'version': version(),
