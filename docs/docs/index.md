@@ -4,7 +4,7 @@
 <b>Is A Fast &  Friendly, Web Framework For Building Async APIs With Python 3.11+</b> 
 
 <p align="center">
-  <img src="https://github.com/AliRn76/panther/blob/master/docs/docs/images/logo.png?raw=true" alt="logo" style="width: 150px">
+  <img src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/logo.png" alt="logo" style="width: 200px">
 </p>
 
 >_Github_ -> [https://github.com/AliRn76/panther/](https://github.com/AliRn76/panther/)
