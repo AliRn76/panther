@@ -20,17 +20,9 @@ class Middleware(BaseMiddleware):
             self.kwargs['host'] = '127.0.0.1'
 
     def validate_port(self):
-        if port := self.kwargs.get('port'):
-            if isinstance(port, str):
-                try:
-                    self.kwargs['port'] = int(port)
-                except ValueError:
-                    logger.critical('Redis "port" should be number')
-
-            elif not isinstance(port, int):
-                logger.critical('Redis "port" is not valid.')
-        else:
-            self.kwargs['port'] = 6379
+        port = self.kwargs.setdefault('port', 6379)
+        if not isinstance(port, int):
+            logger.critical('Redis "port" is not valid.')
 
     async def before(self, request: Request) -> Request:
         self.redis = RedisConnection(**self.kwargs)

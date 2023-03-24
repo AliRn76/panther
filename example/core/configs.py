@@ -20,8 +20,7 @@ SECRET_KEY = env['SECRET_KEY']
 DB_USERNAME = env['DB_USERNAME']
 DB_PASSWORD = env['DB_PASSWORD']
 
-
-# # Go To https://framework.org/Middlewares For More Options
+# # # More Info: https://pantherpy.github.io/middlewares/
 MIDDLEWARES = [
     # TODO: change middleware
     # Go To https://framework.org/SupportedDatabase For More Options
@@ -33,9 +32,9 @@ MIDDLEWARES = [
 mongodb://[Username:Password(optional)]@HostName:Port/?aruguments
 note: if your password has special characters, you would need to URL-Encode.
 
-ex : monodb://my-name:my-pass@localhost:27017/?authSource=users
+ex : mongodb://my-name:my-pass@localhost:27017/?authSource=users
 """
-# Go To https://framework.org/Authentications For More Options
+# # # More Info: Https://PantherPy.GitHub.io/authentications/
 AUTHENTICATION = 'panther.authentications.JWTAuthentication'
 
 # Only If Authentication Set To JWT

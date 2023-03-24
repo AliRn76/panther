@@ -1,3 +1,7 @@
+### 1.7.3
+- Add Throttling Doc
+- Fix some issue in Doc
+
 ### 1.7.2
 - Add Throttling to example
 - Customize install_requires in setup.py

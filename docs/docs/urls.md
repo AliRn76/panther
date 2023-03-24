@@ -17,7 +17,7 @@ and in that file you should have a `dict` name `urls`
 
 - core/configs.py
     ```python
-    `URLS = 'configs/urls.py'`
+    `URLs = 'configs/urls.py'`
     ```
 - core/urls.py
     ```python

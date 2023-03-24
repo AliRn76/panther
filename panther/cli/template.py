@@ -64,22 +64,28 @@ env = load_env(BASE_DIR / '.env')
 DB_NAME = env['DB_NAME']
 SECRET_KEY = env['SECRET_KEY']
 
-
+# # # More Info: Https://PantherPy.GitHub.io/middlewares/
 MIDDLEWARES = [
     ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pantherdb'}),
 ]
 
 USER_MODEL = 'panther.db.models.User'
 
+# # # More Info: Https://PantherPy.GitHub.io/authentications/
+AUTHENTICATION = 'panther.authentications.JWTAuthentication'
+
+# # # More Info: Https://PantherPy.GitHub.io/monitoring/
 MONITORING = True
 
+# # # More Info: Https://PantherPy.GitHub.io/log_queries/
 LOG_QUERIES = True
 
+# # # More Info: Https://PantherPy.GitHub.io/throttling/
+THROTTLING = Throttling(rate=60, duration=timedelta(minutes=1))
+
+# # # More Info: Https://PantherPy.GitHub.io/urls/
 URLs = 'core/urls.py'
 """ % datetime.now().date().isoformat()
-
-middlewares = """from panther.middlewares import BaseMiddleware
-"""
 
 env = """
 SECRET_KEY = '%s'
@@ -102,8 +108,9 @@ urls = {
 git_ignore = """__pycache__/
 .venv/
 .idea/
-.env
 logs/
+
+.env
 *.pantherdb
 """
 
@@ -115,11 +122,11 @@ Template = {
         'apis.py': apis_py,
         'models.py': models_py,
         'serializers.py': serializers_py,
+        'throttling.py': throttling_py,
         'urls.py': app_urls_py,
     },
     'core': {
         'configs.py': configs_py,
-        'middlewares.py': middlewares,
         'urls.py': urls_py,
     },
     'main.py': main_py,
