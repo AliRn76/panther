@@ -1,10 +1,17 @@
 
+
 ## Panther 
 <b>Is A Fast &  Friendly, Web Framework For Building Async APIs With Python 3.11+</b> 
 
->_Full Documentation_ -> [https://pantherpy.github.io](https://pantherpy.github.io)
-> 
+<div style="text-align: center">
+
+![logo](https://avatars.githubusercontent.com/u/119394508?s=400&u=1fbd2b0f07f948c4ce5deae03988e22b47ba11c3&v=4)
+
+</div>
+
 >_Github_ -> [https://github.com/AliRn76/panther/](https://github.com/AliRn76/panther/)
+>
+>_PyPI_ -> [https://pypi.org/project/panther/](https://pypi.org/project/panther/)
 
 ---
 
