@@ -23,7 +23,7 @@ from datetime import timedelta
 from panther.throttling import Throttling
 
 
-# User only can request 5 times in every minutes
+# User only can request 5 times in every minute
 THROTTLING = Throttling(rate=5, duration=timedelta(minutes=1))
 ```
 
@@ -36,7 +36,7 @@ from panther.throttling import Throttling
 from panther.app import API
 
 
-# User only can request 5 times in every minutes
+# User only can request 5 times in every minute
 InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
 
 
