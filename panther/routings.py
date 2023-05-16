@@ -129,7 +129,7 @@ def merge(destination: MutableMapping, *sources) -> MutableMapping:
     return reduce(partial(deepmerge), sources, destination)
 
 
-def finalize_urls(urls: dict):
+def finalize_urls(urls: dict) -> dict:
     urls_list = list()
     for url, endpoint in urls.items():
         path = dict()
