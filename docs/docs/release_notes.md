@@ -1,3 +1,11 @@
+### 1.7.5
+- Change the way of raising exception in JWTAuthentication
+- Rename User model to BaseUser
+- Fix template
+ 
+### 1.7.4
+- Crop Logo
+
 ### 1.7.3
 - Add Throttling Doc
 - Fix some issue in Doc

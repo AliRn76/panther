@@ -40,6 +40,6 @@ class Model(PydanticBaseModel, Query):
             return bson.ObjectId(self.id) if self.id else None
 
 
-class User(Model):
+class BaseUser(Model):
     first_name: str | None
     last_name: str | None

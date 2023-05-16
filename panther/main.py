@@ -148,7 +148,7 @@ class Panther:
             for middleware in config['middlewares']:
                 request = await middleware.before(request=request)
 
-            # User Didn't Use API Decorator
+            # User Didn't Use @API Decorator
             if not hasattr(endpoint, '__wrapped__'):
                 logger.critical(f'You may have forgotten to use @API on the {endpoint.__name__}()')
                 return await http_response(

@@ -55,7 +55,10 @@ configs_py = """\"""
 \"""
 
 from pathlib import Path
+from datetime import timedelta
+
 from panther.utils import load_env
+from panther.throttling import Throttling
 
 
 BASE_DIR = Path(__name__).resolve().parent
@@ -69,21 +72,22 @@ MIDDLEWARES = [
     ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pantherdb'}),
 ]
 
-USER_MODEL = 'panther.db.models.User'
+# More Info: https://pantherpy.github.io/configs/#user_model
+USER_MODEL = 'panther.db.models.BaseUser'
 
-# # # More Info: Https://PantherPy.GitHub.io/authentications/
+# More Info: https://PantherPy.GitHub.io/authentications/
 AUTHENTICATION = 'panther.authentications.JWTAuthentication'
 
-# # # More Info: Https://PantherPy.GitHub.io/monitoring/
+# More Info: https://PantherPy.GitHub.io/monitoring/
 MONITORING = True
 
-# # # More Info: Https://PantherPy.GitHub.io/log_queries/
+# More Info: https://PantherPy.GitHub.io/log_queries/
 LOG_QUERIES = True
 
-# # # More Info: Https://PantherPy.GitHub.io/throttling/
+# More Info: https://PantherPy.GitHub.io/throttling/
 THROTTLING = Throttling(rate=60, duration=timedelta(minutes=1))
 
-# # # More Info: Https://PantherPy.GitHub.io/urls/
+# More Info: https://PantherPy.GitHub.io/urls/
 URLs = 'core/urls.py'
 """ % datetime.now().date().isoformat()
 

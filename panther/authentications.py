@@ -1,7 +1,7 @@
 from datetime import datetime
 from panther.logger import logger
 from panther.configs import config
-from panther.db.models import User
+from panther.db.models import BaseUser
 from panther.request import Request
 from panther.cli.utils import import_error
 from panther.exceptions import AuthenticationException
@@ -13,7 +13,7 @@ except ImportError:
 
 
 class JWTAuthentication:
-    model = User
+    model = BaseUser
     keyword = 'Bearer'
     algorithm = 'HS256'
     HTTP_HEADER_ENCODING = 'iso-8859-1'  # Header encoding (see RFC5987)
@@ -29,35 +29,34 @@ class JWTAuthentication:
     def authentication(cls, request: Request):
         auth = cls.get_authorization_header(request).split()
         if not auth or auth[0].lower() != cls.keyword.lower().encode():
-            logger.error(f'JWT Authentication Error: "token keyword is not valid"')
-            raise AuthenticationException
+            raise cls.exception('token keyword is not valid')
         if len(auth) != 2:
-            logger.error(f'JWT Authentication Error: "len of token should be 2"')
-            raise AuthenticationException
+            raise cls.exception('token should have 2 part')
+
         try:
             token = auth[1].decode()
         except UnicodeError:
-            logger.error(f'JWT Authentication Error: "Unicode Error"')
-            raise AuthenticationException
+            raise cls.exception('Unicode Error')
 
         payload = cls.decode_jwt(token)
         return cls.get_user(payload)
 
     @classmethod
     def get_user(cls, payload: dict):
+        """
+        Get UserModel from config else use default UserModel from cls.model
+        """
         if (user_id := payload.get('user_id')) is None:
-            logger.error(f'JWT Authentication Error: "Payload does not have user_id"')
-            raise AuthenticationException
+            raise cls.exception('Payload does not have user_id')
 
         user_model = config['user_model'] or cls.model
         if user := user_model.find_one(id=user_id):
             return user
 
-        logger.error(f'JWT Authentication Error: "User not found"')
-        raise AuthenticationException
+        raise cls.exception('User not found')
 
-    @staticmethod
-    def encode_jwt(user_id: int) -> str:
+    @classmethod
+    def encode_jwt(cls, user_id: int) -> str:
         """Encode JWT from user_id."""
         expire = datetime.utcnow() + config['jwt_config'].life_time
         access_payload = {
@@ -67,14 +66,17 @@ class JWTAuthentication:
         }
         return jwt.encode(access_payload, config['jwt_config'].key, algorithm=config['jwt_config'].algorithm)
 
-    @staticmethod
-    def decode_jwt(token: str) -> dict:
+    @classmethod
+    def decode_jwt(cls, token: str) -> dict:
         """Decode JWT token to user_id (it can return multiple variable ... )"""
         try:
-            return jwt.decode(token, config['jwt_config'].key, algorithms=[config['jwt_config'].algorithm])
+            return jwt.decode(
+                token=token,
+                key=config['jwt_config'].key,
+                algorithms=[config['jwt_config'].algorithm]
+            )
         except JWTError as e:
-            logger.error(f'JWT Authentication Error: "{e}"')
-            raise AuthenticationException
+            raise cls.exception(e)
 
     @classmethod
     def login(cls, user_id: int) -> str:
@@ -87,3 +89,9 @@ class JWTAuthentication:
         #   1. Save the token in cache
         #   2. Check logout cached token in authentication()
         pass
+
+    @staticmethod
+    def exception(message: str | JWTError, /):
+        logger.error(f'JWT Authentication Error: "{message}"')
+        return AuthenticationException
+
