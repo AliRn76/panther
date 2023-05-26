@@ -1,3 +1,5 @@
+import os
+import ast
 import asyncio
 from pathlib import Path
 from runpy import run_path
@@ -19,11 +21,10 @@ from panther._utils import http_response, import_class, read_body, collect_path_
 class Panther:
 
     def __init__(self, name):
-        import os
         os.system('clear')
         config['base_dir'] = Path(name).resolve().parent
+        self.panther_dir = Path(__file__).parent
         self.load_configs()
-        del os
 
     def load_configs(self) -> None:
         from panther.logger import logger
@@ -46,10 +47,17 @@ class Panther:
         config['authentication'] = self._get_authentication_class()
         config['jwt_config'] = self._get_jwt_config()
 
+        # Find Database Models
+        self.collect_models_for_panel()
+
         # Check & Collect URLs
         #   check_urls should be the last call in load_configs,
         #   because it will read all files and load them.
         config['urls'] = self._load_urls()
+
+        # This import shouldn't be on top
+        from panther.panel.urls import urls as panel_urls
+        config['urls']['_panel'] = panel_urls
 
         logger.debug('Configs loaded.')
         if config['monitoring']:
@@ -102,6 +110,38 @@ class Panther:
         if getattr(config['authentication'], '__name__', None) == 'JWTAuthentication':
             user_config = self.settings.get('JWTConfig')
             return JWTConfig(**user_config) if user_config else JWTConfig(key=config['secret_key'].decode())
+
+    def collect_models_for_panel(self):
+        from panther.db.models import Model
+
+        for root, _, files in os.walk(config['base_dir']):
+            # Traverse through each directory
+            for f in files:
+                # Traverse through each file of directory
+                if f == 'models.py':
+                    # If the file was "models.py" read it
+                    file_path = f'{root}/models.py'
+                    with open(file_path, 'r') as file:
+                        # Parse the file with ast
+                        node = ast.parse(file.read())
+                        for n in node.body:
+                            # Find classes in each element of files' body
+                            if type(n) is ast.ClassDef and n.bases:
+                                class_path = file_path\
+                                    .removesuffix('/models.py')\
+                                    .removeprefix(f'{config["base_dir"]}/')\
+                                    .replace('/', '.')
+                                # Import the class to check his father and brother
+                                klass = import_class(f'{class_path}.models.{n.name}')
+                                for parent in klass.__mro__:
+                                    if parent is Model:
+                                        # The class was one our database models so collect it
+                                        config['models'].append({
+                                            'name': n.name,
+                                            'path':  file_path,
+                                            'class': klass,
+                                            'app': class_path.split('.'),
+                                        })
 
     async def __call__(self, scope, receive, send) -> None:
         """

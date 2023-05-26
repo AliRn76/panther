@@ -28,6 +28,7 @@ class Config(TypedDict):
     jwt_config: JWTConfig | None
     user_model: ModelMetaclass | None
     throttling: Throttling | None
+    models: list[dict]
 
 
 config: Config = {
@@ -44,4 +45,5 @@ config: Config = {
     'authentication': None,
     'user_model': None,
     'throttling': None,
+    'models': [],
 }

@@ -56,15 +56,15 @@ async def http_response(
     await _http_response_body(send, body=body)
 
 
-def import_class(_klass: str, /):
+def import_class(dotted_path: str, /):
     """
     Example:
         Input: panther.db.models.User
         Output: User (The Class)
     """
-    seperator = _klass.rfind('.')
-    module = importlib.import_module(_klass[:seperator])
-    return getattr(module, _klass[seperator + 1:])
+    path, name = dotted_path.rsplit('.', 1)
+    module = importlib.import_module(path)
+    return getattr(module, name)
 
 
 def read_multipart_form_data(content_type: str, body: str) -> dict:

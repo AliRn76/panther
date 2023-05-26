@@ -1,6 +1,5 @@
 import bson
-from pydantic import Field
-from pydantic.main import BaseModel as PydanticBaseModel
+from pydantic import Field, BaseModel as PydanticBaseModel
 
 from panther.configs import config
 from panther.db.queries import Query

@@ -27,7 +27,7 @@
 - &#x2705; TinyDB Connection
 - &#x2705; MongoDB Connection
 - &#x2705; Create Custom BaseModel For All Type Of Databases
-- &#9744; Set TinyDB As Default
+- &#x2705; Set PantherDB As Default
 
 #### Custom ORM
 - &#x2705; Get One 
