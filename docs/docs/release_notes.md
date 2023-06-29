@@ -1,3 +1,6 @@
+### 1.7.7
+- Fix a bug
+ 
 ### 1.7.5
 - Change the way of raising exception in JWTAuthentication
 - Rename User model to BaseUser

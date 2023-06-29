@@ -14,7 +14,6 @@ DESCRIPTION = open('README.md').read()
 
 EXTRAS_REQUIRE = {
     'full': [
-        'python-jose>=3.3.0',
         'pymongo>=4.3.3',
     ]
 }
@@ -53,6 +52,7 @@ setup(
         'uvicorn>=0.21.1',
         'uvloop>=0.17.0',
         'watchfiles>=0.18.1',
+        'python-jose==3.3.0',
     ],
     extras_require=EXTRAS_REQUIRE,
 )

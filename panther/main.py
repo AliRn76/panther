@@ -103,7 +103,7 @@ class Panther:
         return self.settings.get('AUTHENTICATION') and import_class(self.settings['AUTHENTICATION'])
 
     def _get_user_model(self) -> ModelMetaclass:
-        return import_class(self.settings.get('USER_MODEL', 'panther.db.models.User'))
+        return import_class(self.settings.get('USER_MODEL', 'panther.db.models.BaseUser'))
 
     def _get_jwt_config(self) -> JWTConfig:
         """Only Collect JWT Config If Authentication Is JWTAuthentication"""
