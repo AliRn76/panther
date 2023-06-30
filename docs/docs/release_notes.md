@@ -1,4 +1,8 @@
-### 1.7.7
+### 1.7.8
+- Fix a bug
+- Update docs
+
+ ### 1.7.7
 - Fix a bug
  
 ### 1.7.5

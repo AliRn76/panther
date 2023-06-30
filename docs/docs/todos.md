@@ -14,13 +14,16 @@
 - &#x2705; Custom Logging
 - &#x2705; Caching
 - &#x2705; Handle Path Variable
-- &#x2705; Handle Form-Data
-- &#9744; Handle Cookie
+- &#x2705; Handle Simple Form-Data
+- &#x2705; Handle Throttling
+- &#9744; Handle Complex Form-Data
 - &#9744; Handle File 
+- &#9744; Handle Cookie
 - &#9744; Handle WS 
 - &#9744; Handle GraphQL
-- &#9744; Handle Throttling
 - &#9744; Handle Testing
+- &#9744; Generate Swagger For APIs
+- &#9744; Handle ClassBase APIs
 
 #### Database:
 - &#x2705; Structure Of DB Connection
@@ -29,28 +32,36 @@
 - &#x2705; Create Custom BaseModel For All Type Of Databases
 - &#x2705; Set PantherDB As Default
 
-#### Custom ORM
-- &#x2705; Get One 
-- &#x2705; List  
-- &#x2705; Create 
-- &#x2705; Delete 
-- &#x2705; Update
-- &#9744; Get or Raise
-- &#9744; Get or Create
-- &#9744; List with Pagination
-- &#9744; Other Queries In TinyDB
-- &#9744; Other Queries In MongoDB
+#### Custom ODM
+- &#x2705; Find One
+- &#x2705; Find 
+- &#x2705; Last
+- &#x2705; Count
+- &#x2705; Insert One 
+- &#x2705; Insert Many 
+- &#x2705; Delete One
+- &#x2705; Delete Many
+- &#x2705; Delete Itself
+- &#x2705; Update One
+- &#x2705; Update Many
+- &#x2705; Update Itself
+- &#x2705; Find or Insert
+- &#9744; Find or Raise
+- &#9744; Find with Pagination
+- &#9744; Aggregation
+- &#9744; Complex Pipelines
+- &#9744; ...
 
 #### Middleware
 - &#x2705; Add Middlewares To Structure
 - &#x2705; Create BaseMiddleware
 - &#x2705; Pass Custom Parameters To Middlewares
-- &#x2705; Import Custom Middlewares Of User
+- &#x2705; Handle Custom Middlewares
 
 #### Authentication 
 - &#x2705; JWT Authentication
 - &#x2705; Separate Auth For Every API
-- &#9744; Handle Permissions 
+- &#x2705; Handle Permissions 
 - &#9744; Token Storage Authentication
 - &#9744; Cookie Authentication
 - &#9744; Query Param Authentication
@@ -67,17 +78,17 @@
 #### CLI
 - &#x2705; Create Project 
 - &#x2705; Run Project 
-- &#x2705; Monitor Requests Response Time
 - &#x2705; Create Project with Options
 - &#x2705; Monitoring With Textual
+- &#x2705; Monitor Requests, Response & Time
     
 #### Documentation 
 - &#x2705; Create MkDocs For Project 
-- &#9744; Benchmarks
-- &#9744; Release Notes
-- &#9744; Features
+- &#x2705; Benchmarks
+- &#x2705; Release Notes
+- &#x2705; Features
 - &#9744; Complete The MkDoc
 
 #### Tests 
 - &#9744; Write Test For Panther 
-- &#9744; Test ...
+- &#9744; Test Client

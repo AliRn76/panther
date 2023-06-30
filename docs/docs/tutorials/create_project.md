@@ -6,10 +6,12 @@ Create Virtual Environment with:
   ```
 
 and active it with:
+
 - In Linux or Mac:
     ```console
     $ source .venv/bin/activate
     ```
+  
 - In windows:
     ```console
     $ .\.venv\Scripts\activate
@@ -21,13 +23,13 @@ Now we can create a test project named `blog` with:
 $ panther create blog
 ```
 
-and if you don't want to panther create directory with name of project, so pass you custom directory name to it:
+and if you don't want Panther to create a directory with the name of the project, so pass your custom directory name to it:
 
 ```console
 $ panther create blog custom_directory
 ```
 
-Now you can run the project with::
+Now you can run the project with:
 ```console
 $ panther run
 ```

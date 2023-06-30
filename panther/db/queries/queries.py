@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Self, NoReturn
 
 from pydantic import ValidationError
 
@@ -21,7 +21,7 @@ __all__ = (
 class Query(BaseQuery):
 
     @classmethod
-    def validate_data(cls, data: dict, is_updating: bool = False) -> Self | None:
+    def validate_data(cls, data: dict, is_updating: bool = False) -> NoReturn:
         """
         *. Validate the input of user with its class
         *. If is_updating is True & exception happens but the message was empty
