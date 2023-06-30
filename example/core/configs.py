@@ -24,7 +24,7 @@ DB_PASSWORD = env['DB_PASSWORD']
 MIDDLEWARES = [
     # TODO: change middleware
     # Go To https://framework.org/SupportedDatabase For More Options
-    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pantherdb'}),
+    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
     # ('panther.middlewares.db.Middleware', {'url': f'mongodb://{DB_HOST}:27017/{DB_NAME}'}),
     ('panther.middlewares.redis.Middleware', {'host': '127.0.0.1', 'port': 6379}),
 ]

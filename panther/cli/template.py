@@ -69,10 +69,10 @@ SECRET_KEY = env['SECRET_KEY']
 
 # # # More Info: Https://PantherPy.GitHub.io/middlewares/
 MIDDLEWARES = [
-    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pantherdb'}),
+    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
 ]
 
-# More Info: https://pantherpy.github.io/configs/#user_model
+# More Info: https://PantherPy.GitHub.io/configs/#user_model
 USER_MODEL = 'panther.db.models.BaseUser'
 
 # More Info: https://PantherPy.GitHub.io/authentications/
@@ -115,7 +115,7 @@ git_ignore = """__pycache__/
 logs/
 
 .env
-*.pantherdb
+*.pdb
 """
 
 requirements = """panther==%s

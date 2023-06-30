@@ -36,7 +36,7 @@ We only support 2 database: `PantherDB` & `MongoDB`
 - Example of `PantherDB` (`Built-in Local Storage`):
   ```python
   MIDDLEWARES = [
-      ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pantherdb'}),
+      ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
   ]
   ```
 - Example of `MongoDB`:

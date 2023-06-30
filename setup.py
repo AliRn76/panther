@@ -45,7 +45,7 @@ setup(
         'bpython>=0.24',
         'bson>=0.5.10',
         'httptools>=0.5.0',
-        'pantherdb>=1.2.2',
+        'pantherdb>=1.2.3',
         'pydantic>=1.10.7',
         'redis>=4.5.3',
         'rich>=13.3.2',

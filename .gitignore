@@ -6,5 +6,5 @@ dist/
 example/panther/
 logs/
 build/
-*.pantherdb
+*.pdb
 .ruff_cache/
