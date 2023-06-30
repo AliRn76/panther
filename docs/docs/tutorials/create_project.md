@@ -17,6 +17,11 @@ and active it with:
     $ .\.venv\Scripts\activate
     ```
   
+Then install the Panther using `pip`:
+  ```console
+  $ pip install panther
+  ```
+
 Now we can create a test project named `blog` with: 
 
 ```console
