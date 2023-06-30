@@ -136,4 +136,4 @@ def finalize_urls(urls: dict) -> dict:
         for single_path in url.split('/')[:-1][::-1]:
             path = {single_path: path or endpoint}
         urls_list.append(path)
-    return merge(*urls_list)
+    return merge(*urls_list) if urls_list else {}

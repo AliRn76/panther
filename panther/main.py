@@ -131,17 +131,19 @@ class Panther:
                                     .removesuffix('/models.py')\
                                     .removeprefix(f'{config["base_dir"]}/')\
                                     .replace('/', '.')
-                                # Import the class to check his father and brother
-                                klass = import_class(f'{class_path}.models.{n.name}')
-                                for parent in klass.__mro__:
-                                    if parent is Model:
-                                        # The class was one our database models so collect it
-                                        config['models'].append({
-                                            'name': n.name,
-                                            'path':  file_path,
-                                            'class': klass,
-                                            'app': class_path.split('.'),
-                                        })
+                                # We don't need to import the package classes
+                                if class_path.find('site-packages') == -1:
+                                    # Import the class to check his father and brother
+                                    klass = import_class(f'{class_path}.models.{n.name}')
+                                    for parent in klass.__mro__:
+                                        if parent is Model:
+                                            # The class was one our database models so collect it
+                                            config['models'].append({
+                                                'name': n.name,
+                                                'path':  file_path,
+                                                'class': klass,
+                                                'app': class_path.split('.'),
+                                            })
 
     async def __call__(self, scope, receive, send) -> None:
         """
