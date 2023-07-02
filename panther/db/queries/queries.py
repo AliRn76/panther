@@ -43,7 +43,7 @@ class Query(BaseQuery):
         """
         example:
             >>> from example.app.models import User
-            >>> User.find(id=1)
+            >>> User.find_one(id=1)
         """
         return super().find_one(_data, **kwargs)
 

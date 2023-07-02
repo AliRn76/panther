@@ -34,7 +34,15 @@ and if you don't want Panther to create a directory with the name of the project
 $ panther create blog custom_directory
 ```
 
-Now you can run the project with:
+Change directory to your project directory then
+
+```console
+$ cd blog
+or 
+$ cd custom_directory
+```
+
+you can run the project with:
 ```console
 $ panther run
 ```

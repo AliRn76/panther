@@ -27,7 +27,7 @@
 
 #### Database:
 - &#x2705; Structure Of DB Connection
-- &#x2705; TinyDB Connection
+- &#x2705; PantherDB Connection
 - &#x2705; MongoDB Connection
 - &#x2705; Create Custom BaseModel For All Type Of Databases
 - &#x2705; Set PantherDB As Default
