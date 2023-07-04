@@ -20,10 +20,10 @@ class LogConfig(BaseModel):
     LOG_LEVEL: str = 'DEBUG'
     MAX_FILE_SIZE: int = 1024 * 1024 * 100  # 100 MB
 
-    version = 1
-    disable_existing_loggers = False
+    version: int = 1
+    disable_existing_loggers: bool = False
 
-    formatters = {
+    formatters: dict = {
         'default': {
             '()': 'uvicorn.logging.DefaultFormatter',
             'fmt': DEFAULT_LOG_FORMAT,
@@ -35,7 +35,7 @@ class LogConfig(BaseModel):
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
     }
-    handlers = {
+    handlers: dict = {
         'monitoring_file': {
             'formatter': 'file_formatter',
             'filename': LOGS_DIR / 'monitoring.log',
@@ -63,7 +63,7 @@ class LogConfig(BaseModel):
             'stream': 'ext://sys.stderr',
         },
     }
-    loggers = {
+    loggers: dict = {
         'panther': {
             'handlers': ['default', 'file'],
             'level': LOG_LEVEL,
@@ -79,7 +79,7 @@ class LogConfig(BaseModel):
     }
 
 
-dictConfig(LogConfig().dict())
+dictConfig(LogConfig().model_dump())
 logger = logging.getLogger('panther')
 query_logger = logging.getLogger('query')
 monitoring_logger = logging.getLogger('monitoring')

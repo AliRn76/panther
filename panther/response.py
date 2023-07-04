@@ -1,6 +1,6 @@
 import orjson as json
 from types import NoneType
-from pydantic.main import BaseModel as PydanticBaseModel
+from pydantic import BaseModel as PydanticBaseModel
 
 ResponseDataTypes = int | dict | list | tuple | set | str | bool | NoneType
 IterableDataTypes = list | tuple | set
@@ -43,7 +43,7 @@ class Response:
         Make sure the response data is only ResponseDataTypes or Iterable of ResponseDataTypes
         """
         if issubclass(type(data), PydanticBaseModel):
-            return data.dict()
+            return data.model_dump()
 
         elif isinstance(data, IterableDataTypes):
             return [cls.clean_data_type(d) for d in data]

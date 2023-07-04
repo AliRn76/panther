@@ -3,7 +3,7 @@ import ast
 import asyncio
 from pathlib import Path
 from runpy import run_path
-from pydantic.main import ModelMetaclass
+from pydantic._internal._model_construction import ModelMetaclass
 
 from panther import status
 from panther.request import Request

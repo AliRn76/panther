@@ -137,7 +137,7 @@ class API:
     def serialize_with_output_model(self, data: any):
         # Dict
         if isinstance(data, dict):
-            return self.output_model(**data).dict()
+            return self.output_model(**data).model_dump()
 
         # Iterable
         elif isinstance(data, IterableDataTypes):
