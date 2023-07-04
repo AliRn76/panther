@@ -31,6 +31,7 @@ nav:
       - Create Project: 'tutorials/create_project.md'
       - First API: 'tutorials/first_api.md'
       - Working With Database: 'tutorials/working_with_db.md'
+      - Panther ODM: 'tutorials/panther_odm.md'
   - Monitoring: 'monitoring.md'
   - Log Queries: 'log_queries.md'
   - Middlewares: 'middlewares.md'
