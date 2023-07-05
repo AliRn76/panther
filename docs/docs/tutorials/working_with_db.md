@@ -1,3 +1,8 @@
+Panther create a database connection depends on `database middleware` you are using on `core/configs.py` 
+and you can access to this connection from your `models` 
+or direct access from `from panther.db.connection import db`
+
+
 Now we are going to create a new API which uses our default database(`PantherDB`) and creating a `Book`
 
 1.  Create `Book` model in `app/models.py`

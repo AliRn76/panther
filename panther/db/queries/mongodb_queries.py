@@ -65,16 +65,16 @@ class BaseMongoDBQuery:
     @classmethod
     def update_one(cls, _filter, _data: dict = None, /, **kwargs) -> bool:
         clean_object_id_in_dicts(_filter)
-        _update = {'$set': kwargs | {}}
-        if isinstance(_data, dict):
-            _data['$set'] = _data.get('$set', {}) | (kwargs or {})
+        _update = {'$set': cls._merge(_data, kwargs)}
 
-        result = eval(f'db.session.{cls.__name__}.update_one(_filter, _data | _update)')
+        result = eval(f'db.session.{cls.__name__}.update_one(_filter, _update)')
         return bool(result.updated_count)
 
     @classmethod
     def update_many(cls, _filter, _data: dict = None, /, **kwargs) -> int:
+        clean_object_id_in_dicts(_filter)
         _update = {'$set': cls._merge(_data, kwargs)}
+
         result = eval(f'db.session.{cls.__name__}.update_many(_filter, _update)')
         return result.updated_count
 

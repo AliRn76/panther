@@ -1,7 +1,7 @@
 from typing import Self
 
 from panther.db.connection import db
-from panther.db.utils import merge_dicts
+from panther.db.utils import merge_dicts, clean_object_id_in_dicts
 from panther.exceptions import DBException
 
 
@@ -53,10 +53,12 @@ class BasePantherDBQuery:
 
     @classmethod
     def update_one(cls, _filter, _data: dict = None, /, **kwargs) -> bool:
+        clean_object_id_in_dicts(_filter)
         return db.session.collection(cls.__name__).update_one(_filter, **cls._merge(_data, kwargs))
 
     @classmethod
     def update_many(cls, _filter, _data: dict = None, /, **kwargs) -> int:
+        clean_object_id_in_dicts(_filter)
         return db.session.collection(cls.__name__).update_many(_filter, **cls._merge(_data, kwargs))
 
     # # # # # Other # # # # #

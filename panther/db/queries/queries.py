@@ -71,7 +71,7 @@ class Query(BaseQuery):
 
     @classmethod
     @log_query
-    def insert_many(cls, _data: dict = None, **kwargs):
+    def insert_many(cls, _data: dict = None, /, **kwargs):
         return super().insert_many(_data, **kwargs)
 
     # # # # # Delete # # # # #
@@ -87,23 +87,23 @@ class Query(BaseQuery):
 
     @classmethod
     @log_query
-    def delete_one(cls, **kwargs) -> bool:
+    def delete_one(cls, _data: dict = None, /, **kwargs) -> bool:
         """
         example:
             >>> from example.app.models import User
             >>> User.delete_one(id=1)
         """
-        return super().delete_one(**kwargs)
+        return super().delete_one(_data, **kwargs)
 
     @classmethod
     @log_query
-    def delete_many(cls, **kwargs) -> int:
+    def delete_many(cls, _data: dict = None, /, **kwargs) -> int:
         """
         example:
             >>> from example.app.models import User
             >>> User.delete_many(last_name='Rn')
         """
-        return super().delete_many(**kwargs)
+        return super().delete_many(_data, **kwargs)
 
     # # # # # Update # # # # #
     @log_query
