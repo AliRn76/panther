@@ -2,15 +2,13 @@ from panther.request import Request
 
 
 class BasePermission:
-    """
-    Just for demonstration
-    """
+
     @classmethod
     def authorization(cls, request: Request) -> bool:
         return True
 
 
-class AdminPermission:
+class AdminPermission(BasePermission):
 
     @classmethod
     def authorization(cls, request: Request) -> bool:

@@ -1,4 +1,4 @@
-Panther create a database connection depends on `database middleware` you are using on `core/configs.py` 
+Panther create a database connection depends on [database middleware](https://pantherpy.github.io/middlewares/#database-middleware) you are using on `core/configs.py` 
 and you can access to this connection from your `models` 
 or direct access from `from panther.db.connection import db`
 
@@ -45,7 +45,7 @@ Now we are going to create a new API which uses our default database(`PantherDB`
         return Response(status_code=status.HTTP_201_CREATED)  
     ```  
 
-4. Now we should use the `Panther ODM` to create a book, it's based on mongo queries, for creation we use `insert_one` like this:
+4. Now we should use the [Panther ODM](https://pantherpy.github.io/panther_odm/) to create a book, it's based on mongo queries, for creation we use `insert_one` like this:
 
     ```python
     from panther import status
@@ -64,4 +64,4 @@ Now we are going to create a new API which uses our default database(`PantherDB`
         return Response(status_code=status.HTTP_201_CREATED)  
     ```
 
-In next step we are going to explain more about `Panther ODM`
+In [next](https://pantherpy.github.io/panther_odm/) step we are going to explain more about `Panther ODM`

@@ -49,13 +49,13 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
 ---
 
 ### Installation
-- <details>
+- <details open>
     <summary>Create a Virtual Environment</summary>
-    <pre>$ python -m venv .venv</pre>
+    <pre>$ python3 -m venv .venv</pre>
   
   </details>
   
-- <details>
+- <details open>
     <summary>Active The Environment</summary>
     * Linux & Mac
       <pre>$ source .venv/bin/activate</pre>
@@ -68,7 +68,7 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
     <summary>Install Panther</summary>
     * Normal
       <pre>$ pip install panther</pre>
-    * Include JWT Authentication & MongoDB Requirements
+    * Include MongoDB Requirements
       <pre>$ pip install panther[full]</pre>
   </details>
   

@@ -1,4 +1,3 @@
-Panther ODM  
   
 ### find_one:  
 - Find the first match document  
@@ -34,18 +33,6 @@ Panther ODM
 	User.insert_one({'id': 1, 'name': 'Ali'})  
 	  
 	User.insert_one({'id': 1}, name='Ali')  
-	```  
-  
-### insert_many:  
-- Insert only one document into database  
-- Example:  
-  
-	```python  
-	User.insert_many(name='Ali', age=26)  
-	  
-	User.insert_many({'name': 'Ali', 'age': 26})  
-	  
-	User.insert_many({'name': 'Ali'}, age=26)  
 	```
 
 ### delete:  
@@ -141,3 +128,6 @@ and pass the fields you want to update as `kwargs` or another `dictionary` as `s
 	```python  
 	user: User = User.find_or_insert(name='Ali')
 	```
+
+
+### In next step we are going to authentication

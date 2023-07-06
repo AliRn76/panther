@@ -147,7 +147,7 @@ class Panther:
 
     async def __call__(self, scope, receive, send) -> None:
         """
-        We Used Python3.11 For asyncio.TaskGroup()
+        We Used Python3.11+ For asyncio.TaskGroup()
         1.
             async with asyncio.TaskGroup() as tg:
                 tg.create_task(self.run(scope, receive, send))

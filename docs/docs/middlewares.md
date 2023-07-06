@@ -29,7 +29,7 @@ We only support 2 database: `PantherDB` & `MongoDB`
 
 - Address of Middleware: `panther.middlewares.db.Middleware`
 - kwargs:
-    * `{'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pantherdb'}`
+    * `{'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}`
 
     * `{'url': f'mongodb://{DB_HOST}:27017/{DB_NAME}'}`
 

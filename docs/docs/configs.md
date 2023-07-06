@@ -11,7 +11,7 @@ and see the monitoring logs
 
 If `True` it will:
 
-- Log every request
+- Log every request in `logs/monitoring.log`
 
 ---
 ### [LOG_QUERIES](https://pantherpy.github.io/log_queries)
@@ -19,7 +19,7 @@ If `True` it will:
 
 If `True` it will:
 
-- Calculate every query perf time
+- Calculate every query perf time & Log them in `logs/query.log`
 
 ---
 ### [MIDDLEWARES](https://pantherpy.github.io/middlewares)
@@ -31,7 +31,7 @@ List of middlewares you want to use
 ### [AUTHENTICATION](https://pantherpy.github.io/authentications)
 > <b>Type:</b> `str | None` (<b>Default:</b> `None`)
 
-Every request go through `authentication()` method of this `class`
+Every request goes through `authentication()` method of this `class`
 
 _Example:_ `AUTHENTICATION = 'panther.authentications.JWTAuthentication'`
 
@@ -47,7 +47,11 @@ _Example:_ `URLS = 'configs/urls.py'`
 ### [DEFAULT_CACHE_EXP](https://pantherpy.github.io/caching)
 > <b>Type:</b> `timedelta| None` (<b>Default:</b> `None`)
 
-It uses when you set `cache=True` in `@API` decorator
+We use it as default `cache_exp_time` you can overwrite it in your `@API` too
+
+It is used when you set `cache=True` in `@API` decorator
+
+_Example:_ `DEFAULT_CACHE_EXP = timedelta(seconds=10)`
 
 ---
 ### [THROTTLING](https://pantherpy.github.io/throttling)
@@ -59,9 +63,9 @@ _Example:_ `THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))`
 
 ---
 ### [USER_MODEL](https://pantherpy.github.io/user_model)
-> <b>Type:</b> `str | None` (<b>Default:</b> `'panther.db.models.User'`)
+> <b>Type:</b> `str | None` (<b>Default:</b> `'panther.db.models.BaseUser'`)
 
-It uses on authentication
+It is used for authentication
 
 _Example:_ `USER_MODEL = 'panther.db.models.User'`
 
@@ -69,4 +73,4 @@ _Example:_ `USER_MODEL = 'panther.db.models.User'`
 ### [JWTConfig](https://pantherpy.github.io/jwt)
 > <b>Type:</b> `dict | None` (<b>Default:</b> `JWTConfig = {'key': SECRET_KEY}`)
 
-It uses when you set `panther.authentications.JWTAuthentication` as `AUTHENTICATION`
+We use it when you set `panther.authentications.JWTAuthentication` as `AUTHENTICATION`

@@ -1,4 +1,6 @@
-Let's write custom API that returns `current time` of your system:
+We assume you could run the project with [Introduction](https://pantherpy.github.io/#installation)
+
+Now let's write custom API that returns `current time` of your system:
 
 
 1. Create `time_api()` in `app/apis.py`

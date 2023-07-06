@@ -97,13 +97,6 @@ class Request:
         return self.scope['scheme']
 
     @property
-    def data(self):
-        """Return The Validated Data
-        It has been set on API.validate_input() while request is happening
-        """
-        return self._validated_data
-
-    @property
     def pure_data(self) -> dict:
         """This is the data before validation"""
         from panther.logger import logger
@@ -122,6 +115,13 @@ class Request:
                 self._data = {}
 
         return self._data
+
+    @property
+    def data(self):
+        """Return The Validated Data
+        It has been set on API.validate_input() while request is happening
+        """
+        return self._validated_data
 
     def set_validated_data(self, validated_data) -> None:
         self._validated_data = validated_data

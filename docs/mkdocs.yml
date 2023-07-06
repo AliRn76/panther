@@ -26,12 +26,10 @@ edit_uri: edit/master/docs/
 
 nav:
   - Introduction: 'index.md'
+  - First API: 'first_api.md'
+  - Working With Database: 'working_with_db.md'
+  - Panther ODM: 'panther_odm.md'
   - Configs: 'configs.md'
-  - Tutorials:
-      - Create Project: 'tutorials/create_project.md'
-      - First API: 'tutorials/first_api.md'
-      - Working With Database: 'tutorials/working_with_db.md'
-      - Panther ODM: 'tutorials/panther_odm.md'
   - Monitoring: 'monitoring.md'
   - Log Queries: 'log_queries.md'
   - Middlewares: 'middlewares.md'
