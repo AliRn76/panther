@@ -11,7 +11,7 @@ from functools import reduce, partial
 from panther.configs import config
 
 
-def check_urls(urls: str | None) -> dict | None:
+def check_and_load_urls(urls: str | None) -> dict | None:
     from panther.logger import logger
 
     if urls is None:
@@ -29,30 +29,39 @@ def check_urls(urls: str | None) -> dict | None:
     return urls_dict
 
 
-def collect_urls(pre_url: str, urls: dict, final: dict):
+def collect_urls(urls: dict) -> dict:
+    return {k: v for k, v in flatten_urls(urls)}
+
+
+def flatten_urls(data: dict | Callable, url: str = ''):
+    # Add `/` add the end of url
+    if not url.endswith('/'):
+        url = f'{url}/'
+
+    if isinstance(data, dict):
+        for k, v in data.items():
+            yield from flatten_urls(v, f'{url}{k}')
+    else:
+        # Remove `/` prefix of url
+        url = url.removeprefix('/')
+
+        # Collect it, if it doesn't have problem
+        if url_endpoint_is_valid(url=url, endpoint=data):
+            yield url, data
+
+
+def url_endpoint_is_valid(url: str, endpoint: Callable) -> bool:
     from panther.logger import logger
 
-    for url, endpoint in urls.items():
-        if endpoint is ...:
-            logger.error(f"URL Can't Point To Ellipsis. ('{pre_url}{url}' -> ...)")
-        elif endpoint is None:
-            logger.error(f"URL Can't Point To None. ('{pre_url}{url}' -> None)")
-        elif url and not re.match(r'[a-zA-Z<>0-9_/-]', url):
-            logger.error(f"URL Is Not Valid. --> '{pre_url}{url}'")
-        else:
-            if not url.endswith('/'):
-                url = f'{url}/'
-            if isinstance(endpoint, dict):
-                if url != '/':
-                    if pre_url:
-                        pre_url = f'{pre_url}/{url}'
-                    else:
-                        pre_url = url
-                collect_urls(pre_url, endpoint, final)
-            else:
-                final[f'{pre_url}{url}'] = endpoint
-
-    return urls
+    if endpoint is ...:
+        logger.error(f"URL Can't Point To Ellipsis. ('{url}' -> ...)")
+    elif endpoint is None:
+        logger.error(f"URL Can't Point To None. ('{url}' -> None)")
+    elif url and not re.match(r'^[a-zA-Z<>0-9_/-]+$', url):
+        logger.error(f"URL Is Not Valid. --> '{url}'")
+    else:
+        return True
+    return False
 
 
 def find_endpoint(path: str) -> tuple[Callable | None, str]:

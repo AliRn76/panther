@@ -12,7 +12,7 @@ from panther.exceptions import APIException
 from panther.configs import JWTConfig, config
 from panther.middlewares.base import BaseMiddleware
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
-from panther.routings import find_endpoint, check_urls, collect_urls, finalize_urls
+from panther.routings import find_endpoint, check_and_load_urls, finalize_urls, collect_urls
 from panther._utils import http_response, import_class, read_body, collect_path_variables
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
@@ -64,8 +64,8 @@ class Panther:
             logger.info('Run "panther monitor" in another session for Monitoring.')
 
     def _load_urls(self) -> dict:
-        urls = check_urls(self.settings.get('URLs')) or {}
-        collect_urls('', urls, collected_urls := dict())
+        urls = check_and_load_urls(self.settings.get('URLs')) or {}
+        collected_urls = collect_urls(urls)
         return finalize_urls(collected_urls)
 
     def _check_configs(self):
