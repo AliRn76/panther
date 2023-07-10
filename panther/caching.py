@@ -12,7 +12,7 @@ from panther.response import Response, ResponseDataTypes
 
 
 caches = dict()
-Cached = namedtuple('Cached', ['data', 'status_code'])
+CachedResponse = namedtuple('Cached', ['data', 'status_code'])
 
 
 def cache_key(request: Request, /):
@@ -20,7 +20,7 @@ def cache_key(request: Request, /):
     return f'{client}-{request.path}-{request.data}'
 
 
-def get_cached_response_data(*, request: Request) -> Cached | None:
+def get_cached_response_data(*, request: Request) -> CachedResponse | None:
     """
     If redis.is_connected:
         Get Cached Data From Redis
@@ -31,14 +31,14 @@ def get_cached_response_data(*, request: Request) -> Cached | None:
     if redis.is_connected:  # NOQA: Unresolved References
         data = (redis.get(key) or b'{}').decode()
         if cached := json.loads(data):
-            return Cached(*cached)
+            return CachedResponse(*cached)
         else:
             return None
 
     else:
         global caches
         if cached := caches.get(key):
-            return Cached(*cached)
+            return CachedResponse(*cached)
         else:
             return None
 
