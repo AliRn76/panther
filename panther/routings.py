@@ -29,28 +29,28 @@ def check_and_load_urls(urls: str | None) -> dict | None:
     return urls_dict
 
 
-def collect_urls(urls: dict) -> dict:
-    return {k: v for k, v in flatten_urls(urls)}
+def flatten_urls(urls: dict) -> dict:
+    return {k: v for k, v in _flattening_urls(urls)}
 
 
-def flatten_urls(data: dict | Callable, url: str = ''):
+def _flattening_urls(data: dict | Callable, url: str = ''):
     # Add `/` add the end of url
     if not url.endswith('/'):
         url = f'{url}/'
 
     if isinstance(data, dict):
         for k, v in data.items():
-            yield from flatten_urls(v, f'{url}{k}')
+            yield from _flattening_urls(v, f'{url}{k}')
     else:
         # Remove `/` prefix of url
         url = url.removeprefix('/')
 
         # Collect it, if it doesn't have problem
-        if url_endpoint_is_valid(url=url, endpoint=data):
+        if _is_url_endpoint_valid(url=url, endpoint=data):
             yield url, data
 
 
-def url_endpoint_is_valid(url: str, endpoint: Callable) -> bool:
+def _is_url_endpoint_valid(url: str, endpoint: Callable) -> bool:
     from panther.logger import logger
 
     if endpoint is ...:
@@ -62,6 +62,40 @@ def url_endpoint_is_valid(url: str, endpoint: Callable) -> bool:
     else:
         return True
     return False
+
+
+def finalize_urls(urls: dict) -> dict:
+    """convert flat dict to nested"""
+    urls_list = list()
+    for url, endpoint in urls.items():
+        path = dict()
+        for single_path in url.split('/')[:-1][::-1]:
+            path = {single_path: path or endpoint}
+        urls_list.append(path)
+    return _merge(*urls_list) if urls_list else {}
+
+
+def _merge(destination: MutableMapping, *sources) -> MutableMapping:
+    """Credit to Travis Clarke --> https://github.com/clarketm/mergedeep"""
+    return reduce(partial(_deepmerge), sources, destination)
+
+
+def _deepmerge(dst, src):
+    for key in src:
+        if key in dst:
+            if _is_recursive_merge(dst[key], src[key]):
+                _deepmerge(dst[key], src[key])
+            else:
+                dst[key] = deepcopy(src[key])
+        else:
+            dst[key] = deepcopy(src[key])
+    return dst
+
+
+def _is_recursive_merge(a, b):
+    both_mapping = isinstance(a, Mapping) and isinstance(b, Mapping)
+    both_counter = isinstance(a, Counter) and isinstance(b, Counter)
+    return both_mapping and not both_counter
 
 
 def find_endpoint(path: str) -> tuple[Callable | None, str]:
@@ -114,35 +148,3 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
 
     return None, ''
 
-
-def is_recursive_merge(a, b):
-    both_mapping = isinstance(a, Mapping) and isinstance(b, Mapping)
-    both_counter = isinstance(a, Counter) and isinstance(b, Counter)
-    return both_mapping and not both_counter
-
-
-def deepmerge(dst, src):
-    for key in src:
-        if key in dst:
-            if is_recursive_merge(dst[key], src[key]):
-                deepmerge(dst[key], src[key])
-            else:
-                dst[key] = deepcopy(src[key])
-        else:
-            dst[key] = deepcopy(src[key])
-    return dst
-
-
-def merge(destination: MutableMapping, *sources) -> MutableMapping:
-    """Credit to Travis Clarke --> https://github.com/clarketm/mergedeep"""
-    return reduce(partial(deepmerge), sources, destination)
-
-
-def finalize_urls(urls: dict) -> dict:
-    urls_list = list()
-    for url, endpoint in urls.items():
-        path = dict()
-        for single_path in url.split('/')[:-1][::-1]:
-            path = {single_path: path or endpoint}
-        urls_list.append(path)
-    return merge(*urls_list) if urls_list else {}

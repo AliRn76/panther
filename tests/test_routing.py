@@ -1,9 +1,13 @@
 from unittest import TestCase
 
-from panther.routings import collect_urls
+from panther.routings import flatten_urls, finalize_urls
 
 
 class TestRoutingFunctions(TestCase):
+
+    def test_check_and_load_urls(self):
+        # TODO: ...
+        pass
 
     def test_collect_ellipsis_urls(self):
         urls = {
@@ -15,7 +19,7 @@ class TestRoutingFunctions(TestCase):
         }
 
         with self.assertLogs() as captured:
-            collected_urls = collect_urls(urls)
+            collected_urls = flatten_urls(urls)
 
         self.assertEqual(len(captured.records), 3)
         self.assertEqual(captured.records[0].getMessage(), "URL Can't Point To Ellipsis. ('user/<user_id>/' -> ...)")
@@ -34,7 +38,7 @@ class TestRoutingFunctions(TestCase):
         }
 
         with self.assertLogs() as captured:
-            collected_urls = collect_urls(urls)
+            collected_urls = flatten_urls(urls)
 
         self.assertEqual(len(captured.records), 3)
         self.assertEqual(captured.records[0].getMessage(), "URL Can't Point To None. ('user/<user_id>/' -> None)")
@@ -56,7 +60,7 @@ class TestRoutingFunctions(TestCase):
         }
 
         with self.assertLogs() as captured:
-            collected_urls = collect_urls(urls)
+            collected_urls = flatten_urls(urls)
 
         self.assertEqual(len(captured.records), 3)
         self.assertEqual(captured.records[0].getMessage(), "URL Is Not Valid. --> 'user/?/'")
@@ -75,7 +79,7 @@ class TestRoutingFunctions(TestCase):
             'list/': temp_func,
         }
 
-        collected_urls = collect_urls(urls)
+        collected_urls = flatten_urls(urls)
 
         expected_result = {
             '<user_id>/': temp_func,
@@ -96,7 +100,7 @@ class TestRoutingFunctions(TestCase):
             }
         }
 
-        collected_urls = collect_urls(urls)
+        collected_urls = flatten_urls(urls)
 
         expected_result = {
             'user/<user_id>/': temp_func,
@@ -117,7 +121,7 @@ class TestRoutingFunctions(TestCase):
             }
         }
 
-        collected_urls = collect_urls(urls)
+        collected_urls = flatten_urls(urls)
 
         expected_result = {
             'user/<user_id>/': temp_func,
@@ -159,7 +163,7 @@ class TestRoutingFunctions(TestCase):
             }
         }
 
-        collected_urls = collect_urls(urls)
+        collected_urls = flatten_urls(urls)
         expected_result = {
             'user/<user_id>/profile/<id>/': temp_func,
             'user/profile/': temp_func,
@@ -174,3 +178,76 @@ class TestRoutingFunctions(TestCase):
             'admin/v1/users/detail/not-registered/': temp_func
         }
         self.assertEqual(collected_urls, expected_result)
+
+    def test_finalize_urls(self):
+        def temp_func():
+            pass
+
+        urls = {
+            'user/': {
+                '<user_id>/profile/<id>': temp_func,
+                'profile/': temp_func,
+                'list/': temp_func,
+            },
+            '': {
+                'payments': temp_func,
+                'notifications': temp_func,
+            },
+            'admin/v1': {
+                'profile/avatar': temp_func,
+                '<user_id>': temp_func,
+                'users/': {
+                    'list': {
+                        'registered': temp_func,
+                        'not-registered': temp_func,
+                    },
+                    'detail': {
+                        'registered': temp_func,
+                        'not-registered': temp_func,
+                    },
+                }
+            },
+            'admin/v2': {
+
+            }
+        }
+
+        collected_urls = flatten_urls(urls)
+        finalized_urls = finalize_urls(collected_urls)
+
+        expected_result = {
+            'user': {
+                '<user_id>': {
+                    'profile': {
+                        '<id>': temp_func
+                    }
+                },
+                'profile': temp_func,
+                'list': temp_func
+            },
+            'payments': temp_func,
+            'notifications': temp_func,
+            'admin': {
+                'v1': {
+                    'profile': {
+                        'avatar': temp_func
+                    },
+                    '<user_id>': temp_func,
+                    'users': {
+                        'list': {
+                            'registered': temp_func,
+                            'not-registered': temp_func
+                        },
+                        'detail': {
+                            'registered': temp_func,
+                            'not-registered': temp_func
+                        }
+                    }
+                }
+            }
+        }
+        self.assertEqual(finalized_urls, expected_result)
+
+    def test_find_endpoint(self):
+        # TODO: ...
+        pass
