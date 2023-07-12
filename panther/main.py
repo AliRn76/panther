@@ -1,5 +1,6 @@
 import os
 import ast
+import sys
 import asyncio
 from pathlib import Path
 from runpy import run_path
@@ -21,10 +22,13 @@ from panther._utils import http_response, import_class, read_body, collect_path_
 class Panther:
 
     def __init__(self, name):
+        from panther.logger import logger
         os.system('clear')
         config['base_dir'] = Path(name).resolve().parent
         self.panther_dir = Path(__file__).parent
         self.load_configs()
+        if sys.version_info.minor < 11:
+            logger.info('Use Python Version 3.11+ For Better Performance.')
 
     def load_configs(self) -> None:
         from panther.logger import logger
@@ -161,8 +165,11 @@ class Panther:
             with ProcessPoolExecutor() as e:
                 e.submit(self.run, scope, receive, send)
         """
-        async with asyncio.TaskGroup() as tg:
-            tg.create_task(self.run(scope, receive, send))
+        if sys.version_info.minor >= 11:
+            async with asyncio.TaskGroup() as tg:
+                tg.create_task(self.run(scope, receive, send))
+        else:
+            await self.run(scope, receive, send)
 
     async def run(self, scope, receive, send):
         from panther.logger import logger

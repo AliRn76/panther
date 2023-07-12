@@ -5,7 +5,7 @@ from datetime import timedelta
 throttling_storage = defaultdict(int)
 
 
-@dataclass(repr=False, eq=False, match_args=False)
+@dataclass(repr=False, eq=False)
 class Throttling:
     rate: int
     duration: timedelta

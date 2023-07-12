@@ -21,7 +21,7 @@ EXTRAS_REQUIRE = {
 setup(
     name='panther',
     version=VERSION,
-    python_requires='>=3.11',
+    python_requires='>=3.10',
     author='Ali RajabNezhad',
     author_email='alirn76@yahoo.com',
     url='https://github.com/alirn76/panther',
@@ -33,7 +33,9 @@ setup(
     classifiers=[
         'Operating System :: OS Independent',
         'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
     ],
     entry_points={
         'console_scripts': ['panther=panther.cli.main:start'],

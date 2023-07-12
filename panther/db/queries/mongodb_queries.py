@@ -1,8 +1,15 @@
-from typing import Self
+import sys
 
 from panther.db.connection import db  # NOQA: F401
 from panther.exceptions import DBException
 from panther.db.utils import clean_object_id_in_dicts, merge_dicts
+
+
+if sys.version_info.minor >= 11:
+    from typing import Self
+else:
+    from typing import TypeVar
+    Self = TypeVar("Self", bound="BaseMongoDBQuery")
 
 
 class BaseMongoDBQuery:

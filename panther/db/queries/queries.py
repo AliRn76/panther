@@ -1,4 +1,5 @@
-from typing import Self, NoReturn
+import sys
+from typing import NoReturn
 
 from pydantic import ValidationError
 
@@ -16,6 +17,13 @@ else:
 __all__ = (
     'Query',
 )
+
+
+if sys.version_info.minor >= 11:
+    from typing import Self
+else:
+    from typing import TypeVar
+    Self = TypeVar("Self", bound="Query")
 
 
 class Query(BaseQuery):

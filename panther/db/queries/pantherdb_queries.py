@@ -1,8 +1,15 @@
-from typing import Self
+import sys
 
 from panther.db.connection import db
 from panther.db.utils import merge_dicts, clean_object_id_in_dicts
 from panther.exceptions import DBException
+
+
+if sys.version_info.minor >= 11:
+    from typing import Self
+else:
+    from typing import TypeVar
+    Self = TypeVar("Self", bound="BasePantherDBQuery")
 
 
 class BasePantherDBQuery:
