@@ -1,6 +1,7 @@
+import random
 from unittest import TestCase
 
-from panther.routings import flatten_urls, finalize_urls
+from panther.routings import flatten_urls, finalize_urls, find_endpoint
 
 
 class TestRoutingFunctions(TestCase):
@@ -48,8 +49,7 @@ class TestRoutingFunctions(TestCase):
         self.assertDictEqual(collected_urls, {})
 
     def test_collect_invalid_urls(self):
-        def temp_func():
-            pass
+        def temp_func(): pass
 
         urls = {
             'user/': {
@@ -70,8 +70,7 @@ class TestRoutingFunctions(TestCase):
         self.assertDictEqual(collected_urls, {})
 
     def test_collect_simple_urls(self):
-        def temp_func():
-            pass
+        def temp_func(): pass
 
         urls = {
             '<user_id>/': temp_func,
@@ -89,8 +88,7 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(collected_urls, expected_result)
 
     def test_collect_simple_nested_urls(self):
-        def temp_func():
-            pass
+        def temp_func(): pass
 
         urls = {
             'user/': {
@@ -110,8 +108,7 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(collected_urls, expected_result)
 
     def test_collect_simple_nested_urls_without_slash_at_end(self):
-        def temp_func():
-            pass
+        def temp_func(): pass
 
         urls = {
             'user': {
@@ -131,8 +128,7 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(collected_urls, expected_result)
 
     def test_collect_complex_nested_urls(self):
-        def temp_func():
-            pass
+        def temp_func(): pass
 
         urls = {
             'user/': {
@@ -180,8 +176,7 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(collected_urls, expected_result)
 
     def test_finalize_urls(self):
-        def temp_func():
-            pass
+        def temp_func(): pass
 
         urls = {
             'user/': {
@@ -248,6 +243,174 @@ class TestRoutingFunctions(TestCase):
         }
         self.assertEqual(finalized_urls, expected_result)
 
-    def test_find_endpoint(self):
-        # TODO: ...
-        pass
+    def test_find_endpoint_success(self):
+        def user_id_profile_id(): pass
+        def user_profile(): pass
+        def payment(): pass
+        def admin_v1_profile_avatar(): pass
+        def admin_v1_id(): pass
+        def admin_v2_users_list_registered(): pass
+        def admin_v2_users_detail_not_registered(): pass
+
+        from panther.configs import config
+
+        config['urls'] = {
+            'user': {
+                '<user_id>': {
+                    'profile': {
+                        '<id>': user_id_profile_id
+                    }
+                },
+                'profile': user_profile,
+                'list': ...
+            },
+            'payments': payment,
+            'notifications': ...,
+            'admin': {
+                'v1': {
+                    'profile': {
+                        'avatar': admin_v1_profile_avatar
+                    },
+                    '<user_id>': admin_v1_id,
+                    'users': {
+                        'list': {
+                            'registered': admin_v2_users_list_registered,
+                            'not-registered': ...
+                        },
+                        'detail': {
+                            'registered': ...,
+                            'not-registered': admin_v2_users_detail_not_registered
+                        }
+                    }
+                }
+            }
+        }
+        user_id_profile_id_func, _ = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
+        user_profile_func, _ = find_endpoint('user/profile/')
+        payment_func, _ = find_endpoint('payments/')
+        admin_v1_profile_avatar_func, _ = find_endpoint('admin/v1/profile/avatar')
+        admin_v1_id_func, _ = find_endpoint(f'admin/v1/{random.randint(0, 100)}')
+        admin_v2_users_list_registered_func, _ = find_endpoint('admin/v1/users/list/registered/')
+        admin_v2_users_detail_not_registered_func, _ = find_endpoint('admin/v1/users/detail/not-registered')
+
+        self.assertEqual(user_id_profile_id_func, user_id_profile_id)
+        self.assertEqual(user_profile_func, user_profile)
+        self.assertEqual(payment_func, payment)
+        self.assertEqual(admin_v1_profile_avatar_func, admin_v1_profile_avatar)
+        self.assertEqual(admin_v1_id_func, admin_v1_id)
+        self.assertEqual(admin_v2_users_list_registered_func, admin_v2_users_list_registered)
+        self.assertEqual(admin_v2_users_detail_not_registered_func, admin_v2_users_detail_not_registered)
+        config['urls'] = {}
+
+    def test_find_endpoint_success_path(self):
+        def user_id_profile_id(): pass
+        def user_profile(): pass
+        def payment(): pass
+        def admin_v1_profile_avatar(): pass
+        def admin_v1_id(): pass
+        def admin_v2_users_list_registered(): pass
+        def admin_v2_users_detail_not_registered(): pass
+
+        from panther.configs import config
+
+        config['urls'] = {
+            'user': {
+                '<user_id>': {
+                    'profile': {
+                        '<id>': user_id_profile_id
+                    }
+                },
+                'profile': user_profile,
+                'list': ...
+            },
+            'payments': payment,
+            'notifications': ...,
+            'admin': {
+                'v1': {
+                    'profile': {
+                        'avatar': admin_v1_profile_avatar
+                    },
+                    '<user_id>': admin_v1_id,
+                    'users': {
+                        'list': {
+                            'registered': admin_v2_users_list_registered,
+                            'not-registered': ...
+                        },
+                        'detail': {
+                            'registered': ...,
+                            'not-registered': admin_v2_users_detail_not_registered
+                        }
+                    }
+                }
+            }
+        }
+        _, user_id_profile_id_path = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
+        _, user_profile_path = find_endpoint('user/profile/')
+        _, payment_path = find_endpoint('payments/')
+        _, admin_v1_profile_avatar_path = find_endpoint('admin/v1/profile/avatar')
+        _, admin_v1_id_path = find_endpoint(f'admin/v1/{random.randint(0, 100)}')
+        _, admin_v2_users_list_registered_path = find_endpoint('admin/v1/users/list/registered/')
+        _, admin_v2_users_detail_not_registered_path = find_endpoint('admin/v1/users/detail/not-registered')
+
+        self.assertEqual(user_id_profile_id_path, f'user/<user_id>/profile/<id>/')
+        self.assertEqual(user_profile_path, 'user/profile/')
+        self.assertEqual(payment_path, 'payments/')
+        self.assertEqual(admin_v1_profile_avatar_path, 'admin/v1/profile/avatar/')
+        self.assertEqual(admin_v1_id_path, 'admin/v1/<user_id>/')
+        self.assertEqual(admin_v2_users_list_registered_path, 'admin/v1/users/list/registered/')
+        self.assertEqual(admin_v2_users_detail_not_registered_path, 'admin/v1/users/detail/not-registered/')
+        config['urls'] = {}
+
+    def test_find_endpoint_not_found(self):
+        def temp_func(): pass
+
+        from panther.configs import config
+
+        config['urls'] = {
+            'user': {
+                'list': temp_func
+            }
+        }
+        user_id_profile_id_func, _ = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
+        user_profile_func, _ = find_endpoint('user/profile/')
+        payment_func, _ = find_endpoint('payments/')
+        admin_v1_profile_avatar_func, _ = find_endpoint('admin/v1/profile/avatar')
+        admin_v1_id_func, _ = find_endpoint(f'admin/v1/{random.randint(0, 100)}')
+        admin_v2_users_list_registered_func, _ = find_endpoint('admin/v1/users/list/registered/')
+        admin_v2_users_detail_not_registered_func, _ = find_endpoint('admin/v1/users/detail/not-registered')
+
+        self.assertIsNone(user_id_profile_id_func)
+        self.assertIsNone(user_profile_func)
+        self.assertIsNone(payment_func)
+        self.assertIsNone(admin_v1_profile_avatar_func)
+        self.assertIsNone(admin_v1_id_func)
+        self.assertIsNone(admin_v2_users_list_registered_func)
+        self.assertIsNone(admin_v2_users_detail_not_registered_func)
+        config['urls'] = {}
+
+    def test_find_endpoint_not_found_path(self):
+        def temp_func(): pass
+
+        from panther.configs import config
+
+        config['urls'] = {
+            'user': {
+                'list': temp_func
+            }
+        }
+        _, user_id_profile_id_path = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
+        _, user_profile_path = find_endpoint('user/profile/')
+        _, payment_path = find_endpoint('payments/')
+        _, admin_v1_profile_avatar_path = find_endpoint('admin/v1/profile/avatar')
+        _, admin_v1_id_path = find_endpoint(f'admin/v1/{random.randint(0, 100)}')
+        _, admin_v2_users_list_registered_path = find_endpoint('admin/v1/users/list/registered/')
+        _, admin_v2_users_detail_not_registered_path = find_endpoint('admin/v1/users/detail/not-registered')
+
+        self.assertEqual(user_id_profile_id_path, '')
+        self.assertEqual(user_profile_path, '')
+        self.assertEqual(payment_path, '')
+        self.assertEqual(admin_v1_profile_avatar_path, '')
+        self.assertEqual(admin_v1_id_path, '')
+        self.assertEqual(admin_v2_users_list_registered_path, '')
+        self.assertEqual(admin_v2_users_detail_not_registered_path, '')
+        config['urls'] = {}

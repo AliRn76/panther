@@ -104,8 +104,8 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
     path = path.removesuffix('/').removeprefix('/')  # 'user/list'
     paths = path.split('/')  # ['user', 'list']
     paths_len = len(paths)
-    sub = config['urls']
-    # sub = {
+    urls = config['urls']
+    # urls = {
     #     'user': {
     #         '<id>': <function users at 0x7f579d060220>,
     #         '': <function single_user at 0x7f579d060e00>
@@ -114,7 +114,7 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
     found_path = ''
     for i, split_path in enumerate(paths):
         last_path = bool((i + 1) == paths_len)
-        found = sub.get(split_path)
+        found = urls.get(split_path)
         if last_path and callable(found):
             found_path += f'{split_path}/'
             return found, found_path
@@ -123,13 +123,13 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
             if last_path and callable(endpoint := found.get('')):
                 return endpoint, found_path
 
-            sub = found
+            urls = found
             continue
 
         # found = None
-        # sub = {'<id>': <function return_list at 0x7f0757baff60>} (Example)
+        # urls = {'<id>': <function return_list at 0x7f0757baff60>} (Example)
         _continue = False
-        for key, value in sub.items():
+        for key, value in urls.items():
             if key.startswith('<'):
                 if last_path:
                     if callable(value):
@@ -138,7 +138,7 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
                     else:
                         return None, ''
 
-                sub = value
+                urls = value
                 found_path += f'{key}/'
                 _continue = True
                 break

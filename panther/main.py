@@ -26,9 +26,9 @@ class Panther:
         os.system('clear')
         config['base_dir'] = Path(name).resolve().parent
         self.panther_dir = Path(__file__).parent
-        self.load_configs()
         if sys.version_info.minor < 11:
-            logger.info('Use Python Version 3.11+ For Better Performance.')
+            logger.warning('Use Python Version 3.11+ For Better Performance.')
+        self.load_configs()
 
     def load_configs(self) -> None:
         from panther.logger import logger
