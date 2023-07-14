@@ -18,32 +18,32 @@ class Config(TypedDict):
     base_dir: Path
     monitoring: bool
     log_queries: bool
-    urls: dict
+    default_cache_exp: timedelta | None
+    throttling: Throttling | None
+    secret_key: bytes | None
     middlewares: list
     reversed_middlewares: list
-    db_engine: str
-    default_cache_exp: timedelta | None
-    secret_key: bytes | None
+    user_model: ModelMetaclass | None
     authentication: ModelMetaclass | None
     jwt_config: JWTConfig | None
-    user_model: ModelMetaclass | None
-    throttling: Throttling | None
     models: list[dict]
+    urls: dict
+    db_engine: str
 
 
 config: Config = {
     'base_dir': Path(),
     'monitoring': False,
     'log_queries': False,
+    'default_cache_exp': None,
+    'throttling': None,
     'secret_key': None,
-    'urls': {},
     'middlewares': [],
     'reversed_middlewares': [],
-    'db_engine': '',
-    'default_cache_exp': None,
-    'jwt_config': None,
-    'authentication': None,
     'user_model': None,
-    'throttling': None,
+    'authentication': None,
+    'jwt_config': None,
     'models': [],
+    'urls': {},
+    'db_engine': '',  # TODO: Should we set default db_engine=pantherdb ?
 }
