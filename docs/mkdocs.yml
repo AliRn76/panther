@@ -26,7 +26,7 @@ edit_uri: edit/master/docs/
 
 nav:
   - Introduction: 'index.md'
-  - First API: 'first_api.md'
+  - First Crud: 'first_crud.md'
   - Working With Database: 'working_with_db.md'
   - Panther ODM: 'panther_odm.md'
   - Configs: 'configs.md'

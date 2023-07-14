@@ -180,4 +180,4 @@ with [https://github.com/nakabonne/ali](https://github.com/nakabonne/ali) and he
 
 
 
-> More examples: [https://github.com/AliRn76/panther/tree/master/example](https://github.com/AliRn76/panther/tree/master/example).
+> Writing Your First CRUD: [First CRUD](https://pantherpy.github.io/first_crud)
