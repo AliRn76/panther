@@ -7,8 +7,6 @@ from logging.config import dictConfig
 
 
 LOGS_DIR = config['base_dir'] / 'logs'
-if not os.path.exists(LOGS_DIR):
-    os.makedirs(LOGS_DIR)
 
 
 class LogConfig(BaseModel):
@@ -79,7 +77,14 @@ class LogConfig(BaseModel):
     }
 
 
-dictConfig(LogConfig().model_dump())
+try:
+    dictConfig(LogConfig().model_dump())
+except ValueError:
+    LOGS_DIR = config['base_dir'] / 'logs'
+    if not os.path.exists(LOGS_DIR):
+        os.makedirs(LOGS_DIR)
+
+
 logger = logging.getLogger('panther')
 query_logger = logging.getLogger('query')
 monitoring_logger = logging.getLogger('monitoring')
