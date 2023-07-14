@@ -1,7 +1,7 @@
 import random
 from unittest import TestCase
 
-from panther.routings import flatten_urls, finalize_urls, find_endpoint
+from panther.routings import flatten_urls, finalize_urls, find_endpoint, collect_path_variables
 
 
 class TestRoutingFunctions(TestCase):
@@ -413,4 +413,36 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(admin_v1_id_path, '')
         self.assertEqual(admin_v2_users_list_registered_path, '')
         self.assertEqual(admin_v2_users_detail_not_registered_path, '')
+        config['urls'] = {}
+
+    def test_collect_path_variables(self):
+        def temp_func(): pass
+
+        from panther.configs import config
+
+        config['urls'] = {
+            'user': {
+                '<user_id>': {
+                    'profile': {
+                        '<id>': temp_func
+                    }
+                },
+            }
+        }
+
+        _user_id = random.randint(0, 100)
+        _id = random.randint(0, 100)
+        request_path = f'user/{_user_id}/profile/{_id}'
+
+        _, found_path = find_endpoint(request_path)
+        path_variables = collect_path_variables(request_path=request_path, found_path=found_path)
+
+        self.assertTrue(isinstance(path_variables, dict))
+
+        self.assertTrue('user_id' in path_variables)
+        self.assertTrue('id' in path_variables)
+
+        self.assertEqual(path_variables['user_id'], str(_user_id))
+        self.assertEqual(path_variables['id'], str(_id))
+
         config['urls'] = {}

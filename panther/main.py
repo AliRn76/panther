@@ -13,8 +13,8 @@ from panther.exceptions import APIException
 from panther.configs import JWTConfig, config
 from panther.middlewares.base import BaseMiddleware
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
-from panther.routings import find_endpoint, check_and_load_urls, finalize_urls, flatten_urls
-from panther._utils import http_response, import_class, read_body, collect_path_variables
+from panther.routings import find_endpoint, check_and_load_urls, finalize_urls, flatten_urls, collect_path_variables
+from panther._utils import http_response, import_class, read_body
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
@@ -52,7 +52,7 @@ class Panther:
         config['jwt_config'] = self._get_jwt_config()
 
         # Find Database Models
-        self.collect_models_for_panel()
+        self._collect_models()
 
         # Check & Collect URLs
         #   check_urls should be the last call in load_configs,
@@ -67,11 +67,6 @@ class Panther:
         if config['monitoring']:
             logger.info('Run "panther monitor" in another session for Monitoring.')
 
-    def _load_urls(self) -> dict:
-        urls = check_and_load_urls(self.settings.get('URLs')) or {}
-        collected_urls = flatten_urls(urls)
-        return finalize_urls(collected_urls)
-
     def _check_configs(self):
         from panther.logger import logger
         """Read the config file and put it as dict in self.settings"""
@@ -80,6 +75,7 @@ class Panther:
             self.settings = run_path(str(configs_path))
         except FileNotFoundError:
             logger.critical('core/configs.py Not Found.')
+            # TODO: Exit() Here
 
     def _get_secret_key(self) -> bytes | None:
         if secret_key := self.settings.get('SECRET_KEY'):
@@ -103,11 +99,11 @@ class Panther:
             middlewares.append(Middleware(**data))  # NOQA: Py Argument List
         return middlewares
 
-    def _get_authentication_class(self) -> ModelMetaclass | None:
-        return self.settings.get('AUTHENTICATION') and import_class(self.settings['AUTHENTICATION'])
-
     def _get_user_model(self) -> ModelMetaclass:
         return import_class(self.settings.get('USER_MODEL', 'panther.db.models.BaseUser'))
+
+    def _get_authentication_class(self) -> ModelMetaclass | None:
+        return self.settings.get('AUTHENTICATION') and import_class(self.settings['AUTHENTICATION'])
 
     def _get_jwt_config(self) -> JWTConfig:
         """Only Collect JWT Config If Authentication Is JWTAuthentication"""
@@ -115,7 +111,9 @@ class Panther:
             user_config = self.settings.get('JWTConfig')
             return JWTConfig(**user_config) if user_config else JWTConfig(key=config['secret_key'].decode())
 
-    def collect_models_for_panel(self):
+    @classmethod
+    def _collect_models(cls):
+        """Collecting models for panel APIs"""
         from panther.db.models import Model
 
         for root, _, files in os.walk(config['base_dir']):
@@ -148,6 +146,11 @@ class Panther:
                                                 'class': klass,
                                                 'app': class_path.split('.'),
                                             })
+
+    def _load_urls(self) -> dict:
+        urls = check_and_load_urls(self.settings.get('URLs')) or {}
+        collected_urls = flatten_urls(urls)
+        return finalize_urls(collected_urls)
 
     async def __call__(self, scope, receive, send) -> None:
         """

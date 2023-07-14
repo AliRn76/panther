@@ -148,3 +148,12 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
 
     return None, ''
 
+
+def collect_path_variables(request_path: str, found_path: str) -> dict:
+    found_path = found_path.removesuffix('/').removeprefix('/')
+    request_path = request_path.removesuffix('/').removeprefix('/')
+    path_variables = dict()
+    for f_path, r_path in zip(found_path.split('/'), request_path.split('/')):
+        if f_path.startswith('<'):
+            path_variables[f_path[1:-1]] = r_path
+    return path_variables
