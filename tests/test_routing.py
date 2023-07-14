@@ -69,6 +69,34 @@ class TestRoutingFunctions(TestCase):
 
         self.assertDictEqual(collected_urls, {})
 
+    def test_collect_empty_url(self):
+        def temp_func(): pass
+
+        urls = {
+            '': temp_func,
+        }
+
+        collected_urls = flatten_urls(urls)
+
+        expected_result = {
+            '': temp_func,
+        }
+        self.assertEqual(collected_urls, expected_result)
+
+    def test_collect_root_url(self):
+        def temp_func(): pass
+
+        urls = {
+            '/': temp_func,
+        }
+
+        collected_urls = flatten_urls(urls)
+
+        expected_result = {
+            '/': temp_func,
+        }
+        self.assertEqual(collected_urls, expected_result)
+
     def test_collect_simple_urls(self):
         def temp_func(): pass
 
@@ -175,6 +203,36 @@ class TestRoutingFunctions(TestCase):
         }
         self.assertEqual(collected_urls, expected_result)
 
+    def test_finalize_empty_url(self):
+        def temp_func(): pass
+
+        urls = {
+            '': temp_func,
+        }
+
+        collected_urls = flatten_urls(urls)
+        finalized_urls = finalize_urls(collected_urls)
+
+        expected_result = {
+            '': temp_func,
+        }
+        self.assertEqual(finalized_urls, expected_result)
+
+    def test_finalize_root_url(self):
+        def temp_func(): pass
+
+        urls = {
+            '/': temp_func,
+        }
+
+        collected_urls = flatten_urls(urls)
+        finalized_urls = finalize_urls(collected_urls)
+
+        expected_result = {
+            '': temp_func,
+        }
+        self.assertEqual(finalized_urls, expected_result)
+
     def test_finalize_urls(self):
         def temp_func(): pass
 
@@ -242,6 +300,20 @@ class TestRoutingFunctions(TestCase):
             }
         }
         self.assertEqual(finalized_urls, expected_result)
+
+    def test_find_endpoint_root_url(self):
+        def temp_func(): pass
+
+        from panther.configs import config
+
+        config['urls'] = {
+            '': temp_func
+        }
+        _func, _ = find_endpoint('')
+
+        self.assertIsNotNone(_func)
+        self.assertEqual(_func, temp_func)
+        config['urls'] = {}
 
     def test_find_endpoint_success(self):
         def user_id_profile_id(): pass
@@ -437,7 +509,7 @@ class TestRoutingFunctions(TestCase):
         _, found_path = find_endpoint(request_path)
         path_variables = collect_path_variables(request_path=request_path, found_path=found_path)
 
-        self.assertTrue(isinstance(path_variables, dict))
+        self.assertIsInstance(path_variables, dict)
 
         self.assertTrue('user_id' in path_variables)
         self.assertTrue('id' in path_variables)

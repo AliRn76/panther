@@ -69,6 +69,11 @@ def finalize_urls(urls: dict) -> dict:
     urls_list = list()
     for url, endpoint in urls.items():
         path = dict()
+        if url == '':
+            # This condition only happen when
+            #   user defines the root url == '' instead of '/'
+            url = '/'
+
         for single_path in url.split('/')[:-1][::-1]:
             path = {single_path: path or endpoint}
         urls_list.append(path)
