@@ -1,3 +1,9 @@
+### 1.7.10
+- Fix a bug in `collect_urls` and rename it to `flatten_urls`
+- Add General Tests
+- Compatible with python3.10 (Not Tested)
+- Working on docs
+
 ### 1.7.9
 - Working on doc
 
