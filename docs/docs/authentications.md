@@ -4,19 +4,21 @@
 >  
 > <b>Default:</b> `None`
   
-You can set your Authentication class in `core/configs.py`  then Panther will use this class for authentication in every `API` you set `auth=True` in `@API()`  _and put the `user` in `request.user` or `raise HTTP_401_UNAUTHORIZED` 
+You can set your Authentication class in `core/configs.py`, then Panther will use this class for authentication in every `API`, if you set `auth=True` in `@API()`, and put the `user` in `request.user` or `raise HTTP_401_UNAUTHORIZED` 
 
 
-We already have one built-in authentication class which is used `jwt` for authentication and you can write your own authentication class too (we are going to disccuss about both of this scenarios)
+We already have one built-in authentication class which is used `JWT` for authentication.
+
+You can write your own authentication class too (we are going to discuss it)
 
 
 ### JWTAuthentication
 
-#### Intro
 This class will 
-- get the `token` from `Authorization` header of request with keyword of `Bearer`
-- then going to `decode` it 
-- and find the match `user` with the `USER_MODEL` you have been already set
+
+- Get the `token` from `Authorization` header of request with keyword of `Bearer`
+- `decode` it 
+- Find the match `user` in `USER_MODEL` you have already set
 
 > `JWTAuthentication` is going to use `panther.db.models.BaseUser` if you didn't set the `USER_MODEL` in your `core/configs.py`
 
@@ -34,12 +36,30 @@ env = load_env(BASE_DIR / '.env')
 SECRET_KEY = env['SECRET_KEY']
 
 JWTConfig = {  
+	'key': SECRET_KEY,  
 	'algorithm': 'HS256',  
 	'life_time': timedelta(days=2),  
-	'key': SECRET_KEY,  
 }
 ```
 
-> **key**             --> `Default` using your `SECRET_KEY`
-> **algorithm**  --> `Default` using `HS256`
-> **life_time**    --> `Default` using `timedelta(days=1)` 
+> **key** &emsp;&emsp;&emsp;&emsp;--> default is `SECRET_KEY`
+> 
+> **algorithm** &emsp; --> default is `HS256`
+> 
+> **life_time**&emsp;&emsp;--> default is `timedelta(days=1)` 
+
+
+### Custom Authentication
+- Create a class and inherits it from `panther.authentications.BaseAuthentication`
+
+
+- Implement `authentication(cls, request: Request)` method
+    - Process the `request.headers.authorization` or ...
+    - Return Instance of `USER_MODEL`
+    - Or raise `panther.exceptions.AuthenticationException` 
+  
+
+- Address it in `core/configs.py`
+  - `AUTHENTICATION = 'project_name.core.authentications.CustomAuthentication'`
+
+> You can look at the source code of JWTAuthentication for 

@@ -7,13 +7,15 @@
 - `URLs` should point to the root of your `urls` file,
 and in that file you should have a `dict` name `urls`
 - `key` of urls dict is `path` & value is `endpoint` or another `dict`
-- path variables are handled like below:
+
+- #### Path Variables are handled like below:
+
     - <`variable_name`>
     - Example: `user/<user_id>/blog/<title>/`
     - The `endpoint` should have parameters with those names too
     - Example: `async def profile_api(user_id: int, title: str):`
 
-### Structure Example
+## Example
 
 - core/configs.py
     ```python

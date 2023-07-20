@@ -1,5 +1,5 @@
   
-### find_one:  
+### find_one  
 - Find the first match document  
 - Example:  
 
@@ -11,7 +11,7 @@
 	user: User = User.find_one({'id': 1}, name='Ali')  
 	```  
   
-### find:  
+### find  
 - Find all the matches documents  
 - Example:  
   
@@ -23,7 +23,7 @@
 	users: list[User] = User.find({'id': 1}, name='Ali')  
 	```  
   
-### insert_one:  
+### insert_one  
 - Insert only one document into database  
 - Example:  
   
@@ -35,7 +35,7 @@
 	User.insert_one({'id': 1}, name='Ali')  
 	```
 
-### delete:  
+### delete  
 - Delete the selected document from database
 - Example:  
   
@@ -44,7 +44,7 @@
 	user.delete()
 	```
 
-### delete_one:  
+### delete_one  
 - Delete the first match document  from database
 - Example:  
   
@@ -52,7 +52,7 @@
 	is_deleted: bool = User.delete_one(id=1, name='Ali')
 	```
 
-### delete_many:  
+### delete_many  
 - Delete all the matches document  from database
 - Example:  
   
@@ -64,7 +64,7 @@
 	deleted_count: int = User.delete_many({'id': 1, 'name': 'Ali'})
 	```
 
-### update:  
+### update  
 - Update the selected document in database
 - Example:  
   
@@ -73,7 +73,7 @@
 	user.update(name='Saba')
 	```
 
-### update_one:  
+### update_one  
 - Update the first match document in database
 - You should filter with `dictionary` as `first parameter` 
 and pass the fields you want to update as `kwargs` or another `dictionary` as `second parameter`
@@ -87,7 +87,7 @@ and pass the fields you want to update as `kwargs` or another `dictionary` as `s
 	is_updated: bool = User.update_one({'id': 1, 'name': 'Ali'}, {'name': 'Saba'}, age=26)
 	```
 
-### update_many:  
+### update_many  
 - Update all the matches document in database
 - You should filter with `dictionary` as `first parameter` 
 and pass the fields you want to update as `kwargs` or another `dictionary` as `second parameter`
@@ -101,7 +101,7 @@ and pass the fields you want to update as `kwargs` or another `dictionary` as `s
 	updated_count: int = User.update_many({'name': 'Ali'}, {'name': 'Saba'}, age=26)
 	```
 
-### last:  
+### last  
 - Find the last match document
 - Example:  
   
@@ -113,7 +113,7 @@ and pass the fields you want to update as `kwargs` or another `dictionary` as `s
 	user: User = User.last({'name': 'Ali'}, age=26)  
 	```
 
-### count:  
+### count  
 - Count of the matches documents
 - Example:  
   
@@ -121,13 +121,10 @@ and pass the fields you want to update as `kwargs` or another `dictionary` as `s
 	users_count: int = User.count(name='Ali')
 	```
 
-### find_or_insert:  
+### find_or_insert 
 - Find the match document or Create one if none exists
 - Example:  
   
 	```python  
 	user: User = User.find_or_insert(name='Ali')
 	```
-
-
-### In next step we are going to authentication

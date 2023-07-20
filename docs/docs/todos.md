@@ -46,6 +46,7 @@
 - &#x2705; Update Many
 - &#x2705; Update Itself
 - &#x2705; Find or Insert
+- &#x2705; Save
 - &#9744; Find or Raise
 - &#9744; Find with Pagination
 - &#9744; Aggregation

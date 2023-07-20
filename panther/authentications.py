@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from datetime import datetime
 from panther.logger import logger
 from panther.configs import config
@@ -12,7 +13,22 @@ except ImportError:
     exit()
 
 
-class JWTAuthentication:
+class BaseAuthentication:
+    @classmethod
+    @abstractmethod
+    def authentication(cls, request: Request):
+        """
+        Return User Instance
+        """
+        raise cls.exception(f'{cls.__name__}.authentication() is not implemented.')
+
+    @staticmethod
+    def exception(message: str, /):
+        logger.error(f'Authentication Error: "{message}"')
+        return AuthenticationException
+
+
+class JWTAuthentication(BaseAuthentication):
     model = BaseUser
     keyword = 'Bearer'
     algorithm = 'HS256'

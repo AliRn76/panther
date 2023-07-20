@@ -179,3 +179,14 @@ class Query(BaseQuery):
             return False, obj
         else:
             return True, cls.insert_one(**kwargs)
+
+    @log_query
+    def save(self, **kwargs) -> None:
+        """
+        example:
+            >>> from example.app.models import User
+            >>> user = User.find_one(name='Ali')
+            >>> user.name = 'Saba'
+            >>> user.save()
+        """
+        raise DBException('save() is not supported yes')
