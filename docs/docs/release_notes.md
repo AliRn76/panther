@@ -1,3 +1,6 @@
+### 1.7.12
+- Fix a bug in routing
+
 ### 1.7.11
 - Fix an issue in template
 

@@ -74,7 +74,7 @@ def finalize_urls(urls: dict) -> dict:
             #   user defines the root url == '' instead of '/'
             url = '/'
 
-        for single_path in url.split('/')[:-1][::-1]:
+        for single_path in list(filter(lambda x: x != '', url.split('/')[:-1][::-1])) or ['']:
             path = {single_path: path or endpoint}
         urls_list.append(path)
     return _merge(*urls_list) if urls_list else {}

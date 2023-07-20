@@ -83,6 +83,34 @@ class TestRoutingFunctions(TestCase):
         }
         self.assertEqual(collected_urls, expected_result)
 
+    def test_collect_empty_url_nested(self):
+        def temp_func(): pass
+
+        urls = {
+            '': {
+                '': {
+                    'nested/<user_id>/': temp_func,
+                    'nested/profile/': temp_func,
+                    'nested/list/': temp_func,
+                },
+                '<user_id>/': temp_func,
+                'profile/': temp_func,
+                'list/': temp_func,
+            },
+        }
+
+        collected_urls = flatten_urls(urls)
+
+        expected_result = {
+            '<user_id>/': temp_func,
+            'profile/': temp_func,
+            'list/': temp_func,
+            'nested/<user_id>/': temp_func,
+            'nested/profile/': temp_func,
+            'nested/list/': temp_func
+        }
+        self.assertEqual(collected_urls, expected_result)
+
     def test_collect_root_url(self):
         def temp_func(): pass
 
@@ -94,6 +122,34 @@ class TestRoutingFunctions(TestCase):
 
         expected_result = {
             '/': temp_func,
+        }
+        self.assertEqual(collected_urls, expected_result)
+
+    def test_collect_root_url_nested(self):
+        def temp_func(): pass
+
+        urls = {
+            '/': {
+                '/': {
+                    'nested/<user_id>/': temp_func,
+                    'nested/profile/': temp_func,
+                    'nested/list/': temp_func,
+                },
+                '<user_id>/': temp_func,
+                'profile/': temp_func,
+                'list/': temp_func,
+            },
+        }
+
+        collected_urls = flatten_urls(urls)
+
+        expected_result = {
+            '/<user_id>/': temp_func,
+            '/profile/': temp_func,
+            '/list/': temp_func,
+            '//nested/<user_id>/': temp_func,
+            '//nested/profile/': temp_func,
+            '//nested/list/': temp_func
         }
         self.assertEqual(collected_urls, expected_result)
 
@@ -218,6 +274,37 @@ class TestRoutingFunctions(TestCase):
         }
         self.assertEqual(finalized_urls, expected_result)
 
+    def test_finalize_empty_url_nested(self):
+        def temp_func(): pass
+
+        urls = {
+            '': {
+                '': {
+                    'nested/<user_id>/': temp_func,
+                    'nested/profile/': temp_func,
+                    'nested/list/': temp_func,
+                },
+                '<user_id>/': temp_func,
+                'profile/': temp_func,
+                'list/': temp_func,
+            },
+        }
+
+        collected_urls = flatten_urls(urls)
+        finalized_urls = finalize_urls(collected_urls)
+
+        expected_result = {
+            'nested': {
+                '<user_id>': temp_func,
+                'profile': temp_func,
+                'list': temp_func
+            },
+            '<user_id>': temp_func,
+            'profile': temp_func,
+            'list': temp_func
+        }
+        self.assertEqual(finalized_urls, expected_result)
+
     def test_finalize_root_url(self):
         def temp_func(): pass
 
@@ -230,6 +317,99 @@ class TestRoutingFunctions(TestCase):
 
         expected_result = {
             '': temp_func,
+        }
+        self.assertEqual(finalized_urls, expected_result)
+
+    def test_finalize_root_url_nested(self):
+        def temp_func(): pass
+
+        urls = {
+            '/': {
+                '/': {
+                    'nested/<user_id>/': temp_func,
+                    'nested/profile/': temp_func,
+                    'nested/list/': temp_func,
+                },
+                '<user_id>/': temp_func,
+                'profile/': temp_func,
+                'list/': temp_func,
+            },
+        }
+
+        collected_urls = flatten_urls(urls)
+        finalized_urls = finalize_urls(collected_urls)
+
+        expected_result = {
+            'nested': {
+                '<user_id>': temp_func,
+                'profile': temp_func,
+                'list': temp_func
+            },
+            '<user_id>': temp_func,
+            'profile': temp_func,
+            'list': temp_func
+        }
+        self.assertEqual(finalized_urls, expected_result)
+
+    def test_finalize_root_and_empty_url_nested(self):
+        def temp_func(): pass
+
+        urls = {
+            '/': {
+                '': {
+                    'nested/<user_id>/': temp_func,
+                    'nested/profile/': temp_func,
+                    'nested/list/': temp_func,
+                },
+                '/': temp_func,
+                'profile/': temp_func,
+                'list/': temp_func,
+            },
+        }
+
+        collected_urls = flatten_urls(urls)
+        finalized_urls = finalize_urls(collected_urls)
+
+        expected_result = {
+            'nested': {
+                '<user_id>': temp_func,
+                'profile': temp_func,
+                'list': temp_func
+            },
+            '': temp_func,
+            'profile': temp_func,
+            'list': temp_func
+        }
+        self.assertEqual(finalized_urls, expected_result)
+
+    def test_finalize_empty_and_root_url_nested(self):
+        def temp_func(): pass
+
+        urls = {
+            '': {
+                '/': {
+                    'nested/<user_id>/': temp_func,
+                    'nested/profile/': temp_func,
+                    'nested/list/': temp_func,
+                },
+                '': temp_func,
+                'profile/': temp_func,
+                'list/': temp_func,
+            },
+        }
+
+        collected_urls = flatten_urls(urls)
+        finalized_urls = finalize_urls(collected_urls)
+
+        expected_result = {
+            'nested': {
+                '<user_id>': temp_func,
+                'profile': temp_func,
+                'list': temp_func
+            },
+            '': temp_func,
+            'profile': temp_func,
+            'list': temp_func,
         }
         self.assertEqual(finalized_urls, expected_result)
 
@@ -317,11 +497,17 @@ class TestRoutingFunctions(TestCase):
 
     def test_find_endpoint_success(self):
         def user_id_profile_id(): pass
+
         def user_profile(): pass
+
         def payment(): pass
+
         def admin_v1_profile_avatar(): pass
+
         def admin_v1_id(): pass
+
         def admin_v2_users_list_registered(): pass
+
         def admin_v2_users_detail_not_registered(): pass
 
         from panther.configs import config
@@ -376,11 +562,17 @@ class TestRoutingFunctions(TestCase):
 
     def test_find_endpoint_success_path(self):
         def user_id_profile_id(): pass
+
         def user_profile(): pass
+
         def payment(): pass
+
         def admin_v1_profile_avatar(): pass
+
         def admin_v1_id(): pass
+
         def admin_v2_users_list_registered(): pass
+
         def admin_v2_users_detail_not_registered(): pass
 
         from panther.configs import config
