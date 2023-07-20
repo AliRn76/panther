@@ -1,3 +1,6 @@
+### 1.7.11
+- Fix an issue in template
+
 ### 1.7.10
 - Fix a bug in `collect_urls` and rename it to `flatten_urls`
 - Add General Tests
