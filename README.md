@@ -2,7 +2,7 @@
 <b>Is A Fast &  Friendly Web Framework For Building Async APIs With Python 3.10+</b> 
 
 <p align="center">
-<img src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/logo.png" alt="logo" style="width: 200px">
+<img src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/logo-vertical.png" alt="logo" style="width: 450px">
 </p>
 
 >_Full Documentation_ -> [https://pantherpy.github.io](https://pantherpy.github.io)
@@ -11,7 +11,7 @@
 
 ---
 
-### Why Use Panther ?
+### Why Use Panther?
 - Document-oriented Databases ODM ([PantherDB](https://pypi.org/project/pantherdb/), MongoDB)
 - Visual API Monitoring (In Terminal)
 - Caching for APIs (In Memory, In Redis)
