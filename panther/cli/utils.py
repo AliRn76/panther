@@ -25,6 +25,9 @@ help_message = f"""╭{58 * '─'}╮
 │       - panther monitor                                  │
 │           Show the monitor :)                            │
 │                                                          │
+│       - panther version                                  │
+│           Print the version of installed Panther         │
+│                                                          │
 │       - panther [--help | -h ]                           │
 │           Show this message and exit                     │
 ╰{58 * '─'}╯

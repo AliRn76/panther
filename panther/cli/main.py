@@ -3,6 +3,7 @@ import sys
 
 from rich import print as rprint
 
+from panther import version as panther_version
 from panther.cli.run_command import run
 from panther.cli.create_command import create
 from panther.cli.monitor_command import monitor
@@ -11,6 +12,10 @@ from panther.cli.utils import clean_args, help_message, cli_error
 
 def shell() -> None:
     os.system('bpython')
+
+
+def version() -> None:
+    print(panther_version)
 
 
 def start() -> None:
@@ -28,5 +33,7 @@ def start() -> None:
             shell()
         case 'monitor':
             monitor()
+        case 'version':
+            version()
         case _:
             cli_error('Invalid Arguments.')
