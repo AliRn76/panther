@@ -4,11 +4,13 @@ from panther.configs import config
 
 @API()
 async def list_models():
+    data = dict()
     for i, m in enumerate(config['models']):
-        m.pop('class')
-        m['app'] = '.'.join(a for a in m['app'])
-        m['index'] = i
-    return config['models']
+        data['name'] = m['name']
+        data['app'] = '.'.join(a for a in m['app'])
+        data['path'] = m['path']
+        data['index'] = i
+    return data
 
 
 @API()

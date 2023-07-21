@@ -1,4 +1,7 @@
 ### 1.7.12
+- Hotfix validation of _id in Model()
+
+### 1.7.12
 - Fix a bug in routing
 
 ### 1.7.11

@@ -12,17 +12,18 @@ else:
 
 
 class Model(PydanticBaseModel, Query):
-    id: IDType | None = Field(validation_alias='_id')
+    id: IDType | None = Field(None, validation_alias='_id')
 
     @field_validator('id', mode='before')
     def validate_id(cls, value):
-        if isinstance(value, str):
-            try:
-                bson.ObjectId(value)
-            except Exception:
-                raise ValueError('Invalid ObjectId')
-        elif not isinstance(value, bson.ObjectId):
-            raise ValueError('ObjectId required')
+        if IDType is str:
+            if isinstance(value, str):
+                try:
+                    bson.ObjectId(value)
+                except Exception:
+                    raise ValueError('Invalid ObjectId')
+            elif not isinstance(value, bson.ObjectId):
+                raise ValueError('ObjectId required')
         return str(value)
 
     @property
