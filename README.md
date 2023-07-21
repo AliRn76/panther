@@ -152,7 +152,10 @@
 
 ---
 
-### TODOs
+
+**<details>
+  <summary>TODOs**</summary>
+
 - <details>
     <summary>Base</summary>
   
@@ -181,7 +184,7 @@
     - &#9744; Generate Swagger For APIs
     - &#9744; Handle ClassBase APIs
   
-    </details>
+  </details>
 
 - <details>
     <summary>Database</summary>
@@ -246,9 +249,9 @@
 
     - &#x2705; Add Redis To Structure
     - &#x2705; Create Cache Decorator
-    - &#x2705; Handle In Memory Caching 
+    - &#x2705; Handle In-Memory Caching 
     - &#x2705; Handle In Redis Caching 
-    - &#9744; Write Async LRU_Caching With TTL (Replace it with in memory ...)
+    - &#9744; Write Async LRU_Caching With TTL (Replace it with in-memory ...)
   
   </details>
 
@@ -281,6 +284,9 @@
     - &#9744; Test Client
   
   </details>
+
+</details>
+
 
 ---
 
