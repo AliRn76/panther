@@ -91,5 +91,5 @@
 - &#9744; Complete The MkDoc
 
 #### Tests 
-- &#9744; Write Test For Panther 
+- &#x2705; Start Writing Tests For Panther 
 - &#9744; Test Client
