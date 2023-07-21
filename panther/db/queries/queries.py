@@ -138,13 +138,14 @@ class Query(BaseQuery):
 
     @classmethod
     @log_query
-    def update_many(cls, _filter, **kwargs) -> int:
+    def update_many(cls, _filter, _data: dict = None, /, **kwargs) -> int:
         """
         example:
             >>> from example.app.models import User
             >>> User.update_many({'name': 'Mohsen'}, name='Ali')
+            >>> User.update_many({'name': 'Mohsen'}, {'name': 'Ali'})
         """
-        return super().update_many(_filter, **kwargs)
+        return super().update_many(_filter, _data, **kwargs)
 
     # # # # # Other # # # # #
     @classmethod

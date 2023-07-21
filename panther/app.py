@@ -51,7 +51,8 @@ class API:
             self.handle_permissions()
 
             # 4. Validate Input
-            self.validate_input()
+            if self.request.method in ['POST', 'PUT', 'PATCH']:
+                self.validate_input()
 
             # 5. Validate Path Variables
             self.validate_path_variables(func, kwargs)

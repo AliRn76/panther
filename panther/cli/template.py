@@ -32,7 +32,7 @@ async def info_api(request: Request):
 models_py = """from panther.db import Model
 """
 
-serializers_py = """from pydantic import BaseModel as Serializer
+serializers_py = """from pydantic import BaseModel
 """
 
 throttling_py = """from datetime import timedelta

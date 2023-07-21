@@ -1,7 +1,7 @@
 import sys
 
 from panther.db.connection import db
-from panther.db.utils import merge_dicts, clean_object_id_in_dicts
+from panther.db.utils import merge_dicts, prepare_id_for_query
 from panther.exceptions import DBException
 
 
@@ -16,7 +16,7 @@ class BasePantherDBQuery:
 
     @classmethod
     def _merge(cls, *args) -> dict:
-        # TODO: Convert "id" to "_id"
+        prepare_id_for_query(*args)
         return merge_dicts(*args)
 
     # # # # # Find # # # # #
@@ -60,12 +60,12 @@ class BasePantherDBQuery:
 
     @classmethod
     def update_one(cls, _filter, _data: dict = None, /, **kwargs) -> bool:
-        clean_object_id_in_dicts(_filter)
+        prepare_id_for_query(_filter)
         return db.session.collection(cls.__name__).update_one(_filter, **cls._merge(_data, kwargs))
 
     @classmethod
     def update_many(cls, _filter, _data: dict = None, /, **kwargs) -> int:
-        clean_object_id_in_dicts(_filter)
+        prepare_id_for_query(_filter)
         return db.session.collection(cls.__name__).update_many(_filter, **cls._merge(_data, kwargs))
 
     # # # # # Other # # # # #

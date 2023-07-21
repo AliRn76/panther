@@ -1,4 +1,8 @@
-### 1.7.12
+### 1.7.14
+- Add Cache and Throttling doc to FirstCrud
+- Fix an issue in BasePantherDBQuery._merge() 
+
+### 1.7.13
 - Hotfix validation of _id in Model()
 
 ### 1.7.12

@@ -140,7 +140,7 @@ Now we are going to create a book on `post` request, We need to:
     async def book_api(request: Request):
         body: BookSerializer = request.data
     
-        Book.create(
+        Book.insert_one(
             name=body.name,
             author=body.author,
             pages_count=body.pages_count,
@@ -228,6 +228,121 @@ async def book_api(request: Request):
     return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 ```
 
+> Panther validate input with `input_model`, only in `POST`, `PUT`, `PATCH` methods.
+
+### Filter Response Fields
+
+Assume we don't want to return field `author` in response:
+
+
+1. Create new serializer in `app/serializers.py`:
+
+    ```python
+    from pydantic import BaseModel
+    
+    
+    class BookOutputSerializer(BaseModel):
+        name: str
+        pages_count: int
+    ```
+
+2. Add the `BookOutputSerializer` as `output_model` to your `API()`
+    ```python
+    from panther import status
+    from panther.app import API
+    from panther.request import Request
+    from panther.response import Response
+    
+    from app.serializers import BookSerializer, BookOutputSerializer
+    from app.models import Book
+    
+    
+    @API(input_model=BookSerializer, output_model=BookOutputSerializer)
+    async def book_api(request: Request):
+        if request.method == 'POST':
+            ...
+    
+        elif request.method == 'GET':
+            books: list[Book] = Book.find()
+            return Response(data=books, status_code=status.HTTP_200_OK)
+    
+        return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+    ```
+
+> Panther use the `output_model`, in all methods.
+
+
+### Cache The Response
+
+For caching the response, we should add `cache=True` in `API()`.
+And it will return the cached response every time till `cache_exp_time`
+
+For setting a custom expiration time for API we need to add `cache_exp_time` to `API()`:
+
+```python
+from datetime import timedelta
+
+from panther import status
+from panther.app import API
+from panther.request import Request
+from panther.response import Response
+
+from app.serializers import BookSerializer, BookOutputSerializer
+from app.models import Book
+
+
+@API(input_model=BookSerializer, output_model=BookOutputSerializer, cache=True, cache_exp_time=timedelta(seconds=10))
+async def book_api(request: Request):
+    if request.method == 'POST':
+        ...
+
+    elif request.method == 'GET':
+        books: list[Book] = Book.find()
+        return Response(data=books, status_code=status.HTTP_200_OK)
+
+    return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+```
+
+> Panther is going to use the `DEFAULT_CACHE_EXP` from `core/configs.py` if `cache_exp_time` has not been set.
+
+
+### Throttle The Request
+
+For setting rate limit for requests, we can add [throttling](https://pantherpy.github.io/throttling/) to `API()`, it should be the instance of `panther.throttling.Throttling`,
+something like below _(in the below example user can't request more than 10 times in a minutes)_:
+
+```python
+from datetime import timedelta
+
+from panther import status
+from panther.app import API
+from panther.request import Request
+from panther.response import Response
+from panther.throttling import Throttling
+
+from app.serializers import BookSerializer, BookOutputSerializer
+from app.models import Book
+
+
+@API(
+    input_model=BookSerializer, 
+    output_model=BookOutputSerializer, 
+    cache=True, 
+    cache_exp_time=timedelta(seconds=10),
+    throttling=Throttling(rate=10, duration=timedelta(minutes=1))
+)
+async def book_api(request: Request):
+    if request.method == 'POST':
+        ...
+
+    elif request.method == 'GET':
+        books: list[Book] = Book.find()
+        return Response(data=books, status_code=status.HTTP_200_OK)
+
+    return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+```
+
+
 ### API - Retrieve a Book
 
 For `retrieve`, `update` and `delete` API, we are going to
@@ -276,8 +391,10 @@ For `retrieve`, `update` and `delete` API, we are going to
     @API()
     async def single_book_api(request: Request, book_id: int):
         if request.method == 'GET':
-            book: Book = Book.find_one(id=book_id)
-            return Response(data=book, status_code=status.HTTP_200_OK)
+            if book := Book.find_one(id=book_id):
+                return Response(data=book, status_code=status.HTTP_200_OK)
+            else:
+                return Response(status_code=status.HTTP_404_NOT_FOUND)
     ```
 
 ### API - Update a Book
@@ -327,7 +444,7 @@ For `retrieve`, `update` and `delete` API, we are going to
             if request.method == 'GET':
                 ...
             elif request.method == 'PUT':
-                is_updated: bool = Book.update_one({'id': book_id}, **request.data)
+                is_updated: bool = Book.update_one({'id': book_id}, request.data.dict())
                 data = {'is_updated': is_updated}
                 return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
         ```
@@ -349,7 +466,7 @@ For `retrieve`, `update` and `delete` API, we are going to
             if request.method == 'GET':
                 ...
             elif request.method == 'PUT':
-                updated_count: int = Book.update_many({'id': book_id}, **request.data)
+                updated_count: int = Book.update_many({'id': book_id}, request.data.dict())
                 data = {'updated_count': updated_count}
                 return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
         ```
@@ -377,9 +494,11 @@ For `retrieve`, `update` and `delete` API, we are going to
                 elif request.method == 'PUT':
                     ...
                 elif request.method == 'DELETE':
-                    book: Book = Book.find_one(id=book_id)
-                    book.delete()
-                    return Response(status_code=status.HTTP_204_NO_CONTENT)
+                    is_deleted: bool = Book.delete_one(id=book_id)
+                    if is_deleted:
+                        return Response(status_code=status.HTTP_204_NO_CONTENT)
+                    else:
+                        return Response(status_code=status.HTTP_400_BAD_REQUEST)
         ```
     2. Delete with `delete_one` query
 

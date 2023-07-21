@@ -40,5 +40,13 @@ def clean_object_id_in_dicts(*args):
             d['_id'] = clean_object_id(d.pop('id'))
 
 
+def prepare_id_for_query(*args):
+    for d in args:
+        if d is None:
+            continue
+        if 'id' in d:
+            d['_id'] = d.pop('id')
+
+
 def merge_dicts(*args) -> dict:
     return reduce(operator.ior, filter(None, args), {})
