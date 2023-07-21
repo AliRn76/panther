@@ -131,10 +131,6 @@ def import_error_message(module_name: str) -> str:
     return f'No module named "{module_name}"\n\t    Hint: Try to install with "pip install {module_name}"'
 
 
-def import_error(module_name: str) -> None:
-    logger.critical(import_error_message(module_name))
-
-
 def clean_args(args: list[str]) -> dict:
     """
     Input: ['--reload', '--host', '127.0.0.1', ...]

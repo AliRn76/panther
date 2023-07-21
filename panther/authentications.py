@@ -1,16 +1,11 @@
 from abc import abstractmethod
 from datetime import datetime
+from jose import JWTError, jwt
 from panther.logger import logger
 from panther.configs import config
 from panther.db.models import BaseUser
 from panther.request import Request
-from panther.cli.utils import import_error
 from panther.exceptions import AuthenticationException
-try:
-    from jose import JWTError, jwt
-except ImportError:
-    import_error('python-jose')
-    exit()
 
 
 class BaseAuthentication:
