@@ -24,7 +24,8 @@ class Model(PydanticBaseModel, Query):
                     raise ValueError('Invalid ObjectId')
             elif not isinstance(value, bson.ObjectId):
                 raise ValueError('ObjectId required')
-        return str(value)
+            value = str(value)
+        return value
 
     @property
     def _id(self):
