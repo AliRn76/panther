@@ -1,9 +1,9 @@
-from bottle import route, run, HTTPResponse
+from bottle import Bottle, route, run, HTTPResponse
+
+app = Bottle()
 
 
-@route('/')
+@app.route('/')
 def index(*args, **kwargs):
     return HTTPResponse(status=200)
 
-
-run(host='localhost', port=8000, quiet=True)

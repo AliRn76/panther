@@ -1,5 +1,6 @@
-from app.urls import urls as app_urls
+from core.apis import hello_world
+
 
 urls = {
-    '/': app_urls,
+    '': hello_world,
 }

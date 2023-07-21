@@ -1,1 +1,1 @@
-panther run --no-access-log
+panther run
