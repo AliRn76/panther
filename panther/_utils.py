@@ -74,7 +74,7 @@ def read_multipart_form_data(content_type: str, body: str) -> dict:
     """
     boundary = content_type[30:]
 
-    per_pattern = r'(.*\r\nContent-Disposition: form-data; name=")(.*)'  # (Junk)(FieldName)
+    per_pattern = r'(.*\r\nContent-Disposition: form-data; name=")(.*)"'  # (Junk)(FieldName)
     value_pattern = r'(\r\n\r\n)(.*)'  # (Junk)(Value)
 
     # (Junk)(FieldName) (Junk)(Value)(Junk)
