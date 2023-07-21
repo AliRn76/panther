@@ -15,7 +15,7 @@ def shell() -> None:
 
 
 def version() -> None:
-    print(panther_version)
+    print(panther_version())
 
 
 def start() -> None:
