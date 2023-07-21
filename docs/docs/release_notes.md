@@ -1,3 +1,6 @@
+### 1.7.15
+- Fix an issue in handling form-data
+
 ### 1.7.14
 - Add Cache and Throttling doc to FirstCrud
 - Fix an issue in BasePantherDBQuery._merge() 
