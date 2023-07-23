@@ -8,7 +8,7 @@ on:
 jobs:
 
   test-run:
-    name: Test Run
+    name: Test Run Project Successfully
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -84,8 +84,11 @@ jobs:
       - name: Install Faker
         run: python -m pip install faker
 
-      - name: Install Faker
+      - name: Install PyMongo
         run: python -m pip install pymongo
+
+      - name: Install PyOpenSSL
+        run: python -m pip install pyOpenSSL
 
       - name: Run Tests
         run: python -m unittest tests/test_mongodb.py
