@@ -80,7 +80,7 @@ class Query(BaseQuery):
     @classmethod
     @log_query
     def insert_many(cls, _data: dict = None, /, **kwargs):
-        return super().insert_many(_data, **kwargs)
+        raise DBException('insert_many() is not supported yet.')
 
     # # # # # Delete # # # # #
     @log_query
@@ -190,4 +190,4 @@ class Query(BaseQuery):
             >>> user.name = 'Saba'
             >>> user.save()
         """
-        raise DBException('save() is not supported yes')
+        raise DBException('save() is not supported yet.')

@@ -1,11 +1,10 @@
-import sys
+from sys import version_info
 
 from panther.db.connection import db
 from panther.db.utils import merge_dicts, prepare_id_for_query
-from panther.exceptions import DBException
 
 
-if sys.version_info.minor >= 11:
+if version_info.minor >= 11:
     from typing import Self
 else:
     from typing import TypeVar
@@ -35,10 +34,6 @@ class BasePantherDBQuery:
     def insert_one(cls, _data: dict = None, **kwargs) -> Self:
         document = db.session.collection(cls.__name__).insert_one(**cls._merge(_data, kwargs))
         return cls(**document)
-
-    @classmethod
-    def insert_many(cls, _data: dict = None, /, **kwargs):
-        raise DBException('insert_many() is not supported while using PantherDB.')
 
     # # # # # Delete # # # # #
     def delete(self) -> None:

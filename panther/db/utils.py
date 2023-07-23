@@ -20,32 +20,24 @@ def log_query(func):
     return log
 
 
-def clean_object_id(_id: bson.ObjectId | str) -> bson.ObjectId:
-    if isinstance(_id, bson.ObjectId):
-        return _id
-    try:
-        return bson.ObjectId(_id)
-    except Exception:
-        raise bson.errors.InvalidId  # NOQA: Py Unresolved References
-
-
-def clean_object_id_in_dicts(*args):
-    # TODO: Refactor this func
-    for d in args:
-        if d is None:
-            continue
-        if '_id' in d:
-            d['_id'] = clean_object_id(d['_id'])
-        if 'id' in d:
-            d['_id'] = clean_object_id(d.pop('id'))
-
-
-def prepare_id_for_query(*args):
+def prepare_id_for_query(*args, is_mongo: bool = False):
     for d in args:
         if d is None:
             continue
         if 'id' in d:
             d['_id'] = d.pop('id')
+
+        if is_mongo and '_id' in d:
+            d['_id'] = _convert_to_object_id(d['_id'])
+
+
+def _convert_to_object_id(_id: bson.ObjectId | str) -> bson.ObjectId:
+    if isinstance(_id, bson.ObjectId):
+        return _id
+    try:
+        return bson.ObjectId(_id)
+    except Exception:
+        raise bson.errors.InvalidId(f"id={_id} is invalid bson.ObjectId")
 
 
 def merge_dicts(*args) -> dict:

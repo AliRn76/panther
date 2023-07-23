@@ -92,7 +92,11 @@ async def rate_limit():
     return Response(data=('car', 'home', 'phone', 'book'), status_code=202)
 
 
+@API()
 async def single_user(request: Request):
+    # users = User.insert_one(username='Ali', password='1', age=12)
+    users = User.find(id="64bd711cd73aa4a30786db77a")
+    print(f'{users=}')
     # # print(f'{dir(request) = }')
     # print(f'{request.data = }')
     # # print(f'{request.query_params = }')
@@ -139,7 +143,7 @@ async def single_user(request: Request):
     # class A:
     #     ...
     # d = A()
-    e = True
+    # e = True
     # return Response(status_code=200, data=a)
     return Response(status_code=200)
 
