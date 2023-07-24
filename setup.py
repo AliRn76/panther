@@ -1,4 +1,5 @@
 import os
+import platform
 import re
 
 from setuptools import setup
@@ -12,11 +13,27 @@ def panther_version() -> str:
 VERSION = panther_version()
 DESCRIPTION = open('README.md').read()
 
+INSTALL_REQUIRES = [
+    'bpython~=0.24',
+    'bson~=0.5',
+    'httptools~=0.5',
+    'pantherdb~=1.2',
+    'pydantic~=2.0',
+    'redis~=4.5',
+    'rich~=13.3',
+    'uvicorn~=0.21',
+    'watchfiles~=0.18',
+    'python-jose~=3.3',
+]
+if platform.system() != 'Windows':
+    INSTALL_REQUIRES.append('uvloop~=0.17')
+
 EXTRAS_REQUIRE = {
     'full': [
         'pymongo>=4.3.3',
     ]
 }
+
 
 setup(
     name='panther',
@@ -43,18 +60,6 @@ setup(
     package_data={
         'panther': ['cli/*'],
     },
-    install_requires=[
-        'bpython~=0.24',
-        'bson~=0.5',
-        'httptools~=0.5',
-        'pantherdb~=1.2',
-        'pydantic~=2.0',
-        'redis~=4.5',
-        'rich~=13.3',
-        'uvicorn~=0.21',
-        'uvloop~=0.17',
-        'watchfiles~=0.18',
-        'python-jose~=3.3',
-    ],
+    install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
 )
