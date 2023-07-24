@@ -1,3 +1,7 @@
+### 1.7.16
+- Trying to fix requirements for windows
+- Minor improvement in BaseMongoDBQuery
+
 ### 1.7.15
 - Fix an issue in handling form-data
 
