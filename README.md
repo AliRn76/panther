@@ -1,3 +1,4 @@
+
 ## Panther 
 <b>Is A Fast &  Friendly Web Framework For Building Async APIs With Python 3.11+</b> 
 
@@ -5,9 +6,9 @@
 <img src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/logo-vertical.png" alt="logo" style="width: 450px">
 </p>
 
->_Full Documentation_ -> [https://pantherpy.github.io](https://pantherpy.github.io)
-> 
->_PyPI_ -> [https://pypi.org/project/panther/](https://pypi.org/project/panther/)
+**_Full Documentation:_** [https://pantherpy.github.io](https://pantherpy.github.io)
+
+**_Supported by_** <a href="https://jb.gg/OpenSourceSupport">JetBrain</a>
 
 ---
 
