@@ -52,7 +52,6 @@ setup(
         'redis~=4.5',
         'rich~=13.3',
         'uvicorn~=0.21',
-        'uvloop~=0.17',
         'watchfiles~=0.18',
         'python-jose~=3.3',
     ],
