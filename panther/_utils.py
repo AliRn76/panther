@@ -69,19 +69,18 @@ def import_class(dotted_path: str, /):
 
 def read_multipart_form_data(content_type: str, body: str) -> dict:
     """
-    content_type = 'application/json'
     content_type = 'multipart/form-data; boundary=--------------------------984465134948354357674418'
     """
     boundary = content_type[30:]
 
-    per_pattern = r'(.*\r\nContent-Disposition: form-data; name=")(.*)"'  # (Junk)(FieldName)"
+    pre_pattern = r'(.*\r\nContent-Disposition: form-data; name=")(.*)"'  # (Junk)(FieldName)"
     value_pattern = r'(\r\n\r\n)(.*)'  # (Junk)(Value)
 
     # (Junk)(FieldName) (Junk)(Value)(Junk)
-    field_pattern = per_pattern + value_pattern + r'(\r\n.*)'
+    field_pattern = pre_pattern + value_pattern + r'(\r\n.*)'
 
     # (Junk)(FieldName) (Junk)(FileName)(Junk)(ContentType) (Junk)(Value)
-    file_pattern = per_pattern + r'("; filename=")(.*)("\r\nContent-Type: )(.*)' + value_pattern
+    file_pattern = pre_pattern + r'("; filename=")(.*)("\r\nContent-Type: )(.*)' + value_pattern
 
     fields = dict()
     for field in body.split(boundary):

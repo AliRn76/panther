@@ -71,16 +71,16 @@ class TestPantherDB(TestCase):
         name = f.name()
         author = f.name()
         pages_count = random.randint(0, 10)
-        inserted_count = random.randint(2, 10)
+        insert_count = random.randint(2, 10)
         # Insert Many
-        for _ in range(inserted_count):
+        for _ in range(insert_count):
             Book.insert_one(name=f.name(), author=f.name(), pages_count=random.randint(0, 10))
         created_book = Book.insert_one(name=name, author=author, pages_count=pages_count)
         # FindOne
         book = Book.find_one(name=name, author=author, pages_count=pages_count)
 
         self.assertIsInstance(book, Book)
-        self.assertEqual(book.id, inserted_count + 1)
+        self.assertEqual(book.id, insert_count + 1)
         self.assertEqual(book.name, name)
         self.assertEqual(book.pages_count, pages_count)
         self.assertEqual(created_book, book)
@@ -91,44 +91,44 @@ class TestPantherDB(TestCase):
             Book.insert_one(name=f.name(), author=f.name(), pages_count=random.randint(0, 10))
 
         name = f.name()
-        inserted_count = random.randint(2, 10)
-        for _ in range(inserted_count):
+        insert_count = random.randint(2, 10)
+        for _ in range(insert_count):
             Book.insert_one(name=name, author=f.name(), pages_count=random.randint(0, 10))
 
         # Find
         books = Book.find(name=name)
 
         self.assertIsInstance(books, list)
-        self.assertEqual(len(books), inserted_count)
+        self.assertEqual(len(books), insert_count)
         book = books[0]
         self.assertIsInstance(book, Book)
         self.assertEqual(book.name, name)
 
     def test_all(self):
-        inserted_count = random.randint(2, 10)
+        insert_count = random.randint(2, 10)
         # Insert Many
-        for _ in range(inserted_count):
+        for _ in range(insert_count):
             Book.insert_one(name=f.name(), author=f.name(), pages_count=random.randint(0, 10))
 
         # Find All
         books = Book.find()
 
         self.assertIsInstance(books, list)
-        self.assertEqual(len(books), inserted_count)
+        self.assertEqual(len(books), insert_count)
         book = books[0]
         self.assertIsInstance(book, Book)
 
     def test_count_all(self):
-        inserted_count = random.randint(2, 10)
+        insert_count = random.randint(2, 10)
         # Insert Many
-        for _ in range(inserted_count):
+        for _ in range(insert_count):
             Book.insert_one(name=f.name(), author=f.name(), pages_count=random.randint(0, 10))
 
         # Count All
         books_count = Book.count()
 
         self.assertIsInstance(books_count, int)
-        self.assertEqual(books_count, inserted_count)
+        self.assertEqual(books_count, insert_count)
 
     def test_count_with_filter(self):
         # Insert Many
@@ -136,15 +136,15 @@ class TestPantherDB(TestCase):
             Book.insert_one(name=f.name(), author=f.name(), pages_count=random.randint(0, 10))
 
         name = f.name()
-        inserted_count = random.randint(2, 10)
-        for _ in range(inserted_count):
+        insert_count = random.randint(2, 10)
+        for _ in range(insert_count):
             Book.insert_one(name=name, author=f.name(), pages_count=random.randint(0, 10))
 
         # Count
         books_count = Book.count(name=name)
 
         self.assertIsInstance(books_count, int)
-        self.assertEqual(books_count, inserted_count)
+        self.assertEqual(books_count, insert_count)
 
     def test_delete_one(self):
         # Insert Many
@@ -160,6 +160,22 @@ class TestPantherDB(TestCase):
         self.assertIsInstance(is_deleted, bool)
         self.assertTrue(is_deleted)
 
-        # Find
-        books = Book.find(name=name)
-        self.assertEqual(len(books), 0)
+        # Count Them
+        books_count = Book.count(name=name)
+        self.assertEqual(books_count, 0)
+
+    def test_delete_one_not_found(self):
+        insert_count = random.randint(2, 10)
+        # Insert Many
+        for _ in range(insert_count):
+            Book.insert_one(name=f.name(), author=f.name(), pages_count=random.randint(0, 10))
+
+        # Delete One
+        is_deleted = Book.delete_one(name='InvalidName')
+
+        self.assertIsInstance(is_deleted, bool)
+        self.assertFalse(is_deleted)
+
+        # Count All
+        books_count = Book.count()
+        self.assertEqual(books_count, insert_count)
