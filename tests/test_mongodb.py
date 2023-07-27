@@ -1,4 +1,3 @@
-import os
 import bson
 import faker
 import random
