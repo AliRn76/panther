@@ -6,9 +6,12 @@
 <img src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/logo-vertical.png" alt="logo" style="width: 450px">
 </p>
 
-**_Full Documentation:_** [https://pantherpy.github.io](https://pantherpy.github.io)
+<p>
+  <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="logo" style="width: 50px;">
+   <b>Supported by </b><a href="https://jb.gg/OpenSourceSupport">JetBrain</a>
+</p>
 
-**_Supported by_** <a href="https://jb.gg/OpenSourceSupport">JetBrain</a>
+**_Full Documentation:_** [https://pantherpy.github.io](https://pantherpy.github.io)
 
 ---
 
