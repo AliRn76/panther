@@ -9,6 +9,7 @@ from panther.configs import config
 from panther.request import Request
 from panther.db.connection import redis
 from panther.response import Response, ResponseDataTypes
+from panther.utils import generate_hash_value_from_string
 
 
 caches = dict()
@@ -17,7 +18,8 @@ CachedResponse = namedtuple('Cached', ['data', 'status_code'])
 
 def cache_key(request: Request, /):
     client = request.user and request.user.id or request.client.ip
-    return f'{client}-{request.path}-{request.data}'
+    query_params_hash = generate_hash_value_from_string(request.scope['query_string'].decode('utf-8'))
+    return f'{client}-{request.path}{query_params_hash}-{request.data}'
 
 
 def get_cached_response_data(*, request: Request) -> CachedResponse | None:
