@@ -3,9 +3,7 @@ from panther.app import API
 from panther.configs import config
 from panther.request import Request
 from panther.response import Response
-from panther.exceptions import APIException
-
-from pydantic import ValidationError
+from panther.panel.utils import validate_input
 
 
 @API()
@@ -26,12 +24,7 @@ async def documents_api(request: Request, index: int):
     model = config['models'][index]['class']
 
     if request.method == 'POST':
-        try:
-            validated_data = model(**request.pure_data)
-        except ValidationError as validation_error:
-            error = {e['loc'][0]: e['msg'] for e in validation_error.errors()}
-            raise APIException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
-
+        validated_data = validate_input(model=model, data=request.pure_data)
         document = model.insert_one(**validated_data.model_dump(exclude=['id']))
         return Response(data=document, status_code=status.HTTP_201_CREATED)
 
@@ -53,12 +46,7 @@ async def single_document_api(request: Request, index: int, id: int | str):
     if document := model.find_one(id=id):
 
         if request.method == 'PUT':
-            try:
-                validated_data = model(**request.pure_data)
-            except ValidationError as validation_error:
-                error = {e['loc'][0]: e['msg'] for e in validation_error.errors()}
-                raise APIException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
-
+            validated_data = validate_input(model=model, data=request.pure_data)
             document.update(**validated_data.model_dump(exclude=['id']))
             return Response(data=document, status_code=status.HTTP_202_ACCEPTED)
 
