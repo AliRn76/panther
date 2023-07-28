@@ -1,3 +1,7 @@
+### 1.7.19
+- Fix an issue in routing
+- Fix an issue on return complex dict Response
+
 ### 1.7.16
 - Trying to fix requirements for windows
 - Minor improvement in BaseMongoDBQuery
