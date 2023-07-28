@@ -7,7 +7,6 @@ from typing import MutableMapping
 from collections.abc import Mapping
 from functools import reduce, partial
 
-
 from panther.configs import config
 
 
@@ -75,17 +74,36 @@ def finalize_urls(urls: dict) -> dict:
             url = '/'
 
         for single_path in list(filter(lambda x: x != '', url.split('/')[:-1][::-1])) or ['']:
-            path = {single_path: path or endpoint}
+            if single_path != '' and not path:
+                path = {single_path: {'': endpoint}}
+            else:
+                path = {single_path: path or endpoint}
         urls_list.append(path)
     return _merge(*urls_list) if urls_list else {}
 
 
 def _merge(destination: MutableMapping, *sources) -> MutableMapping:
-    """Credit to Travis Clarke --> https://github.com/clarketm/mergedeep"""
-    return reduce(partial(_deepmerge), sources, destination)
+    return _simplify_urls(reduce(partial(_deepmerge), sources, destination))
+
+
+def _simplify_urls(urls):
+    simplified_urls = dict()
+
+    for key, value in urls.items():
+        if isinstance(value, dict):
+            simplified_value = _simplify_urls(value)
+            if isinstance(simplified_value, dict) and len(simplified_value) == 1 and '' in simplified_value:
+                simplified_urls[key] = simplified_value['']
+            else:
+                simplified_urls[key] = simplified_value
+        else:
+            simplified_urls[key] = value
+
+    return simplified_urls
 
 
 def _deepmerge(dst, src):
+    """Credit to Travis Clarke --> https://github.com/clarketm/mergedeep"""
     for key in src:
         if key in dst:
             if _is_recursive_merge(dst[key], src[key]):
@@ -104,25 +122,25 @@ def _is_recursive_merge(a, b):
 
 
 def find_endpoint(path: str) -> tuple[Callable | None, str]:
+    urls = config['urls']
+
     if (location := path.find('?')) != -1:
         path = path[:location]
     path = path.removesuffix('/').removeprefix('/')  # 'user/list'
     paths = path.split('/')  # ['user', 'list']
     paths_len = len(paths)
-    urls = config['urls']
-    # urls = {
-    #     'user': {
-    #         '<id>': <function users at 0x7f579d060220>,
-    #         '': <function single_user at 0x7f579d060e00>
-    #     }
-    # }
+
     found_path = ''
     for i, split_path in enumerate(paths):
         last_path = bool((i + 1) == paths_len)
         found = urls.get(split_path)
+
+        # `found` is callable
         if last_path and callable(found):
             found_path += f'{split_path}/'
             return found, found_path
+
+        # `found` is dict
         if isinstance(found, dict):
             found_path += f'{split_path}/'
             if last_path and callable(endpoint := found.get('')):
@@ -131,8 +149,7 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
             urls = found
             continue
 
-        # found = None
-        # urls = {'<id>': <function return_list at 0x7f0757baff60>} (Example)
+        # `found` is None
         _continue = False
         for key, value in urls.items():
             if key.startswith('<'):

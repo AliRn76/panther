@@ -56,6 +56,14 @@ jobs:
       - name: Run Tests
         run: python -m unittest tests/test_pantherdb.py
 
+#      - name: Install Coverage
+#        run: python -m pip install coverage
+#
+#      - name: Upload coverage reports to Codecov
+#        uses: codecov/codecov-action@v3
+#        env:
+#          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
   test-mongodb:
     name: Test MongoDB
     runs-on: ubuntu-latest

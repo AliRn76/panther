@@ -1,8 +1,10 @@
 import orjson as json
 from types import NoneType
+
+from panther.logger import logger
 from pydantic import BaseModel as PydanticBaseModel
 
-ResponseDataTypes = int | dict | list | tuple | set | str | bool | NoneType
+ResponseDataTypes = list | tuple | set | dict | int | str | bool | NoneType
 IterableDataTypes = list | tuple | set
 
 
@@ -42,11 +44,21 @@ class Response:
         """
         Make sure the response data is only ResponseDataTypes or Iterable of ResponseDataTypes
         """
+
         if issubclass(type(data), PydanticBaseModel):
             return data.model_dump()
 
         elif isinstance(data, IterableDataTypes):
             return [cls.clean_data_type(d) for d in data]
 
-        else:
+        elif isinstance(data, dict):
+            for key, value in data.items():
+                data[key] = cls.clean_data_type(value)
+            else:
+                return data
+
+        elif isinstance(data, (int | str | bool | NoneType)):
             return data
+
+        else:
+            raise ValueError(f'Invalid Response Type: {type(data)}')

@@ -6,10 +6,12 @@ from panther.routings import flatten_urls, finalize_urls, find_endpoint, collect
 
 class TestRoutingFunctions(TestCase):
 
+    # Check and Load
     def test_check_and_load_urls(self):
         # TODO: ...
         pass
 
+    # Collecting
     def test_collect_ellipsis_urls(self):
         urls = {
             'user/': {
@@ -259,6 +261,7 @@ class TestRoutingFunctions(TestCase):
         }
         self.assertEqual(collected_urls, expected_result)
 
+    # Finalize
     def test_finalize_empty_url(self):
         def temp_func(): pass
 
@@ -481,6 +484,27 @@ class TestRoutingFunctions(TestCase):
         }
         self.assertEqual(finalized_urls, expected_result)
 
+    def test_finalize_urls_same_pre_key(self):
+        def temp_func(): pass
+
+        urls = {
+            '': temp_func,
+            '<index>/': temp_func,
+            '<index>/<id>/': temp_func,
+        }
+
+        collected_urls = flatten_urls(urls)
+        finalized_urls = finalize_urls(collected_urls)
+        expected_result = {
+                    '': temp_func,
+                    '<index>': {
+                        '': temp_func,
+                        '<id>': temp_func
+                    }
+                }
+        self.assertEqual(finalized_urls, expected_result)
+
+    # Find Endpoint
     def test_find_endpoint_root_url(self):
         def temp_func(): pass
 
@@ -679,6 +703,7 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(admin_v2_users_detail_not_registered_path, '')
         config['urls'] = {}
 
+    # Collect PathVariables
     def test_collect_path_variables(self):
         def temp_func(): pass
 
