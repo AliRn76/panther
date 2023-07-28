@@ -61,7 +61,7 @@ class Panther:
 
         # This import shouldn't be on top
         from panther.panel.urls import urls as panel_urls
-        config['urls']['_panel'] = panel_urls
+        config['urls']['_panel'] = finalize_urls(flatten_urls(panel_urls))
 
         logger.debug('Configs loaded.')
         if config['monitoring']:

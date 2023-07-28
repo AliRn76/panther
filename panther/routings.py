@@ -157,6 +157,11 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
                     if callable(value):
                         found_path += f'{key}/'
                         return value, found_path
+
+                    elif isinstance(value, dict) and '' in value:
+                        found_path += f'{key}/'
+                        return value[''], found_path
+
                     else:
                         return None, ''
 
