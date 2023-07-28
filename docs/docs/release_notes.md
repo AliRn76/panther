@@ -1,3 +1,6 @@
+### 1.7.20
+- Fix an issue in find_endpoint()
+
 ### 1.7.19
 - Fix an issue in routing
 - Fix an issue on return complex dict Response

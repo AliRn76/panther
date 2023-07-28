@@ -484,7 +484,7 @@ class TestRoutingFunctions(TestCase):
         }
         self.assertEqual(finalized_urls, expected_result)
 
-    def test_finalize_urls_same_pre_key(self):
+    def test_finalize_urls_same_pre_path_variable(self):
         def temp_func(): pass
 
         urls = {
@@ -496,12 +496,12 @@ class TestRoutingFunctions(TestCase):
         collected_urls = flatten_urls(urls)
         finalized_urls = finalize_urls(collected_urls)
         expected_result = {
-                    '': temp_func,
-                    '<index>': {
-                        '': temp_func,
-                        '<id>': temp_func
-                    }
-                }
+            '': temp_func,
+            '<index>': {
+                '': temp_func,
+                '<id>': temp_func
+            }
+        }
         self.assertEqual(finalized_urls, expected_result)
 
     # Find Endpoint
@@ -701,6 +701,112 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(admin_v1_id_path, '')
         self.assertEqual(admin_v2_users_list_registered_path, '')
         self.assertEqual(admin_v2_users_detail_not_registered_path, '')
+        config['urls'] = {}
+
+    def test_find_endpoint_same_pre_path_variable(self):
+        def temp_1(): pass
+
+        def temp_2(): pass
+
+        def temp_3(): pass
+
+        from panther.configs import config
+
+        config['urls'] = {
+            '': temp_1,
+            '<index>': {
+                '': temp_2,
+                '<id>': temp_3
+            },
+        }
+        temp_1_func, _ = find_endpoint('')
+        temp_2_func, _ = find_endpoint(f'{random.randint(2, 100)}')
+        temp_3_func, _ = find_endpoint(f'{random.randint(2, 100)}/{random.randint(2, 100)}')
+
+        self.assertEqual(temp_1_func, temp_1)
+        self.assertEqual(temp_2_func, temp_2)
+        self.assertEqual(temp_3_func, temp_3)
+
+        config['urls'] = {}
+
+    def test_find_endpoint_same_pre_path_variable_path(self):
+        def temp_1(): pass
+
+        def temp_2(): pass
+
+        def temp_3(): pass
+
+        from panther.configs import config
+
+        config['urls'] = {
+            '': temp_1,
+            '<index>': {
+                '': temp_2,
+                '<id>': temp_3
+            },
+        }
+        _, temp_1_path = find_endpoint('')
+        _, temp_2_path = find_endpoint(f'{random.randint(2, 100)}')
+        _, temp_3_path = find_endpoint(f'{random.randint(2, 100)}/{random.randint(2, 100)}')
+
+        self.assertEqual(temp_1_path, '/')
+        self.assertEqual(temp_2_path, '<index>/')
+        self.assertEqual(temp_3_path, '<index>/<id>/')
+
+        config['urls'] = {}
+
+    def test_find_endpoint_same_pre_key(self):
+        def temp_1(): pass
+
+        def temp_2(): pass
+
+        def temp_3(): pass
+
+        from panther.configs import config
+
+        config['urls'] = {
+            '': temp_1,
+            'hello': {
+                '': temp_2,
+                '<id>': temp_3
+            },
+        }
+        temp_1_func, _ = find_endpoint('')
+
+        temp_2_func, _ = find_endpoint(f'hello')
+        temp_3_func, _ = find_endpoint(f'hello/{random.randint(2, 100)}')
+
+        self.assertEqual(temp_1_func, temp_1)
+        self.assertEqual(temp_2_func, temp_2)
+        self.assertEqual(temp_3_func, temp_3)
+
+        config['urls'] = {}
+
+    def test_find_endpoint_same_pre_key_path(self):
+        def temp_1(): pass
+
+        def temp_2(): pass
+
+        def temp_3(): pass
+
+        from panther.configs import config
+
+        config['urls'] = {
+            '': temp_1,
+            'hello': {
+                '': temp_2,
+                '<id>': temp_3
+            },
+        }
+        _, temp_1_path = find_endpoint('')
+
+        _, temp_2_path = find_endpoint(f'hello')
+        _, temp_3_path = find_endpoint(f'hello/{random.randint(2, 100)}')
+
+        self.assertEqual(temp_1_path, '/')
+        self.assertEqual(temp_2_path, 'hello/')
+        self.assertEqual(temp_3_path, 'hello/<id>/')
+
         config['urls'] = {}
 
     # Collect PathVariables
