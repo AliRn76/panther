@@ -1,6 +1,6 @@
 from .main import Panther
 
-__version__ = '1.7.20'
+__version__ = '1.7.21'
 
 
 def version():
