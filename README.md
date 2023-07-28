@@ -8,7 +8,7 @@
 
 <p>
   <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="logo" style="width: 50px;">
-   <b>Supported by </b><a href="https://jb.gg/OpenSourceSupport">JetBrain</a>
+   <b>Supported by </b><a href="https://drive.google.com/file/d/17xe1hicIiRF7SQ-clg9SETdc19SktCbV/view?usp=sharing">JetBrain</a>
 </p>
 
 **_Full Documentation:_** [https://pantherpy.github.io](https://pantherpy.github.io)
