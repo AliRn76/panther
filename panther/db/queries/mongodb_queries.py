@@ -63,7 +63,7 @@ class BaseMongoDBQuery:
         update_fields = {'$set': cls._merge(_data, kwargs)}
 
         result = db.session[cls.__name__].update_one(_filter, update_fields)
-        return bool(result.updated_count)
+        return bool(result.matched_count)
 
     @classmethod
     def update_many(cls, _filter, _data: dict = None, /, **kwargs) -> int:
