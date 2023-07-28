@@ -1,7 +1,7 @@
-from panther.panel.apis import list_models, model_list, model_retrieve
+from panther.panel.apis import models_api, documents_api, single_document_api
 
 urls = {
-    '': list_models,
-    '<index>/': model_list,
-    '<index>/<id>/': model_retrieve,
+    '': models_api,
+    '<index>/': documents_api,
+    '<index>/<id>/': single_document_api,
 }
