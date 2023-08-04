@@ -8,7 +8,6 @@ from runpy import run_path
 from pydantic._internal._model_construction import ModelMetaclass
 
 from panther import status
-from panther.app import GenericAPI
 from panther.request import Request
 from panther.response import Response
 from panther.exceptions import APIException
@@ -219,6 +218,8 @@ class Panther:
 
             # Class
             else:
+                from panther.app import GenericAPI
+
                 if not issubclass(endpoint, GenericAPI):
                     logger.critical(f'You may have forgotten to inherit from GenericAPI on the {endpoint.__name__}()')
                     return await http_response(

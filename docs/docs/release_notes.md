@@ -1,3 +1,6 @@
+### 2.1.1
+- Fix a bug in main.py imports
+
 ### 2.1.0
 - Support Sync APIs
 
