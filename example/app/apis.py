@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from panther.app import API
+from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
 from panther.logger import logger
 from panther.request import Request
@@ -11,6 +11,15 @@ from panther.throttling import Throttling
 from app.serializers import UserInputSerializer, UserOutputSerializer
 from app.models import User
 from core.permissions import UserPermission
+
+
+class ReturnNone(GenericAPI):
+    cache = True
+
+    async def get(self, request: Request):
+        import time
+        time.sleep(2)
+        return {'detail': 'ok'}
 
 
 @API()

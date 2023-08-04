@@ -7,6 +7,7 @@ from runpy import run_path
 from pydantic._internal._model_construction import ModelMetaclass
 
 from panther import status
+from panther.app import GenericAPI
 from panther.request import Request
 from panther.response import Response
 from panther.exceptions import APIException
@@ -200,18 +201,36 @@ class Panther:
             for middleware in config['middlewares']:
                 request = await middleware.before(request=request)
 
-            # User Didn't Use @API Decorator
-            if not hasattr(endpoint, '__wrapped__'):
-                logger.critical(f'You may have forgotten to use @API on the {endpoint.__name__}()')
-                return await http_response(
-                    send,
-                    status_code=status.HTTP_510_NOT_EXTENDED,
-                    monitoring=monitoring_middleware,
-                    exception=True,
-                )
+            if type(endpoint).__name__ == 'function':
+                # User Didn't Use @API Decorator
+                if not hasattr(endpoint, '__wrapped__'):
+                    logger.critical(f'You may have forgotten to use @API on the {endpoint.__name__}()')
+                    return await http_response(
+                        send,
+                        status_code=status.HTTP_510_NOT_EXTENDED,
+                        monitoring=monitoring_middleware,
+                        exception=True,
+                    )
+
+                # Prepare Endpoint
+                _endpoint = endpoint
+
+            else:
+                if not issubclass(endpoint, GenericAPI):
+                    logger.critical(f'You may have forgotten to inherit from GenericAPI on the {endpoint.__name__}()')
+                    return await http_response(
+                        send,
+                        status_code=status.HTTP_510_NOT_EXTENDED,
+                        monitoring=monitoring_middleware,
+                        exception=True,
+                    )
+
+                # Prepare Endpoint
+                _endpoint = endpoint.call_method
 
             # Call Endpoint
-            response = await endpoint(request=request, **path_variables)
+            response = await _endpoint(request=request, **path_variables)
+
         except APIException as e:
             response = self.handle_exceptions(e)
         except Exception as e:

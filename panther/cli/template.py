@@ -64,12 +64,11 @@ from panther.throttling import Throttling
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-DB_NAME = env['DB_NAME']
 SECRET_KEY = env['SECRET_KEY']
 
 # # # More Info: Https://PantherPy.GitHub.io/middlewares/
 MIDDLEWARES = [
-    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
+    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/database.pdb'}),
 ]
 
 # More Info: https://PantherPy.GitHub.io/configs/#user_model
@@ -93,8 +92,6 @@ URLs = 'core/urls.py'
 
 env = """
 SECRET_KEY = '%s'
-
-DB_NAME = '{PROJECT_NAME}'
 """ % generate_secret_key()
 
 main_py = """from panther import Panther

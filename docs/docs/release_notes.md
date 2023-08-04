@@ -1,9 +1,15 @@
+### 2.0.0
+- Supporting class-base APIs
+
 ### 1.7.20
 - Fix an issue in find_endpoint()
 
 ### 1.7.19
 - Fix an issue in routing
 - Fix an issue on return complex dict Response
+
+### 1.7.18
+- Remove uvloop from requirements for now (we had issue in windows)
 
 ### 1.7.16
 - Trying to fix requirements for windows
