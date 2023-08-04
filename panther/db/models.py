@@ -34,6 +34,9 @@ class Model(PydanticBaseModel, Query):
         else:
             return bson.ObjectId(self.id) if self.id else None
 
+    def dict(self, *args, **kwargs):
+        return self.model_dump(*args, **kwargs)
+
 
 class BaseUser(Model):
     first_name: str | None

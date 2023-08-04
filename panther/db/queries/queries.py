@@ -39,7 +39,7 @@ class Query(BaseQuery):
         except ValidationError as validation_error:
             error = ', '.join(
                 '{field}="{error}"'.format(field=e['loc'][0], error=e['msg'])
-                for e in validation_error.errors() if not is_updating or e['type'] != 'value_error.missing')
+                for e in validation_error.errors() if not is_updating or e['type'] != 'missing')
             if error:
                 message = f'{cls.__name__}({error})'
                 raise DBException(message)

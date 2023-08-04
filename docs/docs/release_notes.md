@@ -1,3 +1,6 @@
+### 2.1.0
+- Support Sync APIs
+
 ### 2.0.0
 - Supporting class-base APIs
 

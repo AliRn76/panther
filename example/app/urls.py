@@ -9,7 +9,8 @@ async def test(*args, **kwargs):
     return Response(data={'detail': 'this is for test'})
 
 urls = {
-    'none/': ReturnNone,
+    'none-class/': ReturnNone,
+    'none/': return_none,
     'dict/': return_dict,
     'list/': return_list,
     'tuple/': return_tuple,
@@ -25,5 +26,7 @@ urls = {
     'perm/': check_permission,
     'rate-limit/': rate_limit,
     'test/': test,
+    'patch-user/': patch_user,
+    'patch-user-class/': PatchUser,
     '': single_user,
 }
