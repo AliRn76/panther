@@ -1,10 +1,10 @@
-import inspect
 import functools
 from pydantic import ValidationError
 from datetime import timedelta, datetime
 from orjson.orjson import JSONDecodeError
 
 from panther import status
+from panther._utils import is_function_async
 from panther.logger import logger
 from panther.configs import config
 from panther.request import Request
@@ -73,11 +73,9 @@ class API:
                 kwargs[req_arg[0]] = self.request
 
             # 8. Call Endpoint
-            if inspect.iscoroutinefunction(func):
-                # It's an async function
+            if is_function_async(func):
                 response = await func(**kwargs)
             else:
-                # It's a sync function
                 response = func(**kwargs)
 
             # 9. Clean Output
