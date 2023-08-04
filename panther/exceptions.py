@@ -14,6 +14,11 @@ class APIException(Exception):
         self.status_code = status_code or self.status_code
 
 
+class MethodNotAllowed(APIException):
+    detail = 'Method Not Allowed'
+    status_code = status.HTTP_405_METHOD_NOT_ALLOWED
+
+
 class AuthenticationException(APIException):
     detail = 'Authentication Error'
     status_code = status.HTTP_401_UNAUTHORIZED

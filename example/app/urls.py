@@ -9,7 +9,7 @@ async def test(*args, **kwargs):
     return Response(data={'detail': 'this is for test'})
 
 urls = {
-    'none/': return_none,
+    'none/': ReturnNone,
     'dict/': return_dict,
     'list/': return_list,
     'tuple/': return_tuple,

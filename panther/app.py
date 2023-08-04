@@ -1,19 +1,24 @@
 import functools
-from datetime import timedelta, datetime
-
 from pydantic import ValidationError
+from datetime import timedelta, datetime
 from orjson.orjson import JSONDecodeError
 
 from panther import status
 from panther.logger import logger
 from panther.configs import config
 from panther.request import Request
-from panther.throttling import Throttling, throttling_storage
-from panther.response import Response, IterableDataTypes
-from panther.caching import get_cached_response_data, set_cache_response, cache_key
-from panther.exceptions import APIException, InvalidPathVariableException, AuthorizationException, JsonDecodeException, \
-    ThrottlingException
 from panther.utils import round_datetime
+from panther.response import Response, IterableDataTypes
+from panther.throttling import Throttling, throttling_storage
+from panther.caching import get_cached_response_data, set_cache_response, cache_key
+from panther.exceptions import (
+    InvalidPathVariableException,
+    AuthorizationException,
+    ThrottlingException,
+    JsonDecodeException,
+    MethodNotAllowed,
+    APIException,
+)
 
 
 class API:
@@ -161,3 +166,52 @@ class API:
                         except ValueError:
                             raise InvalidPathVariableException(value=value, arg_type=_type)
                     break
+
+
+class GenericAPI:
+    input_model = None
+    output_model = None
+    auth: bool = False
+    permissions: list | None = None
+    throttling: Throttling = None
+    cache: bool = False
+    cache_exp_time: timedelta | int | None = None
+    
+    async def get(self, *args, **kwargs):
+        raise MethodNotAllowed
+
+    async def post(self, *args, **kwargs):
+        raise MethodNotAllowed
+
+    async def put(self, *args, **kwargs):
+        raise MethodNotAllowed
+
+    async def patch(self, *args, **kwargs):
+        raise MethodNotAllowed
+
+    async def delete(self, *args, **kwargs):
+        raise MethodNotAllowed
+
+    @classmethod
+    async def call_method(cls, *args, **kwargs):
+        match kwargs['request'].method:
+            case 'GET':
+                func = cls().get
+            case 'POST':
+                func = cls().post
+            case 'PUT':
+                func = cls().put
+            case 'PATCH':
+                func = cls().patch
+            case 'DELETE':
+                func = cls().delete
+
+        return await API(
+            input_model=cls.input_model,
+            output_model=cls.output_model,
+            auth=cls.auth,
+            permissions=cls.permissions,
+            throttling=cls.throttling,
+            cache=cls.cache,
+            cache_exp_time=cls.cache_exp_time,
+        )(func)(*args, **kwargs)
