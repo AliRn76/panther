@@ -5,4 +5,5 @@ from panther.response import Response
 
 @API()
 async def hello_world():
-    return Response(status_code=status.HTTP_200_OK)
+    data = {'detail': 'hello world'}
+    return Response(data=data, status_code=status.HTTP_200_OK)
