@@ -8,7 +8,7 @@ from panther.response import Response
 from panther.db.connection import redis
 from panther.throttling import Throttling
 
-from app.serializers import UserInputSerializer, UserOutputSerializer
+from app.serializers import UserInputSerializer, UserOutputSerializer, UserUpdateSerializer
 from app.models import User
 from core.permissions import UserPermission
 
@@ -99,6 +99,22 @@ async def check_permission(request: Request):
 @API(throttling=Throttling(rate=5, duration=timedelta(minutes=1)))
 async def rate_limit():
     return Response(data=('car', 'home', 'phone', 'book'), status_code=202)
+
+
+@API(input_model=UserUpdateSerializer)
+async def patch_user(request: Request):
+    _, user = User.find_or_insert(username='Ali', password='1', age=12)
+    user.update(**request.data.model_dump())
+    return Response(data=user)
+
+
+class PatchUser(GenericAPI):
+    input_model = UserUpdateSerializer
+
+    def patch(self, request: Request, *args, **kwargs):
+        _, user = User.find_or_insert(username='Ali', password='1', age=12)
+        user.update(**request.data.model_dump())
+        return Response(data=user)
 
 
 @API()

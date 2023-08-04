@@ -1,3 +1,4 @@
+import inspect
 import functools
 from pydantic import ValidationError
 from datetime import timedelta, datetime
@@ -72,7 +73,12 @@ class API:
                 kwargs[req_arg[0]] = self.request
 
             # 8. Call Endpoint
-            response = await func(**kwargs)
+            if inspect.iscoroutinefunction(func):
+                # It's an async function
+                response = await func(**kwargs)
+            else:
+                # It's a sync function
+                response = func(**kwargs)
 
             # 9. Clean Output
             if not isinstance(response, Response):
@@ -89,6 +95,7 @@ class API:
                 logger.warning('"cache_exp_time" won\'t work while "cache" is False')
 
             return response
+
         return wrapper
 
     def handle_authentications(self) -> None:
@@ -176,7 +183,7 @@ class GenericAPI:
     throttling: Throttling = None
     cache: bool = False
     cache_exp_time: timedelta | int | None = None
-    
+
     async def get(self, *args, **kwargs):
         raise MethodNotAllowed
 

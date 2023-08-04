@@ -1,6 +1,7 @@
 import os
 import ast
 import sys
+import types
 import asyncio
 from pathlib import Path
 from runpy import run_path
@@ -201,7 +202,8 @@ class Panther:
             for middleware in config['middlewares']:
                 request = await middleware.before(request=request)
 
-            if type(endpoint).__name__ == 'function':
+            # Function
+            if isinstance(endpoint, types.FunctionType):
                 # User Didn't Use @API Decorator
                 if not hasattr(endpoint, '__wrapped__'):
                     logger.critical(f'You may have forgotten to use @API on the {endpoint.__name__}()')
@@ -212,9 +214,10 @@ class Panther:
                         exception=True,
                     )
 
-                # Prepare Endpoint
+                # Declare Endpoint
                 _endpoint = endpoint
 
+            # Class
             else:
                 if not issubclass(endpoint, GenericAPI):
                     logger.critical(f'You may have forgotten to inherit from GenericAPI on the {endpoint.__name__}()')
@@ -224,8 +227,7 @@ class Panther:
                         monitoring=monitoring_middleware,
                         exception=True,
                     )
-
-                # Prepare Endpoint
+                # Declare Endpoint
                 _endpoint = endpoint.call_method
 
             # Call Endpoint

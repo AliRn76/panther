@@ -9,3 +9,7 @@ class UserInputSerializer(BaseModel):
 class UserOutputSerializer(BaseModel):
     username: str
 
+
+class UserUpdateSerializer(BaseModel):
+    username: str
+
