@@ -3,16 +3,14 @@
 ## Panther 
 <b>Is A Fast &  Friendly Web Framework For Building Async APIs With Python 3.11+</b> 
 
-<p align="center">
+<p style="text-align: center">
   <img src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/logo-vertical.png" alt="logo" style="width: 450px">
 </p>
 
 <p>
   <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="logo" style="width: 50px;">
-   <b>Supported by </b><a href="https://jb.gg/OpenSourceSupport">JetBrain</a>
+   <b>Supported by </b><a href="https://drive.google.com/file/d/17xe1hicIiRF7SQ-clg9SETdc19SktCbV/view?usp=sharing">JetBrain</a>
 </p>
-
-**_Full Documentation:_** [https://pantherpy.github.io](https://pantherpy.github.io)
 
 **_GitHub:_** [https://github.com/AliRn76/panther](https://github.com/AliRn76/panther)
 
@@ -86,6 +84,8 @@
     $ panther shell 
     ```
   
+---
+
 ### Example
 
 - #### You can create project with
@@ -154,7 +154,12 @@
         return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
     ```
 
-- <b> Then run (`$ panther run`) the project, now you can see these two urls:</b>
+- Then **run** the project:
+  
+  - `$ cd myproject`
+  - `$ panther run` or `$ panther run --reload` 
+  
+  now you can see these two urls:</b>
 
   * [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
@@ -162,4 +167,4 @@
 
 
 
-> Writing Your First CRUD: [First CRUD](https://pantherpy.github.io/first_crud)
+> **Writing Your First CRUD: [First CRUD](https://pantherpy.github.io/first_crud)**
