@@ -193,6 +193,7 @@
     - &#x2705; Handle Path Variable
     - &#x2705; Handle Simple Form-Data
     - &#x2705; Handle Throttling
+    - &#x2705; Handle ClassBase APIs
     - &#9744; Handle Complex Form-Data
     - &#9744; Handle File 
     - &#9744; Handle Cookie
@@ -200,7 +201,6 @@
     - &#9744; Handle GraphQL
     - &#9744; Handle Testing
     - &#9744; Generate Swagger For APIs
-    - &#9744; Handle ClassBase APIs
   
   </details>
 
