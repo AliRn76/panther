@@ -167,4 +167,4 @@
 
 
 
-> **Writing Your First CRUD: [First CRUD](https://pantherpy.github.io/first_crud)**
+> **Writing Your First CRUD: [First CRUD](https://pantherpy.github.io/function_first_crud/)**

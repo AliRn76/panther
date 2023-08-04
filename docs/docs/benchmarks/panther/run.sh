@@ -1,1 +1,1 @@
-panther run
+uvicorn main:app --no-access-log

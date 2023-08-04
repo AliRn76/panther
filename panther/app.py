@@ -22,6 +22,9 @@ from panther.exceptions import (
 )
 
 
+__all__ = ('API', 'GenericAPI')
+
+
 class API:
     def __init__(
             self,
