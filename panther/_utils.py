@@ -101,3 +101,11 @@ def read_multipart_form_data(content_type: str, body: str) -> dict:
             # fields[field_name] = data
             logger.error("We Don't Handle Files In Multipart Request Yet.")
     return fields
+
+
+def is_function_async(func) -> bool:
+    """
+        sync result is 0 --> False
+        async result is 128 --> True
+    """
+    return bool(func.__code__.co_flags & (1 << 7))
