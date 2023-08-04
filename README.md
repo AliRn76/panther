@@ -1,9 +1,10 @@
 
+
 ## Panther 
 <b>Is A Fast &  Friendly Web Framework For Building Async APIs With Python 3.11+</b> 
 
-<p align="center">
-<img src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/logo-vertical.png" alt="logo" style="width: 450px">
+<p style="text-align: center">
+  <img src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/logo-vertical.png" alt="logo" style="width: 450px">
 </p>
 
 <p>
@@ -13,12 +14,14 @@
 
 **_Full Documentation:_** [https://pantherpy.github.io](https://pantherpy.github.io)
 
+**_PyPI:_** [https://pypi.org/project/panther/](https://pypi.org/project/panther/)
+
 ---
 
-### Why Use Panther?
+### Why Use Panther ?
 - Document-oriented Databases ODM ([PantherDB](https://pypi.org/project/pantherdb/), MongoDB)
 - Visual API Monitoring (In Terminal)
-- Caching for APIs (In Memory, In Redis)
+- Cache APIs (In Memory, In Redis)
 - Built-in Authentication Classes (Customizable)
 - Built-in Permission Classes (Customizable)
 - Handle Custom Middlewares
@@ -28,7 +31,7 @@
 ### Installation
 - <details>
     <summary>Create a Virtual Environment</summary>
-    <pre>$ python -m venv .venv</pre>
+    <pre>$ python3 -m venv .venv</pre>
   
   </details>
   
@@ -45,7 +48,7 @@
     <summary>Install Panther</summary>
     * Normal
       <pre>$ pip install panther</pre>
-    * Include JWT Authentication
+    * Include MongoDB Requirements
       <pre>$ pip install panther[full]</pre>
   </details>
   
@@ -60,7 +63,9 @@
     ```
 
 - #### Run Project
-    Panther Uses [Uvicorn](https://github.com/encode/uvicorn) as ASGI (Asynchronous Server Gateway Interface)
+
+    Panther uses [Uvicorn](https://github.com/encode/uvicorn) as ASGI (Asynchronous Server Gateway Interface)
+    
     ```console
     $ panther run 
     ```
@@ -72,7 +77,9 @@
     ```
 
 - #### Python Shell
+
     Panther Uses [bpython](https://bpython-interpreter.org) for shell
+    
     ```console
     $ panther shell 
     ```
@@ -128,12 +135,14 @@
     from panther.throttling import Throttling
     
     
+    InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
+  
     @API()
     async def hello_world():
         return {'detail': 'Hello World'}
     
     
-    @API(cache=True, throttling=Throttling(rate=5, duration=timedelta(minutes=1)))
+    @API(cache=True, throttling=InfoThrottling)
     async def info(request: Request):
         data = {
             'version': version(),
@@ -144,14 +153,19 @@
         return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
     ```
 
-- <b> Then run (`$ panther run`) the project, now you can see these two urls:</b>
+- Then **run** the project:
+  
+  - `$ cd myproject`
+  - `$ panther run` or `$ panther run --reload` 
+  
+  now you can see these two urls:</b>
 
   * [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
   * [http://127.0.0.1:8000/info/](http://127.0.0.1:8000/info/)
 
 
-  
+
 > **Writing Your First CRUD: [First CRUD](https://pantherpy.github.io/first_crud)**
 
 ---

@@ -196,7 +196,7 @@ class Panther:
                 send, status_code=status.HTTP_404_NOT_FOUND, monitoring=monitoring_middleware, exception=True,
             )
 
-        try:  # They Both Have The Save Exception (APIException)
+        try:  # They Both(middleware.before() & _endpoint()) Have The Same Exception (APIException)
             # Call 'Before' Middlewares
             for middleware in config['middlewares']:
                 request = await middleware.before(request=request)
