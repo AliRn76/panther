@@ -12,9 +12,9 @@
    <b>Supported by </b><a href="https://drive.google.com/file/d/17xe1hicIiRF7SQ-clg9SETdc19SktCbV/view?usp=sharing">JetBrain</a>
 </p>
 
-**_Full Documentation:_** [https://pantherpy.github.io](https://pantherpy.github.io)
+**_Full Documentation:_** [Panther Docs](https://pantherpy.github.io)
 
-**_PyPI:_** [https://pypi.org/project/panther/](https://pypi.org/project/panther/)
+**_PyPI:_** [panther 2.1+](https://pypi.org/project/panther/)
 
 ---
 
