@@ -62,6 +62,10 @@
     $ panther create <project_name> <directory>
     ```
 
+    ```console
+    $ cd <project_name>
+    ```
+
 - #### Run Project
 
     Panther uses [Uvicorn](https://github.com/encode/uvicorn) as ASGI (Asynchronous Server Gateway Interface)
@@ -91,7 +95,10 @@
  
     ```console 
     $ panther create myproject
-    ``` 
+    ```
+    ```console
+    $ cd myproject
+    ```
   
 - #### or create it yourself:
 
