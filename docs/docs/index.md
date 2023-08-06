@@ -9,7 +9,7 @@
 
 <p>
   <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="logo" style="width: 50px;">
-   <b>Supported by </b><a href="https://drive.google.com/file/d/17xe1hicIiRF7SQ-clg9SETdc19SktCbV/view?usp=sharing">JetBrain</a>
+   <b>Supported by </b><a href="https://drive.google.com/file/d/17xe1hicIiRF7SQ-clg9SETdc19SktCbV/view?usp=sharing">JetBrains</a>
 </p>
 
 **_GitHub:_** [https://github.com/AliRn76/panther](https://github.com/AliRn76/panther)
