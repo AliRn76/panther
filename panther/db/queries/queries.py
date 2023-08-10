@@ -29,7 +29,7 @@ else:
 class Query(BaseQuery):
 
     @classmethod
-    def validate_data(cls, data: dict, is_updating: bool = False) -> NoReturn:
+    def validate_data(cls, *, data: dict, is_updating: bool = False) -> NoReturn:
         """
         *. Validate the input of user with its class
         *. If is_updating is True & exception happens but the message was empty
@@ -77,7 +77,7 @@ class Query(BaseQuery):
             >>> from example.app.models import User
             >>> User.insert_one(name='Ali', age=24, ...)
         """
-        cls.validate_data(kwargs)
+        cls.validate_data(data=kwargs)
         return super().insert_one(_data, **kwargs)
 
     @classmethod
@@ -129,7 +129,7 @@ class Query(BaseQuery):
             >>> user = User.find_one(name='Ali')
             >>> user.update(name='Saba')
         """
-        self.validate_data(kwargs, is_updating=True)
+        self.validate_data(data=kwargs, is_updating=True)
         return super().update(**kwargs)
 
     @classmethod

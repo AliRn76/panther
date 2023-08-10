@@ -28,6 +28,7 @@ __all__ = ('API', 'GenericAPI')
 class API:
     def __init__(
             self,
+            *,
             input_model=None,
             output_model=None,
             auth: bool = False,

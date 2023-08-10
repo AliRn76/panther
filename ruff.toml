@@ -1,0 +1,18 @@
+exclude = [
+    ".venv",
+	"build",
+    ".git",
+]
+select = [
+    "F", "E", "W", "C90", "I", "N", "D", "UP", "ASYNC", "BLE", "FBT"
+]
+ignore = ["C901", "N818", "N805", "D1", "D2", "D400", "D415", "D401", "YTT", "ANN", "S"]
+
+line-length = 120
+
+[flake8-quotes]
+inline-quotes = "single"
+
+[per-file-ignores]
+"panther/db/connection.py" = ["UP004", "UP008"]
+"example/app/urls.py" = ["F403", "F405"]
