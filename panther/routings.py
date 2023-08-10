@@ -63,7 +63,7 @@ def _is_url_endpoint_valid(url: str, endpoint: Callable) -> bool:
 
 
 def finalize_urls(urls: dict) -> dict:
-    """convert flat dict to nested"""
+    """Convert flat dict to nested"""
     urls_list = list()
     for url, endpoint in urls.items():
         path = dict()

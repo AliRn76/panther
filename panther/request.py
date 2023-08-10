@@ -99,7 +99,7 @@ class Request:
 
     @property
     def pure_data(self) -> dict:
-        """This is the data before validation"""
+        """Data before validation"""
         from panther.logger import logger
 
         if self._data is None:
@@ -119,8 +119,9 @@ class Request:
 
     @property
     def data(self):
-        """Return The Validated Data
-        It has been set on API.validate_input() while request is happening
+        """
+        Return The Validated Data
+        It has been set on API.validate_input() while request is happening.
         """
         return self._validated_data
 

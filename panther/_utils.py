@@ -59,6 +59,7 @@ async def http_response(
 def import_class(dotted_path: str, /):
     """
     Example:
+    -------
         Input: panther.db.models.User
         Output: User (The Class)
     """

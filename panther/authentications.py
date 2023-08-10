@@ -93,7 +93,7 @@ class JWTAuthentication(BaseAuthentication):
 
     @classmethod
     def login(cls, user_id: int) -> str:
-        """alias of encode_jwt()"""
+        """Alias of encode_jwt()"""
         return cls.encode_jwt(user_id=user_id)
 
     @staticmethod

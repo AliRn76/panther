@@ -51,7 +51,7 @@ def create(args: list):
 
 
 def check_all_directories(base_directory: str) -> str | None:
-    """return folder_name means that the directory exist."""
+    """Return folder_name means that the directory exist."""
     if base_directory != '.' and os.path.isdir(base_directory):
         return base_directory
 

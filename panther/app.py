@@ -140,7 +140,7 @@ class API:
     def serialize_response_data(self, data):
         """
         We serializer the response here instead of response.py file
-        because we don't have access to the "output_model" there
+        because we don't have access to the "output_model" there.
         """
 
         # None or Unchanged
