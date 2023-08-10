@@ -10,7 +10,8 @@ def panther_version() -> str:
 
 
 VERSION = panther_version()
-DESCRIPTION = open('README.md').read()
+with open('README.md') as file:
+    DESCRIPTION = file.read()
 
 EXTRAS_REQUIRE = {
     'full': [

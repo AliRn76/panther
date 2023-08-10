@@ -8,5 +8,4 @@ class UserPermission(BasePermission):
     def authorization(cls, request: Request) -> bool:
         if request.user.username == 'Ali':
             return True
-        else:
-            return False
+        return False

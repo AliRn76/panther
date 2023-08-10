@@ -1,12 +1,13 @@
 import os
 import sys
 import time
+from typing import NoReturn
 
 from panther.cli.template import Template
 from panther.cli.utils import cli_error
 
 
-def create(args: list):
+def create(args: list) -> NoReturn:
     # Get Project Name
     if len(args) == 0:
         return cli_error('Not Enough Parameters.')
@@ -67,7 +68,7 @@ def check_all_directories(base_directory: str) -> str | None:
                     return file_path
 
 
-def load_animation():
+def load_animation() -> NoReturn:
     animation = [
         '■□□□□□□□□□□',
         '■■□□□□□□□□□',

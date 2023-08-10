@@ -33,15 +33,13 @@ def get_cached_response_data(*, request: Request) -> CachedResponse | None:
         data = (redis.get(key) or b'{}').decode()
         if cached := json.loads(data):
             return CachedResponse(*cached)
-        else:
-            return None
 
     else:
         global caches
         if cached := caches.get(key):
             return CachedResponse(*cached)
-        else:
-            return None
+
+    return None
 
 
 def set_cache_response(*, request: Request, response: Response, cache_exp_time: timedelta | int) -> None:
@@ -52,7 +50,7 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
         Cache The Data In Memory
     """
     key = cache_key(request)
-    cache_data: tuple[ResponseDataTypes, int] = (response._data, response.status_code)
+    cache_data: tuple[ResponseDataTypes, int] = (response._data, response.status_code)  # NOQA: SLF001
 
     if redis.is_connected:  # NOQA: Unresolved References
         cache_exp_time = cache_exp_time or config['default_cache_exp']

@@ -86,7 +86,7 @@ class API:
             # 9. Clean Output
             if not isinstance(response, Response):
                 response = Response(data=response)
-            data = self.serialize_response_data(data=response._data)  # NOQA: Access to a protected member
+            data = self.serialize_response_data(data=response._data)  # NOQA: SLF001
             response.set_data(data)
 
             # 10. Set New Response To Cache
@@ -156,7 +156,7 @@ class API:
             return self.output_model(**data).model_dump()
 
         # Iterable
-        elif isinstance(data, IterableDataTypes):
+        if isinstance(data, IterableDataTypes):
             return [self.serialize_with_output_model(d) for d in data]
 
         # Str | Bool
