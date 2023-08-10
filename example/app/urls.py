@@ -1,4 +1,4 @@
-from app.apis import *
+from app.apis import *  # NOQA: F403
 
 from panther.app import API
 from panther.response import Response
@@ -9,24 +9,24 @@ async def test(*args, **kwargs):
     return Response(data={'detail': 'this is for test'})
 
 urls = {
-    'none-class/': ReturnNone,
-    'none/': return_none,
-    'dict/': return_dict,
-    'list/': return_list,
-    'tuple/': return_tuple,
-    'res-dict/': return_response_dict,
-    'res-none': return_response_none,
-    'res-list/': return_response_list,
-    'res-tuple/': return_response_tuple,
-    'res-req-data/': res_request_data,
-    'res-req-data-output/': res_request_data_with_output_model,
-    'redis/': using_redis,
-    'login/': login,
-    'auth/': auth_true,
-    'perm/': check_permission,
-    'rate-limit/': rate_limit,
-    'test/': test,
-    'patch-user/': patch_user,
-    'patch-user-class/': PatchUser,
-    '': single_user,
+    'none-class/': ReturnNone,  # NOQA: F405
+    'none/': return_none,  # NOQA: F405
+    'dict/': return_dict,  # NOQA: F405
+    'list/': return_list,  # NOQA: F405
+    'tuple/': return_tuple,  # NOQA: F405
+    'res-dict/': return_response_dict,  # NOQA: F405
+    'res-none': return_response_none,  # NOQA: F405
+    'res-list/': return_response_list,  # NOQA: F405
+    'res-tuple/': return_response_tuple,  # NOQA: F405
+    'res-req-data/': res_request_data,  # NOQA: F405
+    'res-req-data-output/': res_request_data_with_output_model,  # NOQA: F405
+    'redis/': using_redis,  # NOQA: F405
+    'login/': login,  # NOQA: F405
+    'auth/': auth_true,  # NOQA: F405
+    'perm/': check_permission,  # NOQA: F405
+    'rate-limit/': rate_limit,  # NOQA: F405
+    'test/': test,  # NOQA: F405
+    'patch-user/': patch_user,  # NOQA: F405
+    'patch-user-class/': PatchUser,  # NOQA: F405
+    '': single_user,  # NOQA: F405
 }

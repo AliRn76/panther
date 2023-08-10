@@ -640,7 +640,7 @@ class TestRoutingFunctions(TestCase):
         _, admin_v2_users_list_registered_path = find_endpoint('admin/v1/users/list/registered/')
         _, admin_v2_users_detail_not_registered_path = find_endpoint('admin/v1/users/detail/not-registered')
 
-        self.assertEqual(user_id_profile_id_path, f'user/<user_id>/profile/<id>/')
+        self.assertEqual(user_id_profile_id_path, 'user/<user_id>/profile/<id>/')
         self.assertEqual(user_profile_path, 'user/profile/')
         self.assertEqual(payment_path, 'payments/')
         self.assertEqual(admin_v1_profile_avatar_path, 'admin/v1/profile/avatar/')
@@ -773,7 +773,7 @@ class TestRoutingFunctions(TestCase):
         }
         temp_1_func, _ = find_endpoint('')
 
-        temp_2_func, _ = find_endpoint(f'hello')
+        temp_2_func, _ = find_endpoint('hello')
         temp_3_func, _ = find_endpoint(f'hello/{random.randint(2, 100)}')
 
         self.assertEqual(temp_1_func, temp_1)
@@ -800,7 +800,7 @@ class TestRoutingFunctions(TestCase):
         }
         _, temp_1_path = find_endpoint('')
 
-        _, temp_2_path = find_endpoint(f'hello')
+        _, temp_2_path = find_endpoint('hello')
         _, temp_3_path = find_endpoint(f'hello/{random.randint(2, 100)}')
 
         self.assertEqual(temp_1_path, '/')

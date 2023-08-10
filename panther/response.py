@@ -1,7 +1,6 @@
 import orjson as json
 from types import NoneType
 
-from panther.logger import logger
 from pydantic import BaseModel as PydanticBaseModel
 
 ResponseDataTypes = list | tuple | set | dict | int | str | bool | NoneType

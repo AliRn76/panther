@@ -36,7 +36,7 @@ class TestPantherDB(TestCase):
         config['db_engine'] = 'pantherdb'
 
     def setUp(self) -> None:
-        DBSession(db_url=f'pantherdb://database.pdb')
+        DBSession(db_url='pantherdb://database.pdb')
 
     def tearDown(self) -> None:
         os.remove('database.pdb')

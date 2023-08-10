@@ -50,7 +50,7 @@ class LogConfig(BaseModel):
         },
         'file': {
             'formatter': 'file_formatter',
-            'filename': LOGS_DIR / f'main.log',
+            'filename': LOGS_DIR / 'main.log',
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': MAX_FILE_SIZE,  # 100 MB,
             'backupCount': 3,

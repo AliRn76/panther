@@ -41,7 +41,7 @@ class TestPantherDB(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         config['db_engine'] = 'mongodb'
-        cls.db = DBSession(db_url=f'mongodb://127.0.0.1:27017/test')
+        cls.db = DBSession(db_url='mongodb://127.0.0.1:27017/test')
 
     @classmethod
     def tearDownClass(cls) -> None:
