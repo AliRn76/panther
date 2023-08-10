@@ -68,8 +68,8 @@ class TestRun(TestCase):
             '_panel': {
                 '': list_models,
                 '<index>/': model_list,
-                '<index>/<id>/': model_retrieve
-            }
+                '<index>/<id>/': model_retrieve,
+            },
         }
         self.assertEqual(config['urls'], urls)
         self.assertEqual(config['db_engine'], '')

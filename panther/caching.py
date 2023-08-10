@@ -64,8 +64,7 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
         if cache_exp_time is None:
             logger.warning(
                 'your response are going to cache in redis forever '
-                '** set DEFAULT_CACHE_EXP in configs or pass the cache_exp_time in @API.get() for prevent this **'
-            )
+                '** set DEFAULT_CACHE_EXP in configs or pass the cache_exp_time in @API.get() for prevent this **')
             redis.set(key, cache_data)
         else:
             redis.set(key, cache_data, ex=cache_exp_time)

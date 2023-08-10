@@ -15,7 +15,7 @@ DESCRIPTION = open('README.md').read()
 EXTRAS_REQUIRE = {
     'full': [
         'pymongo>=4.3.3',
-    ]
+    ],
 }
 
 setup(

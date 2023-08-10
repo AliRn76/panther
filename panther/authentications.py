@@ -86,7 +86,7 @@ class JWTAuthentication(BaseAuthentication):
             return jwt.decode(
                 token=token,
                 key=config['jwt_config'].key,
-                algorithms=[config['jwt_config'].algorithm]
+                algorithms=[config['jwt_config'].algorithm],
             )
         except JWTError as e:
             raise cls.exception(e)

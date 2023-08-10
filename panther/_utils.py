@@ -42,7 +42,7 @@ async def http_response(
         status_code: int,
         monitoring,  # type: MonitoringMiddleware | None
         body: bytes = None,
-        exception: bool = False
+        exception: bool = False,
 ):
     if exception:
         body = json.dumps({'detail': status_text[status_code]})
