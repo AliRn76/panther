@@ -189,7 +189,7 @@ class Panther:
 
         # Find Endpoint
         endpoint, found_path = find_endpoint(path=request.path)
-        path_variables = collect_path_variables(request_path=request.path, found_path=found_path)
+        path_variables: dict = collect_path_variables(request_path=request.path, found_path=found_path)
 
         if endpoint is None:
             return await http_response(
