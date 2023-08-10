@@ -3,8 +3,8 @@ import re
 
 import orjson as json
 
+from panther import status
 from panther.logger import logger
-from panther.status import status_text
 
 
 async def read_body(receive) -> bytes:
@@ -45,8 +45,8 @@ async def http_response(
         exception: bool = False,
 ):
     if exception:
-        body = json.dumps({'detail': status_text[status_code]})
-    elif status_code == 204 or body == b'null':
+        body = json.dumps({'detail': status.status_text[status_code]})
+    elif status_code == status.HTTP_204_NO_CONTENT or body == b'null':
         body = None
 
     if monitoring is not None:

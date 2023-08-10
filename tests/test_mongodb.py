@@ -24,7 +24,7 @@ class Model(PydanticBaseModel):
             except bson.objectid.InvalidId:
                 raise ValueError('Invalid ObjectId')
         elif not isinstance(value, bson.ObjectId):
-            raise ValueError('ObjectId required')
+            raise TypeError('ObjectId required')
         return str(value)
 
     @property

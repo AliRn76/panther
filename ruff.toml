@@ -5,9 +5,12 @@ exclude = [
 ]
 select = [
     "F", "E", "W", "C90", "I", "N", "D", "UP", "ASYNC", "BLE", "FBT", "A", "COM", "CPY", "T10", "DJ", "ISC", "ICN", "G",
-    "PIE", "T20", "PYI", "Q", "RSE", "RET", "SLF", "SLOT", "SIM", "TID", "TCH", "INT", "PTH"
+    "PIE", "T20", "PYI", "Q", "RSE", "RET", "SLF", "SLOT", "SIM", "TID", "TCH", "INT", "PTH", "ERA", "PD", "PGH", "TRY004", "FLY", "NPY", "AIR", "PERF"
 ]
-ignore = ["C901", "N818", "N805", "D1", "D2", "D400", "D415", "D401", "YTT", "ANN", "S", "B", "C4", "DTZ", "EM", "EXE", "FA", "INP", "PYI024", "PT", "RET503", "RET505", "ARG", "PTH123"]
+ignore = [
+    "C901", "N818", "N805", "D1", "D2", "D400", "D415", "D401", "YTT", "ANN", "S", "B", "C4", "DTZ", "EM", "EXE",
+    "FA", "INP", "PYI024", "PT", "RET503", "RET505", "ARG", "PTH123", "TD", "FIX", "PL"
+]
 
 line-length = 120
 
@@ -23,3 +26,7 @@ inline-quotes = "single"
 "panther/cli/*" = ["T201"]
 "panther/app.py" = ["SIM102"]
 "panther/routings.py" = ["SIM108"]
+"example/app/apis.py" = ["ERA001"]
+"panther/_utils.py" = ["ERA001"]
+"example/core/configs.py" = ["ERA001"]
+"panther/status.py" = ["PLR2004"]

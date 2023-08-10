@@ -47,8 +47,8 @@ def create(args: list) -> NoReturn:
             file_path = f'{base_directory}/{file_name}'
             with open(file_path, 'x') as file:
                 file.write(data)
-    else:
-        print('Project Created Successfully.')
+
+    print('Project Created Successfully.')
 
 
 def check_all_directories(base_directory: str) -> str | None:
@@ -62,7 +62,7 @@ def check_all_directories(base_directory: str) -> str | None:
             return sub_directory
 
         if isinstance(data, dict):
-            for sub_file_name, _ in data.items():
+            for sub_file_name in data:
                 file_path = f'{sub_directory}/{sub_file_name}'
                 if Path(file_path).exists():
                     return file_path

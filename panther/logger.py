@@ -1,6 +1,6 @@
 import logging
-from pathlib import Path
 from logging.config import dictConfig
+from pathlib import Path
 
 from pydantic import BaseModel
 

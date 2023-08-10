@@ -137,17 +137,18 @@ class Panther:
                                     .replace('/', '.')
                                 # We don't need to import the package classes
                                 if class_path.find('site-packages') == -1:
-                                    # Import the class to check his father and brother
+                                    # Import the class to check his parents and siblings
                                     klass = import_class(f'{class_path}.models.{n.name}')
-                                    for parent in klass.__mro__:
-                                        if parent is Model:
-                                            # The class was one our database models so collect it
-                                            config['models'].append({
-                                                'name': n.name,
-                                                'path':  file_path,
-                                                'class': klass,
-                                                'app': class_path.split('.'),
-                                            })
+
+                                    config['models'] = [
+                                        {
+                                            'name': n.name,
+                                            'path': file_path,
+                                            'class': klass,
+                                            'app': class_path.split('.'),
+                                        }
+                                        for parent in klass.__mro__ if parent is Model
+                                    ]
 
     def _load_urls(self) -> dict:
         urls = check_and_load_urls(self.settings.get('URLs')) or {}
@@ -251,7 +252,7 @@ class Panther:
         for middleware in config['reversed_middlewares']:
             try:
                 response = await middleware.after(response=response)
-            except APIException as e:
+            except APIException as e:  # NOQA: PERF203
                 response = self.handle_exceptions(e)
 
         await http_response(

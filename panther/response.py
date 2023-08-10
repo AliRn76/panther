@@ -53,11 +53,10 @@ class Response:
         elif isinstance(data, dict):
             for key, value in data.items():
                 data[key] = cls.clean_data_type(value)
-            else:
-                return data
+            return data
 
         elif isinstance(data, (int | str | bool | NoneType)):
             return data
 
         else:
-            raise ValueError(f'Invalid Response Type: {type(data)}')
+            raise TypeError(f'Invalid Response Type: {type(data)}')

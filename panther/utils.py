@@ -14,9 +14,9 @@ def load_env(env_file: str | Path, /) -> dict[str, str]:
 
     with open(env_file) as file:
         for line in file.readlines():
-            line = line.strip()
-            if not line.startswith('#') and '=' in line:
-                key, value = line.split('=', 1)
+            striped_line = line.strip()
+            if not striped_line.startswith('#') and '=' in striped_line:
+                key, value = striped_line.split('=', 1)
                 key = key.strip()
                 value = value.strip().strip('"\'')
                 variables[key] = value
