@@ -93,7 +93,7 @@ class Panther:
             if path.find('panther.middlewares.db.Middleware') != -1:
                 config['db_engine'] = data['url'].split(':')[0]
 
-            Middleware = import_class(path)  # NOQA: Py Pep8 Naming
+            Middleware = import_class(path)  # NOQA: N806
             if not issubclass(Middleware, BaseMiddleware):
                 logger.critical(f'{Middleware} is not a sub class of BaseMiddleware.')
                 continue

@@ -31,7 +31,7 @@ class TestRoutingFunctions(TestCase):
 
         self.assertDictEqual(collected_urls, {})
 
-    def test_collect_None_urls(self):
+    def test_collect_None_urls(self):  # NOQA: N802
         urls = {
             'user/': {
                 '<user_id>/': None,
