@@ -13,9 +13,9 @@ exclude = [
     ".git",
 ]
 select = [
-    "F", "E", "W"
+    "F", "E", "W", "C90"
 ]
-unfixable = ["F401"]
+ignore = ["C901"]
 line-length = 120
 [tool.ruff.flake8-quotes]
 inline-quotes = "single"
