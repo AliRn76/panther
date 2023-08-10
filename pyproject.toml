@@ -13,7 +13,7 @@ exclude = [
     ".git",
 ]
 select = [
-    "F"
+    "F", "E", "W"
 ]
 unfixable = ["F401"]
 line-length = 120

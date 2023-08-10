@@ -102,7 +102,7 @@ app = Panther(__name__)
 urls_py = """from app.urls import urls as app_urls
 
 urls = {
-    '/': app_urls, 
+    '/': app_urls,
 }
 """
 

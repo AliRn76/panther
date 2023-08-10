@@ -72,14 +72,14 @@ run_help_message = """
                                     Select ASGI3, ASGI2, or WSGI as the
                                     application interface.  [default: auto]
     --env-file PATH                 Environment configuration file.
-    --log-config PATH               Logging configuration file. Supported 
+    --log-config PATH               Logging configuration file. Supported
                                         formats: .ini, .json, .yaml.
     --log-level [critical|error|warning|info|debug|trace]
                                     Log level. [default: info]
     --access-log / --no-access-log  Enable/Disable access log.
     --use-colors / --no-use-colors  Enable/Disable colorized logging.
     --proxy-headers / --no-proxy-headers
-                                    Enable/Disable X-Forwarded-Proto, X-Forwarded-For, 
+                                    Enable/Disable X-Forwarded-Proto, X-Forwarded-For,
                                     X-Forwarded-Port to populate remote address info.
     --server-header / --no-server-header
                                     Enable/Disable default Server header.
@@ -103,7 +103,7 @@ run_help_message = """
     --ssl-keyfile-password TEXT     SSL keyfile password
     --ssl-version INTEGER           SSL version to use (see stdlib ssl module's)
                                     [default: 17]
-    --ssl-cert-reqs INTEGER         Whether client certificate is required 
+    --ssl-cert-reqs INTEGER         Whether client certificate is required
                                     (see stdlib ssl module's)  [default: 0]
     --ssl-ca-certs TEXT             CA certificates file
     --ssl-ciphers TEXT              Ciphers to use (see stdlib ssl module's)
