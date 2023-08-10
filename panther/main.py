@@ -125,7 +125,7 @@ class Panther:
                 if f == 'models.py':
                     # If the file was "models.py" read it
                     file_path = f'{root}/models.py'
-                    with open(file_path, 'r') as file:
+                    with open(file_path) as file:
                         # Parse the file with ast
                         node = ast.parse(file.read())
                         for n in node.body:

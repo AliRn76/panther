@@ -5,12 +5,12 @@ from panther.cli.utils import import_error_message
 from panther.configs import config
 
 
-class Singleton(object):
+class Singleton(object):  # NOQA: UP004
     _instances = {}
 
     def __new__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__new__(cls, *args, **kwargs)
+            cls._instances[cls] = super(Singleton, cls).__new__(cls, *args, **kwargs)  # NOQA: UP008
         return cls._instances[cls]
 
 

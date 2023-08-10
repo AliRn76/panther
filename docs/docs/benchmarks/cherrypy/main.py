@@ -1,7 +1,7 @@
 import cherrypy
 
 
-class HelloWorld(object):
+class HelloWorld:
     @cherrypy.expose
     def index(self):
         return
