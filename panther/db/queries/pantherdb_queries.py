@@ -7,7 +7,7 @@ if version_info.minor >= 11:
     from typing import Self
 else:
     from typing import TypeVar
-    Self = TypeVar("Self", bound="BasePantherDBQuery")
+    Self = TypeVar('Self', bound='BasePantherDBQuery')
 
 
 class BasePantherDBQuery:

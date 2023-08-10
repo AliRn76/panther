@@ -23,7 +23,7 @@ if sys.version_info.minor >= 11:
     from typing import Self
 else:
     from typing import TypeVar
-    Self = TypeVar("Self", bound="Query")
+    Self = TypeVar('Self', bound='Query')
 
 
 class Query(BaseQuery):
