@@ -4,9 +4,10 @@ exclude = [
     ".git",
 ]
 select = [
-    "F", "E", "W", "C90", "I", "N", "D", "UP", "ASYNC", "BLE", "FBT", "A", "COM"
+    "F", "E", "W", "C90", "I", "N", "D", "UP", "ASYNC", "BLE", "FBT", "A", "COM", "CPY", "T10", "DJ", "ISC", "ICN", "G",
+    "PIE", "T20", "PYI", "PT"
 ]
-ignore = ["C901", "N818", "N805", "D1", "D2", "D400", "D415", "D401", "YTT", "ANN", "S", "B"]
+ignore = ["C901", "N818", "N805", "D1", "D2", "D400", "D415", "D401", "YTT", "ANN", "S", "B", "C4", "DTZ", "EM", "EXE", "FA", "INP", "PYI024"]
 
 line-length = 120
 
@@ -18,3 +19,4 @@ inline-quotes = "single"
 "example/app/urls.py" = ["F403", "F405"]
 "panther/db/models.py" = ["A003"]
 "tests/*" = ["A003"]
+"panther/cli/*" = ["T201"]

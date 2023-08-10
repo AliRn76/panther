@@ -118,8 +118,8 @@ class PatchUser(GenericAPI):
 @API()
 async def single_user(request: Request):
     # users = User.insert_one(username='Ali', password='1', age=12)
-    users = User.find(id="64bd711cd73aa4a30786db77")
-    print(f'{users=}')
+    # users = User.find(id="64bd711cd73aa4a30786db77")
+    # print(f'{users=}')
     # # print(f'{dir(request) = }')
     # print(f'{request.data = }')
     # # print(f'{request.query_params = }')
