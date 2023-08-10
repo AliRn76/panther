@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from pantherdb import PantherDB
 from redis import Redis
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class Singleton(object):
-    _instances = {}
+    _instances: ClassVar = {}
 
     def __new__(cls, *args, **kwargs):
         if cls not in cls._instances:

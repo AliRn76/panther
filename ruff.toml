@@ -4,12 +4,11 @@ exclude = [
     ".git",
 ]
 select = [
-    "F", "E", "W", "C90", "I", "N", "D", "UP", "ASYNC", "BLE", "FBT", "A", "COM", "CPY", "T10", "DJ", "ISC", "ICN", "G",
-    "PIE", "T20", "PYI", "Q", "RSE", "RET", "SLF", "SLOT", "SIM", "TID", "TCH", "INT", "PTH", "ERA", "PD", "PGH", "TRY004", "FLY", "NPY", "AIR", "PERF"
+    "ALL"
 ]
 ignore = [
     "C901", "N818", "N805", "D1", "D2", "D400", "D415", "D401", "YTT", "ANN", "S", "B", "C4", "DTZ", "EM", "EXE",
-    "FA", "INP", "PYI024", "PT", "RET503", "RET505", "ARG", "PTH123", "TD", "FIX", "PL"
+    "FA", "INP", "PYI024", "PT", "RET503", "RET505", "ARG", "PTH123", "TD", "FIX", "PL", "RUF013", "TRY003", "TRY200"
 ]
 
 line-length = 120
