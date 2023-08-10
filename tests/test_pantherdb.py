@@ -1,5 +1,5 @@
-import os
 import random
+from pathlib import Path
 from unittest import TestCase
 
 import faker
@@ -40,7 +40,7 @@ class TestPantherDB(TestCase):
         DBSession(db_url='pantherdb://database.pdb')
 
     def tearDown(self) -> None:
-        os.remove('database.pdb')
+        Path('database.db').unlink()
 
     def test_insert_one(self):
         name = f.name()

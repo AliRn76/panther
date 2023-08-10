@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import uvicorn
 from rich import print as rprint
@@ -47,7 +47,7 @@ def run(args: dict[str, str | None]) -> None:
     if 'h' in args or 'help' in args:
         rprint(run_help_message)
         return
-    command = {'app_dir': os.getcwd()}
+    command = {'app_dir': Path.cwd()}
     command.update(_handle_boolean_commands(args))
     command.update(args)
 

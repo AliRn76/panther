@@ -1,11 +1,10 @@
-import os
 import re
 
 from setuptools import setup
 
 
 def panther_version() -> str:
-    with open(os.path.join('panther/__init__.py')) as f:
+    with open('panther/__init__.py') as f:
         return re.search("__version__ = ['\"]([^'\"]+)['\"]", f.read()).group(1)
 
 

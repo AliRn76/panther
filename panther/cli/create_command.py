@@ -1,6 +1,6 @@
-import os
 import sys
 import time
+from pathlib import Path
 from typing import NoReturn
 
 from panther.cli.template import Template
@@ -14,7 +14,7 @@ def create(args: list) -> NoReturn:
     project_name = args[0]
 
     # Get Base Directory
-    base_directory = project_name
+    base_directory: str = project_name
     if len(args) > 1:
         base_directory = args[1]
 
@@ -27,13 +27,13 @@ def create(args: list) -> NoReturn:
 
     # Create Base Directory
     if base_directory != '.':
-        os.makedirs(base_directory)
+        Path(base_directory).mkdir()
 
     for file_name, data in Template.items():
         if isinstance(data, dict):
             # Create Sub Directory
             sub_directory = f'{base_directory}/{file_name}'
-            os.makedirs(sub_directory)
+            Path(sub_directory).mkdir()
 
             # Create Files of Sub Directory
             for sub_file_name, sub_data in data.items():
@@ -53,18 +53,18 @@ def create(args: list) -> NoReturn:
 
 def check_all_directories(base_directory: str) -> str | None:
     """Return folder_name means that the directory exist."""
-    if base_directory != '.' and os.path.isdir(base_directory):
+    if base_directory != '.' and Path(base_directory).is_dir():
         return base_directory
 
     for file_name, data in Template.items():
         sub_directory = f'{base_directory}/{file_name}'
-        if os.path.exists(sub_directory):
+        if Path(sub_directory).exists():
             return sub_directory
 
         if isinstance(data, dict):
             for sub_file_name, _ in data.items():
                 file_path = f'{sub_directory}/{sub_file_name}'
-                if os.path.exists(file_path):
+                if Path(file_path).exists():
                     return file_path
 
 

@@ -1,5 +1,5 @@
 import logging
-import os
+from pathlib import Path
 from logging.config import dictConfig
 
 from pydantic import BaseModel
@@ -81,8 +81,7 @@ try:
     dictConfig(LogConfig().model_dump())
 except ValueError:
     LOGS_DIR = config['base_dir'] / 'logs'
-    if not os.path.exists(LOGS_DIR):
-        os.makedirs(LOGS_DIR)
+    Path(LOGS_DIR).mkdir(exist_ok=True)
 
 
 logger = logging.getLogger('panther')
