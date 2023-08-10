@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
+
 from pantherdb import PantherDB
 from redis import Redis
 
 from panther.cli.utils import import_error_message
 from panther.configs import config
+
+if TYPE_CHECKING:
+    from pymongo.database import Database
 
 
 class Singleton(object):
@@ -42,7 +47,6 @@ class DBSession(Singleton):
     def _create_mongodb_session(self, db_url: str) -> None:
         try:
             from pymongo import MongoClient
-            from pymongo.database import Database
         except ImportError:
             raise ImportError(import_error_message('pymongo'))
 
