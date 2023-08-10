@@ -37,7 +37,7 @@ def _convert_to_object_id(_id: bson.ObjectId | str) -> bson.ObjectId:
         return _id
     try:
         return bson.ObjectId(_id)
-    except Exception:
+    except bson.objectid.InvalidId:
         raise bson.errors.InvalidId(f"id={_id} is invalid bson.ObjectId")
 
 

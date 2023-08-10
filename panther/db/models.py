@@ -20,7 +20,7 @@ class Model(PydanticBaseModel, Query):
             if isinstance(value, str):
                 try:
                     bson.ObjectId(value)
-                except Exception:
+                except bson.objectid.InvalidId:
                     raise ValueError('Invalid ObjectId')
             elif not isinstance(value, bson.ObjectId):
                 raise ValueError('ObjectId required')

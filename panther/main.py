@@ -237,7 +237,7 @@ class Panther:
 
         except APIException as e:
             response = self.handle_exceptions(e)
-        except Exception as e:
+        except Exception as e:  # NOQA: BLE001
             # Every unhandled exception in Panther or code will catch here
             logger.critical(e)
             return await http_response(

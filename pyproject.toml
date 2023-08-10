@@ -13,9 +13,9 @@ exclude = [
     ".git",
 ]
 select = [
-    "F", "E", "W", "C90", "I", "N", "D", "UP"
+    "F", "E", "W", "C90", "I", "N", "D", "UP", "ASYNC", "BLE"
 ]
-ignore = ["C901", "N818", "N805", "D1", "D2", "D400", "D415", "D401"]
+ignore = ["C901", "N818", "N805", "D1", "D2", "D400", "D415", "D401", "YTT", "ANN", "S"]
 line-length = 120
 #[tool.ruff.flake8-quotes]
 #inline-quotes = "single"

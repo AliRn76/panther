@@ -17,8 +17,6 @@ class ReturnNone(GenericAPI):
     cache = True
 
     async def get(self, request: Request):
-        import time
-        time.sleep(2)
         return {'detail': 'ok'}
 
 
