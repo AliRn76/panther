@@ -1,9 +1,9 @@
 from panther import status
 from panther.app import API
 from panther.configs import config
+from panther.panel.utils import validate_input
 from panther.request import Request
 from panther.response import Response
-from panther.panel.utils import validate_input
 
 
 @API()

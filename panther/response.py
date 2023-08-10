@@ -1,6 +1,6 @@
-import orjson as json
 from types import NoneType
 
+import orjson as json
 from pydantic import BaseModel as PydanticBaseModel
 
 ResponseDataTypes = list | tuple | set | dict | int | str | bool | NoneType

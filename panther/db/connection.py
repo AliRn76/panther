@@ -1,7 +1,8 @@
-from redis import Redis
 from pantherdb import PantherDB
-from panther.configs import config
+from redis import Redis
+
 from panther.cli.utils import import_error_message
+from panther.configs import config
 
 
 class Singleton(object):

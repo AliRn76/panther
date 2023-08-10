@@ -1,6 +1,6 @@
-from tornado.web import RequestHandler, Application
-from tornado.ioloop import IOLoop
 from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
+from tornado.web import Application, RequestHandler
 
 
 class MainHandler(RequestHandler):

@@ -1,13 +1,14 @@
-import bson
-import faker
 import random
 from unittest import TestCase
-from pydantic import field_validator, Field, BaseModel as PydanticBaseModel
+
+import bson
+import faker
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field, field_validator
 
 from panther.configs import config
 from panther.db.connection import DBSession
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
-
 
 f = faker.Faker()
 

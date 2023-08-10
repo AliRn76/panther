@@ -4,9 +4,9 @@ from typing import NoReturn
 from pydantic import ValidationError
 
 from panther.configs import config
-from panther.db.utils import log_query
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
+from panther.db.utils import log_query
 from panther.exceptions import DBException
 
 if config['db_engine'] == 'pantherdb':

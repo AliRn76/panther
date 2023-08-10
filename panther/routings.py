@@ -1,11 +1,10 @@
 import re
-from copy import deepcopy
-from runpy import run_path
-from typing import Callable
 from collections import Counter
-from typing import MutableMapping
 from collections.abc import Mapping
-from functools import reduce, partial
+from copy import deepcopy
+from functools import partial, reduce
+from runpy import run_path
+from typing import Callable, MutableMapping
 
 from panther.configs import config
 

@@ -1,11 +1,13 @@
 from abc import abstractmethod
 from datetime import datetime
+
 from jose import JWTError, jwt
-from panther.logger import logger
+
 from panther.configs import config
 from panther.db.models import BaseUser
-from panther.request import Request
 from panther.exceptions import AuthenticationException
+from panther.logger import logger
+from panther.request import Request
 
 
 class BaseAuthentication:

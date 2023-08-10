@@ -1,7 +1,8 @@
-import orjson as json
-from typing import Literal
-from dataclasses import dataclass
 from collections import namedtuple
+from dataclasses import dataclass
+from typing import Literal
+
+import orjson as json
 
 from panther._utils import read_multipart_form_data
 

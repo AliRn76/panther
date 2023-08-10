@@ -1,5 +1,5 @@
-import re
 import importlib
+import re
 
 import orjson as json
 

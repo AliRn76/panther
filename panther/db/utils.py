@@ -1,7 +1,8 @@
-import bson
 import operator
 from functools import reduce
 from time import perf_counter
+
+import bson
 
 from panther.configs import config
 from panther.logger import query_logger

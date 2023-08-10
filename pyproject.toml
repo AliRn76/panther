@@ -13,15 +13,15 @@ exclude = [
     ".git",
 ]
 select = [
-    "F", "E", "W", "C90"
+    "F", "E", "W", "C90", "I"
 ]
 ignore = ["C901"]
 line-length = 120
-[tool.ruff.flake8-quotes]
-inline-quotes = "single"
+#[tool.ruff.flake8-quotes]
+#inline-quotes = "single"
 
-[tool.ruff.pydocstyle]
-convention = "google"
+#[tool.ruff.pydocstyle]
+#convention = "google"
 
 [tool.ruff.flake8-annotations]
 mypy-init-return = false

@@ -1,6 +1,8 @@
 import os
+
 import uvicorn
 from rich import print as rprint
+
 from panther.cli.utils import cli_error, run_help_message
 
 

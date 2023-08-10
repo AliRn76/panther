@@ -1,7 +1,7 @@
 import random
 from unittest import TestCase
 
-from panther.routings import flatten_urls, finalize_urls, find_endpoint, collect_path_variables
+from panther.routings import collect_path_variables, finalize_urls, find_endpoint, flatten_urls
 
 
 class TestRoutingFunctions(TestCase):

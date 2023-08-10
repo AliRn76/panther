@@ -1,9 +1,9 @@
 import bson
-from pydantic import field_validator, Field, BaseModel as PydanticBaseModel
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field, field_validator
 
 from panther.configs import config
 from panther.db.queries import Query
-
 
 if config['db_engine'] == 'pantherdb':
     IDType = int

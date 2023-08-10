@@ -1,16 +1,16 @@
 from datetime import timedelta
 
+from app.models import User
+from app.serializers import UserInputSerializer, UserOutputSerializer, UserUpdateSerializer
+from core.permissions import UserPermission
+
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
+from panther.db.connection import redis
 from panther.logger import logger
 from panther.request import Request
 from panther.response import Response
-from panther.db.connection import redis
 from panther.throttling import Throttling
-
-from app.serializers import UserInputSerializer, UserOutputSerializer, UserUpdateSerializer
-from app.models import User
-from core.permissions import UserPermission
 
 
 class ReturnNone(GenericAPI):
