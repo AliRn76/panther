@@ -40,7 +40,7 @@ class TestPantherDB(TestCase):
         DBSession(db_url='pantherdb://database.pdb')
 
     def tearDown(self) -> None:
-        Path('database.db').unlink()
+        Path('database.pdb').unlink()
 
     def test_insert_one(self):
         name = f.name()

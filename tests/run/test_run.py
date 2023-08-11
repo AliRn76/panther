@@ -41,7 +41,7 @@ class TestRun(TestCase):
     def test_load_configs(self):
         from panther.configs import config
         from panther.db.models import BaseUser
-        from panther.panel.apis import list_models, model_list, model_retrieve
+        from panther.panel.apis import documents_api, models_api, single_document_api
 
         base_dir = Path(__name__).resolve().parent
         app = Panther(__name__)
@@ -66,9 +66,9 @@ class TestRun(TestCase):
         config['urls'].pop('')
         urls = {
             '_panel': {
-                '': list_models,
-                '<index>/': model_list,
-                '<index>/<id>/': model_retrieve,
+                '': models_api,
+                '<index>/': documents_api,
+                '<index>/<document_id>/': single_document_api,
             },
         }
         self.assertEqual(config['urls'], urls)
