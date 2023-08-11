@@ -15,7 +15,7 @@ class Model(PydanticBaseModel, Query):
     id: IDType | None = Field(None, validation_alias='_id')
 
     @field_validator('id', mode='before')
-    def validate_id(self, value):
+    def validate_id(cls, value):
         if IDType is str:
             if isinstance(value, str):
                 try:
