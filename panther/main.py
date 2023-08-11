@@ -93,12 +93,12 @@ class Panther:
             if path.find('panther.middlewares.db.Middleware') != -1:
                 config['db_engine'] = data['url'].split(':')[0]
 
-            Middleware = import_class(path)  # NOQA: N806
+            Middleware = import_class(path)  # noqa: N806
             if not issubclass(Middleware, BaseMiddleware):
                 logger.critical(f'{Middleware} is not a sub class of BaseMiddleware.')
                 continue
 
-            middlewares.append(Middleware(**data))  # NOQA: Py Argument List
+            middlewares.append(Middleware(**data))  # noqa: Py Argument List
         return middlewares
 
     def _get_user_model(self) -> ModelMetaclass:
@@ -238,7 +238,7 @@ class Panther:
 
         except APIException as e:
             response = self.handle_exceptions(e)
-        except Exception as e:  # NOQA: BLE001
+        except Exception as e:  # noqa: BLE001
             # Every unhandled exception in Panther or code will catch here
             logger.critical(e)
             return await http_response(
@@ -252,7 +252,7 @@ class Panther:
         for middleware in config['reversed_middlewares']:
             try:
                 response = await middleware.after(response=response)
-            except APIException as e:  # NOQA: PERF203
+            except APIException as e:  # noqa: PERF203
                 response = self.handle_exceptions(e)
 
         await http_response(

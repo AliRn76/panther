@@ -49,7 +49,7 @@ class API:
     def __call__(self, func):
         @functools.wraps(func)
         async def wrapper(request: Request, **path_variables):
-            self.request: Request = request  # NOQA: Non-self attribute could not be type hinted
+            self.request: Request = request  # noqa: Non-self attribute could not be type hinted
 
             # 1. Authentication
             self.handle_authentications()
@@ -86,7 +86,7 @@ class API:
             # 9. Clean Output
             if not isinstance(response, Response):
                 response = Response(data=response)
-            data = self.serialize_response_data(data=response._data)  # NOQA: SLF001
+            data = self.serialize_response_data(data=response._data)  # noqa: SLF001
             response.set_data(data)
 
             # 10. Set New Response To Cache

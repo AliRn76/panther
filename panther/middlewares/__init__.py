@@ -1,1 +1,1 @@
-from panther.middlewares.base import BaseMiddleware  # NOQA: F401
+from panther.middlewares.base import BaseMiddleware  # noqa: F401

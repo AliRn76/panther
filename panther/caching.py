@@ -29,7 +29,7 @@ def get_cached_response_data(*, request: Request) -> CachedResponse | None:
         Get Cached Data From Memory
     """
     key = cache_key(request)
-    if redis.is_connected:  # NOQA: Unresolved References
+    if redis.is_connected:  # noqa: Unresolved References
         data = (redis.get(key) or b'{}').decode()
         if cached := json.loads(data):
             return CachedResponse(*cached)
@@ -50,9 +50,9 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
         Cache The Data In Memory
     """
     key = cache_key(request)
-    cache_data: tuple[ResponseDataTypes, int] = (response._data, response.status_code)  # NOQA: SLF001
+    cache_data: tuple[ResponseDataTypes, int] = (response._data, response.status_code)  # noqa: SLF001
 
-    if redis.is_connected:  # NOQA: Unresolved References
+    if redis.is_connected:  # noqa: Unresolved References
         cache_exp_time = cache_exp_time or config['default_cache_exp']
         cache_data: bytes = json.dumps(cache_data)
 
