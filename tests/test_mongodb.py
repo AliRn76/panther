@@ -1,4 +1,3 @@
-import random
 from unittest import TestCase
 
 import bson
@@ -7,7 +6,6 @@ from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, field_validator
 
 from panther.configs import config
-from panther.db.connection import DBSession
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 
 f = faker.Faker()
@@ -39,12 +37,10 @@ class Book(Model, BaseMongoDBQuery):
 
 
 class TestPantherDB(TestCase):
-    # @classmethod
-    # def setUpClass(cls) -> None:
-    #     config['db_engine'] = 'mongodb'
-    #     cls.db = DBSession(db_url='mongodb://127.0.0.1:27017/test')
-    #
-    # @classmethod
-    # def tearDownClass(cls) -> None:
-    #     cls.db.close()
-    pass
+    @classmethod
+    def setUpClass(cls) -> None:
+        config['db_engine'] = 'mongodb'
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        config['db_engine'] = ''

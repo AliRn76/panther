@@ -12,6 +12,10 @@ class TestRun(TestCase):
     def setUpClass(cls) -> None:
         os.chdir('tests/run')
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.chdir('../..')
+
     def test_init(self):
         app = Panther(__name__)
         self.assertIsInstance(app, Panther)
@@ -75,9 +79,9 @@ class TestRun(TestCase):
                 '': models_api,
                 '<index>': {
                     '': documents_api,
-                    '<document_id>': single_document_api
-                }
-            }
+                    '<document_id>': single_document_api,
+                },
+            },
         }
         self.assertEqual(config['urls'], urls)
         self.assertEqual(config['db_engine'], '')
