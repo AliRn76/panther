@@ -1,10 +1,10 @@
-import os
 import logging
+from logging.config import dictConfig
+from pathlib import Path
+
 from pydantic import BaseModel
 
 from panther.configs import config
-from logging.config import dictConfig
-
 
 LOGS_DIR = config['base_dir'] / 'logs'
 
@@ -50,7 +50,7 @@ class LogConfig(BaseModel):
         },
         'file': {
             'formatter': 'file_formatter',
-            'filename': LOGS_DIR / f'main.log',
+            'filename': LOGS_DIR / 'main.log',
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': MAX_FILE_SIZE,  # 100 MB,
             'backupCount': 3,
@@ -81,8 +81,7 @@ try:
     dictConfig(LogConfig().model_dump())
 except ValueError:
     LOGS_DIR = config['base_dir'] / 'logs'
-    if not os.path.exists(LOGS_DIR):
-        os.makedirs(LOGS_DIR)
+    Path(LOGS_DIR).mkdir(exist_ok=True)
 
 
 logger = logging.getLogger('panther')

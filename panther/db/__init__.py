@@ -1,1 +1,1 @@
-from panther.db.models import Model  # NOQA: F401
+from panther.db.models import Model  # noqa: F401

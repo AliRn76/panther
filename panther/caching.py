@@ -1,16 +1,15 @@
-import orjson as json
-from types import NoneType
-from datetime import timedelta
 from collections import namedtuple
+from datetime import timedelta
+from types import NoneType
 
+import orjson as json
 
-from panther.logger import logger
 from panther.configs import config
-from panther.request import Request
 from panther.db.connection import redis
+from panther.logger import logger
+from panther.request import Request
 from panther.response import Response, ResponseDataTypes
 from panther.utils import generate_hash_value_from_string
-
 
 caches = dict()
 CachedResponse = namedtuple('Cached', ['data', 'status_code'])
@@ -30,19 +29,17 @@ def get_cached_response_data(*, request: Request) -> CachedResponse | None:
         Get Cached Data From Memory
     """
     key = cache_key(request)
-    if redis.is_connected:  # NOQA: Unresolved References
+    if redis.is_connected:  # noqa: Unresolved References
         data = (redis.get(key) or b'{}').decode()
         if cached := json.loads(data):
             return CachedResponse(*cached)
-        else:
-            return None
 
     else:
         global caches
         if cached := caches.get(key):
             return CachedResponse(*cached)
-        else:
-            return None
+
+    return None
 
 
 def set_cache_response(*, request: Request, response: Response, cache_exp_time: timedelta | int) -> None:
@@ -53,9 +50,9 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
         Cache The Data In Memory
     """
     key = cache_key(request)
-    cache_data: tuple[ResponseDataTypes, int] = (response._data, response.status_code)
+    cache_data: tuple[ResponseDataTypes, int] = (response._data, response.status_code)  # noqa: SLF001
 
-    if redis.is_connected:  # NOQA: Unresolved References
+    if redis.is_connected:  # noqa: Unresolved References
         cache_exp_time = cache_exp_time or config['default_cache_exp']
         cache_data: bytes = json.dumps(cache_data)
 
@@ -65,8 +62,7 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
         if cache_exp_time is None:
             logger.warning(
                 'your response are going to cache in redis forever '
-                '** set DEFAULT_CACHE_EXP in configs or pass the cache_exp_time in @API.get() for prevent this **'
-            )
+                '** set DEFAULT_CACHE_EXP in configs or pass the cache_exp_time in @API.get() for prevent this **')
             redis.set(key, cache_data)
         else:
             redis.set(key, cache_data, ex=cache_exp_time)

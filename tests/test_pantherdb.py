@@ -1,13 +1,14 @@
-import os
-import faker
 import random
+from pathlib import Path
 from unittest import TestCase
-from pydantic import field_validator, Field, BaseModel as PydanticBaseModel
+
+import faker
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field, field_validator
 
 from panther.configs import config
 from panther.db.connection import DBSession
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
-
 
 f = faker.Faker()
 
@@ -36,10 +37,10 @@ class TestPantherDB(TestCase):
         config['db_engine'] = 'pantherdb'
 
     def setUp(self) -> None:
-        DBSession(db_url=f'pantherdb://database.pdb')
+        DBSession(db_url='pantherdb://database.pdb')
 
     def tearDown(self) -> None:
-        os.remove('database.pdb')
+        Path('database.pdb').unlink()
 
     def test_insert_one(self):
         name = f.name()

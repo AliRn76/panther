@@ -1,7 +1,8 @@
-import bson
 import operator
 from functools import reduce
 from time import perf_counter
+
+import bson
 
 from panther.configs import config
 from panther.logger import query_logger
@@ -36,8 +37,8 @@ def _convert_to_object_id(_id: bson.ObjectId | str) -> bson.ObjectId:
         return _id
     try:
         return bson.ObjectId(_id)
-    except Exception:
-        raise bson.errors.InvalidId(f"id={_id} is invalid bson.ObjectId")
+    except bson.objectid.InvalidId:
+        raise bson.errors.InvalidId(f'id={_id} is invalid bson.ObjectId')
 
 
 def merge_dicts(*args) -> dict:

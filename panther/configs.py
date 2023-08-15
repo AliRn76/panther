@@ -1,7 +1,8 @@
+from dataclasses import dataclass
+from datetime import timedelta
 from pathlib import Path
 from typing import TypedDict
-from datetime import timedelta
-from dataclasses import dataclass
+
 from pydantic._internal._model_construction import ModelMetaclass
 
 from panther.throttling import Throttling

@@ -1,21 +1,21 @@
-import os
 import re
 
 from setuptools import setup
 
 
 def panther_version() -> str:
-    with open(os.path.join('panther/__init__.py')) as f:
+    with open('panther/__init__.py') as f:
         return re.search("__version__ = ['\"]([^'\"]+)['\"]", f.read()).group(1)
 
 
 VERSION = panther_version()
-DESCRIPTION = open('README.md').read()
+with open('README.md') as file:
+    DESCRIPTION = file.read()
 
 EXTRAS_REQUIRE = {
     'full': [
         'pymongo>=4.3.3',
-    ]
+    ],
 }
 
 setup(

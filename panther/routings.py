@@ -1,11 +1,10 @@
 import re
-from copy import deepcopy
-from runpy import run_path
-from typing import Callable
 from collections import Counter
-from typing import MutableMapping
 from collections.abc import Mapping
-from functools import reduce, partial
+from copy import deepcopy
+from functools import partial, reduce
+from runpy import run_path
+from typing import Callable, MutableMapping
 
 from panther.configs import config
 
@@ -64,7 +63,7 @@ def _is_url_endpoint_valid(url: str, endpoint: Callable) -> bool:
 
 
 def finalize_urls(urls: dict) -> dict:
-    """convert flat dict to nested"""
+    """Convert flat dict to nested"""
     urls_list = list()
     for url, endpoint in urls.items():
         path = dict()
@@ -158,12 +157,11 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
                         found_path += f'{key}/'
                         return value, found_path
 
-                    elif isinstance(value, dict) and '' in value:
+                    if isinstance(value, dict) and '' in value:
                         found_path += f'{key}/'
                         return value[''], found_path
 
-                    else:
-                        return None, ''
+                    return None, ''
 
                 urls = value
                 found_path += f'{key}/'

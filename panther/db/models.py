@@ -1,9 +1,9 @@
 import bson
-from pydantic import field_validator, Field, BaseModel as PydanticBaseModel
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field, field_validator
 
 from panther.configs import config
 from panther.db.queries import Query
-
 
 if config['db_engine'] == 'pantherdb':
     IDType = int
@@ -20,7 +20,7 @@ class Model(PydanticBaseModel, Query):
             if isinstance(value, str):
                 try:
                     bson.ObjectId(value)
-                except Exception:
+                except bson.objectid.InvalidId:
                     raise ValueError('Invalid ObjectId')
             elif not isinstance(value, bson.ObjectId):
                 raise ValueError('ObjectId required')

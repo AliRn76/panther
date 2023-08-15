@@ -3,12 +3,11 @@ from sys import version_info
 from panther.db.connection import db
 from panther.db.utils import merge_dicts, prepare_id_for_query
 
-
 if version_info.minor >= 11:
     from typing import Self
 else:
     from typing import TypeVar
-    Self = TypeVar("Self", bound="BaseMongoDBQuery")
+    Self = TypeVar('Self', bound='BaseMongoDBQuery')
 
 
 class BaseMongoDBQuery:

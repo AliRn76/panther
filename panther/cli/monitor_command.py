@@ -1,14 +1,14 @@
 import os
 from collections import deque
 
+from rich import box
+from rich.align import Align
 from rich.console import Group
 from rich.layout import Layout
-from rich.align import Align
+from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 from watchfiles import watch
-from rich.live import Live
-from rich import box
 
 
 def monitor() -> None:

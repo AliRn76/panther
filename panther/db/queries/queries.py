@@ -4,9 +4,9 @@ from typing import NoReturn
 from pydantic import ValidationError
 
 from panther.configs import config
-from panther.db.utils import log_query
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
+from panther.db.utils import log_query
 from panther.exceptions import DBException
 
 if config['db_engine'] == 'pantherdb':
@@ -23,13 +23,13 @@ if sys.version_info.minor >= 11:
     from typing import Self
 else:
     from typing import TypeVar
-    Self = TypeVar("Self", bound="Query")
+    Self = TypeVar('Self', bound='Query')
 
 
 class Query(BaseQuery):
 
     @classmethod
-    def validate_data(cls, data: dict, is_updating: bool = False) -> NoReturn:
+    def validate_data(cls, *, data: dict, is_updating: bool = False) -> NoReturn:
         """
         *. Validate the input of user with its class
         *. If is_updating is True & exception happens but the message was empty
@@ -49,7 +49,8 @@ class Query(BaseQuery):
     @log_query
     def find_one(cls, _data: dict = None, /, **kwargs) -> Self | None:
         """
-        example:
+        Example:
+        -------
             >>> from example.app.models import User
             >>> User.find_one(id=1)
         """
@@ -59,7 +60,8 @@ class Query(BaseQuery):
     @log_query
     def find(cls, _data: dict = None, /, **kwargs) -> list[Self]:
         """
-        example:
+        Example:
+        -------
             >>> from example.app.models import User
             >>> User.find(name='Ali')
         """
@@ -70,11 +72,12 @@ class Query(BaseQuery):
     @log_query
     def insert_one(cls, _data: dict = None, /, **kwargs) -> Self:
         """
-        example:
+        Example:
+        -------
             >>> from example.app.models import User
             >>> User.insert_one(name='Ali', age=24, ...)
         """
-        cls.validate_data(kwargs)
+        cls.validate_data(data=kwargs)
         return super().insert_one(_data, **kwargs)
 
     @classmethod
@@ -86,7 +89,8 @@ class Query(BaseQuery):
     @log_query
     def delete(self) -> None:
         """
-        example:
+        Example:
+        -------
             >>> from example.app.models import User
             >>> user = User.find_one(name='Ali')
             >>> user.delete()
@@ -97,7 +101,8 @@ class Query(BaseQuery):
     @log_query
     def delete_one(cls, _data: dict = None, /, **kwargs) -> bool:
         """
-        example:
+        Example:
+        -------
             >>> from example.app.models import User
             >>> User.delete_one(id=1)
         """
@@ -107,7 +112,8 @@ class Query(BaseQuery):
     @log_query
     def delete_many(cls, _data: dict = None, /, **kwargs) -> int:
         """
-        example:
+        Example:
+        -------
             >>> from example.app.models import User
             >>> User.delete_many(last_name='Rn')
         """
@@ -117,19 +123,21 @@ class Query(BaseQuery):
     @log_query
     def update(self, **kwargs) -> None:
         """
-        example:
+        Example:
+        -------
             >>> from example.app.models import User
             >>> user = User.find_one(name='Ali')
             >>> user.update(name='Saba')
         """
-        self.validate_data(kwargs, is_updating=True)
+        self.validate_data(data=kwargs, is_updating=True)
         return super().update(**kwargs)
 
     @classmethod
     @log_query
     def update_one(cls, _filter, _data: dict = None, /, **kwargs) -> bool:
         """
-        example:
+        Example:
+        -------
             >>> from example.app.models import User
             >>> User.update_one({'id': 1}, name='Ali')
             >>> User.update_one({'id': 2}, {'name': 'Ali', 'age': 25})
@@ -140,7 +148,8 @@ class Query(BaseQuery):
     @log_query
     def update_many(cls, _filter, _data: dict = None, /, **kwargs) -> int:
         """
-        example:
+        Example:
+        -------
             >>> from example.app.models import User
             >>> User.update_many({'name': 'Mohsen'}, name='Ali')
             >>> User.update_many({'name': 'Mohsen'}, {'name': 'Ali'})
@@ -152,7 +161,8 @@ class Query(BaseQuery):
     @log_query
     def last(cls, _data: dict = None, /, **kwargs) -> Self | None:
         """
-        example:
+        Example:
+        -------
             >>> from example.app.models import User
             >>> user = User.last(name='Ali')
         """
@@ -162,7 +172,8 @@ class Query(BaseQuery):
     @log_query
     def count(cls, _data: dict = None, /, **kwargs) -> int:
         """
-        example:
+        Example:
+        -------
             >>> from example.app.models import User
             >>> User.count(name='Ali')
         """
@@ -172,7 +183,8 @@ class Query(BaseQuery):
     @log_query
     def find_or_insert(cls, **kwargs) -> tuple[bool, any]:
         """
-        example:
+        Example:
+        -------
             >>> from example.app.models import User
             >>> user = User.find_or_insert(name='Ali')
         """
@@ -184,7 +196,8 @@ class Query(BaseQuery):
     @log_query
     def save(self, **kwargs) -> None:
         """
-        example:
+        Example:
+        -------
             >>> from example.app.models import User
             >>> user = User.find_one(name='Ali')
             >>> user.name = 'Saba'
