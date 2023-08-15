@@ -1,9 +1,9 @@
 from panther import status
 from panther.app import API
 from panther.configs import config
+from panther.panel.utils import validate_input
 from panther.request import Request
 from panther.response import Response
-from panther.panel.utils import validate_input
 
 
 @API()
@@ -40,10 +40,10 @@ async def documents_api(request: Request, index: int):
 
 
 @API()
-async def single_document_api(request: Request, index: int, id: int | str):
+async def single_document_api(request: Request, index: int, document_id: int | str):
     model = config['models'][index]['class']
 
-    if document := model.find_one(id=id):
+    if document := model.find_one(id=document_id):
 
         if request.method == 'PUT':
             validated_data = validate_input(model=model, data=request.pure_data)

@@ -1,19 +1,20 @@
-import os
 import sys
 import time
+from pathlib import Path
+from typing import NoReturn
 
 from panther.cli.template import Template
 from panther.cli.utils import cli_error
 
 
-def create(args: list):
+def create(args: list) -> NoReturn:
     # Get Project Name
     if len(args) == 0:
         return cli_error('Not Enough Parameters.')
     project_name = args[0]
 
     # Get Base Directory
-    base_directory = project_name
+    base_directory: str = project_name
     if len(args) > 1:
         base_directory = args[1]
 
@@ -26,13 +27,13 @@ def create(args: list):
 
     # Create Base Directory
     if base_directory != '.':
-        os.makedirs(base_directory)
+        Path(base_directory).mkdir()
 
     for file_name, data in Template.items():
         if isinstance(data, dict):
             # Create Sub Directory
             sub_directory = f'{base_directory}/{file_name}'
-            os.makedirs(sub_directory)
+            Path(sub_directory).mkdir()
 
             # Create Files of Sub Directory
             for sub_file_name, sub_data in data.items():
@@ -46,28 +47,28 @@ def create(args: list):
             file_path = f'{base_directory}/{file_name}'
             with open(file_path, 'x') as file:
                 file.write(data)
-    else:
-        print('Project Created Successfully.')
+
+    print('Project Created Successfully.')
 
 
 def check_all_directories(base_directory: str) -> str | None:
-    """return folder_name means that the directory exist."""
-    if base_directory != '.' and os.path.isdir(base_directory):
+    """Return folder_name means that the directory exist."""
+    if base_directory != '.' and Path(base_directory).is_dir():
         return base_directory
 
     for file_name, data in Template.items():
         sub_directory = f'{base_directory}/{file_name}'
-        if os.path.exists(sub_directory):
+        if Path(sub_directory).exists():
             return sub_directory
 
         if isinstance(data, dict):
-            for sub_file_name, _ in data.items():
+            for sub_file_name in data:
                 file_path = f'{sub_directory}/{sub_file_name}'
-                if os.path.exists(file_path):
+                if Path(file_path).exists():
                     return file_path
 
 
-def load_animation():
+def load_animation() -> NoReturn:
     animation = [
         '■□□□□□□□□□□',
         '■■□□□□□□□□□',

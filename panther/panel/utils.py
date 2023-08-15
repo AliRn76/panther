@@ -1,7 +1,7 @@
+from pydantic import ValidationError
+
 from panther import status
 from panther.exceptions import APIException
-
-from pydantic import ValidationError
 
 
 def validate_input(model, data: dict):

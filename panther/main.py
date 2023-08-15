@@ -1,21 +1,22 @@
-import os
 import ast
+import asyncio
+import os
 import sys
 import types
-import asyncio
 from pathlib import Path
 from runpy import run_path
+
 from pydantic._internal._model_construction import ModelMetaclass
 
 from panther import status
-from panther.request import Request
-from panther.response import Response
-from panther.exceptions import APIException
+from panther._utils import http_response, import_class, read_body
 from panther.configs import JWTConfig, config
+from panther.exceptions import APIException
 from panther.middlewares.base import BaseMiddleware
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
-from panther.routings import find_endpoint, check_and_load_urls, finalize_urls, flatten_urls, collect_path_variables
-from panther._utils import http_response, import_class, read_body
+from panther.request import Request
+from panther.response import Response
+from panther.routings import check_and_load_urls, collect_path_variables, finalize_urls, find_endpoint, flatten_urls
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
@@ -92,12 +93,12 @@ class Panther:
             if path.find('panther.middlewares.db.Middleware') != -1:
                 config['db_engine'] = data['url'].split(':')[0]
 
-            Middleware = import_class(path)  # NOQA: Py Pep8 Naming
+            Middleware = import_class(path)  # noqa: N806
             if not issubclass(Middleware, BaseMiddleware):
                 logger.critical(f'{Middleware} is not a sub class of BaseMiddleware.')
                 continue
 
-            middlewares.append(Middleware(**data))  # NOQA: Py Argument List
+            middlewares.append(Middleware(**data))  # noqa: Py Argument List
         return middlewares
 
     def _get_user_model(self) -> ModelMetaclass:
@@ -124,7 +125,7 @@ class Panther:
                 if f == 'models.py':
                     # If the file was "models.py" read it
                     file_path = f'{root}/models.py'
-                    with open(file_path, 'r') as file:
+                    with open(file_path) as file:
                         # Parse the file with ast
                         node = ast.parse(file.read())
                         for n in node.body:
@@ -136,17 +137,18 @@ class Panther:
                                     .replace('/', '.')
                                 # We don't need to import the package classes
                                 if class_path.find('site-packages') == -1:
-                                    # Import the class to check his father and brother
+                                    # Import the class to check his parents and siblings
                                     klass = import_class(f'{class_path}.models.{n.name}')
-                                    for parent in klass.__mro__:
-                                        if parent is Model:
-                                            # The class was one our database models so collect it
-                                            config['models'].append({
-                                                'name': n.name,
-                                                'path':  file_path,
-                                                'class': klass,
-                                                'app': class_path.split('.'),
-                                            })
+
+                                    config['models'] = [
+                                        {
+                                            'name': n.name,
+                                            'path': file_path,
+                                            'class': klass,
+                                            'app': class_path.split('.'),
+                                        }
+                                        for parent in klass.__mro__ if parent is Model
+                                    ]
 
     def _load_urls(self) -> dict:
         urls = check_and_load_urls(self.settings.get('URLs')) or {}
@@ -189,7 +191,7 @@ class Panther:
 
         # Find Endpoint
         endpoint, found_path = find_endpoint(path=request.path)
-        path_variables = collect_path_variables(request_path=request.path, found_path=found_path)
+        path_variables: dict = collect_path_variables(request_path=request.path, found_path=found_path)
 
         if endpoint is None:
             return await http_response(
@@ -236,7 +238,7 @@ class Panther:
 
         except APIException as e:
             response = self.handle_exceptions(e)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # Every unhandled exception in Panther or code will catch here
             logger.critical(e)
             return await http_response(
@@ -250,7 +252,7 @@ class Panther:
         for middleware in config['reversed_middlewares']:
             try:
                 response = await middleware.after(response=response)
-            except APIException as e:
+            except APIException as e:  # noqa: PERF203
                 response = self.handle_exceptions(e)
 
         await http_response(

@@ -1,24 +1,22 @@
 from datetime import timedelta
 
+from app.models import User
+from app.serializers import UserInputSerializer, UserOutputSerializer, UserUpdateSerializer
+from core.permissions import UserPermission
+
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
+from panther.db.connection import redis
 from panther.logger import logger
 from panther.request import Request
 from panther.response import Response
-from panther.db.connection import redis
 from panther.throttling import Throttling
-
-from app.serializers import UserInputSerializer, UserOutputSerializer, UserUpdateSerializer
-from app.models import User
-from core.permissions import UserPermission
 
 
 class ReturnNone(GenericAPI):
     cache = True
 
     async def get(self, request: Request):
-        import time
-        time.sleep(2)
         return {'detail': 'ok'}
 
 
@@ -120,8 +118,8 @@ class PatchUser(GenericAPI):
 @API()
 async def single_user(request: Request):
     # users = User.insert_one(username='Ali', password='1', age=12)
-    users = User.find(id="64bd711cd73aa4a30786db77")
-    print(f'{users=}')
+    # users = User.find(id="64bd711cd73aa4a30786db77")
+    # print(f'{users=}')
     # # print(f'{dir(request) = }')
     # print(f'{request.data = }')
     # # print(f'{request.query_params = }')

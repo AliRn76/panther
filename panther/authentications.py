@@ -1,11 +1,13 @@
 from abc import abstractmethod
 from datetime import datetime
+
 from jose import JWTError, jwt
-from panther.logger import logger
+
 from panther.configs import config
 from panther.db.models import BaseUser
-from panther.request import Request
 from panther.exceptions import AuthenticationException
+from panther.logger import logger
+from panther.request import Request
 
 
 class BaseAuthentication:
@@ -84,14 +86,14 @@ class JWTAuthentication(BaseAuthentication):
             return jwt.decode(
                 token=token,
                 key=config['jwt_config'].key,
-                algorithms=[config['jwt_config'].algorithm]
+                algorithms=[config['jwt_config'].algorithm],
             )
         except JWTError as e:
             raise cls.exception(e)
 
     @classmethod
     def login(cls, user_id: int) -> str:
-        """alias of encode_jwt()"""
+        """Alias of encode_jwt()"""
         return cls.encode_jwt(user_id=user_id)
 
     @staticmethod

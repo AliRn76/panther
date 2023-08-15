@@ -1,8 +1,8 @@
 from time import perf_counter
 
-from panther.request import Request
 from panther.logger import monitoring_logger
 from panther.middlewares.base import BaseMiddleware
+from panther.request import Request
 
 
 class Middleware(BaseMiddleware):

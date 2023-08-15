@@ -4,10 +4,10 @@ import sys
 from rich import print as rprint
 
 from panther import version as panther_version
-from panther.cli.run_command import run
 from panther.cli.create_command import create
 from panther.cli.monitor_command import monitor
-from panther.cli.utils import clean_args, help_message, cli_error
+from panther.cli.run_command import run
+from panther.cli.utils import clean_args, cli_error, help_message
 
 
 def shell() -> None:

@@ -13,8 +13,8 @@ class Middleware(BaseMiddleware):
         self.validate_port()
 
     def validate_host(self):
-        if host := self.kwargs.get('host'):
-            if False:  # TODO: should be valid ip or domain
+        if host := self.kwargs.get('host'):  # noqa: F841
+            if False:  # TODO: should be valid ip or domain (then remove the 'noqa')
                 logger.critical('Redis "host" is not valid.')
         else:
             self.kwargs['host'] = '127.0.0.1'

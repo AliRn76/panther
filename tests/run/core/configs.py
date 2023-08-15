@@ -7,5 +7,5 @@ def api():
 
 
 urls = {
-    '/': api
+    '/': api,
 }

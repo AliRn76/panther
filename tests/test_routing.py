@@ -1,7 +1,7 @@
 import random
 from unittest import TestCase
 
-from panther.routings import flatten_urls, finalize_urls, find_endpoint, collect_path_variables
+from panther.routings import collect_path_variables, finalize_urls, find_endpoint, flatten_urls
 
 
 class TestRoutingFunctions(TestCase):
@@ -31,7 +31,7 @@ class TestRoutingFunctions(TestCase):
 
         self.assertDictEqual(collected_urls, {})
 
-    def test_collect_None_urls(self):
+    def test_collect_None_urls(self):  # noqa: N802
         urls = {
             'user/': {
                 '<user_id>/': None,
@@ -109,7 +109,7 @@ class TestRoutingFunctions(TestCase):
             'list/': temp_func,
             'nested/<user_id>/': temp_func,
             'nested/profile/': temp_func,
-            'nested/list/': temp_func
+            'nested/list/': temp_func,
         }
         self.assertEqual(collected_urls, expected_result)
 
@@ -151,7 +151,7 @@ class TestRoutingFunctions(TestCase):
             '/list/': temp_func,
             '//nested/<user_id>/': temp_func,
             '//nested/profile/': temp_func,
-            '//nested/list/': temp_func
+            '//nested/list/': temp_func,
         }
         self.assertEqual(collected_urls, expected_result)
 
@@ -169,7 +169,7 @@ class TestRoutingFunctions(TestCase):
         expected_result = {
             '<user_id>/': temp_func,
             'profile/': temp_func,
-            'list/': temp_func
+            'list/': temp_func,
         }
         self.assertEqual(collected_urls, expected_result)
 
@@ -181,7 +181,7 @@ class TestRoutingFunctions(TestCase):
                 '<user_id>/': temp_func,
                 'profile/': temp_func,
                 'list/': temp_func,
-            }
+            },
         }
 
         collected_urls = flatten_urls(urls)
@@ -189,7 +189,7 @@ class TestRoutingFunctions(TestCase):
         expected_result = {
             'user/<user_id>/': temp_func,
             'user/profile/': temp_func,
-            'user/list/': temp_func
+            'user/list/': temp_func,
         }
         self.assertEqual(collected_urls, expected_result)
 
@@ -201,7 +201,7 @@ class TestRoutingFunctions(TestCase):
                 '<user_id>': temp_func,
                 'profile': temp_func,
                 'list': temp_func,
-            }
+            },
         }
 
         collected_urls = flatten_urls(urls)
@@ -209,7 +209,7 @@ class TestRoutingFunctions(TestCase):
         expected_result = {
             'user/<user_id>/': temp_func,
             'user/profile/': temp_func,
-            'user/list/': temp_func
+            'user/list/': temp_func,
         }
         self.assertEqual(collected_urls, expected_result)
 
@@ -238,11 +238,11 @@ class TestRoutingFunctions(TestCase):
                         'registered': temp_func,
                         'not-registered': temp_func,
                     },
-                }
+                },
             },
             'admin/v2': {
 
-            }
+            },
         }
 
         collected_urls = flatten_urls(urls)
@@ -257,7 +257,7 @@ class TestRoutingFunctions(TestCase):
             'admin/v1/users/list/registered/': temp_func,
             'admin/v1/users/list/not-registered/': temp_func,
             'admin/v1/users/detail/registered/': temp_func,
-            'admin/v1/users/detail/not-registered/': temp_func
+            'admin/v1/users/detail/not-registered/': temp_func,
         }
         self.assertEqual(collected_urls, expected_result)
 
@@ -300,11 +300,11 @@ class TestRoutingFunctions(TestCase):
             'nested': {
                 '<user_id>': temp_func,
                 'profile': temp_func,
-                'list': temp_func
+                'list': temp_func,
             },
             '<user_id>': temp_func,
             'profile': temp_func,
-            'list': temp_func
+            'list': temp_func,
         }
         self.assertEqual(finalized_urls, expected_result)
 
@@ -346,11 +346,11 @@ class TestRoutingFunctions(TestCase):
             'nested': {
                 '<user_id>': temp_func,
                 'profile': temp_func,
-                'list': temp_func
+                'list': temp_func,
             },
             '<user_id>': temp_func,
             'profile': temp_func,
-            'list': temp_func
+            'list': temp_func,
         }
         self.assertEqual(finalized_urls, expected_result)
 
@@ -377,11 +377,11 @@ class TestRoutingFunctions(TestCase):
             'nested': {
                 '<user_id>': temp_func,
                 'profile': temp_func,
-                'list': temp_func
+                'list': temp_func,
             },
             '': temp_func,
             'profile': temp_func,
-            'list': temp_func
+            'list': temp_func,
         }
         self.assertEqual(finalized_urls, expected_result)
 
@@ -408,7 +408,7 @@ class TestRoutingFunctions(TestCase):
             'nested': {
                 '<user_id>': temp_func,
                 'profile': temp_func,
-                'list': temp_func
+                'list': temp_func,
             },
             '': temp_func,
             'profile': temp_func,
@@ -441,11 +441,11 @@ class TestRoutingFunctions(TestCase):
                         'registered': temp_func,
                         'not-registered': temp_func,
                     },
-                }
+                },
             },
             'admin/v2': {
 
-            }
+            },
         }
 
         collected_urls = flatten_urls(urls)
@@ -455,32 +455,32 @@ class TestRoutingFunctions(TestCase):
             'user': {
                 '<user_id>': {
                     'profile': {
-                        '<id>': temp_func
-                    }
+                        '<id>': temp_func,
+                    },
                 },
                 'profile': temp_func,
-                'list': temp_func
+                'list': temp_func,
             },
             'payments': temp_func,
             'notifications': temp_func,
             'admin': {
                 'v1': {
                     'profile': {
-                        'avatar': temp_func
+                        'avatar': temp_func,
                     },
                     '<user_id>': temp_func,
                     'users': {
                         'list': {
                             'registered': temp_func,
-                            'not-registered': temp_func
+                            'not-registered': temp_func,
                         },
                         'detail': {
                             'registered': temp_func,
-                            'not-registered': temp_func
-                        }
-                    }
-                }
-            }
+                            'not-registered': temp_func,
+                        },
+                    },
+                },
+            },
         }
         self.assertEqual(finalized_urls, expected_result)
 
@@ -499,8 +499,8 @@ class TestRoutingFunctions(TestCase):
             '': temp_func,
             '<index>': {
                 '': temp_func,
-                '<id>': temp_func
-            }
+                '<id>': temp_func,
+            },
         }
         self.assertEqual(finalized_urls, expected_result)
 
@@ -511,7 +511,7 @@ class TestRoutingFunctions(TestCase):
         from panther.configs import config
 
         config['urls'] = {
-            '': temp_func
+            '': temp_func,
         }
         _func, _ = find_endpoint('')
 
@@ -540,32 +540,32 @@ class TestRoutingFunctions(TestCase):
             'user': {
                 '<user_id>': {
                     'profile': {
-                        '<id>': user_id_profile_id
-                    }
+                        '<id>': user_id_profile_id,
+                    },
                 },
                 'profile': user_profile,
-                'list': ...
+                'list': ...,
             },
             'payments': payment,
             'notifications': ...,
             'admin': {
                 'v1': {
                     'profile': {
-                        'avatar': admin_v1_profile_avatar
+                        'avatar': admin_v1_profile_avatar,
                     },
                     '<user_id>': admin_v1_id,
                     'users': {
                         'list': {
                             'registered': admin_v2_users_list_registered,
-                            'not-registered': ...
+                            'not-registered': ...,
                         },
                         'detail': {
                             'registered': ...,
-                            'not-registered': admin_v2_users_detail_not_registered
-                        }
-                    }
-                }
-            }
+                            'not-registered': admin_v2_users_detail_not_registered,
+                        },
+                    },
+                },
+            },
         }
         user_id_profile_id_func, _ = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
         user_profile_func, _ = find_endpoint('user/profile/')
@@ -605,32 +605,32 @@ class TestRoutingFunctions(TestCase):
             'user': {
                 '<user_id>': {
                     'profile': {
-                        '<id>': user_id_profile_id
-                    }
+                        '<id>': user_id_profile_id,
+                    },
                 },
                 'profile': user_profile,
-                'list': ...
+                'list': ...,
             },
             'payments': payment,
             'notifications': ...,
             'admin': {
                 'v1': {
                     'profile': {
-                        'avatar': admin_v1_profile_avatar
+                        'avatar': admin_v1_profile_avatar,
                     },
                     '<user_id>': admin_v1_id,
                     'users': {
                         'list': {
                             'registered': admin_v2_users_list_registered,
-                            'not-registered': ...
+                            'not-registered': ...,
                         },
                         'detail': {
                             'registered': ...,
-                            'not-registered': admin_v2_users_detail_not_registered
-                        }
-                    }
-                }
-            }
+                            'not-registered': admin_v2_users_detail_not_registered,
+                        },
+                    },
+                },
+            },
         }
         _, user_id_profile_id_path = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
         _, user_profile_path = find_endpoint('user/profile/')
@@ -640,7 +640,7 @@ class TestRoutingFunctions(TestCase):
         _, admin_v2_users_list_registered_path = find_endpoint('admin/v1/users/list/registered/')
         _, admin_v2_users_detail_not_registered_path = find_endpoint('admin/v1/users/detail/not-registered')
 
-        self.assertEqual(user_id_profile_id_path, f'user/<user_id>/profile/<id>/')
+        self.assertEqual(user_id_profile_id_path, 'user/<user_id>/profile/<id>/')
         self.assertEqual(user_profile_path, 'user/profile/')
         self.assertEqual(payment_path, 'payments/')
         self.assertEqual(admin_v1_profile_avatar_path, 'admin/v1/profile/avatar/')
@@ -656,8 +656,8 @@ class TestRoutingFunctions(TestCase):
 
         config['urls'] = {
             'user': {
-                'list': temp_func
-            }
+                'list': temp_func,
+            },
         }
         user_id_profile_id_func, _ = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
         user_profile_func, _ = find_endpoint('user/profile/')
@@ -683,8 +683,8 @@ class TestRoutingFunctions(TestCase):
 
         config['urls'] = {
             'user': {
-                'list': temp_func
-            }
+                'list': temp_func,
+            },
         }
         _, user_id_profile_id_path = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
         _, user_profile_path = find_endpoint('user/profile/')
@@ -716,7 +716,7 @@ class TestRoutingFunctions(TestCase):
             '': temp_1,
             '<index>': {
                 '': temp_2,
-                '<id>': temp_3
+                '<id>': temp_3,
             },
         }
         temp_1_func, _ = find_endpoint('')
@@ -742,7 +742,7 @@ class TestRoutingFunctions(TestCase):
             '': temp_1,
             '<index>': {
                 '': temp_2,
-                '<id>': temp_3
+                '<id>': temp_3,
             },
         }
         _, temp_1_path = find_endpoint('')
@@ -768,12 +768,12 @@ class TestRoutingFunctions(TestCase):
             '': temp_1,
             'hello': {
                 '': temp_2,
-                '<id>': temp_3
+                '<id>': temp_3,
             },
         }
         temp_1_func, _ = find_endpoint('')
 
-        temp_2_func, _ = find_endpoint(f'hello')
+        temp_2_func, _ = find_endpoint('hello')
         temp_3_func, _ = find_endpoint(f'hello/{random.randint(2, 100)}')
 
         self.assertEqual(temp_1_func, temp_1)
@@ -795,12 +795,12 @@ class TestRoutingFunctions(TestCase):
             '': temp_1,
             'hello': {
                 '': temp_2,
-                '<id>': temp_3
+                '<id>': temp_3,
             },
         }
         _, temp_1_path = find_endpoint('')
 
-        _, temp_2_path = find_endpoint(f'hello')
+        _, temp_2_path = find_endpoint('hello')
         _, temp_3_path = find_endpoint(f'hello/{random.randint(2, 100)}')
 
         self.assertEqual(temp_1_path, '/')
@@ -819,10 +819,10 @@ class TestRoutingFunctions(TestCase):
             'user': {
                 '<user_id>': {
                     'profile': {
-                        '<id>': temp_func
-                    }
+                        '<id>': temp_func,
+                    },
                 },
-            }
+            },
         }
 
         _user_id = random.randint(0, 100)

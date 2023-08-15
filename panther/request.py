@@ -1,7 +1,8 @@
-import orjson as json
-from typing import Literal
-from dataclasses import dataclass
 from collections import namedtuple
+from dataclasses import dataclass
+from typing import Literal
+
+import orjson as json
 
 from panther._utils import read_multipart_form_data
 
@@ -98,7 +99,7 @@ class Request:
 
     @property
     def pure_data(self) -> dict:
-        """This is the data before validation"""
+        """Data before validation"""
         from panther.logger import logger
 
         if self._data is None:
@@ -118,8 +119,9 @@ class Request:
 
     @property
     def data(self):
-        """Return The Validated Data
-        It has been set on API.validate_input() while request is happening
+        """
+        Return The Validated Data
+        It has been set on API.validate_input() while request is happening.
         """
         return self._validated_data
 

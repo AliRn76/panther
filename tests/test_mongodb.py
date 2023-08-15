@@ -1,13 +1,14 @@
-import bson
-import faker
 import random
 from unittest import TestCase
-from pydantic import field_validator, Field, BaseModel as PydanticBaseModel
+
+import bson
+import faker
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field, field_validator
 
 from panther.configs import config
 from panther.db.connection import DBSession
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
-
 
 f = faker.Faker()
 
@@ -20,10 +21,10 @@ class Model(PydanticBaseModel):
         if isinstance(value, str):
             try:
                 bson.ObjectId(value)
-            except Exception:
+            except bson.objectid.InvalidId:
                 raise ValueError('Invalid ObjectId')
         elif not isinstance(value, bson.ObjectId):
-            raise ValueError('ObjectId required')
+            raise TypeError('ObjectId required')
         return str(value)
 
     @property
@@ -41,7 +42,7 @@ class TestPantherDB(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         config['db_engine'] = 'mongodb'
-        cls.db = DBSession(db_url=f'mongodb://127.0.0.1:27017/test')
+        cls.db = DBSession(db_url='mongodb://127.0.0.1:27017/test')
 
     @classmethod
     def tearDownClass(cls) -> None:

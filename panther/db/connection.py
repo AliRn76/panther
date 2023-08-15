@@ -1,11 +1,17 @@
-from redis import Redis
+from typing import TYPE_CHECKING, ClassVar
+
 from pantherdb import PantherDB
-from panther.configs import config
+from redis import Redis
+
 from panther.cli.utils import import_error_message
+from panther.configs import config
+
+if TYPE_CHECKING:
+    from pymongo.database import Database
 
 
 class Singleton(object):
-    _instances = {}
+    _instances: ClassVar = {}
 
     def __new__(cls, *args, **kwargs):
         if cls not in cls._instances:
@@ -41,7 +47,6 @@ class DBSession(Singleton):
     def _create_mongodb_session(self, db_url: str) -> None:
         try:
             from pymongo import MongoClient
-            from pymongo.database import Database
         except ImportError:
             raise ImportError(import_error_message('pymongo'))
 
