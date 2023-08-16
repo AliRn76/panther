@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 from unittest import TestCase
@@ -6,6 +7,15 @@ from panther import Panther
 
 
 class TestRun(TestCase):
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        os.chdir('tests/run')
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.chdir('../..')
+
     def test_init(self):
         app = Panther(__name__)
         self.assertIsInstance(app, Panther)
@@ -67,8 +77,10 @@ class TestRun(TestCase):
         urls = {
             '_panel': {
                 '': models_api,
-                '<index>/': documents_api,
-                '<index>/<document_id>/': single_document_api,
+                '<index>': {
+                    '': documents_api,
+                    '<document_id>': single_document_api,
+                },
             },
         }
         self.assertEqual(config['urls'], urls)
