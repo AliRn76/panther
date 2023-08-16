@@ -1,5 +1,6 @@
 import importlib
 import re
+from traceback import TracebackException
 
 import orjson as json
 
@@ -110,3 +111,12 @@ def is_function_async(func) -> bool:
         async result is 128 --> True
     """
     return bool(func.__code__.co_flags & (1 << 7))
+
+
+def clean_traceback_message(exception) -> str:
+    tb = TracebackException(type(exception), exception, exception.__traceback__)
+    stack = tb.stack.copy()
+    for t in stack:
+        if t.filename.find('site-packages') != -1:
+            tb.stack.remove(t)
+    return f'{exception}\n' + ''.join(tb.format())

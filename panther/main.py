@@ -10,7 +10,7 @@ from runpy import run_path
 from pydantic._internal._model_construction import ModelMetaclass
 
 from panther import status
-from panther._utils import http_response, import_class, read_body
+from panther._utils import clean_traceback_message, http_response, import_class, read_body
 from panther.configs import JWTConfig, config
 from panther.exceptions import APIException
 from panther.middlewares.base import BaseMiddleware
@@ -243,7 +243,8 @@ class Panther:
             response = self.handle_exceptions(e)
         except Exception as e:  # noqa: BLE001
             # Every unhandled exception in Panther or code will catch here
-            logger.critical(e)
+            exception = clean_traceback_message(exception=e)
+            logger.critical(exception)
             return await http_response(
                 send,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
