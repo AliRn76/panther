@@ -1,3 +1,8 @@
+### 2.1.2
+- Add ruff.toml
+- Add Coverage to workflows
+- Fix a bug for running in Windows
+
 ### 2.1.1
 - Fix a bug in main.py imports
 

@@ -1,6 +1,7 @@
 import ast
 import asyncio
 import os
+import platform
 import sys
 import types
 from pathlib import Path
@@ -123,18 +124,20 @@ class Panther:
             for f in files:
                 # Traverse through each file of directory
                 if f == 'models.py':
+                    slash = r'\\' if platform.system() == 'Windows' else '/'
+
                     # If the file was "models.py" read it
-                    file_path = f'{root}/models.py'
+                    file_path = f'{root}{slash}models.py'
                     with open(file_path) as file:
                         # Parse the file with ast
                         node = ast.parse(file.read())
                         for n in node.body:
                             # Find classes in each element of files' body
                             if type(n) is ast.ClassDef and n.bases:
-                                class_path = file_path\
-                                    .removesuffix('/models.py')\
-                                    .removeprefix(f'{config["base_dir"]}/')\
-                                    .replace('/', '.')
+                                class_path = file_path \
+                                    .removesuffix(f'{slash}models.py') \
+                                    .removeprefix(f'{config["base_dir"]}{slash}') \
+                                    .replace(slash, '.')
                                 # We don't need to import the package classes
                                 if class_path.find('site-packages') == -1:
                                     # Import the class to check his parents and siblings
