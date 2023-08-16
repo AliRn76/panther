@@ -25,21 +25,32 @@ class TestRun(TestCase):
         with self.assertLogs(level='DEBUG') as captured:
             Panther(__name__)
 
-            self.assertEqual(len(captured.records), 2)
-            self.assertEqual(captured.records[0].getMessage(), f'Base directory: {base_dir}')
-            self.assertEqual(captured.records[1].getMessage(), 'Configs loaded.')
+            if sys.version_info.minor < 11:
+                self.assertEqual(len(captured.records), 3)
+                self.assertEqual(captured.records[0].getMessage(), f'Use Python Version 3.11+ For Better Performance.')
+                self.assertEqual(captured.records[1].getMessage(), f'Base directory: {base_dir}')
+                self.assertEqual(captured.records[2].getMessage(), 'Configs loaded.')
+            else:
+                self.assertEqual(len(captured.records), 2)
+                self.assertEqual(captured.records[0].getMessage(), f'Base directory: {base_dir}')
+                self.assertEqual(captured.records[1].getMessage(), 'Configs loaded.')
 
-        with self.assertNoLogs(level='INFO'):
-            Panther(__name__)
+        if sys.version_info.minor < 11:
+            with self.assertLogs(level='INFO') as captured:
+                Panther(__name__)
+                self.assertEqual(len(captured.records), 1)
+                self.assertEqual(captured.records[0].getMessage(), f'Use Python Version 3.11+ For Better Performance.')
+        else:
+            with self.assertNoLogs(level='INFO'):
+                Panther(__name__)
 
         if sys.version_info.minor < 11:
             with self.assertLogs(level='WARNING') as captured:
                 Panther(__name__)
                 self.assertEqual(len(captured.records), 1)
                 self.assertEqual(captured.records[0].getMessage(), 'Use Python Version 3.11+ For Better Performance.')
-
         else:
-            with self.assertNoLogs(level='WARNING'):
+            with self.assertNoLogs(level='INFO'):
                 Panther(__name__)
 
         with self.assertNoLogs(level='ERROR'):
