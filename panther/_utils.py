@@ -114,9 +114,12 @@ def is_function_async(func) -> bool:
 
 
 def clean_traceback_message(exception) -> str:
+    """
+    We are ignoring packages traceback message
+    """
     tb = TracebackException(type(exception), exception, exception.__traceback__)
     stack = tb.stack.copy()
     for t in stack:
         if t.filename.find('site-packages') != -1:
             tb.stack.remove(t)
-    return f'{exception}\n' + ''.join(tb.format())
+    return f'{exception}\n' + '\n'.join(tb.format(chain=False))
