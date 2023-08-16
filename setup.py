@@ -14,7 +14,7 @@ with open('README.md') as file:
 
 EXTRAS_REQUIRE = {
     'full': [
-        'pymongo>=4.3.3',
+        'pymongo~=4.4',
     ],
 }
 
@@ -46,13 +46,13 @@ setup(
     install_requires=[
         'bpython~=0.24',
         'bson~=0.5',
-        'httptools~=0.5',
+        'httptools~=0.6',
         'pantherdb~=1.2',
-        'pydantic~=2.0',
-        'redis~=4.5',
-        'rich~=13.3',
-        'uvicorn~=0.21',
-        'watchfiles~=0.18',
+        'pydantic~=2.1',
+        'redis~=5.0',
+        'rich~=13.5',
+        'uvicorn~=0.23',
+        'watchfiles~=0.19',
         'python-jose~=3.3',
     ],
     extras_require=EXTRAS_REQUIRE,
