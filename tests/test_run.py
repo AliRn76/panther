@@ -27,7 +27,7 @@ class TestRun(TestCase):
 
             if sys.version_info.minor < 11:
                 self.assertEqual(len(captured.records), 3)
-                self.assertEqual(captured.records[0].getMessage(), f'Use Python Version 3.11+ For Better Performance.')
+                self.assertEqual(captured.records[0].getMessage(), 'Use Python Version 3.11+ For Better Performance.')
                 self.assertEqual(captured.records[1].getMessage(), f'Base directory: {base_dir}')
                 self.assertEqual(captured.records[2].getMessage(), 'Configs loaded.')
             else:
@@ -39,7 +39,7 @@ class TestRun(TestCase):
             with self.assertLogs(level='INFO') as captured:
                 Panther(__name__)
                 self.assertEqual(len(captured.records), 1)
-                self.assertEqual(captured.records[0].getMessage(), f'Use Python Version 3.11+ For Better Performance.')
+                self.assertEqual(captured.records[0].getMessage(), 'Use Python Version 3.11+ For Better Performance.')
         else:
             with self.assertNoLogs(level='INFO'):
                 Panther(__name__)
