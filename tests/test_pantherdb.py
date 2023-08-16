@@ -39,6 +39,10 @@ class TestPantherDB(TestCase):
     def setUp(self) -> None:
         DBSession(db_url='pantherdb://database.pdb')
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        config['db_engine'] = ''
+
     def tearDown(self) -> None:
         Path('database.pdb').unlink()
 
