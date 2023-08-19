@@ -59,7 +59,7 @@ urls = {
 ### Add Database Middleware
 
 Add one database middleware in `core/configs.py` `MIDDLEWARES`, we are going to add `pantherdb`
-> [PantherDB](https://github.com/AliRn76/PantherDB/#readme) is a Simple, FileBase and Document Oriented database:
+> [PantherDB](https://github.com/PantherPy/PantherDB/#readme) is a Simple, FileBase and Document Oriented database:
 
 ```python
 ...
