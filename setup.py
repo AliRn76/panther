@@ -54,6 +54,7 @@ setup(
         'uvicorn~=0.23',
         'watchfiles~=0.19',
         'python-jose~=3.3',
+        'greenlet~=3.0.0a1',
     ],
     extras_require=EXTRAS_REQUIRE,
 )

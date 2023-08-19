@@ -1,3 +1,6 @@
+### 2.1.3
+- Upgrade greenlet version in requirements for python3.12
+
 ### 2.1.2
 - Add ruff.toml
 - Add Coverage to workflows
