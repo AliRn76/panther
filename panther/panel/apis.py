@@ -1,7 +1,7 @@
 from panther import status
 from panther.app import API
 from panther.configs import config
-from panther.panel.utils import validate_input
+from panther.panel.utils import validate_input, get_model_fields
 from panther.request import Request
 from panther.response import Response
 
@@ -30,7 +30,7 @@ async def documents_api(request: Request, index: int):
 
     else:
         result = {
-            'fields': {k: getattr(v.annotation, '__name__', str(v.annotation)) for k, v in model.model_fields.items()},
+            'fields': get_model_fields(model)
         }
         if data := model.find():
             result['data'] = data
