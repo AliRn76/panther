@@ -62,7 +62,7 @@ class API:
 
             # 4. Validate Input
             if self.request.method in ['POST', 'PUT', 'PATCH']:
-                self.validate_input()
+                self.set_validated_input()
 
             # 5. Validate Path Variables
             self.validate_path_variables(func, path_variables)
@@ -127,16 +127,20 @@ class API:
             if perm.authorization(request=self.request) is False:
                 raise AuthorizationException
 
-    def validate_input(self):
+    def set_validated_input(self):
         if self.input_model:
-            try:
-                validated_data = self.input_model(**self.request.pure_data)
-                self.request.set_validated_data(validated_data)
-            except ValidationError as validation_error:
-                error = {e['loc'][0]: e['msg'] for e in validation_error.errors()}
-                raise APIException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
-            except JSONDecodeError:
-                raise JsonDecodeException
+            validated_data = self.validate_input(model=self.input_model, request=self.request)
+            self.request.set_validated_data(validated_data)
+
+    @classmethod
+    def validate_input(cls, model, request: Request):
+        try:
+            return model(**request.pure_data)
+        except ValidationError as validation_error:
+            error = {'.'.join(loc for loc in e['loc']): e['msg'] for e in validation_error.errors()}
+            raise APIException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+        except JSONDecodeError:
+            raise JsonDecodeException
 
     def serialize_response_data(self, data):
         """

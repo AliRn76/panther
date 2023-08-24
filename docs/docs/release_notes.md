@@ -1,3 +1,6 @@
+### 2.1.6
+- Fix validation errors on nested inputs
+
 ### 2.1.5
 - Fix response of nested Models in _panel/<index>/
 
