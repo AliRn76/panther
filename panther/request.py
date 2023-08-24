@@ -39,7 +39,7 @@ class Request:
         'method': 'GET', 'path': '/list/', 'raw_path': b'/list/', 'query_string': b''}.
         """
         self.scope = scope
-        self._body = body
+        self.__body = body
         self._data = None
         self._validated_data = None
         self._user = None
@@ -104,7 +104,7 @@ class Request:
 
         if self._data is None:
 
-            body = self._body.decode('utf-8', errors='replace') or {}
+            body = self.__body.decode('utf-8', errors='replace') or {}
             if self.headers.content_type is None:
                 self._data = body
             elif self.headers.content_type == 'application/json':

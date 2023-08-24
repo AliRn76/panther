@@ -5,6 +5,7 @@ from traceback import TracebackException
 import orjson as json
 
 from panther import status
+from panther.file_handler import File
 from panther.logger import logger
 
 
@@ -96,12 +97,12 @@ def read_multipart_form_data(content_type: str, body: str) -> dict:
             # TODO: It works but it is not profitable, So comment it for later
             #   We should handle it while we are reading the body in _utils.read_body()
             _, field_name, _, file_name, _, content_type, _, value, _ = match.groups()
-            data = {
-                'filename': file_name,
-                'Content-Type': content_type,
-                'value': value
-            }
-            fields[field_name] = data
+            file = File(
+                file_name=file_name,
+                content_type=content_type,
+                file=value,
+            )
+            fields[field_name] = file
             logger.error("We Don't Handle Files In Multipart Request Yet.")
     return fields
 
