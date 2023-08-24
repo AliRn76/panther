@@ -194,8 +194,8 @@
     - &#x2705; Handle Simple Form-Data
     - &#x2705; Handle Throttling
     - &#x2705; Handle ClassBase APIs
-    - &#9744; Handle Complex Form-Data
-    - &#9744; Handle File 
+    - &#x2705; Handle File 
+    - &#9744; Handle Huge Files
     - &#9744; Handle Cookie
     - &#9744; Handle WS 
     - &#9744; Handle GraphQL

@@ -1,3 +1,6 @@
+### 2.2.0
+- Supporting File 
+
 ### 2.1.6
 - Fix validation errors on nested inputs
 

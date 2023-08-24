@@ -4,6 +4,7 @@ from app.models import User
 from app.serializers import UserInputSerializer, UserOutputSerializer, UserUpdateSerializer
 from core.permissions import UserPermission
 
+from app.serializers import FileSerializer
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
 from panther.db.connection import redis
@@ -175,3 +176,13 @@ async def single_user(request: Request):
 def create_user(request, body):
     return {'detail': 'ok'}
 
+
+class FileAPI(GenericAPI):
+    input_model = FileSerializer
+
+    def post(self, request: Request, *args, **kwargs):
+        body: FileSerializer = request.data
+        with open(body.image.file_name, 'w') as file:
+            print(f'{body.image.file_name=}')
+            file.write(body.image.file)
+        return {'detail': 'ok'}
