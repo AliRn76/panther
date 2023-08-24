@@ -28,5 +28,6 @@ urls = {
     'test/': test,
     'patch-user/': patch_user,
     'patch-user-class/': PatchUser,
+    'file-class/': FileAPI,
     '': single_user,
 }
