@@ -25,6 +25,7 @@ async def _http_response_start(send, /, status_code: int):
         'status': status_code,
         'headers': [
             [b'content-type', b'application/json'],
+            [b'access-control-allow-origin', b'*'],
         ],
     })
 
