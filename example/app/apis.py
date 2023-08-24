@@ -175,3 +175,10 @@ async def single_user(request: Request):
 def create_user(request, body):
     return {'detail': 'ok'}
 
+
+class FileAPI(GenericAPI):
+
+    def post(self, request: Request, *args, **kwargs):
+        print(request.pure_data)
+        print(request.data)
+        return {'detail': 'ok'}

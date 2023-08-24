@@ -76,14 +76,15 @@ def read_multipart_form_data(content_type: str, body: str) -> dict:
     """
     boundary = content_type[30:]
 
-    pre_pattern = r'(.*\r\nContent-Disposition: form-data; name=")(.*)"'  # (Junk)(FieldName)"
-    value_pattern = r'(\r\n\r\n)(.*)'  # (Junk)(Value)
+    pre_pattern = r'(.*\r\nContent-Disposition: form-data; name=")(.*)'  # (Junk)(FieldName)
+    field_value_pattern = r'"(\r\n\r\n)(.*)'  # (Junk)(Value)
+    file_value_pattern = r'(\r\n\r\n)(.*)(\n\r\n--)'  # (Junk)(Value)(Junk)
 
-    # (Junk)(FieldName) (Junk)(Value)(Junk)
-    field_pattern = pre_pattern + value_pattern + r'(\r\n.*)'
+    # (Junk)(FieldName) + (Junk)(Value)(Junk) + (Junk)
+    field_pattern = pre_pattern + field_value_pattern + r'(\r\n.*)'
 
-    # (Junk)(FieldName) (Junk)(FileName)(Junk)(ContentType) (Junk)(Value)
-    file_pattern = pre_pattern + r'("; filename=")(.*)("\r\nContent-Type: )(.*)' + value_pattern
+    # (Junk)(FieldName) + (Junk)(FileName)(Junk)(ContentType) + (Junk)(Value)
+    file_pattern = pre_pattern + r'("; filename=")(.*)("\r\nContent-Type: )(.*)' + file_value_pattern
 
     fields = dict()
     for field in body.split(boundary):
@@ -91,17 +92,16 @@ def read_multipart_form_data(content_type: str, body: str) -> dict:
             _, field_name, _, value, _ = match.groups()
             fields[field_name] = value
 
-        if match := re.match(pattern=file_pattern, string=field):
+        if match := re.match(pattern=file_pattern, string=field, flags=re.DOTALL):
             # TODO: It works but it is not profitable, So comment it for later
             #   We should handle it while we are reading the body in _utils.read_body()
-
-            # _, field_name, _, file_name, _, content_type, _, value = match.groups()
-            # data = {
-            #     'filename': file_name,
-            #     'Content-Type': content_type,
-            #     'value': value
-            # }
-            # fields[field_name] = data
+            _, field_name, _, file_name, _, content_type, _, value, _ = match.groups()
+            data = {
+                'filename': file_name,
+                'Content-Type': content_type,
+                'value': value
+            }
+            fields[field_name] = data
             logger.error("We Don't Handle Files In Multipart Request Yet.")
     return fields
 
