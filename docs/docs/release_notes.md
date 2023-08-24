@@ -1,4 +1,7 @@
-### 2.1.3
+### 2.1.5
+- Fix response of nested Models in _panel/<index>/
+
+### 2.1.4
 - Add access-control-allow-origin to response header
 
 ### 2.1.3
