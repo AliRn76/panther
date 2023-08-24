@@ -123,4 +123,4 @@ def clean_traceback_message(exception) -> str:
     for t in stack:
         if t.filename.find('site-packages') != -1:
             tb.stack.remove(t)
-    return f'{exception}\n' + '\n'.join(tb.format(chain=False))
+    return f'{exception}\n' + ''.join(tb.format(chain=False))

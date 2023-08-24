@@ -208,12 +208,12 @@ class Panther:
 
             # Function
             if isinstance(endpoint, types.FunctionType):
-                # User Didn't Use @API Decorator
+                # Function Doesn't Have @API Decorator
                 if not hasattr(endpoint, '__wrapped__'):
                     logger.critical(f'You may have forgotten to use @API on the {endpoint.__name__}()')
                     return await http_response(
                         send,
-                        status_code=status.HTTP_510_NOT_EXTENDED,
+                        status_code=status.HTTP_501_NOT_IMPLEMENTED,
                         monitoring=monitoring_middleware,
                         exception=True,
                     )
@@ -229,7 +229,7 @@ class Panther:
                     logger.critical(f'You may have forgotten to inherit from GenericAPI on the {endpoint.__name__}()')
                     return await http_response(
                         send,
-                        status_code=status.HTTP_510_NOT_EXTENDED,
+                        status_code=status.HTTP_501_NOT_IMPLEMENTED,
                         monitoring=monitoring_middleware,
                         exception=True,
                     )
