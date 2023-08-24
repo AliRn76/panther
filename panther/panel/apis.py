@@ -1,7 +1,7 @@
 from panther import status
 from panther.app import API
 from panther.configs import config
-from panther.panel.utils import validate_input, get_model_fields
+from panther.panel.utils import get_model_fields
 from panther.request import Request
 from panther.response import Response
 
@@ -24,7 +24,7 @@ async def documents_api(request: Request, index: int):
     model = config['models'][index]['class']
 
     if request.method == 'POST':
-        validated_data = validate_input(model=model, data=request.pure_data)
+        validated_data = API.validate_input(model=model, request=request)
         document = model.insert_one(**validated_data.model_dump(exclude=['id']))
         return Response(data=document, status_code=status.HTTP_201_CREATED)
 
@@ -46,7 +46,7 @@ async def single_document_api(request: Request, index: int, document_id: int | s
     if document := model.find_one(id=document_id):
 
         if request.method == 'PUT':
-            validated_data = validate_input(model=model, data=request.pure_data)
+            validated_data = API.validate_input(model=model, request=request)
             document.update(**validated_data.model_dump(exclude=['id']))
             return Response(data=document, status_code=status.HTTP_202_ACCEPTED)
 
