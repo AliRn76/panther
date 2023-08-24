@@ -94,8 +94,6 @@ def read_multipart_form_data(content_type: str, body: str) -> dict:
             fields[field_name] = value
 
         if match := re.match(pattern=file_pattern, string=field, flags=re.DOTALL):
-            # TODO: It works but it is not profitable, So comment it for later
-            #   We should handle it while we are reading the body in _utils.read_body()
             _, field_name, _, file_name, _, content_type, _, value, _ = match.groups()
             file = File(
                 file_name=file_name,
@@ -103,7 +101,7 @@ def read_multipart_form_data(content_type: str, body: str) -> dict:
                 file=value,
             )
             fields[field_name] = file
-            logger.error("We Don't Handle Files In Multipart Request Yet.")
+            logger.error("File support is in beta")
     return fields
 
 
