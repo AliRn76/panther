@@ -121,7 +121,7 @@ def collect_all_models():
                                 # Import the class to check his parents and siblings
                                 klass = import_class(f'{class_path}.models.{n.name}')
 
-                                collected_models = [
+                                collected_models.extend([
                                     {
                                         'name': n.name,
                                         'path': file_path,
@@ -129,7 +129,7 @@ def collect_all_models():
                                         'app': class_path.split('.'),
                                     }
                                     for parent in klass.__mro__ if parent is Model
-                                ]
+                                ])
     return collected_models
 
 

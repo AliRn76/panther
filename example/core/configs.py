@@ -45,7 +45,7 @@ JWTConfig = {
 }
 
 
-URLs = 'core/urls.py'
+URLs = 'core.urls.urls'
 
 USER_MODEL = 'app.models.User'
 
