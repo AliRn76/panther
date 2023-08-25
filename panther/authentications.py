@@ -31,9 +31,13 @@ class JWTAuthentication(BaseAuthentication):
     algorithm = 'HS256'
     HTTP_HEADER_ENCODING = 'iso-8859-1'  # Header encoding (see RFC5987)
 
-    @staticmethod
-    def get_authorization_header(request: Request):
+    @classmethod
+    def get_authorization_header(cls, request: Request):
         auth = request.headers.authorization
+
+        if auth is None:
+            raise cls.exception('Authorization is required')
+
         if isinstance(auth, str):
             auth = auth.encode(JWTAuthentication.HTTP_HEADER_ENCODING)
         return auth
@@ -42,9 +46,9 @@ class JWTAuthentication(BaseAuthentication):
     def authentication(cls, request: Request):
         auth = cls.get_authorization_header(request).split()
         if not auth or auth[0].lower() != cls.keyword.lower().encode():
-            raise cls.exception('token keyword is not valid')
+            raise cls.exception('Token keyword is not valid')
         if len(auth) != 2:
-            raise cls.exception('token should have 2 part')
+            raise cls.exception('Token should have 2 part')
 
         try:
             token = auth[1].decode()

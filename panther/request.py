@@ -53,7 +53,7 @@ class Request:
             self._headers = Headers(
                 accept_encoding=_headers.pop('accept-encoding', None),
                 content_length=_headers.pop('content_length', None),
-                authorization=_headers.pop('authorization', b''),
+                authorization=_headers.pop('authorization', None),
                 content_type=_headers.pop('content-type', None),  # Handle content-type & boundary together
                 user_agent=_headers.pop('user-agent', None),
                 connection=_headers.pop('connection', None),
@@ -64,13 +64,14 @@ class Request:
         return self._headers
 
     @property
-    def query_params(self):
-        query_string = self.scope['query_string'].decode('utf-8').split('&')
+    def query_params(self) -> dict:
         if self._params is None:
             self._params = dict()
-            for param in query_string:
-                k, *_, v = param.split('=')
-                self._params[k] = v
+            if (query_string := self.scope['query_string']) != b'':
+                query_string = query_string.decode('utf-8').split('&')
+                for param in query_string:
+                    k, *_, v = param.split('=')
+                    self._params[k] = v
         return self._params
 
     @property

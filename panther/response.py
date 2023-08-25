@@ -10,7 +10,7 @@ IterableDataTypes = list | tuple | set
 class Response:
     content_type = 'application/json'
 
-    def __init__(self, data: ResponseDataTypes = None, status_code: int = 200):
+    def __init__(self, data: ResponseDataTypes = None, headers: dict = None, status_code: int = 200):
         """
         :param data: should be int | dict | list | tuple | set | str | bool | NoneType
             or instance of Pydantic.BaseModel
@@ -23,7 +23,7 @@ class Response:
 
         self._status_code = status_code
         self._data = data
-        # TODO: Add Header To Response
+        self._headers = headers
 
     @property
     def status_code(self) -> int:
@@ -38,7 +38,7 @@ class Response:
         return {
             'content_type': self.content_type,
             'access-control-allow-origin': '*'
-        }
+        } | (self._headers or {})
 
     def set_data(self, data) -> None:
         self._data = data
@@ -73,6 +73,14 @@ class Response:
 
 class HTMLResponse(Response):
     content_type = 'text/html; charset=utf-8'
+
+    @property
+    def body(self) -> bytes:
+        return self._data.encode()
+
+
+class PlainTextResponse(Response):
+    content_type = 'text/plain; charset=utf-8'
 
     @property
     def body(self) -> bytes:
