@@ -1,3 +1,10 @@
+### 2.3.1
+
+- Handle PlainTextResponse
+- Handle Custom Header in Response
+- Change the way of accepting 'URLs' in configs (relative -> dotted)
+- Fix an issue in collect_all_models()
+
 ### 2.3.0
 - Handle HTMLResponse
 

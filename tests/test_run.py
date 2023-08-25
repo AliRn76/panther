@@ -78,7 +78,7 @@ class TestRun(TestCase):
         self.assertEqual(config['reversed_middlewares'], [])
         self.assertEqual(config['user_model'], BaseUser)
         self.assertIsNone(config['jwt_config'])
-        self.assertEqual(config['models'], [])
+        self.assertEqual(len(config['models']), 4)
 
         self.assertTrue('' in config['urls'])
         config['urls'].pop('')
