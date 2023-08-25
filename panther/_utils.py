@@ -101,7 +101,7 @@ def read_multipart_form_data(content_type: str, body: str) -> dict:
                 file=value,
             )
             fields[field_name] = file
-            logger.error("File support is in beta")
+            logger.error('File support is in beta')
     return fields
 
 

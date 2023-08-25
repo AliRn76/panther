@@ -1,5 +1,5 @@
 
-URLs = 'core/configs.py'
+URLs = 'core.configs.urls'
 
 
 def api():

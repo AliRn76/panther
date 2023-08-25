@@ -17,6 +17,7 @@ line-length = 120
 inline-quotes = "single"
 
 [per-file-ignores]
+"panther/main.py" = ["F405", "F403"]
 "panther/app.py" = ["SIM102"]
 "panther/cli/run_command.py" = ["PTH109"]
 "panther/cli/*" = ["T201"]

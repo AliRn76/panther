@@ -100,7 +100,7 @@
     **core/configs.py**:
     
     ```python
-    URLs = 'core/urls.py'
+    URLs = 'core.urls.url_routing'
     ```
     
     **core/urls.py**:
@@ -108,7 +108,7 @@
     ```python
     from app.urls import urls as app_urls
     
-    urls = {
+    url_routing = {
         '/': app_urls,
     }
     ```

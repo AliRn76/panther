@@ -30,7 +30,7 @@ async def documents_api(request: Request, index: int):
 
     else:
         result = {
-            'fields': get_model_fields(model)
+            'fields': get_model_fields(model),
         }
         if data := model.find():
             result['data'] = data

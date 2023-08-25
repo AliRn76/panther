@@ -45,7 +45,7 @@ InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
 
 app_urls_py = """from app.apis import hello_world_api, info_api
 
-urls = {
+url_routing = {
     '/': hello_world_api,
     'info/': info_api,
 }
@@ -87,7 +87,7 @@ LOG_QUERIES = True
 THROTTLING = Throttling(rate=60, duration=timedelta(minutes=1))
 
 # More Info: https://PantherPy.GitHub.io/urls/
-URLs = 'core/urls.py'
+URLs = 'core.urls.url_routing'
 """ % datetime.now().date().isoformat()
 
 env = """

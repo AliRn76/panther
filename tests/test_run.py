@@ -1,4 +1,3 @@
-import os
 import sys
 from pathlib import Path
 from unittest import TestCase
@@ -10,11 +9,11 @@ class TestRun(TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        os.chdir('tests/run')
+        sys.path.append('tests/run')
 
     @classmethod
     def tearDownClass(cls) -> None:
-        os.chdir('../..')
+        sys.path.pop()
 
     def test_init(self):
         app = Panther(__name__)
@@ -26,14 +25,12 @@ class TestRun(TestCase):
             Panther(__name__)
 
             if sys.version_info.minor < 11:
-                self.assertEqual(len(captured.records), 3)
+                self.assertEqual(len(captured.records), 2)
                 self.assertEqual(captured.records[0].getMessage(), 'Use Python Version 3.11+ For Better Performance.')
                 self.assertEqual(captured.records[1].getMessage(), f'Base directory: {base_dir}')
-                self.assertEqual(captured.records[2].getMessage(), 'Configs loaded.')
             else:
-                self.assertEqual(len(captured.records), 2)
+                self.assertEqual(len(captured.records), 1)
                 self.assertEqual(captured.records[0].getMessage(), f'Base directory: {base_dir}')
-                self.assertEqual(captured.records[1].getMessage(), 'Configs loaded.')
 
         if sys.version_info.minor < 11:
             with self.assertLogs(level='INFO') as captured:
@@ -67,8 +64,8 @@ class TestRun(TestCase):
         base_dir = Path(__name__).resolve().parent
         app = Panther(__name__)
 
-        self.assertIsInstance(app.settings, dict)
-        self.assertEqual(app.settings.get('URLs'), 'core/configs.py')
+        self.assertIsInstance(app.configs, dict)
+        self.assertEqual(app.configs.get('URLs'), 'core.configs.urls')
 
         self.assertIsInstance(config, dict)
         self.assertEqual(config['base_dir'], base_dir)

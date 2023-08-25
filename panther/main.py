@@ -1,167 +1,63 @@
-import ast
 import asyncio
-import os
-import platform
 import sys
 import types
 from pathlib import Path
-from runpy import run_path
-
-from pydantic._internal._model_construction import ModelMetaclass
 
 from panther import status
-from panther._utils import clean_traceback_message, http_response, import_class, read_body
-from panther.configs import JWTConfig, config
+from panther._load_configs import *
+from panther._utils import clean_traceback_message, http_response, read_body
+from panther.configs import config
 from panther.exceptions import APIException
-from panther.middlewares.base import BaseMiddleware
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
 from panther.request import Request
 from panther.response import Response
-from panther.routings import collect_path_variables, finalize_urls, find_endpoint, flatten_urls
+from panther.routings import collect_path_variables, find_endpoint
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
 
 class Panther:
 
-    def __init__(self, name):
+    def __init__(self, name, configs=None):
         from panther.logger import logger
-        os.system('clear')
+
+        self._configs = configs
         config['base_dir'] = Path(name).resolve().parent
-        self.panther_dir = Path(__file__).parent
         if sys.version_info.minor < 11:
             logger.warning('Use Python Version 3.11+ For Better Performance.')
-        self.load_configs()
+
+        try:
+            self.load_configs()
+        except TypeError:
+            exit()
 
     def load_configs(self) -> None:
         from panther.logger import logger
         logger.debug(f'Base directory: {config["base_dir"]}')
 
         # Check & Read The Configs File
-        self._check_configs()
+        self.configs = load_configs_file(self._configs)
 
-        # Put Variables In "config"
-        config['monitoring'] = self.settings.get('MONITORING', config['monitoring'])
-        config['log_queries'] = self.settings.get('LOG_QUERIES', config['log_queries'])
-        config['default_cache_exp'] = self.settings.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
-        config['throttling'] = self.settings.get('THROTTLING', config['throttling'])
-        config['secret_key'] = self._get_secret_key()
-
-        config['middlewares'] = self._get_middlewares()
+        # Put Variables In "config" (Careful about the ordering)
+        config['secret_key'] = load_secret_key(self.configs)
+        config['monitoring'] = load_monitoring(self.configs)
+        config['log_queries'] = load_log_queries(self.configs)
+        config['throttling'] = load_throttling(self.configs)
+        config['default_cache_exp'] = load_default_cache_exp(self.configs)
+        config['middlewares'] = load_middlewares(self.configs)
         config['reversed_middlewares'] = config['middlewares'][::-1]
-        config['user_model'] = self._get_user_model()
+        config['user_model'] = load_user_model(self.configs)
+        config['authentication'] = load_authentication_class(self.configs)
+        config['jwt_config'] = load_jwt_config(self.configs)
+        config['models'] = collect_all_models()
 
-        config['authentication'] = self._get_authentication_class()
-        config['jwt_config'] = self._get_jwt_config()
-
-        # Find Database Models
-        self._collect_models()
-
-        # Check & Collect URLs
-        #   check_urls should be the last call in load_configs,
+        # Load URLs should be the last call in load_configs,
         #   because it will read all files and load them.
-        config['urls'] = self._load_urls()
+        config['urls'] = load_urls(self.configs)
+        config['urls']['_panel'] = load_panel_urls()
 
-        # This import shouldn't be on top
-        from panther.panel.urls import urls as panel_urls
-        config['urls']['_panel'] = finalize_urls(flatten_urls(panel_urls))
-
-        logger.debug('Configs loaded.')
         if config['monitoring']:
             logger.info('Run "panther monitor" in another session for Monitoring.')
-
-    def _check_configs(self):
-        from panther.logger import logger
-        """Read the config file and put it as dict in self.settings"""
-        try:
-            configs_path = config['base_dir'] / 'core/configs.py'
-            self.settings = run_path(str(configs_path))
-        except FileNotFoundError:
-            logger.critical('core/configs.py Not Found.')
-            # TODO: Exit() Here
-
-    def _get_secret_key(self) -> bytes | None:
-        if secret_key := self.settings.get('SECRET_KEY'):
-            return secret_key.encode()
-        return secret_key
-
-    def _get_middlewares(self) -> list:
-        """Collect The Middlewares & Set db_engine If One Of Middlewares Was For DB"""
-        from panther.logger import logger
-        middlewares = list()
-
-        for path, data in self.settings.get('MIDDLEWARES', []):
-            if path.find('panther.middlewares.db.Middleware') != -1:
-                config['db_engine'] = data['url'].split(':')[0]
-
-            Middleware = import_class(path)  # noqa: N806
-            if not issubclass(Middleware, BaseMiddleware):
-                logger.critical(f'{Middleware} is not a sub class of BaseMiddleware.')
-                continue
-
-            middlewares.append(Middleware(**data))  # noqa: Py Argument List
-        return middlewares
-
-    def _get_user_model(self) -> ModelMetaclass:
-        return import_class(self.settings.get('USER_MODEL', 'panther.db.models.BaseUser'))
-
-    def _get_authentication_class(self) -> ModelMetaclass | None:
-        return self.settings.get('AUTHENTICATION') and import_class(self.settings['AUTHENTICATION'])
-
-    def _get_jwt_config(self) -> JWTConfig:
-        """Only Collect JWT Config If Authentication Is JWTAuthentication"""
-        if getattr(config['authentication'], '__name__', None) == 'JWTAuthentication':
-            user_config = self.settings.get('JWTConfig')
-            return JWTConfig(**user_config) if user_config else JWTConfig(key=config['secret_key'].decode())
-
-    @classmethod
-    def _collect_models(cls):
-        """Collecting models for panel APIs"""
-        from panther.db.models import Model
-
-        for root, _, files in os.walk(config['base_dir']):
-            # Traverse through each directory
-            for f in files:
-                # Traverse through each file of directory
-                if f == 'models.py':
-                    slash = r'\\' if platform.system() == 'Windows' else '/'
-
-                    # If the file was "models.py" read it
-                    file_path = f'{root}{slash}models.py'
-                    with open(file_path) as file:
-                        # Parse the file with ast
-                        node = ast.parse(file.read())
-                        for n in node.body:
-                            # Find classes in each element of files' body
-                            if type(n) is ast.ClassDef and n.bases:
-                                class_path = file_path \
-                                    .removesuffix(f'{slash}models.py') \
-                                    .removeprefix(f'{config["base_dir"]}{slash}') \
-                                    .replace(slash, '.')
-                                # We don't need to import the package classes
-                                if class_path.find('site-packages') == -1:
-                                    # Import the class to check his parents and siblings
-                                    klass = import_class(f'{class_path}.models.{n.name}')
-
-                                    config['models'] = [
-                                        {
-                                            'name': n.name,
-                                            'path': file_path,
-                                            'class': klass,
-                                            'app': class_path.split('.'),
-                                        }
-                                        for parent in klass.__mro__ if parent is Model
-                                    ]
-
-    def _load_urls(self) -> dict:
-        from panther.logger import logger
-
-        urls = import_class(self.settings.get('URLs'))
-        if not isinstance(urls, dict):
-            return logger.critical("'URLs' should point to a dict")
-
-        collected_urls = flatten_urls(urls)
-        return finalize_urls(collected_urls)
 
     async def __call__(self, scope, receive, send) -> None:
         """
@@ -187,6 +83,7 @@ class Panther:
 
     async def run(self, scope, receive, send):
         from panther.logger import logger
+
         # Read Body & Create Request
         body = await read_body(receive)
         request = Request(scope=scope, body=body)
