@@ -3,28 +3,9 @@ from collections import Counter
 from collections.abc import Mapping
 from copy import deepcopy
 from functools import partial, reduce
-from runpy import run_path
 from typing import Callable, MutableMapping
 
 from panther.configs import config
-
-
-def check_and_load_urls(urls: str | None) -> dict | None:
-    from panther.logger import logger
-
-    if urls is None:
-        return logger.critical("configs.py Does Not Have 'URLs'")
-
-    try:
-        full_urls_path = config['base_dir'] / urls
-        urls_dict = run_path(str(full_urls_path))['urls']
-    except FileNotFoundError:
-        return logger.critical("Couldn't Open 'URLs' Address.")
-    except KeyError:
-        return logger.critical("'URLs' Address Does Not Have 'urls'")
-    if not isinstance(urls_dict, dict):
-        return logger.critical("'urls' Of URLs Is Not dict.")
-    return urls_dict
 
 
 def flatten_urls(urls: dict) -> dict:

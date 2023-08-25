@@ -10,11 +10,6 @@ class TestRoutingFunctions(TestCase):
         from panther.configs import config
         config['urls'] = {}
 
-    # Check and Load
-    def test_check_and_load_urls(self):
-        # TODO: ...
-        pass
-
     # Collecting
     def test_collect_ellipsis_urls(self):
         urls = {

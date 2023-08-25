@@ -17,7 +17,7 @@ from panther.middlewares.base import BaseMiddleware
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
 from panther.request import Request
 from panther.response import Response
-from panther.routings import check_and_load_urls, collect_path_variables, finalize_urls, find_endpoint, flatten_urls
+from panther.routings import collect_path_variables, finalize_urls, find_endpoint, flatten_urls
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
@@ -154,7 +154,12 @@ class Panther:
                                     ]
 
     def _load_urls(self) -> dict:
-        urls = check_and_load_urls(self.settings.get('URLs')) or {}
+        from panther.logger import logger
+
+        urls = import_class(self.settings.get('URLs'))
+        if not isinstance(urls, dict):
+            return logger.critical("'URLs' should point to a dict")
+
         collected_urls = flatten_urls(urls)
         return finalize_urls(collected_urls)
 
