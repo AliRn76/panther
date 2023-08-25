@@ -20,14 +20,12 @@ async def read_body(receive) -> bytes:
     return body
 
 
-async def _http_response_start(send, /, status_code: int):
+async def _http_response_start(send, /, headers: dict, status_code: int):
+    bytes_headers = [[k.encode(), v.encode()] for k, v in (headers or {}).items()]
     await send({
         'type': 'http.response.start',
         'status': status_code,
-        'headers': [
-            [b'content-type', b'application/json'],
-            [b'access-control-allow-origin', b'*'],
-        ],
+        'headers': bytes_headers,
     })
 
 
@@ -44,6 +42,7 @@ async def http_response(
         *,
         status_code: int,
         monitoring,  # type: MonitoringMiddleware | None
+        headers: dict = None,
         body: bytes = None,
         exception: bool = False,
 ):
@@ -55,7 +54,8 @@ async def http_response(
     if monitoring is not None:
         await monitoring.after(status_code=status_code)
 
-    await _http_response_start(send, status_code=status_code)
+    # TODO: Should we send 'access-control-allow-origin' in any case
+    await _http_response_start(send, headers=headers, status_code=status_code)
     await _http_response_body(send, body=body)
 
 

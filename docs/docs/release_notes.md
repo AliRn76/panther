@@ -1,3 +1,6 @@
+### 2.3.0
+- Handle HTMLResponse
+
 ### 2.2.0
 - Supporting File 
 

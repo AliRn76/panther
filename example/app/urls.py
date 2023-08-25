@@ -29,5 +29,6 @@ urls = {
     'patch-user/': patch_user,
     'patch-user-class/': PatchUser,
     'file-class/': FileAPI,
+    'html-response/': HTMLAPI,
     '': single_user,
 }

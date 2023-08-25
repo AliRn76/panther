@@ -8,11 +8,15 @@ IterableDataTypes = list | tuple | set
 
 
 class Response:
+    content_type = 'application/json'
+
     def __init__(self, data: ResponseDataTypes = None, status_code: int = 200):
         """
-        :param data: should be int | dict | list | tuple | set | str | bool or NoneType
+        :param data: should be int | dict | list | tuple | set | str | bool | NoneType
+            or instance of Pydantic.BaseModel
         :param status_code: should be int
         """
+
         # TODO: Handle bytes data
         data = self.clean_data_type(data)
         self.check_status_code(status_code)
@@ -28,6 +32,13 @@ class Response:
     @property
     def body(self) -> bytes:
         return json.dumps(self._data)
+
+    @property
+    def headers(self) -> dict:
+        return {
+            'content_type': self.content_type,
+            'access-control-allow-origin': '*'
+        }
 
     def set_data(self, data) -> None:
         self._data = data
@@ -51,12 +62,18 @@ class Response:
             return [cls.clean_data_type(d) for d in data]
 
         elif isinstance(data, dict):
-            for key, value in data.items():
-                data[key] = cls.clean_data_type(value)
-            return data
+            return {key: cls.clean_data_type(value) for key, value in data.items()}
 
         elif isinstance(data, (int | str | bool | NoneType)):
             return data
 
         else:
             raise TypeError(f'Invalid Response Type: {type(data)}')
+
+
+class HTMLResponse(Response):
+    content_type = 'text/html; charset=utf-8'
+
+    @property
+    def body(self) -> bytes:
+        return self._data.encode()

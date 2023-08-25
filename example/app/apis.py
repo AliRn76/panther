@@ -10,7 +10,7 @@ from panther.authentications import JWTAuthentication
 from panther.db.connection import redis
 from panther.logger import logger
 from panther.request import Request
-from panther.response import Response
+from panther.response import Response, HTMLResponse
 from panther.throttling import Throttling
 
 
@@ -186,3 +186,14 @@ class FileAPI(GenericAPI):
             print(f'{body.image.file_name=}')
             file.write(body.image.file)
         return {'detail': 'ok'}
+
+
+class HTMLAPI(GenericAPI):
+    def get(self, *args, **kwargs):
+        html_data = """<!DOCTYPE html>
+<html>
+    <body>
+        <h1>Hellow World</h1>
+    </body>
+</html>"""
+        return HTMLResponse(data=html_data)
