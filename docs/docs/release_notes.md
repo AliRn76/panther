@@ -1,5 +1,7 @@
-### 2.3.1
+### 2.3.2
+- Fix a bug in Template
 
+### 2.3.1
 - Handle PlainTextResponse
 - Handle Custom Header in Response
 - Change the way of accepting 'URLs' in configs (relative -> dotted)
