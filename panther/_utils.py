@@ -9,12 +9,30 @@ from panther.file_handler import File
 from panther.logger import logger
 
 
-async def read_body(receive) -> bytes:
+async def read_content_type(scope) -> bytes | None:
+    try:
+        return next(value for key, value in scope.get('headers') if key == b'content-type')
+    except StopIteration:
+        return None
+
+
+async def read_body(receive, content_type) -> bytes:
     """Read and return the entire body from an incoming ASGI message."""
+
+    if content_type == b'application/json':
+        pass
+    # TODO: multipart... is [:19]
+    elif content_type == b'multipart/form-data':
+        pass
+    else:
+        logger.error(f'{content_type} Is Not Supported.')
+        return b''
+
     body = b''
     more_body = True
     while more_body:
         message = await receive()
+        # {'type': 'lifespan.startup'}
         body += message.get('body', b'')
         more_body = message.get('more_body', False)
     return body
@@ -41,7 +59,7 @@ async def http_response(
         /,
         *,
         status_code: int,
-        monitoring,  # type: MonitoringMiddleware | None
+        monitoring=None,  # type: MonitoringMiddleware | None
         headers: dict = None,
         body: bytes = None,
         exception: bool = False,
