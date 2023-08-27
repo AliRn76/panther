@@ -1,3 +1,6 @@
+### 2.3.3
+- Fix a bug in response headers
+
 ### 2.3.2
 - Fix a bug in Template
 
