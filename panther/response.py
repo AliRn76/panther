@@ -36,7 +36,7 @@ class Response:
     @property
     def headers(self) -> dict:
         return {
-            'content_type': self.content_type,
+            'content-type': self.content_type,
             'access-control-allow-origin': '*',
         } | (self._headers or {})
 
