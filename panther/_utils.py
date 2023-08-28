@@ -9,25 +9,8 @@ from panther.file_handler import File
 from panther.logger import logger
 
 
-async def read_content_type(scope) -> bytes | None:
-    try:
-        return next(value for key, value in scope.get('headers') if key == b'content-type')
-    except StopIteration:
-        return None
-
-
 async def read_body(receive, content_type) -> bytes:
     """Read and return the entire body from an incoming ASGI message."""
-
-    if content_type == b'application/json':
-        pass
-    # TODO: multipart... is [:19]
-    elif content_type == b'multipart/form-data':
-        pass
-    else:
-        logger.error(f'{content_type} Is Not Supported.')
-        return b''
-
     body = b''
     more_body = True
     while more_body:
@@ -89,38 +72,55 @@ def import_class(dotted_path: str, /):
     return getattr(module, name)
 
 
-def read_multipart_form_data(content_type: str, body: str) -> dict:
+def read_multipart_form_data(boundary: str, body: bytes) -> dict:
     """
-    content_type = 'multipart/form-data; boundary=--------------------------984465134948354357674418'
+    ----------------------------163708487248928886496634
+    Content-Disposition: form-data; name="name"
+
+    ali
+    ----------------------------163708487248928886496634
+    Content-Disposition: form-data; name="image"; filename="hello.txt"
+    Content-Type: text/plain
+
+    Hello World
+
+    ----------------------------163708487248928886496634
+    Content-Disposition: form-data; name="age"
+
+    12
+    ----------------------------163708487248928886496634--
     """
-    boundary = content_type[30:]
 
-    pre_pattern = r'(.*\r\nContent-Disposition: form-data; name=")(.*)'  # (Junk)(FieldName)
-    field_value_pattern = r'"(\r\n\r\n)(.*)'  # (Junk)(Value)
-    file_value_pattern = r'(\r\n\r\n)(.*)(\n\r\n--)'  # (Junk)(Value)(Junk)
+    boundary = b'--' + boundary.encode()
 
-    # (Junk)(FieldName) + (Junk)(Value)(Junk) + (Junk)
-    field_pattern = pre_pattern + field_value_pattern + r'(\r\n.*)'
+    field_pattern = rb'(Content-Disposition: form-data; name=")(.*)("\n\n)(.*)'
+    file_pattern = rb'(Content-Disposition: form-data; name=")(.*)("; filename=")(.*)("\nContent-Type: )(.*)'
 
-    # (Junk)(FieldName) + (Junk)(FileName)(Junk)(ContentType) + (Junk)(Value)
-    file_pattern = pre_pattern + r'("; filename=")(.*)("\r\nContent-Type: )(.*)' + file_value_pattern
+    data = dict()
+    for row in body.split(boundary):
+        row = row.removeprefix(b'\n').removesuffix(b'\n')
+        if row == b'' or row == b'--':
+            continue
 
-    fields = dict()
-    for field in body.split(boundary):
-        if match := re.match(pattern=field_pattern, string=field):
-            _, field_name, _, value, _ = match.groups()
-            fields[field_name] = value
+        if match := re.match(pattern=field_pattern, string=row):
+            _, field_name, _, value = match.groups()
+            data[field_name.decode('utf-8')] = value.decode('utf-8')
 
-        if match := re.match(pattern=file_pattern, string=field, flags=re.DOTALL):
-            _, field_name, _, file_name, _, content_type, _, value, _ = match.groups()
-            file = File(
-                file_name=file_name,
-                content_type=content_type,
-                file=value,
-            )
-            fields[field_name] = file
-            logger.error('File support is in beta')
-    return fields
+        else:
+            file_meta_data, value = row.split(b'\n\n', 1)
+            if match := re.match(pattern=file_pattern, string=file_meta_data):
+                _, field_name, _, file_name, _, content_type = match.groups()
+                file = File(
+                    file_name=file_name.decode('utf-8'),
+                    content_type=content_type.decode('utf-8'),
+                    file=value,
+                )
+                data[field_name.decode('utf-8')] = file
+                logger.warning('File support is in beta')
+            else:
+                logger.error('Unrecognized Pattern')
+
+    return data
 
 
 def is_function_async(func) -> bool:

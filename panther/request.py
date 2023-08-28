@@ -103,18 +103,14 @@ class Request:
         from panther.logger import logger
 
         if self._data is None:
-
-            body = self.__body.decode('utf-8', errors='replace') or {}
-            if self.headers.content_type is None:
-                self._data = body
-            elif self.headers.content_type == 'application/json':
-                self._data = json.loads(body)
-            elif self.headers.content_type[:19] == 'multipart/form-data':
-                self._data = read_multipart_form_data(content_type=self.headers.content_type, body=body)
-            else:
-                logger.error(f'{self.headers.content_type} Is Not Supported.')
-                self._data = {}
-
+            match (self.headers.content_type or '').split('; boundary='):
+                case ['application/json']:
+                    self._data = json.loads(self.__body)
+                case ['multipart/form-data', boundary]:
+                    self._data = read_multipart_form_data(boundary=boundary, body=self.__body)
+                case _:
+                    logger.error(f'ContentType="{self.headers.content_type}" Is Not Supported.')
+                    self._data = self.__body.decode('utf-8', errors='replace') or {}
         return self._data
 
     @property
@@ -130,7 +126,6 @@ class Request:
 
     def set_body(self, body: bytes):
         self.__body = body
-
 
     @property
     def user(self):
