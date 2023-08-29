@@ -127,10 +127,6 @@ def cli_error(message: str | TypeError) -> None:
     logger.error(f'Error: {message}\n\nUse panther -h for more help')
 
 
-def import_error_message(module_name: str) -> str:
-    return f'No module named "{module_name}"\n\t    Hint: Try to install with "pip install {module_name}"'
-
-
 def clean_args(args: list[str]) -> dict:
     """
     Input: ['--reload', '--host', '127.0.0.1', ...]

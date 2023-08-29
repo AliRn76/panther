@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, ClassVar
 from pantherdb import PantherDB
 from redis import Redis
 
-from panther.cli.utils import import_error_message
 from panther.configs import config
 
 if TYPE_CHECKING:
@@ -45,10 +44,7 @@ class DBSession(Singleton):
         return self._db_name
 
     def _create_mongodb_session(self, db_url: str) -> None:
-        try:
-            from pymongo import MongoClient
-        except ImportError:
-            raise ImportError(import_error_message('pymongo'))
+        from pymongo import MongoClient
 
         self._client: MongoClient = MongoClient(db_url)
         self._session: Database = self._client.get_database()
