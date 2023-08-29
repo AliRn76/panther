@@ -195,7 +195,7 @@
     - &#x2705; Handle Throttling
     - &#x2705; Handle ClassBase APIs
     - &#x2705; Handle File 
-    - &#9744; Handle Huge Files
+    - &#x2705; Handle Huge Files
     - &#9744; Handle Cookie
     - &#9744; Handle WS 
     - &#9744; Handle GraphQL

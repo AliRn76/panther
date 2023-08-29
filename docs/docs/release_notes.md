@@ -1,3 +1,6 @@
+### 2.4.0
+- Handle Complex Multipart-FormData
+
 ### 2.3.3
 - Fix a bug in response headers
 

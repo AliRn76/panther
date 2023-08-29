@@ -14,11 +14,11 @@
 - &#x2705; Custom Logging
 - &#x2705; Caching
 - &#x2705; Handle Path Variable
-- &#x2705; Handle Simple Form-Data
+- &#x2705; Handle Simple Multipart-FormData
 - &#x2705; Handle Throttling
 - &#x2705; Handle ClassBase APIs
 - &#x2705; Handle File 
-- &#9744; Handle Huge Files
+- &#x2705; Handle Complex Multipart-FormData
 - &#9744; Handle Cookie
 - &#9744; Handle WS 
 - &#9744; Handle GraphQL
