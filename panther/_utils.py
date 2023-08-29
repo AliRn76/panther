@@ -15,6 +15,7 @@ async def read_body(receive) -> bytes:
     more_body = True
     while more_body:
         message = await receive()
+        # {'type': 'lifespan.startup'}
         body += message.get('body', b'')
         more_body = message.get('more_body', False)
     return body
@@ -41,7 +42,7 @@ async def http_response(
         /,
         *,
         status_code: int,
-        monitoring,  # type: MonitoringMiddleware | None
+        monitoring=None,  # type: MonitoringMiddleware | None
         headers: dict = None,
         body: bytes = None,
         exception: bool = False,
@@ -71,38 +72,49 @@ def import_class(dotted_path: str, /):
     return getattr(module, name)
 
 
-def read_multipart_form_data(content_type: str, body: str) -> dict:
+def read_multipart_form_data(boundary: str, body: bytes) -> dict:
     """
-    content_type = 'multipart/form-data; boundary=--------------------------984465134948354357674418'
+    ----------------------------449529189836774544725855
+    \r\nContent-Disposition: form-data; name="name"\r\n\r\nali\r\n
+    ----------------------------449529189836774544725855
+    \r\nContent-Disposition: form-data; name="image"; filename="ali.txt"\r\nContent-Type: text/plain\r\n\r\nHello\n\r\n
+    ----------------------------449529189836774544725855
+    \r\nContent-Disposition: form-data; name="age"\r\n\r\n12\r\n
+    ----------------------------449529189836774544725855
+    --\r\n
     """
-    boundary = content_type[30:]
 
-    pre_pattern = r'(.*\r\nContent-Disposition: form-data; name=")(.*)'  # (Junk)(FieldName)
-    field_value_pattern = r'"(\r\n\r\n)(.*)'  # (Junk)(Value)
-    file_value_pattern = r'(\r\n\r\n)(.*)(\n\r\n--)'  # (Junk)(Value)(Junk)
+    boundary = b'--' + boundary.encode()
+    new_line = b'\r\n' if body[-2:] == b'\r\n' else b'\n'
 
-    # (Junk)(FieldName) + (Junk)(Value)(Junk) + (Junk)
-    field_pattern = pre_pattern + field_value_pattern + r'(\r\n.*)'
+    field_pattern = rb'(Content-Disposition: form-data; name=")(.*)("' + 2 * new_line + b')(.*)'
+    file_pattern = rb'(Content-Disposition: form-data; name=")(.*)("; filename=")(.*)("' + new_line + b'Content-Type: )(.*)'
 
-    # (Junk)(FieldName) + (Junk)(FileName)(Junk)(ContentType) + (Junk)(Value)
-    file_pattern = pre_pattern + r'("; filename=")(.*)("\r\nContent-Type: )(.*)' + file_value_pattern
+    data = dict()
+    for row in body.split(boundary):
 
-    fields = dict()
-    for field in body.split(boundary):
-        if match := re.match(pattern=field_pattern, string=field):
-            _, field_name, _, value, _ = match.groups()
-            fields[field_name] = value
+        row = row.removeprefix(new_line).removesuffix(new_line)
+        if row == b'' or row == b'--':
+            continue
 
-        if match := re.match(pattern=file_pattern, string=field, flags=re.DOTALL):
-            _, field_name, _, file_name, _, content_type, _, value, _ = match.groups()
-            file = File(
-                file_name=file_name,
-                content_type=content_type,
-                file=value,
-            )
-            fields[field_name] = file
-            logger.error('File support is in beta')
-    return fields
+        if match := re.match(pattern=field_pattern, string=row):
+            _, field_name, _, value = match.groups()
+            data[field_name.decode('utf-8')] = value.decode('utf-8')
+
+        else:
+            file_meta_data, value = row.split(2 * new_line, 1)
+            if match := re.match(pattern=file_pattern, string=file_meta_data):
+                _, field_name, _, file_name, _, content_type = match.groups()
+                file = File(
+                    file_name=file_name.decode('utf-8'),
+                    content_type=content_type.decode('utf-8'),
+                    file=value,
+                )
+                data[field_name.decode('utf-8')] = file
+            else:
+                logger.error('Unrecognized Pattern')
+
+    return data
 
 
 def is_function_async(func) -> bool:

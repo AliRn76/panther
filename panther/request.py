@@ -23,7 +23,7 @@ Address = namedtuple('Client', ['ip', 'port'])
 
 
 class Request:
-    def __init__(self, scope: dict, body: bytes):
+    def __init__(self, scope: dict):
         """{'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'},
         'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'client': ('127.0.0.1', 35064),
         'scheme': 'http', 'root_path': '', 'headers': [
@@ -39,7 +39,6 @@ class Request:
         'method': 'GET', 'path': '/list/', 'raw_path': b'/list/', 'query_string': b''}.
         """
         self.scope = scope
-        self.__body = body
         self._data = None
         self._validated_data = None
         self._user = None
@@ -104,18 +103,14 @@ class Request:
         from panther.logger import logger
 
         if self._data is None:
-
-            body = self.__body.decode('utf-8', errors='replace') or {}
-            if self.headers.content_type is None:
-                self._data = body
-            elif self.headers.content_type == 'application/json':
-                self._data = json.loads(body)
-            elif self.headers.content_type[:19] == 'multipart/form-data':
-                self._data = read_multipart_form_data(content_type=self.headers.content_type, body=body)
-            else:
-                logger.error(f'{self.headers.content_type} Is Not Supported.')
-                self._data = {}
-
+            match (self.headers.content_type or '').split('; boundary='):
+                case ['application/json']:
+                    self._data = json.loads(self.__body)
+                case ['multipart/form-data', boundary]:
+                    self._data = read_multipart_form_data(boundary=boundary, body=self.__body)
+                case _:
+                    logger.error(f'ContentType="{self.headers.content_type}" Is Not Supported.')
+                    self._data = self.__body.decode('utf-8', errors='replace') or {}
         return self._data
 
     @property
@@ -128,6 +123,9 @@ class Request:
 
     def set_validated_data(self, validated_data) -> None:
         self._validated_data = validated_data
+
+    def set_body(self, body: bytes):
+        self.__body = body
 
     @property
     def user(self):

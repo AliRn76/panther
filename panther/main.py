@@ -84,15 +84,17 @@ class Panther:
     async def run(self, scope, receive, send):
         from panther.logger import logger
 
-        # Read Body & Create Request
-        body = await read_body(receive)
-        request = Request(scope=scope, body=body)
+        request = Request(scope=scope)
 
         # Monitoring Middleware
         monitoring_middleware = None
         if config['monitoring']:
             monitoring_middleware = MonitoringMiddleware()
             await monitoring_middleware.before(request=request)
+
+        # Read Body & Create Request
+        body = await read_body(receive)
+        request.set_body(body)
 
         # Find Endpoint
         endpoint, found_path = find_endpoint(path=request.path)
