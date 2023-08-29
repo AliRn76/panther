@@ -181,7 +181,7 @@ class FileAPI(GenericAPI):
 
     def post(self, request: Request, *args, **kwargs):
         body: FileSerializer = request.data
-        with open(body.image.file_name, 'w') as file:
+        with open(body.image.file_name, 'wb') as file:
             file.write(body.image.file)
         return {'detail': 'ok'}
 

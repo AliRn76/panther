@@ -9,7 +9,7 @@ from panther.file_handler import File
 from panther.logger import logger
 
 
-async def read_body(receive, content_type) -> bytes:
+async def read_body(receive) -> bytes:
     """Read and return the entire body from an incoming ASGI message."""
     body = b''
     more_body = True
@@ -74,31 +74,26 @@ def import_class(dotted_path: str, /):
 
 def read_multipart_form_data(boundary: str, body: bytes) -> dict:
     """
-    ----------------------------163708487248928886496634
-    Content-Disposition: form-data; name="name"
-
-    ali
-    ----------------------------163708487248928886496634
-    Content-Disposition: form-data; name="image"; filename="hello.txt"
-    Content-Type: text/plain
-
-    Hello World
-
-    ----------------------------163708487248928886496634
-    Content-Disposition: form-data; name="age"
-
-    12
-    ----------------------------163708487248928886496634--
+    ----------------------------449529189836774544725855
+    \r\nContent-Disposition: form-data; name="name"\r\n\r\nali\r\n
+    ----------------------------449529189836774544725855
+    \r\nContent-Disposition: form-data; name="image"; filename="ali.txt"\r\nContent-Type: text/plain\r\n\r\nHello\n\r\n
+    ----------------------------449529189836774544725855
+    \r\nContent-Disposition: form-data; name="age"\r\n\r\n12\r\n
+    ----------------------------449529189836774544725855
+    --\r\n
     """
 
     boundary = b'--' + boundary.encode()
+    new_line = b'\r\n' if body[-2:] == b'\r\n' else b'\n'
 
-    field_pattern = rb'(Content-Disposition: form-data; name=")(.*)("\n\n)(.*)'
-    file_pattern = rb'(Content-Disposition: form-data; name=")(.*)("; filename=")(.*)("\nContent-Type: )(.*)'
+    field_pattern = rb'(Content-Disposition: form-data; name=")(.*)("' + 2 * new_line + b')(.*)'
+    file_pattern = rb'(Content-Disposition: form-data; name=")(.*)("; filename=")(.*)("' + new_line + b'Content-Type: )(.*)'
 
     data = dict()
     for row in body.split(boundary):
-        row = row.removeprefix(b'\n').removesuffix(b'\n')
+
+        row = row.removeprefix(new_line).removesuffix(new_line)
         if row == b'' or row == b'--':
             continue
 
@@ -107,7 +102,7 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
             data[field_name.decode('utf-8')] = value.decode('utf-8')
 
         else:
-            file_meta_data, value = row.split(b'\n\n', 1)
+            file_meta_data, value = row.split(2 * new_line, 1)
             if match := re.match(pattern=file_pattern, string=file_meta_data):
                 _, field_name, _, file_name, _, content_type = match.groups()
                 file = File(
@@ -116,7 +111,6 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
                     file=value,
                 )
                 data[field_name.decode('utf-8')] = file
-                logger.warning('File support is in beta')
             else:
                 logger.error('Unrecognized Pattern')
 

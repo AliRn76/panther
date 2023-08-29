@@ -5,7 +5,7 @@ from pathlib import Path
 
 from panther import status
 from panther._load_configs import *
-from panther._utils import clean_traceback_message, http_response, read_body, read_content_type
+from panther._utils import clean_traceback_message, http_response, read_body
 from panther.configs import config
 from panther.exceptions import APIException
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
@@ -92,17 +92,8 @@ class Panther:
             monitoring_middleware = MonitoringMiddleware()
             await monitoring_middleware.before(request=request)
 
-        # Detect ContentType
-        if (content_type := read_content_type(scope=scope)) is None:
-            return await http_response(
-                send,
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                monitoring=monitoring_middleware,
-                exception=True,
-            )
-
         # Read Body & Create Request
-        body = await read_body(receive, content_type=content_type)
+        body = await read_body(receive)
         request.set_body(body)
 
         # Find Endpoint
