@@ -12,6 +12,7 @@ from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
 from panther.request import Request
 from panther.response import Response
 from panther.routings import collect_path_variables, find_endpoint
+from panther.websocket import Websocket
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
@@ -75,13 +76,24 @@ class Panther:
             with ProcessPoolExecutor() as e:
                 e.submit(self.run, scope, receive, send)
         """
+        if scope['type'] == 'http':
+            func = self.handle_http
+        else:
+            func = self.handle_ws
+
         if sys.version_info.minor >= 11:
             async with asyncio.TaskGroup() as tg:
-                tg.create_task(self.run(scope, receive, send))
+                tg.create_task(func(scope, receive, send))
         else:
-            await self.run(scope, receive, send)
+            await func(scope, receive, send)
 
-    async def run(self, scope, receive, send):
+    async def handle_ws(self, scope, receive, send):
+        from panther.logger import logger
+
+        ws = Websocket(scope=scope, send=send)
+        await ws.accept()
+
+    async def handle_http(self, scope, receive, send):
         from panther.logger import logger
 
         request = Request(scope=scope)
