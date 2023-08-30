@@ -1,9 +1,8 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
 labels: bug
-assignees: ''
+assignees: AliRn76
 
 ---
 
@@ -13,9 +12,10 @@ A clear and concise description of what the bug is.
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Desktop (please complete the following information):**
+**Environment:**
  - OS: [e.g. iOS]
- - Version [e.g. 22]
+ - Python Version [e.g. 3.11.4]
+ - Panther Version [e.g. 2.4.0]
 
 **Additional context**
 Add any other context about the problem here.
