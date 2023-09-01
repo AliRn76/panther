@@ -92,9 +92,24 @@ class Panther:
 
     async def handle_ws(self, scope, receive, send):
         from panther.logger import logger
+        from panther.websocket import GenericWebsocket
 
-        connection = Websocket(scope=scope, receive=receive, send=send)
-        connection_id = await self.websocket_connection.new_connection(connection=connection)
+        temp_connection = Websocket(scope=scope, receive=receive, send=send)
+
+        endpoint, found_path = find_endpoint(path=temp_connection.path)
+        path_variables: dict = collect_path_variables(request_path=temp_connection.path, found_path=found_path)
+        if endpoint is None:
+            # TODO: what is 404 code in ws
+            return await temp_connection.close(status.WS_1000_NORMAL_CLOSURE)
+
+        if not issubclass(endpoint, GenericWebsocket):
+            logger.critical(f'You may have forgotten to inherit from GenericWebsocket on the {endpoint.__name__}()')
+            return await temp_connection.close(status.WS_1014_BAD_GATEWAY)
+
+        del temp_connection
+        connection = endpoint(scope=scope, receive=receive, send=send)
+        connection.set_path_variables(path_variables=path_variables)
+        await self.websocket_connection.new_connection(connection=connection)
         await connection.listen()
 
     async def handle_http(self, scope, receive, send):

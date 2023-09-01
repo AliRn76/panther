@@ -1,56 +1,25 @@
-from dataclasses import dataclass
-from typing import Callable
+from __future__ import annotations
+
 import orjson as json
 
 from panther import status
-from panther.request import Address
+from panther.base_request import BaseRequest
 from panther.utils import Singleton
 
 
-@dataclass(frozen=True)
-class WebsocketHeaders:
-    upgrade: str
-    sec_websocket_key: str
-    sec_websocket_version: str
-    connection: str
-    host: str
+class WebsocketConnections(Singleton):
+    def __init__(self):
+        self.connections = dict()
+        self.connections_count = 0
+
+    async def new_connection(self, connection: GenericWebsocket):
+        await connection.connect()  # TODO: Check user accepted or not
+        self.connections_count += 1
+        self.connections[self.connections_count] = connection
+        connection.set_connection_id(self.connections_count)
 
 
-class Websocket:
-    def __init__(self, scope: dict, receive: Callable, send: Callable):
-        """
-        {
-            'type': 'websocket',
-            'asgi': {'version': '3.0', 'spec_version': '2.3'},
-            'http_version': '1.1',
-            'scheme': 'ws',
-            'server': ('127.0.0.1', 8000),
-            'client': ('127.0.0.1', 45360),
-            'root_path': '',
-            'path': '/',
-            'raw_path': b'/',
-            'query_string': b'',
-            'state': {},
-            'headers': [
-                (b'host', b'127.0.0.1:8000'),
-                (b'connection', b'Upgrade'),
-                (b'sec-websocket-version', b'13'),
-                (b'sec-websocket-key', b'Vi6QcgsQ5OvGxaWbLcf4GQ=='),
-                (b'upgrade', b'websocket'),
-            ],
-            'subprotocols': [],
-        }
-        """
-
-        self.scope = scope
-        self.asgi_send = send
-        self._receive = receive
-        self._data = None
-        self._validated_data = None
-        self._user = None
-        self._headers: WebsocketHeaders | None = None
-        self._params: dict | None = None
-
+class Websocket(BaseRequest):
     async def connect(self):
         """
         Check your conditions then self.accept() the connection
@@ -74,7 +43,7 @@ class Websocket:
 
     async def listen(self):
         while True:
-            response = await self._receive()
+            response = await self.asgi_receive()
             if response['type'] == 'websocket.connect':
                 continue
 
@@ -86,68 +55,18 @@ class Websocket:
             else:
                 await self.receive(bytes=response['bytes'])
 
-    @property
-    def headers(self):
-        _headers = {header[0].decode('utf-8'): header[1].decode('utf-8') for header in self.scope['headers']}
-        if self._headers is None:
-            self._headers = WebsocketHeaders(
-                upgrade=_headers.pop('upgrade', None),
-                sec_websocket_key=_headers.pop('sec_websocket_key', None),
-                sec_websocket_version=_headers.pop('sec_websocket_version', None),
-                connection=_headers.pop('connection', None),
-                host=_headers.pop('host', None),
-            )
-        return self._headers
+    def set_path_variables(self, path_variables: dict):
+        self._path_variables = path_variables
 
     @property
-    def query_params(self) -> dict:
-        if self._params is None:
-            self._params = dict()
-            if (query_string := self.scope['query_string']) != b'':
-                query_string = query_string.decode('utf-8').split('&')
-                for param in query_string:
-                    k, *_, v = param.split('=')
-                    self._params[k] = v
-        return self._params
+    def path_variables(self):
+        return getattr(self, 'path_variables', {})
 
-    @property
-    def path(self) -> str:
-        return self.scope['path']
+    def connection_id(self):
+        return self.__connection_id
 
-    @property
-    def server(self) -> Address:
-        return Address(*self.scope['server'])
-
-    @property
-    def client(self) -> Address:
-        return Address(*self.scope['client'])
-
-    @property
-    def http_version(self) -> str:
-        return self.scope['http_version']
-
-    @property
-    def scheme(self) -> str:
-        return self.scope['scheme']
-
-    @property
-    def user(self):
-        return self._user
-
-    def set_user(self, user) -> None:
-        self._user = user
-
-
-class WebsocketConnections(Singleton):
-    def __init__(self):
-        self.connections = dict()
-        self.connections_count = 0
-
-    async def new_connection(self, connection: Websocket):
-        await connection.connect()  # TODO: Check user accepted or not
-        self.connections_count += 1
-        self.connections[self.connections_count] = connection
-        return self.connections_count
+    def set_connection_id(self, connection_id):
+        self.__connection_id = connection_id
 
 
 class GenericWebsocket(Websocket):
