@@ -1,8 +1,18 @@
 import hashlib
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import ClassVar
 
 from panther.logger import logger
+
+
+class Singleton(object):
+    _instances: ClassVar = {}
+
+    def __new__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__new__(cls, *args, **kwargs)
+        return cls._instances[cls]
 
 
 def load_env(env_file: str | Path, /) -> dict[str, str]:
