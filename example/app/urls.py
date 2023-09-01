@@ -1,4 +1,5 @@
 from app.apis import *
+from app.websockets import UserWebsocket
 
 from panther.app import API
 from panther.response import Response
@@ -31,4 +32,5 @@ urls = {
     'file-class/': FileAPI,
     'html-response/': HTMLAPI,
     '': single_user,
+    'ws/': UserWebsocket,
 }
