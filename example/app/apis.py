@@ -3,6 +3,7 @@ from datetime import timedelta
 from app.models import User
 from app.serializers import FileSerializer, UserInputSerializer, UserOutputSerializer, UserUpdateSerializer
 from core.permissions import UserPermission
+from panther.websocket import send_message_to_websocket
 
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
@@ -32,6 +33,7 @@ async def return_dict():
 
 @API()
 async def return_list():
+    await send_message_to_websocket(connection_id=1, data='Hello From API')
     return [1, 2, 3]
 
 

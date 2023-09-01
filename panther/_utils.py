@@ -9,18 +9,6 @@ from panther.file_handler import File
 from panther.logger import logger
 
 
-async def read_body(receive) -> bytes:
-    """Read and return the entire body from an incoming ASGI message."""
-    body = b''
-    more_body = True
-    while more_body:
-        message = await receive()
-        # {'type': 'lifespan.startup'}
-        body += message.get('body', b'')
-        more_body = message.get('more_body', False)
-    return body
-
-
 async def _http_response_start(send, /, headers: dict, status_code: int):
     bytes_headers = [[k.encode(), v.encode()] for k, v in (headers or {}).items()]
     await send({

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from panther import status
 from panther._load_configs import *
-from panther._utils import clean_traceback_message, http_response, read_body
+from panther._utils import clean_traceback_message, http_response
 from panther.configs import config
 from panther.exceptions import APIException
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
@@ -40,7 +40,7 @@ class Panther:
         self.configs = load_configs_file(self._configs)
 
         # Create websocket connections instance
-        self.websocket_connection = WebsocketConnections()
+        config['websocket_connections'] = self.websocket_connections = WebsocketConnections()
 
         # Put Variables In "config" (Careful about the ordering)
         config['secret_key'] = load_secret_key(self.configs)
@@ -109,13 +109,13 @@ class Panther:
         del temp_connection
         connection = endpoint(scope=scope, receive=receive, send=send)
         connection.set_path_variables(path_variables=path_variables)
-        await self.websocket_connection.new_connection(connection=connection)
+        await self.websocket_connections.new_connection(connection=connection)
         await connection.listen()
 
     async def handle_http(self, scope, receive, send):
         from panther.logger import logger
 
-        request = Request(scope=scope)
+        request = Request(scope=scope, receive=receive, send=send)
 
         # Monitoring Middleware
         monitoring_middleware = None
@@ -123,9 +123,8 @@ class Panther:
             monitoring_middleware = MonitoringMiddleware()
             await monitoring_middleware.before(request=request)
 
-        # Read Body & Create Request
-        body = await read_body(receive)
-        request.set_body(body)
+        # Read Request Payload
+        await request.read_body()
 
         # Find Endpoint
         endpoint, found_path = find_endpoint(path=request.path)
