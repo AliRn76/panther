@@ -72,18 +72,18 @@ HTTP_510_NOT_EXTENDED = 510
 HTTP_511_NETWORK_AUTHENTICATION_REQUIRED = 511
 
 
-WS_NORMAL_CLOSURE = 1000
-WS_GOING_AWAY = 1001
-WS_PROTOCOL_ERROR = 1002
-WS_UNSUPPORTED_DATA = 1003
-WS_INVALID_FRAME_PAYLOAD_DATA = 1007
-WS_POLICY_VIOLATION = 1008
-WS_MESSAGE_TOO_BIG = 1009
-WS_MANDATORY_EXT = 1010
-WS_INTERNAL_ERROR = 1011
-WS_SERVICE_RESTART = 1012
-WS_TRY_AGAIN_LATER = 1013
-WS_BAD_GATEWAY = 1014
+WS_1000_NORMAL_CLOSURE = 1000
+WS_1001_GOING_AWAY = 1001
+WS_1002_PROTOCOL_ERROR = 1002
+WS_1003_UNSUPPORTED_DATA = 1003
+WS_1007_INVALID_FRAME_PAYLOAD_DATA = 1007
+WS_1008_POLICY_VIOLATION = 1008
+WS_1009_MESSAGE_TOO_BIG = 1009
+WS_1010_MANDATORY_EXT = 1010
+WS_1011_INTERNAL_ERROR = 1011
+WS_1012_SERVICE_RESTART = 1012
+WS_1013_TRY_AGAIN_LATER = 1013
+WS_1014_BAD_GATEWAY = 1014
 
 # # # # # You can't use these status codes manually
 # WS_RESERVED = 1004
@@ -93,7 +93,8 @@ WS_BAD_GATEWAY = 1014
 # # # # #
 
 
-status_text = {int(x[5:8]): x[9:].replace('_', ' ').title() for x in globals() if not x.startswith('_')}
+status_text = {int(x[5:8]): x[9:].replace('_', ' ').title() for x in globals() if x.startswith('HTTP')}
+status_text.update({int(x[3:7]): x[8:].replace('_', ' ').title() for x in globals() if x.startswith('WS')})
 
 
 def is_informational(status_code: int):
