@@ -1,8 +1,10 @@
 """
 HTTP codes
-See HTTP Status Code Registry:
 https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
 And RFC 2324 - https://tools.ietf.org/html/rfc2324
+
+WEBSOCKET codes
+https://www.iana.org/assignments/websocket/websocket.xhtml
 """
 
 HTTP_100_CONTINUE = 100
@@ -68,6 +70,27 @@ HTTP_507_INSUFFICIENT_STORAGE = 507
 HTTP_508_LOOP_DETECTED = 508
 HTTP_510_NOT_EXTENDED = 510
 HTTP_511_NETWORK_AUTHENTICATION_REQUIRED = 511
+
+
+WS_NORMAL_CLOSURE = 1000
+WS_GOING_AWAY = 1001
+WS_PROTOCOL_ERROR = 1002
+WS_UNSUPPORTED_DATA = 1003
+WS_INVALID_FRAME_PAYLOAD_DATA = 1007
+WS_POLICY_VIOLATION = 1008
+WS_MESSAGE_TOO_BIG = 1009
+WS_MANDATORY_EXT = 1010
+WS_INTERNAL_ERROR = 1011
+WS_SERVICE_RESTART = 1012
+WS_TRY_AGAIN_LATER = 1013
+WS_BAD_GATEWAY = 1014
+
+# # # # # You can't use these status codes manually
+# WS_RESERVED = 1004
+# WS_NO_STATUS_RCVD = 1005
+# WS_ABNORMAL_CLOSURE = 1006
+# WS_TLS_HANDSHAKE = 1015
+# # # # #
 
 
 status_text = {int(x[5:8]): x[9:].replace('_', ' ').title() for x in globals() if not x.startswith('_')}
