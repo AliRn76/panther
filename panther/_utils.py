@@ -1,5 +1,7 @@
 import importlib
+import random
 import re
+import string
 from traceback import TracebackException
 
 import orjson as json
@@ -103,6 +105,10 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
                 logger.error('Unrecognized Pattern')
 
     return data
+
+
+def generate_ws_connection_id() -> str:
+    return ''.join(random.choices(string.ascii_letters, k=10))
 
 
 def is_function_async(func) -> bool:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import orjson as json
 
+from panther._utils import generate_ws_connection_id
 from panther.base_request import BaseRequest
 from panther.configs import config
 from panther.logger import logger
@@ -17,8 +18,15 @@ class WebsocketConnections(Singleton):
         await connection.connect()
         if connection.is_connected:
             self.connections_count += 1
-            self.connections[self.connections_count] = connection
-            connection.set_connection_id(self.connections_count)
+
+            # Generate ConnectionID
+            connection_id = generate_ws_connection_id()
+            while connection_id in self.connections:
+                connection_id = generate_ws_connection_id()
+
+            # Save & Set ConnectionID
+            self.connections[connection_id] = connection
+            connection.set_connection_id(connection_id)
 
     async def remove_connection(self, connection: Websocket):
         self.connections_count -= 1
@@ -35,7 +43,7 @@ class Websocket(BaseRequest):
         await self.accept()
 
     async def accept(self, subprotocol: str = None, headers: dict = None):
-        await self.asgi_send({"type": "websocket.accept", "subprotocol": subprotocol, "headers": headers or {}})
+        await self.asgi_send({'type': 'websocket.accept', 'subprotocol': subprotocol, 'headers': headers or {}})
         self.is_connected = True
 
     async def receive(self, text_data: any = None, bytes_data: bytes = None):
@@ -50,15 +58,15 @@ class Websocket(BaseRequest):
             await self.send_bytes(bytes_data=bytes_data or b'')
 
     async def send_text(self, text_data: str = None):
-        await self.asgi_send({"type": "websocket.send", "text": text_data})
+        await self.asgi_send({'type': 'websocket.send', 'text': text_data})
 
     async def send_bytes(self, bytes_data: bytes = None):
-        await self.asgi_send({"type": "websocket.send", "bytes": bytes_data})
+        await self.asgi_send({'type': 'websocket.send', 'bytes': bytes_data})
 
     async def close(self, code: int = 1000, reason: str = ''):
         config['websocket_connections'].remove_connection(self)
         self.is_connected = False
-        await self.asgi_send({"type": "websocket.close", 'code': code, 'reason': reason})
+        await self.asgi_send({'type': 'websocket.close', 'code': code, 'reason': reason})
 
     async def listen(self):
         while self.is_connected:
@@ -75,19 +83,19 @@ class Websocket(BaseRequest):
                 await self.receive(bytes_data=response['bytes'])
 
     def set_path_variables(self, path_variables: dict):
-        self._path_variables = path_variables
+        self.path_variables = path_variables
 
     @property
     def path_variables(self):
         return getattr(self, 'path_variables', {})
 
+    def set_connection_id(self, connection_id):
+        self.__connection_id = connection_id
+
     @property
     def connection_id(self) -> str:
         connection_id = getattr(self, '__connection_id', None)
         if connection_id is None:
-            logger.error('You should first accept() the connection then get the `connection_id`')
+            logger.error('You should first accept() the connection then use the `self.connection_id`')
         return connection_id
-
-    def set_connection_id(self, connection_id):
-        self.__connection_id = connection_id
 

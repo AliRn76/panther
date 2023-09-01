@@ -22,9 +22,9 @@ class GenericWebsocket(Websocket):
 
     async def disconnect(self):
         """
-        Just a demonstration how you can close a connection
+        Just a demonstration how you can `close()` a connection
         """
-        return await self.close(code=status.WS_1000_NORMAL_CLOSURE, reason='I just want to close it')
+        await self.close(code=status.WS_1000_NORMAL_CLOSURE, reason='I just want to close it')
 
     async def send(self, text_data: any = None, bytes_data: bytes = None):
         """
