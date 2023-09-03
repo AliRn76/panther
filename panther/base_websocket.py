@@ -83,11 +83,11 @@ class Websocket(BaseRequest):
                 await self.receive(bytes_data=response['bytes'])
 
     def set_path_variables(self, path_variables: dict):
-        self.path_variables = path_variables
+        self._path_variables = path_variables
 
     @property
     def path_variables(self):
-        return getattr(self, 'path_variables', {})
+        return getattr(self, '_path_variables', {})
 
     def set_connection_id(self, connection_id):
         self.__connection_id = connection_id

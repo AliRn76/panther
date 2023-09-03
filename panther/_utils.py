@@ -108,7 +108,8 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
 
 
 def generate_ws_connection_id() -> str:
-    return ''.join(random.choices(string.ascii_letters, k=10))
+    return 1  # TODO: For testing ...
+    # return ''.join(random.choices(string.ascii_letters, k=10))
 
 
 def is_function_async(func) -> bool:

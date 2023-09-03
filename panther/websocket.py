@@ -31,7 +31,7 @@ class GenericWebsocket(Websocket):
         We are using this method to send message to the client,
         You may want to override it with your custom scenario. (not recommended)
         """
-        pass
+        return await super().send(text_data=text_data, bytes_data=bytes_data)
 
 
 async def send_message_to_websocket(connection_id: str, data: any):
