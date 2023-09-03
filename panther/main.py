@@ -5,7 +5,7 @@ from pathlib import Path
 
 from panther import status
 from panther._load_configs import *
-from panther._utils import clean_traceback_message, http_response
+from panther._utils import clean_traceback_message, http_response, generate_ws_connection_id
 from panther.configs import config
 from panther.exceptions import APIException
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
@@ -109,6 +109,14 @@ class Panther:
         del temp_connection
         connection = endpoint(scope=scope, receive=receive, send=send)
         connection.set_path_variables(path_variables=path_variables)
+
+        # Generate ConnectionID
+        connection_id = generate_ws_connection_id()
+        while connection_id in self.websocket_connections.connections:
+            connection_id = generate_ws_connection_id()
+
+        # Set ConnectionID
+        connection.set_connection_id(connection_id)
         await self.websocket_connections.new_connection(connection=connection)
         await connection.listen()
 

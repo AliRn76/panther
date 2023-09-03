@@ -19,14 +19,8 @@ class WebsocketConnections(Singleton):
         if connection.is_connected:
             self.connections_count += 1
 
-            # Generate ConnectionID
-            connection_id = generate_ws_connection_id()
-            while connection_id in self.connections:
-                connection_id = generate_ws_connection_id()
-
-            # Save & Set ConnectionID
-            self.connections[connection_id] = connection
-            connection.set_connection_id(connection_id)
+            # Save New ConnectionID
+            self.connections[connection.connection_id] = connection
 
     async def remove_connection(self, connection: Websocket):
         self.connections_count -= 1
@@ -90,11 +84,11 @@ class Websocket(BaseRequest):
         return getattr(self, '_path_variables', {})
 
     def set_connection_id(self, connection_id):
-        self.__connection_id = connection_id
+        self._connection_id = connection_id
 
     @property
     def connection_id(self) -> str:
-        connection_id = getattr(self, '__connection_id', None)
+        connection_id = getattr(self, '_connection_id', None)
         if connection_id is None:
             logger.error('You should first accept() the connection then use the `self.connection_id`')
         return connection_id
