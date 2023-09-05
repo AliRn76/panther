@@ -1,1 +1,1 @@
-gunicorn django_test.wsgi
+gunicorn -k uvicorn.workers.UvicornWorker main:app

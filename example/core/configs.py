@@ -8,9 +8,9 @@ from panther.utils import load_env
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-MONITORING = True
+# MONITORING = True
 
-LOG_QUERIES = True
+# LOG_QUERIES = True
 
 # Load Env Variables
 DB_NAME = env['DB_NAME']
@@ -24,8 +24,8 @@ DB_PASSWORD = env['DB_PASSWORD']
 MIDDLEWARES = [
     # TODO: change middleware
     # Go To https://framework.org/SupportedDatabase For More Options
-    # ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
-    ('panther.middlewares.db.Middleware', {'url': f'mongodb://{DB_HOST}:27017/{DB_NAME}'}),
+    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
+    # ('panther.middlewares.db.Middleware', {'url': f'mongodb://{DB_HOST}:27017/{DB_NAME}'}),
     ('panther.middlewares.redis.Middleware', {'host': '127.0.0.1', 'port': 6379}),
 ]
 """
@@ -51,4 +51,4 @@ USER_MODEL = 'app.models.User'
 
 DEFAULT_CACHE_EXP = timedelta(seconds=10)
 
-THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))
+# THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))
