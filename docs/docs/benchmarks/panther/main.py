@@ -45,7 +45,7 @@ main_url_routing = {'users/<user>/records/<record>': main_api}
 post_fake_url_routing = dict()
 
 for n in range(50):
-    pre_fake_url_routing['users/<int:user>/'] = fake_api
+    pre_fake_url_routing['users/<user>/'] = fake_api
     post_fake_url_routing[f'fake-route-{n}/<part>'] = fake_api
 
 url_routing = pre_fake_url_routing | main_url_routing | post_fake_url_routing

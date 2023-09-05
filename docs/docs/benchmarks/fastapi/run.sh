@@ -1,1 +1,1 @@
-uvicorn main:app --no-access-log
+gunicorn -k uvicorn.workers.UvicornWorker main:app
