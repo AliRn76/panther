@@ -1,2 +1,0 @@
-
-URLs = 'core/urls.py'
