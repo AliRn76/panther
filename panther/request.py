@@ -98,9 +98,8 @@ class Request:
         return self.scope['scheme']
 
     @property
-    def pure_data(self) -> dict:
+    def pure_data(self) -> dict | bytes:
         """Data before validation"""
-        from panther.logger import logger
 
         if self._data is None:
             match (self.headers.content_type or '').split('; boundary='):
@@ -109,8 +108,8 @@ class Request:
                 case ['multipart/form-data', boundary]:
                     self._data = read_multipart_form_data(boundary=boundary, body=self.__body)
                 case _:
-                    logger.error(f'ContentType="{self.headers.content_type}" Is Not Supported.')
-                    self._data = self.__body.decode('utf-8', errors='replace') or {}
+                    # We don't know the `content-type` so just pass the payload to user
+                    self._data = self.__body
         return self._data
 
     @property
