@@ -36,7 +36,7 @@ async def fake_api(*args, **kwargs):
 
 
 # Routing
-pre_fake_urlpatterns = [path('users/<int:user>/', fake_api) for n in range(50)]
+pre_fake_urlpatterns = [path(f'users/<int:user>/{n}', fake_api) for n in range(50)]
 main_urlpatterns = [path('users/<int:user>/records/<int:record>',  main_api)]
 post_fake_urlpatterns = [path(f'fake-route-{n}/<part>', fake_api) for n in range(50)]
 

@@ -12,7 +12,7 @@ def fake_api(*args, **kwargs):
 
 # Pre Routing
 for n in range(50):
-    app.route('users/<user>/')(fake_api)
+    app.route(f'users/<user>/{n}')(fake_api)
 
 
 # Main API
