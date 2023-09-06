@@ -1,3 +1,6 @@
+### 2.4.2
+- Don't log content-type when it's not supported
+
 ### 2.4.1
 - Fix an issue in collect_all_models() in Windows
 
