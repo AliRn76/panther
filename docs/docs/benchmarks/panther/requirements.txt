@@ -1,1 +1,1 @@
-panther==2.4.1
+panther==2.4.2

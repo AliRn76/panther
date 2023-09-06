@@ -1,2 +1,1 @@
-flask==2.2.3
-gunicorn
+flask==2.3.3
