@@ -1,1 +1,1 @@
-sanic main:app --no-access-logs
+gunicorn -k uvicorn.workers.UvicornWorker main:app
