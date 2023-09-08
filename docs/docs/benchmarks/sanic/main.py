@@ -12,7 +12,7 @@ async def fake_api(*args, **kwargs):
 
 # Pre Routing
 for n in range(50):
-    app.route(f'users/<user:int>/{n}')(fake_api)
+    app.route(f'users/<user:int>/{n}', name=f'pre-{n}')(fake_api)
 
 
 # Main API
@@ -38,4 +38,4 @@ async def api(request, user, record):
 
 # Post Routing
 for n in range(50):
-    app.route(f'fake-route-{n}/<part:int>')(fake_api)
+    app.route(f'fake-route-{n}/<part:int>', name=f'post-{n}')(fake_api)
