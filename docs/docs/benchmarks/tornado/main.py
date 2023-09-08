@@ -46,9 +46,8 @@ class MainAPI(RequestHandler):
 
 
 # Routing
-for n in range(50):
-    pre_fake_url_routing = [url(f'users/(.*)/{n}', FakeAPI)]
-    post_fake_url_routing = [url(f'fake-route-{n}/(.*)', FakeAPI)]
+pre_fake_url_routing = [url(f'users/(.*)/{n}', FakeAPI) for n in range(50)]
+post_fake_url_routing = [url(f'fake-route-{n}/(.*)', FakeAPI) for n in range(50)]
 
 main_url_routing = [url('/users/([^/]+)/records/(.+)', MainAPI)]
 app = Application(pre_fake_url_routing + main_url_routing + post_fake_url_routing)
@@ -58,7 +57,7 @@ app = Application(pre_fake_url_routing + main_url_routing + post_fake_url_routin
 if __name__ == '__main__':
     uvloop.install()
     server = HTTPServer(app)
-    server.bind(8000, reuse_port=True)
+    server.bind(address='0.0.0.0', port=8000, reuse_port=True)
     server.start()
     access_log.setLevel('ERROR')
     IOLoop.current().start()
