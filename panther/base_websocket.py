@@ -40,6 +40,14 @@ class Websocket(BaseRequest):
         await self.asgi_send({'type': 'websocket.accept', 'subprotocol': subprotocol, 'headers': headers or {}})
         self.is_connected = True
 
+        # Generate ConnectionID
+        connection_id = generate_ws_connection_id()
+        while connection_id in config['websocket_connections'].connections:
+            connection_id = generate_ws_connection_id()
+
+        # Set ConnectionID
+        self.set_connection_id(connection_id)
+
     async def receive(self, text_data: any = None, bytes_data: bytes = None):
         pass
 
@@ -90,6 +98,6 @@ class Websocket(BaseRequest):
     def connection_id(self) -> str:
         connection_id = getattr(self, '_connection_id', None)
         if connection_id is None:
-            logger.error('You should first accept() the connection then use the `self.connection_id`')
+            logger.error('You should first `self.accept()` the connection then use the `self.connection_id`')
         return connection_id
 

@@ -97,10 +97,10 @@ class Panther:
         temp_connection = Websocket(scope=scope, receive=receive, send=send)
 
         endpoint, found_path = find_endpoint(path=temp_connection.path)
-        path_variables: dict = collect_path_variables(request_path=temp_connection.path, found_path=found_path)
         if endpoint is None:
             # TODO: what is 404 code in ws
             return await temp_connection.close(status.WS_1000_NORMAL_CLOSURE)
+        path_variables: dict = collect_path_variables(request_path=temp_connection.path, found_path=found_path)
 
         if not issubclass(endpoint, GenericWebsocket):
             logger.critical(f'You may have forgotten to inherit from GenericWebsocket on the {endpoint.__name__}()')
@@ -110,13 +110,6 @@ class Panther:
         connection = endpoint(scope=scope, receive=receive, send=send)
         connection.set_path_variables(path_variables=path_variables)
 
-        # Generate ConnectionID
-        connection_id = generate_ws_connection_id()
-        while connection_id in self.websocket_connections.connections:
-            connection_id = generate_ws_connection_id()
-
-        # Set ConnectionID
-        connection.set_connection_id(connection_id)
         await self.websocket_connections.new_connection(connection=connection)
         await connection.listen()
 
