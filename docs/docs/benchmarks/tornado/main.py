@@ -59,5 +59,5 @@ if __name__ == '__main__':
     server = HTTPServer(app)
     server.bind(address='0.0.0.0', port=8000, reuse_port=True)
     server.start()
-    access_log.setLevel('ERROR')
+    access_log.setLevel('CRITICAL')
     IOLoop.current().start()
