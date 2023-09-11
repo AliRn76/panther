@@ -2,16 +2,18 @@ import asyncio
 import sys
 import types
 from pathlib import Path
+from threading import Thread
 
 from panther import status
 from panther._load_configs import *
-from panther._utils import clean_traceback_message, http_response, read_body
+from panther._utils import clean_traceback_message, http_response
 from panther.configs import config
 from panther.exceptions import APIException
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
 from panther.request import Request
 from panther.response import Response
 from panther.routings import collect_path_variables, find_endpoint
+from panther.websocket import Websocket, WebsocketConnections
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
@@ -30,6 +32,8 @@ class Panther:
             self.load_configs()
         except TypeError:
             exit()
+
+        Thread(target=self.websocket_connections, daemon=True, args=(self.ws_redis_connection,)).start()
 
     def load_configs(self) -> None:
         from panther.logger import logger
@@ -50,6 +54,17 @@ class Panther:
         config['authentication'] = load_authentication_class(self.configs)
         config['jwt_config'] = load_jwt_config(self.configs)
         config['models'] = collect_all_models()
+
+        # Create websocket connections instance
+        config['websocket_connections'] = self.websocket_connections = WebsocketConnections()
+        # Websocket Redis Connection
+        for middleware in config['middlewares']:
+            if middleware.__class__.__name__ == 'RedisMiddleware':
+                # TODO: What if user define a middleware with same name?
+                self.ws_redis_connection = middleware.redis_connection_for_ws()
+                break
+        else:
+            self.ws_redis_connection = None
 
         # Load URLs should be the last call in load_configs,
         #   because it will read all files and load them.
@@ -75,16 +90,41 @@ class Panther:
             with ProcessPoolExecutor() as e:
                 e.submit(self.run, scope, receive, send)
         """
+        func = self.handle_http if scope['type'] == 'http' else self.handle_ws
+
         if sys.version_info.minor >= 11:
             async with asyncio.TaskGroup() as tg:
-                tg.create_task(self.run(scope, receive, send))
+                tg.create_task(func(scope, receive, send))
         else:
-            await self.run(scope, receive, send)
+            await func(scope, receive, send)
 
-    async def run(self, scope, receive, send):
+    async def handle_ws(self, scope, receive, send):
+        from panther.logger import logger
+        from panther.websocket import GenericWebsocket
+
+        temp_connection = Websocket(scope=scope, receive=receive, send=send)
+
+        endpoint, found_path = find_endpoint(path=temp_connection.path)
+        if endpoint is None:
+            # TODO: what is 404 code in ws
+            return await temp_connection.close(status.WS_1000_NORMAL_CLOSURE)
+        path_variables: dict = collect_path_variables(request_path=temp_connection.path, found_path=found_path)
+
+        if not issubclass(endpoint, GenericWebsocket):
+            logger.critical(f'You may have forgotten to inherit from GenericWebsocket on the {endpoint.__name__}()')
+            return await temp_connection.close(status.WS_1014_BAD_GATEWAY)
+
+        del temp_connection
+        connection = endpoint(scope=scope, receive=receive, send=send)
+        connection.set_path_variables(path_variables=path_variables)
+
+        await self.websocket_connections.new_connection(connection=connection)
+        await connection.listen()
+
+    async def handle_http(self, scope, receive, send):
         from panther.logger import logger
 
-        request = Request(scope=scope)
+        request = Request(scope=scope, receive=receive, send=send)
 
         # Monitoring Middleware
         monitoring_middleware = None
@@ -92,9 +132,8 @@ class Panther:
             monitoring_middleware = MonitoringMiddleware()
             await monitoring_middleware.before(request=request)
 
-        # Read Body & Create Request
-        body = await read_body(receive)
-        request.set_body(body)
+        # Read Request Payload
+        await request.read_body()
 
         # Find Endpoint
         endpoint, found_path = find_endpoint(path=request.path)

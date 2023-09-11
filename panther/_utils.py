@@ -1,24 +1,15 @@
 import importlib
+import random
 import re
+import string
 from traceback import TracebackException
 
 import orjson as json
 
 from panther import status
+from panther.db.connection import redis
 from panther.file_handler import File
 from panther.logger import logger
-
-
-async def read_body(receive) -> bytes:
-    """Read and return the entire body from an incoming ASGI message."""
-    body = b''
-    more_body = True
-    while more_body:
-        message = await receive()
-        # {'type': 'lifespan.startup'}
-        body += message.get('body', b'')
-        more_body = message.get('more_body', False)
-    return body
 
 
 async def _http_response_start(send, /, headers: dict, status_code: int):
@@ -73,7 +64,7 @@ def import_class(dotted_path: str, /):
 
 
 def read_multipart_form_data(boundary: str, body: bytes) -> dict:
-    """
+    r"""
     ----------------------------449529189836774544725855
     \r\nContent-Disposition: form-data; name="name"\r\n\r\nali\r\n
     ----------------------------449529189836774544725855
@@ -88,7 +79,11 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
     new_line = b'\r\n' if body[-2:] == b'\r\n' else b'\n'
 
     field_pattern = rb'(Content-Disposition: form-data; name=")(.*)("' + 2 * new_line + b')(.*)'
-    file_pattern = rb'(Content-Disposition: form-data; name=")(.*)("; filename=")(.*)("' + new_line + b'Content-Type: )(.*)'
+    file_pattern = (
+            rb'(Content-Disposition: form-data; name=")(.*)("; filename=")(.*)("'
+            + new_line
+            + b'Content-Type: )(.*)'
+    )
 
     data = dict()
     for row in body.split(boundary):
@@ -117,6 +112,10 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
     return data
 
 
+def generate_ws_connection_id() -> str:
+    return ''.join(random.choices(string.ascii_letters, k=10))
+
+
 def is_function_async(func) -> bool:
     """
         sync result is 0 --> False
@@ -135,3 +134,9 @@ def clean_traceback_message(exception) -> str:
         if t.filename.find('site-packages') != -1:
             tb.stack.remove(t)
     return f'{exception}\n' + ''.join(tb.format(chain=False))
+
+
+def publish_to_ws_channel(connection_id: str, data: any):
+    if redis.is_connected:
+        p_data = json.dumps({'connection_id': connection_id, 'type': 'message', 'data': data})
+        redis.publish('websocket_connections', p_data)

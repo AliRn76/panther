@@ -30,6 +30,7 @@ class Config(TypedDict):
     models: list[dict]
     urls: dict
     db_engine: str
+    websocket_connections: any  # type: WebsocketConnections
 
 
 config: Config = {
@@ -46,5 +47,6 @@ config: Config = {
     'jwt_config': None,
     'models': [],
     'urls': {},
-    'db_engine': '',  # TODO: Should we set default db_engine=pantherdb ?
+    'db_engine': '',
+    'websocket_connections': None,
 }

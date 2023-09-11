@@ -1,21 +1,13 @@
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from pantherdb import PantherDB
 from redis import Redis
 
 from panther.configs import config
+from panther.utils import Singleton
 
 if TYPE_CHECKING:
     from pymongo.database import Database
-
-
-class Singleton(object):
-    _instances: ClassVar = {}
-
-    def __new__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__new__(cls, *args, **kwargs)
-        return cls._instances[cls]
 
 
 class DBSession(Singleton):
@@ -60,6 +52,9 @@ class DBSession(Singleton):
 
 
 class RedisConnection(Singleton, Redis):
+    """
+    Redis connection here works for per request things (caching, ...)
+    """
     is_connected: bool = False
 
     def __init__(self, host: str | None = None, port: int | None = None, **kwargs):
