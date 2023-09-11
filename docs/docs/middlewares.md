@@ -47,7 +47,7 @@ We only support 2 database: `PantherDB` & `MongoDB`
   ```
   
 ## Redis Middleware
-- Address of Middleware: `panther.middlewares.redis.Middleware`
+- Address of Middleware: `panther.middlewares.redis.RedisMiddleware`
 - kwargs: 
     ```python
     {'host': '127.0.0.1', 'port': 6379, ...}
@@ -56,7 +56,7 @@ We only support 2 database: `PantherDB` & `MongoDB`
 - Example
   ```python
   MIDDLEWARES = [
-      ('panther.middlewares.redis.Middleware', {'host': '127.0.0.1', 'port': 6379}),
+      ('panther.middlewares.redis.RedisMiddleware', {'host': '127.0.0.1', 'port': 6379}),
   ]
   ```
   
