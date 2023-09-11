@@ -103,7 +103,7 @@ def collect_all_models():
         for f in files:
             # Traverse through each file of directory
             if f == 'models.py':
-                slash = r'\\' if platform.system() == 'Windows' else '/'
+                slash = '\\' if platform.system() == 'Windows' else '/'
 
                 # If the file was "models.py" read it
                 file_path = f'{root}{slash}models.py'

@@ -4,9 +4,9 @@
 > 
 > <b>Required:</b> `True`
 
-- `URLs` should point to the root of your `urls` file,
-and in that file you should have a `dict` name `urls`
-- `key` of urls dict is `path` & value is `endpoint` or another `dict`
+- `URLs` should point to your root `urls` with dotted address (`path.module.url_dict`),
+and it should be `dict`.
+- `key` of url_routing dict is `path` & value is `endpoint` or another `dict`
 
 - #### Path Variables are handled like below:
 
@@ -19,13 +19,13 @@ and in that file you should have a `dict` name `urls`
 
 - core/configs.py
     ```python
-    `URLs = 'configs/urls.py'`
+    `URLs = 'core.urls.url_routing`
     ```
 - core/urls.py
     ```python
     from app.urls import app_urls
 
-    urls = {
+    url_routing = {
         'user/': app_urls,
     }
     ```

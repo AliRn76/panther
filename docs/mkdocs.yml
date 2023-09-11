@@ -39,6 +39,7 @@ nav:
   - URLs: 'urls.md'
   - Throttling: 'throttling.md'
   - Caching: 'caching.md'
+  - Single-File: 'single_file.md'
   - Benchmarks: 'benchmarks.md'
   - Release Notes: 'release_notes.md'
   - TODOs: 'todos.md'

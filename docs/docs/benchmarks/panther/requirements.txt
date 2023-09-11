@@ -1,2 +1,0 @@
-panther==2.1.0
-uvloop==0.17.0
