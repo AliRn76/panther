@@ -52,6 +52,9 @@ class DBSession(Singleton):
 
 
 class RedisConnection(Singleton, Redis):
+    """
+    Redis connection here works for per request things (caching, ...)
+    """
     is_connected: bool = False
 
     def __init__(self, host: str | None = None, port: int | None = None, **kwargs):

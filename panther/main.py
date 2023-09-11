@@ -2,10 +2,11 @@ import asyncio
 import sys
 import types
 from pathlib import Path
+from threading import Thread
 
 from panther import status
 from panther._load_configs import *
-from panther._utils import clean_traceback_message, http_response, generate_ws_connection_id
+from panther._utils import clean_traceback_message, http_response
 from panther.configs import config
 from panther.exceptions import APIException
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
@@ -32,15 +33,14 @@ class Panther:
         except TypeError:
             exit()
 
+        Thread(target=self.websocket_connections, daemon=True, args=(self.ws_redis_connection,)).start()
+
     def load_configs(self) -> None:
         from panther.logger import logger
         logger.debug(f'Base directory: {config["base_dir"]}')
 
         # Check & Read The Configs File
         self.configs = load_configs_file(self._configs)
-
-        # Create websocket connections instance
-        config['websocket_connections'] = self.websocket_connections = WebsocketConnections()
 
         # Put Variables In "config" (Careful about the ordering)
         config['secret_key'] = load_secret_key(self.configs)
@@ -54,6 +54,17 @@ class Panther:
         config['authentication'] = load_authentication_class(self.configs)
         config['jwt_config'] = load_jwt_config(self.configs)
         config['models'] = collect_all_models()
+
+        # Create websocket connections instance
+        config['websocket_connections'] = self.websocket_connections = WebsocketConnections()
+        # Websocket Redis Connection
+        for middleware in config['middlewares']:
+            if middleware.__class__.__name__ == 'RedisMiddleware':
+                # TODO: What if user define a middleware with same name?
+                self.ws_redis_connection = middleware.redis_connection_for_ws()
+                break
+        else:
+            self.ws_redis_connection = None
 
         # Load URLs should be the last call in load_configs,
         #   because it will read all files and load them.
@@ -79,10 +90,7 @@ class Panther:
             with ProcessPoolExecutor() as e:
                 e.submit(self.run, scope, receive, send)
         """
-        if scope['type'] == 'http':
-            func = self.handle_http
-        else:
-            func = self.handle_ws
+        func = self.handle_http if scope['type'] == 'http' else self.handle_ws
 
         if sys.version_info.minor >= 11:
             async with asyncio.TaskGroup() as tg:

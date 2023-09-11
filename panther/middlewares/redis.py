@@ -1,3 +1,5 @@
+from redis import Redis
+
 from panther.db.connection import RedisConnection
 from panther.logger import logger
 from panther.middlewares.base import BaseMiddleware
@@ -5,7 +7,7 @@ from panther.request import Request
 from panther.response import Response
 
 
-class Middleware(BaseMiddleware):
+class RedisMiddleware(BaseMiddleware):
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
@@ -31,3 +33,6 @@ class Middleware(BaseMiddleware):
     async def after(self, response: Response) -> Response:
         self.redis.close()
         return response
+
+    def redis_connection_for_ws(self) -> Redis:
+        return Redis(**self.kwargs)

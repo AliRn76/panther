@@ -85,13 +85,14 @@ WS_1012_SERVICE_RESTART = 1012
 WS_1013_TRY_AGAIN_LATER = 1013
 WS_1014_BAD_GATEWAY = 1014
 
-# # # # # You can't use these status codes manually
-# WS_RESERVED = 1004
-# WS_NO_STATUS_RCVD = 1005
-# WS_ABNORMAL_CLOSURE = 1006
-# WS_TLS_HANDSHAKE = 1015
-# # # # #
+"""
+You can't use these status codes manually:
 
+WS_RESERVED = 1004
+WS_NO_STATUS_RCVD = 1005
+WS_ABNORMAL_CLOSURE = 1006
+WS_TLS_HANDSHAKE = 1015
+"""
 
 status_text = {int(x[5:8]): x[9:].replace('_', ' ').title() for x in globals() if x.startswith('HTTP')}
 status_text.update({int(x[3:7]): x[8:].replace('_', ' ').title() for x in globals() if x.startswith('WS')})

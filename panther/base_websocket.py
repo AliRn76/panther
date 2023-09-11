@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import asyncio
+from typing import TYPE_CHECKING
+
 import orjson as json
 
 from panther._utils import generate_ws_connection_id
@@ -8,11 +11,42 @@ from panther.configs import config
 from panther.logger import logger
 from panther.utils import Singleton
 
+if TYPE_CHECKING:
+    from redis import Redis
+
 
 class WebsocketConnections(Singleton):
     def __init__(self):
         self.connections = dict()
         self.connections_count = 0
+
+    def __call__(self, r: Redis | None):
+        if r:
+            subscriber = r.pubsub()
+            subscriber.subscribe('websocket_connections')
+            logger.debug("Subscribing: 'websocket_connections'")
+            for channel_data in subscriber.listen():
+                logger.debug(f'{channel_data=}')
+                match channel_data['type']:
+                    case 'subscribe':
+                        continue
+
+                    case 'message':
+                        data = json.loads(channel_data['data'].decode())
+                        if (
+                                isinstance(data, dict)
+                                and 'connection_id' in data
+                                and (message := data.get('data'))
+                                and (connection := self.connections.get(connection_id := data['connection_id']))
+                        ):
+                            logger.debug(f'Sending Message to {connection_id}')
+                            if isinstance(message, bytes):
+                                asyncio.run(connection.send(bytes_data=message))
+                            else:
+                                asyncio.run(connection.send(text_data=message))
+
+                    case _:
+                        logger.debug(f'Unknown  Channel Type: {channel_data["type"]}')
 
     async def new_connection(self, connection: Websocket):
         await connection.connect()

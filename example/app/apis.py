@@ -3,8 +3,8 @@ from datetime import timedelta
 from app.models import User
 from app.serializers import FileSerializer, UserInputSerializer, UserOutputSerializer, UserUpdateSerializer
 from core.permissions import UserPermission
-from panther.websocket import send_message_to_websocket
 
+from panther import status
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
 from panther.db.connection import redis
@@ -12,6 +12,7 @@ from panther.logger import logger
 from panther.request import Request
 from panther.response import HTMLResponse, Response
 from panther.throttling import Throttling
+from panther.websocket import send_message_to_websocket
 
 
 class ReturnNone(GenericAPI):
@@ -33,7 +34,6 @@ async def return_dict():
 
 @API()
 async def return_list():
-    await send_message_to_websocket(connection_id=1, data='Hello From API')
     return [1, 2, 3]
 
 
@@ -197,3 +197,9 @@ class HTMLAPI(GenericAPI):
     </body>
 </html>"""
         return HTMLResponse(data=html_data)
+
+
+@API()
+async def send_message_to_websocket_api(connection_id: str):
+    await send_message_to_websocket(connection_id=connection_id, data='Hello From API')
+    return Response(status_code=status.HTTP_202_ACCEPTED)

@@ -33,4 +33,5 @@ urls = {
     'html-response/': HTMLAPI,
     '': single_user,
     'ws/': UserWebsocket,
+    'send/<connection_id>/': send_message_to_websocket_api,
 }

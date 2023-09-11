@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from panther import status
+from panther._utils import publish_to_ws_channel
 from panther.base_websocket import Websocket, WebsocketConnections
 from panther.configs import config
+from panther.db.connection import redis
 
 
 class GenericWebsocket(Websocket):
@@ -18,7 +20,6 @@ class GenericWebsocket(Websocket):
         Receive `text_data` or `bytes_data` from the connection
         You may want to use json.loads() for the text_data
         """
-        pass
 
     async def disconnect(self):
         """
@@ -35,9 +36,12 @@ class GenericWebsocket(Websocket):
 
 
 async def send_message_to_websocket(connection_id: str, data: any):
-    websocket_connections: WebsocketConnections = config['websocket_connections']
-    if connection := websocket_connections.connections.get(connection_id):
-        if isinstance(data, bytes):
-            await connection.send(bytes_data=data)
-        else:
-            await connection.send(text_data=data)
+    if redis.is_connected:
+        publish_to_ws_channel(connection_id=connection_id, data=data)
+    else:
+        websocket_connections: WebsocketConnections = config['websocket_connections']
+        if connection := websocket_connections.connections.get(connection_id):
+            if isinstance(data, bytes):
+                await connection.send(bytes_data=data)
+            else:
+                await connection.send(text_data=data)

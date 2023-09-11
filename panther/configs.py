@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
-from typing import TypedDict, Callable
+from typing import TypedDict
 
 from pydantic._internal._model_construction import ModelMetaclass
 
