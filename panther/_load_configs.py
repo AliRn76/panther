@@ -134,7 +134,10 @@ def collect_all_models():
     return collected_models
 
 
-def load_urls(configs: dict, /) -> dict:
+def load_urls(configs: dict, /, urls: dict | None) -> dict:
+    if isinstance(urls, dict):
+        return urls
+
     try:
         urls = import_class(configs.get('URLs'))
     except ModuleNotFoundError as e:
