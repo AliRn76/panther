@@ -64,12 +64,15 @@ async def return_response_tuple():
 
 @API(input_model=UserInputSerializer)
 async def res_request_data(request: Request):
-    return Response(data=request.data)
+    print('ok')
+    print(f'{request.validated_data=}')
+    print(f'{request.data=}')
+    return Response(data=request.validated_data)
 
 
 @API(input_model=UserInputSerializer, output_model=UserOutputSerializer)
 async def res_request_data_with_output_model(request: Request):
-    return Response(data=request.data)
+    return Response(data=request.validated_data)
 
 
 @API(input_model=UserInputSerializer)
@@ -104,7 +107,7 @@ async def rate_limit():
 @API(input_model=UserUpdateSerializer)
 async def patch_user(request: Request):
     _, user = User.find_or_insert(username='Ali', password='1', age=12)
-    user.update(**request.data.model_dump())
+    user.update(**request.validated_data.model_dump())
     return Response(data=user)
 
 
@@ -113,7 +116,7 @@ class PatchUser(GenericAPI):
 
     def patch(self, request: Request, *args, **kwargs):
         _, user = User.find_or_insert(username='Ali', password='1', age=12)
-        user.update(**request.data.model_dump())
+        user.update(**request.validated_data.model_dump())
         return Response(data=user)
 
 
@@ -182,7 +185,7 @@ class FileAPI(GenericAPI):
     input_model = FileSerializer
 
     def post(self, request: Request, *args, **kwargs):
-        body: FileSerializer = request.data
+        body: FileSerializer = request.validated_data
         with open(body.image.file_name, 'wb') as file:
             file.write(body.image.file)
         return {'detail': 'ok'}

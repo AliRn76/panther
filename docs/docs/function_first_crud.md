@@ -122,7 +122,7 @@ Now we are going to create a book on `post` request, We need to:
     
     @API(input_model=BookSerializer)
     async def book_api(request: Request):
-        body: BookSerializer = request.data
+        body: BookSerializer = request.validated_data
         ...
     ```
 
@@ -138,7 +138,7 @@ Now we are going to create a book on `post` request, We need to:
     
     @API(input_model=BookSerializer)
     async def book_api(request: Request):
-        body: BookSerializer = request.data
+        body: BookSerializer = request.validated_data
     
         Book.insert_one(
             name=body.name,
@@ -161,7 +161,7 @@ Now we are going to create a book on `post` request, We need to:
     @API(input_model=BookSerializer)
     async def book_api(request: Request):
         if request.method == 'POST':
-            body: BookSerializer = request.data
+            body: BookSerializer = request.validated_data
     
             Book.create(
                 name=body.name,
@@ -185,7 +185,7 @@ Now we are going to create a book on `post` request, We need to:
     @API(input_model=BookSerializer)
     async def book_api(request: Request):
         if request.method == 'POST':
-            body: BookSerializer = request.data
+            body: BookSerializer = request.validated_data
     
             book: Book = Book.create(
                 name=body.name,
@@ -414,7 +414,7 @@ For `retrieve`, `update` and `delete` API, we are going to
        
         @API(input_model=BookSerializer)
         async def single_book_api(request: Request, book_id: int):
-            body: BookSerializer = request.data
+            body: BookSerializer = request.validated_data
             if request.method == 'GET':
                 ...
             elif request.method == 'PUT':
@@ -444,7 +444,7 @@ For `retrieve`, `update` and `delete` API, we are going to
             if request.method == 'GET':
                 ...
             elif request.method == 'PUT':
-                is_updated: bool = Book.update_one({'id': book_id}, request.data.dict())
+                is_updated: bool = Book.update_one({'id': book_id}, request.validated_data.model_dump())
                 data = {'is_updated': is_updated}
                 return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
         ```
@@ -466,7 +466,7 @@ For `retrieve`, `update` and `delete` API, we are going to
             if request.method == 'GET':
                 ...
             elif request.method == 'PUT':
-                updated_count: int = Book.update_many({'id': book_id}, request.data.dict())
+                updated_count: int = Book.update_many({'id': book_id}, request.validated_data.model_dump())
                 data = {'updated_count': updated_count}
                 return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
         ```

@@ -18,7 +18,7 @@ CachedResponse = namedtuple('Cached', ['data', 'status_code'])
 def cache_key(request: Request, /):
     client = request.user and request.user.id or request.client.ip
     query_params_hash = generate_hash_value_from_string(request.scope['query_string'].decode('utf-8'))
-    return f'{client}-{request.path}{query_params_hash}-{request.data}'
+    return f'{client}-{request.path}{query_params_hash}-{request.validated_data}'
 
 
 def get_cached_response_data(*, request: Request) -> CachedResponse | None:

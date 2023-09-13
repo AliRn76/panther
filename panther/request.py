@@ -12,7 +12,7 @@ class Request(BaseRequest):
         return self.scope['method']
 
     @property
-    def pure_data(self) -> dict | bytes:
+    def data(self) -> dict | bytes:
         """Data before validation"""
 
         if self._data is None:
@@ -27,7 +27,7 @@ class Request(BaseRequest):
         return self._data
 
     @property
-    def data(self):
+    def validated_data(self):
         """
         Return The Validated Data
         It has been set on API.validate_input() while request is happening.

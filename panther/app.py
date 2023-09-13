@@ -135,7 +135,7 @@ class API:
     @classmethod
     def validate_input(cls, model, request: Request):
         try:
-            return model(**request.pure_data)
+            return model(**request.data)
         except ValidationError as validation_error:
             error = {'.'.join(loc for loc in e['loc']): e['msg'] for e in validation_error.errors()}
             raise APIException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
