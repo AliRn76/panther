@@ -18,8 +18,8 @@ class Response:
         :param status_code: should be int
         """
 
-        self.data = self.clean_data_type(data)
-        self.check_status_code(status_code)
+        self.data = self._clean_data_type(data)
+        self._check_status_code(status_code)
         self.status_code = status_code
         self._headers = headers
 
@@ -38,13 +38,13 @@ class Response:
         } | (self._headers or {})
 
     @classmethod
-    def check_status_code(cls, status_code: any):
+    def _check_status_code(cls, status_code: any):
         if not isinstance(status_code, int):
             error = f'Response "status_code" Should Be "int". ("{status_code}" is {type(status_code)})'
             raise TypeError(error)
 
     @classmethod
-    def clean_data_type(cls, data: any):
+    def _clean_data_type(cls, data: any):
         """
         Make sure the response data is only ResponseDataTypes or Iterable of ResponseDataTypes
         """
@@ -53,10 +53,10 @@ class Response:
             return data.model_dump()
 
         elif isinstance(data, IterableDataTypes):
-            return [cls.clean_data_type(d) for d in data]
+            return [cls._clean_data_type(d) for d in data]
 
         elif isinstance(data, dict):
-            return {key: cls.clean_data_type(value) for key, value in data.items()}
+            return {key: cls._clean_data_type(value) for key, value in data.items()}
 
         elif isinstance(data, (int | str | bool | bytes | NoneType)):
             return data
@@ -64,22 +64,19 @@ class Response:
         else:
             raise TypeError(f'Invalid Response Type: {type(data)}')
 
-    def clean_data_with_output_model(self, output_model: ModelMetaclass | None):
-        # None or Unchanged
-        if self.data is None or output_model is None:
-            return self.data
-
-        self.data = self.serialize_with_output_model(self.data, output_model=output_model)
+    def _clean_data_with_output_model(self, output_model: ModelMetaclass | None):
+        if self.data and output_model:
+            self.data = self._serialize_with_output_model(self.data, output_model=output_model)
 
     @classmethod
-    def serialize_with_output_model(cls, data: any, /, output_model: ModelMetaclass):
+    def _serialize_with_output_model(cls, data: any, /, output_model: ModelMetaclass):
         # Dict
         if isinstance(data, dict):
             return output_model(**data).model_dump()
 
         # Iterable
         if isinstance(data, IterableDataTypes):
-            return [cls.serialize_with_output_model(d, output_model=output_model) for d in data]
+            return [cls._serialize_with_output_model(d, output_model=output_model) for d in data]
 
         # Str | Bool | Bytes
         raise TypeError(

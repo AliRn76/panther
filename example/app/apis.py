@@ -16,10 +16,8 @@ from panther.websocket import send_message_to_websocket
 
 
 class ReturnNone(GenericAPI):
-    cache = True
-
     async def get(self, request: Request):
-        return {'detail': 'ok'}
+        return None
 
 
 @API()

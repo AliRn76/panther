@@ -51,7 +51,7 @@ class RequestClient:
             send=self.send
         )
         return Response(
-            data=self.response.get('body'),
+            data=json.loads(self.response.get('body', b'null')),
             status_code=self.header['status'],
             headers=self.header['headers']
         )

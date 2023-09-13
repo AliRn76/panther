@@ -5,26 +5,22 @@ from unittest import TestCase
 
 class Test1(TestCase):
 
-    def test1(self):
-        client = APIClient(app=app)
-        x = client.get('user/none-class/')
-        print(f'{x.status_code=}')
-        print(f'{x.data=}')
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.client = APIClient(app=app)
 
-        assert True
+    def test_none_class(self):
+        res = self.client.get('user/none-class/')
+        assert res.status_code == 200
+        assert res.data is None
 
-    def test2(self):
-        client = APIClient(app=app)
-        x = client.get('user/none-class/')
-        print(f'{x.status_code=}')
-        print(f'{x.data=}')
+    def test_none(self):
+        res = self.client.get('user/none/')
+        assert res.status_code == 200
+        assert res.data is None
 
-        assert True
-
-    def test3(self):
-        client = APIClient(app=app)
-        x = client.get('user/none-class/')
-        print(f'{x.status_code=}')
-        print(f'{x.data=}')
-
-        assert True
+    def test_dict(self):
+        res = self.client.get('user/dict/')
+        assert res.status_code == 200
+        breakpoint()
+        assert res.data == {'detail': 'ok'}
