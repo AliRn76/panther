@@ -18,7 +18,7 @@ CachedResponse = namedtuple('Cached', ['data', 'status_code'])
 def cache_key(request: Request, /):
     client = request.user and request.user.id or request.client.ip
     query_params_hash = generate_hash_value_from_string(request.scope['query_string'].decode('utf-8'))
-    return f'{client}-{request.path}{query_params_hash}-{request.data}'
+    return f'{client}-{request.path}{query_params_hash}-{request.validated_data}'
 
 
 def get_cached_response_data(*, request: Request) -> CachedResponse | None:
@@ -50,7 +50,7 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
         Cache The Data In Memory
     """
     key = cache_key(request)
-    cache_data: tuple[ResponseDataTypes, int] = (response._data, response.status_code)  # noqa: SLF001
+    cache_data: tuple[ResponseDataTypes, int] = (response.data, response.status_code)
 
     if redis.is_connected:  # noqa: Unresolved References
         cache_exp_time = cache_exp_time or config['default_cache_exp']

@@ -1,7 +1,7 @@
 import functools
 from datetime import datetime, timedelta
 
-from orjson.orjson import JSONDecodeError
+from orjson import JSONDecodeError
 from pydantic import ValidationError
 
 from panther import status
@@ -86,8 +86,7 @@ class API:
             # 9. Clean Output
             if not isinstance(response, Response):
                 response = Response(data=response)
-            data = self.serialize_response_data(data=response._data)  # noqa: SLF001
-            response.set_data(data)
+            response._clean_data_with_output_model(output_model=self.output_model)
 
             # 10. Set New Response To Cache
             if self.cache and self.request.method == 'GET':
@@ -135,37 +134,14 @@ class API:
     @classmethod
     def validate_input(cls, model, request: Request):
         try:
-            return model(**request.pure_data)
+            if isinstance(request.data, bytes):
+                raise APIException(detail='Content-Type is not valid', status_code=status.HTTP_400_BAD_REQUEST)
+            return model(**request.data)
         except ValidationError as validation_error:
             error = {'.'.join(loc for loc in e['loc']): e['msg'] for e in validation_error.errors()}
-            raise APIException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+            raise APIException(detail=error, status_code=status.HTTP_400_BAD_REQUEST)
         except JSONDecodeError:
             raise JsonDecodeException
-
-    def serialize_response_data(self, data):
-        """
-        We serializer the response here instead of response.py file
-        because we don't have access to the "output_model" there.
-        """
-
-        # None or Unchanged
-        if data is None or self.output_model is None:
-            return data
-
-        return self.serialize_with_output_model(data)
-
-    def serialize_with_output_model(self, data: any):
-        # Dict
-        if isinstance(data, dict):
-            return self.output_model(**data).model_dump()
-
-        # Iterable
-        if isinstance(data, IterableDataTypes):
-            return [self.serialize_with_output_model(d) for d in data]
-
-        # Str | Bool
-        raise TypeError('Type of Response data is not match with output_model. '
-                        '\n*hint: You may want to pass None to output_model')
 
     @staticmethod
     def validate_path_variables(func, request_path_variables: dict):

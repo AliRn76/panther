@@ -31,7 +31,7 @@ class BaseRequest:
         self.scope = scope
         self.asgi_send = send
         self.asgi_receive = receive
-        self._data = None
+        self._data = ...
         self._validated_data = None
         self._user = None
         self._headers: Headers | None = None
@@ -87,25 +87,6 @@ class BaseRequest:
     @property
     def scheme(self) -> str:
         return self.scope['scheme']
-
-    @property
-    def pure_data(self) -> dict:
-        """Data before validation"""
-        from panther.logger import logger
-
-        if self._data is None:
-            match (self.headers.content_type or '').split('; boundary='):
-                case ['application/json']:
-                    self._data = json.loads(self.__body)
-                case ['multipart/form-data', boundary]:
-                    self._data = read_multipart_form_data(boundary=boundary, body=self.__body)
-                case _:
-                    logger.error(f'ContentType="{self.headers.content_type}" Is Not Supported.')
-                    self._data = self.__body.decode('utf-8', errors='replace') or {}
-        return self._data
-
-    def set_body(self, body: bytes):
-        self.__body = body
 
     @property
     def user(self):

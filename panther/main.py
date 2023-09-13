@@ -20,10 +20,11 @@ from panther.websocket import Websocket, WebsocketConnections
 
 class Panther:
 
-    def __init__(self, name, configs=None):
+    def __init__(self, name, configs=None, urls: dict | None = None):
         from panther.logger import logger
 
         self._configs = configs
+        self._urls = urls
         config['base_dir'] = Path(name).resolve().parent
         if sys.version_info.minor < 11:
             logger.warning('Use Python Version 3.11+ For Better Performance.')
@@ -68,7 +69,7 @@ class Panther:
 
         # Load URLs should be the last call in load_configs,
         #   because it will read all files and load them.
-        config['urls'] = load_urls(self.configs)
+        config['urls'] = load_urls(self.configs, urls=self._urls)
         config['urls']['_panel'] = load_panel_urls()
 
         if config['monitoring']:

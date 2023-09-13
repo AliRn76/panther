@@ -2,8 +2,9 @@ from types import NoneType
 
 import orjson as json
 from pydantic import BaseModel as PydanticBaseModel
+from pydantic._internal._model_construction import ModelMetaclass
 
-ResponseDataTypes = list | tuple | set | dict | int | str | bool | NoneType
+ResponseDataTypes = list | tuple | set | dict | int | str | bool | bytes | NoneType | ModelMetaclass
 IterableDataTypes = list | tuple | set
 
 
@@ -12,26 +13,22 @@ class Response:
 
     def __init__(self, data: ResponseDataTypes = None, headers: dict = None, status_code: int = 200):
         """
-        :param data: should be int | dict | list | tuple | set | str | bool | NoneType
+        :param data: should be int | dict | list | tuple | set | str | bool | bytes | NoneType
             or instance of Pydantic.BaseModel
         :param status_code: should be int
         """
 
-        # TODO: Handle bytes data
-        data = self.clean_data_type(data)
-        self.check_status_code(status_code)
-
-        self._status_code = status_code
-        self._data = data
+        self.data = self._clean_data_type(data)
+        self._check_status_code(status_code)
+        self.status_code = status_code
         self._headers = headers
 
     @property
-    def status_code(self) -> int:
-        return self._status_code
-
-    @property
     def body(self) -> bytes:
-        return json.dumps(self._data)
+        if isinstance(self.data, bytes):
+            return self.data
+        else:
+            return json.dumps(self.data)
 
     @property
     def headers(self) -> dict:
@@ -40,17 +37,14 @@ class Response:
             'access-control-allow-origin': '*',
         } | (self._headers or {})
 
-    def set_data(self, data) -> None:
-        self._data = data
-
     @classmethod
-    def check_status_code(cls, status_code: any):
+    def _check_status_code(cls, status_code: any):
         if not isinstance(status_code, int):
-            error = f'Response "status_code" Should Be "int". ("{status_code}" -> {type(status_code)})'
+            error = f'Response "status_code" Should Be "int". ("{status_code}" is {type(status_code)})'
             raise TypeError(error)
 
     @classmethod
-    def clean_data_type(cls, data: any):
+    def _clean_data_type(cls, data: any):
         """
         Make sure the response data is only ResponseDataTypes or Iterable of ResponseDataTypes
         """
@@ -59,16 +53,36 @@ class Response:
             return data.model_dump()
 
         elif isinstance(data, IterableDataTypes):
-            return [cls.clean_data_type(d) for d in data]
+            return [cls._clean_data_type(d) for d in data]
 
         elif isinstance(data, dict):
-            return {key: cls.clean_data_type(value) for key, value in data.items()}
+            return {key: cls._clean_data_type(value) for key, value in data.items()}
 
-        elif isinstance(data, (int | str | bool | NoneType)):
+        elif isinstance(data, (int | str | bool | bytes | NoneType)):
             return data
 
         else:
             raise TypeError(f'Invalid Response Type: {type(data)}')
+
+    def _clean_data_with_output_model(self, output_model: ModelMetaclass | None):
+        if self.data and output_model:
+            self.data = self._serialize_with_output_model(self.data, output_model=output_model)
+
+    @classmethod
+    def _serialize_with_output_model(cls, data: any, /, output_model: ModelMetaclass):
+        # Dict
+        if isinstance(data, dict):
+            return output_model(**data).model_dump()
+
+        # Iterable
+        if isinstance(data, IterableDataTypes):
+            return [cls._serialize_with_output_model(d, output_model=output_model) for d in data]
+
+        # Str | Bool | Bytes
+        raise TypeError(
+            'Type of Response data is not match with `output_model`.'
+            '\n*hint: You may want to remove `output_model`'
+        )
 
 
 class HTMLResponse(Response):
@@ -76,7 +90,7 @@ class HTMLResponse(Response):
 
     @property
     def body(self) -> bytes:
-        return self._data.encode()
+        return self.data.encode()
 
 
 class PlainTextResponse(Response):
@@ -84,4 +98,4 @@ class PlainTextResponse(Response):
 
     @property
     def body(self) -> bytes:
-        return self._data.encode()
+        return self.data.encode()
