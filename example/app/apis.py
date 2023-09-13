@@ -65,9 +65,9 @@ async def return_response_tuple():
 @API(input_model=UserInputSerializer)
 async def res_request_data(request: Request):
     print('ok')
-    print(f'{request.validated_data=}')
     print(f'{request.data=}')
-    return Response(data=request.validated_data)
+    print(f'{request.validated_data=}')
+    return Response(data=request.validated_data, status_code=204)
 
 
 @API(input_model=UserInputSerializer, output_model=UserOutputSerializer)

@@ -1,7 +1,7 @@
 import functools
 from datetime import datetime, timedelta
 
-from orjson.orjson import JSONDecodeError
+from orjson import JSONDecodeError
 from pydantic import ValidationError
 
 from panther import status
@@ -134,10 +134,12 @@ class API:
     @classmethod
     def validate_input(cls, model, request: Request):
         try:
+            if isinstance(request.data, bytes):
+                raise APIException(detail='Content-Type is not valid', status_code=status.HTTP_400_BAD_REQUEST)
             return model(**request.data)
         except ValidationError as validation_error:
             error = {'.'.join(loc for loc in e['loc']): e['msg'] for e in validation_error.errors()}
-            raise APIException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+            raise APIException(detail=error, status_code=status.HTTP_400_BAD_REQUEST)
         except JSONDecodeError:
             raise JsonDecodeException
 
