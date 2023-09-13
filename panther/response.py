@@ -12,12 +12,11 @@ class Response:
 
     def __init__(self, data: ResponseDataTypes = None, headers: dict = None, status_code: int = 200):
         """
-        :param data: should be int | dict | list | tuple | set | str | bool | NoneType
+        :param data: should be int | dict | list | tuple | set | str | bool | bytes | NoneType
             or instance of Pydantic.BaseModel
         :param status_code: should be int
         """
 
-        # TODO: Handle bytes data
         data = self.clean_data_type(data)
         self.check_status_code(status_code)
 
@@ -64,7 +63,7 @@ class Response:
         elif isinstance(data, dict):
             return {key: cls.clean_data_type(value) for key, value in data.items()}
 
-        elif isinstance(data, (int | str | bool | NoneType)):
+        elif isinstance(data, (int | str | bool | bytes | NoneType)):
             return data
 
         else:
