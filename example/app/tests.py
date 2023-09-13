@@ -9,7 +9,7 @@ class Test1(TestCase):
         client = APIClient(app=app)
         x = client.get('user/none-class/')
         print(f'{x.status_code=}')
-        print(f'{x._data=}')
+        print(f'{x.data=}')
 
         assert True
 
@@ -17,7 +17,7 @@ class Test1(TestCase):
         client = APIClient(app=app)
         x = client.get('user/none-class/')
         print(f'{x.status_code=}')
-        print(f'{x._data=}')
+        print(f'{x.data=}')
 
         assert True
 
@@ -25,6 +25,6 @@ class Test1(TestCase):
         client = APIClient(app=app)
         x = client.get('user/none-class/')
         print(f'{x.status_code=}')
-        print(f'{x._data=}')
+        print(f'{x.data=}')
 
         assert True
