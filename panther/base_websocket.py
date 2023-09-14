@@ -49,7 +49,7 @@ class WebsocketConnections(Singleton):
                         logger.debug(f'Unknown  Channel Type: {channel_data["type"]}')
 
     async def new_connection(self, connection: Websocket):
-        await connection.connect()
+        await connection.connect(**connection.path_variables)
         if connection.is_connected:
             self.connections_count += 1
 
@@ -64,7 +64,7 @@ class WebsocketConnections(Singleton):
 class Websocket(BaseRequest):
     is_connected: bool = False
 
-    async def connect(self):
+    async def connect(self, **kwargs):
         """
         Check your conditions then self.accept() the connection
         """

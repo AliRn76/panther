@@ -2,7 +2,8 @@ from panther.websocket import GenericWebsocket
 
 
 class UserWebsocket(GenericWebsocket):
-    async def connect(self):
+    async def connect(self, user_id: int):
+        print(f'{user_id=}')
         await self.accept()
         print(f'{self.connection_id=}')
 

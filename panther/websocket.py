@@ -9,7 +9,7 @@ from panther.db.connection import redis
 
 class GenericWebsocket(Websocket):
 
-    async def connect(self):
+    async def connect(self, **kwargs):
         """
         Check your conditions then `accept()` the connection
         """
