@@ -3,7 +3,7 @@ from panther.test import APIClient
 from unittest import TestCase
 
 
-class Test(TestCase):
+class TestSimpleResponses(TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:

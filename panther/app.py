@@ -1,5 +1,6 @@
 import functools
 from datetime import datetime, timedelta
+from typing import Literal
 
 from orjson import JSONDecodeError
 from pydantic import ValidationError
@@ -36,6 +37,7 @@ class API:
             throttling: Throttling = None,
             cache: bool = False,
             cache_exp_time: timedelta | int | None = None,
+            methods: list[Literal["GET", "POST", "PUT", "PATCH", "DELETE"]] = None
     ):
         self.input_model = input_model
         self.output_model = output_model
@@ -44,6 +46,7 @@ class API:
         self.throttling = throttling
         self.cache = cache
         self.cache_exp_time = cache_exp_time
+        self.methods = methods
         self.request: Request | None = None
 
     def __call__(self, func):
@@ -51,48 +54,52 @@ class API:
         async def wrapper(request: Request, **path_variables):
             self.request: Request = request  # noqa: Non-self attribute could not be type hinted
 
-            # 1. Authentication
+            # 1. Check Method
+            if self.methods and self.request.method not in self.methods:
+                raise MethodNotAllowed
+
+            # 2. Authentication
             self.handle_authentications()
 
-            # 2. Throttling
+            # 3. Throttling
             self.handle_throttling()
 
-            # 3. Permissions
+            # 4. Permissions
             self.handle_permissions()
 
-            # 4. Validate Input
+            # 5. Validate Input
             if self.request.method in ['POST', 'PUT', 'PATCH']:
                 self.set_validated_input()
 
-            # 5. Validate Path Variables
+            # 6. Validate Path Variables
             self.validate_path_variables(func, path_variables)
 
-            # 6. Get Cached Response
+            # 7. Get Cached Response
             if self.cache and self.request.method == 'GET':
                 if cached := get_cached_response_data(request=self.request):
                     return Response(data=cached.data, status_code=cached.status_code)
 
-            # 7. Put Request In kwargs (If User Wants It)
+            # 8. Put Request In kwargs (If User Wants It)
             kwargs = path_variables
             if req_arg := [k for k, v in func.__annotations__.items() if v == Request]:
                 kwargs[req_arg[0]] = self.request
 
-            # 8. Call Endpoint
+            # 9. Call Endpoint
             if is_function_async(func):
                 response = await func(**kwargs)
             else:
                 response = func(**kwargs)
 
-            # 9. Clean Output
+            # 10. Clean Output
             if not isinstance(response, Response):
                 response = Response(data=response)
             response._clean_data_with_output_model(output_model=self.output_model)
 
-            # 10. Set New Response To Cache
+            # 11. Set New Response To Cache
             if self.cache and self.request.method == 'GET':
                 set_cache_response(request=self.request, response=response, cache_exp_time=self.cache_exp_time)
 
-            # 11. Warning CacheExpTime
+            # 12. Warning CacheExpTime
             if self.cache_exp_time and self.cache is False:
                 logger.warning('"cache_exp_time" won\'t work while "cache" is False')
 
