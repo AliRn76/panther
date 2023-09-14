@@ -90,6 +90,8 @@ class HTMLResponse(Response):
 
     @property
     def body(self) -> bytes:
+        if isinstance(self.data, bytes):
+            return self.data
         return self.data.encode()
 
 
@@ -98,4 +100,6 @@ class PlainTextResponse(Response):
 
     @property
     def body(self) -> bytes:
+        if isinstance(self.data, bytes):
+            return self.data
         return self.data.encode()
