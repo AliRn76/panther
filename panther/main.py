@@ -2,8 +2,10 @@ import asyncio
 import sys
 import types
 from pathlib import Path
+from rich.console import Console
 from threading import Thread
 
+import panther
 from panther import status
 from panther._load_configs import *
 from panther._utils import clean_traceback_message, http_response
@@ -42,6 +44,8 @@ class Panther:
 
         # Check & Read The Configs File
         self.configs = load_configs_file(self._configs)
+
+        self.console = Console()
 
         # Put Variables In "config" (Careful about the ordering)
         config['secret_key'] = load_secret_key(self.configs)
@@ -107,7 +111,6 @@ class Panther:
 
         endpoint, found_path = find_endpoint(path=temp_connection.path)
         if endpoint is None:
-            # TODO: what is 404 code in ws
             return await temp_connection.close(status.WS_1000_NORMAL_CLOSURE)
         path_variables: dict = collect_path_variables(request_path=temp_connection.path, found_path=found_path)
 
@@ -187,8 +190,12 @@ class Panther:
             response = self.handle_exceptions(e)
         except Exception as e:  # noqa: BLE001
             # Every unhandled exception in Panther or code will catch here
-            exception = clean_traceback_message(exception=e)
-            logger.critical(exception)
+            if config['monitoring']:
+                self.console.print_exception(show_locals=True, suppress=[panther])
+            else:
+                exception = clean_traceback_message(exception=e)
+                logger.critical(exception)
+
             return await http_response(
                 send,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
