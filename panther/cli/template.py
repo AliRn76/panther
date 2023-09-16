@@ -68,7 +68,7 @@ SECRET_KEY = env['SECRET_KEY']
 
 # # # More Info: Https://PantherPy.GitHub.io/middlewares/
 MIDDLEWARES = [
-    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/database.pdb'}),
+    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/database.pdb'}),
 ]
 
 # More Info: https://PantherPy.GitHub.io/configs/#user_model

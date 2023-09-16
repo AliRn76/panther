@@ -67,7 +67,7 @@ def load_middlewares(configs: dict, /) -> list:
     middlewares = list()
 
     for path, data in configs.get('MIDDLEWARES', []):
-        if path.find('panther.middlewares.db.Middleware') != -1:
+        if path.find('panther.middlewares.db.DatabaseMiddleware') != -1:
             config['db_engine'] = data['url'].split(':')[0]
 
         Middleware = import_class(path)  # noqa: N806

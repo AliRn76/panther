@@ -27,7 +27,7 @@ from panther.db.connection import db
 
 We only support 2 database: `PantherDB` & `MongoDB`
 
-- Address of Middleware: `panther.middlewares.db.Middleware`
+- Address of Middleware: `panther.middlewares.db.DatabaseMiddleware`
 - kwargs:
     * `{'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}`
 
@@ -36,13 +36,13 @@ We only support 2 database: `PantherDB` & `MongoDB`
 - Example of `PantherDB` (`Built-in Local Storage`):
   ```python
   MIDDLEWARES = [
-      ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
+      ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
   ]
   ```
 - Example of `MongoDB`:
   ```python
   MIDDLEWARES = [
-      ('panther.middlewares.db.Middleware', {'url': f'mongodb://{DB_HOST}:27017/{DB_NAME}'}),
+      ('panther.middlewares.db.DatabaseMiddleware', {'url': f'mongodb://{DB_HOST}:27017/{DB_NAME}'}),
   ]
   ```
   

@@ -4,7 +4,7 @@ from panther.request import Request
 from panther.response import Response
 
 
-class Middleware(BaseMiddleware):
+class DatabaseMiddleware(BaseMiddleware):
 
     def __init__(self, **kwargs):
         self.url = kwargs['url']

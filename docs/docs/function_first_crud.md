@@ -65,7 +65,7 @@ Add one database middleware in `core/configs.py` `MIDDLEWARES`, we are going to 
 ...
 
 MIDDLEWARES = [
-    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
+    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
 ]
 ```
 
