@@ -6,8 +6,9 @@ from rich import print as rprint
 from panther.cli.utils import cli_error, run_help_message
 
 
-def _handle_boolean_commands(args: dict[str, str | None]) -> dict:
-    """Boolean Commands:
+def _handle_commands(args: dict[str, str | None]) -> dict:
+    """
+    Boolean Commands:
     - reload
     - access-log
     - no-access-log
@@ -15,6 +16,13 @@ def _handle_boolean_commands(args: dict[str, str | None]) -> dict:
     - no-use-colors
     - server-header
     - no-server-header
+
+    Int Commands:
+    - port
+    - ws_max_size
+    - ws_max_queue
+    - ws_ping_interval
+    - ws_ping_timeout
     """
     _command = dict()
 
@@ -40,15 +48,30 @@ def _handle_boolean_commands(args: dict[str, str | None]) -> dict:
     if 'no-server-header' in args:
         _command['server_header'] = not bool(args.pop('no-server-header', None))
 
+    if 'port' in args:
+        _command['port'] = int(args.pop('port'))
+
+    if 'ws_max_size' in args:
+        _command['ws_max_size'] = int(args.pop('ws_max_size'))
+
+    if 'ws_max_queue' in args:
+        _command['ws_max_queue'] = int(args.pop('ws_max_queue'))
+
+    if 'ws_ping_interval' in args:
+        _command['ws_ping_interval'] = int(args.pop('ws_ping_interval'))
+
+    if 'ws_ping_timeout' in args:
+        _command['ws_ping_timeout'] = int(args.pop('ws_ping_timeout'))
+
     return _command
 
 
 def run(args: dict[str, str | None]) -> None:
-    if 'h' in args or 'help' in args:
+    if 'h' in args or 'help' in args or '-h' in args or '--help' in args:
         rprint(run_help_message)
         return
     command = {'app_dir': os.getcwd()}
-    command.update(_handle_boolean_commands(args))
+    command.update(_handle_commands(args))
     command.update(args)
 
     try:
