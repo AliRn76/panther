@@ -14,7 +14,7 @@ help_message = f"""╭{58 * '─'}╮
 │                                                          │
 │   usage:                                                 │
 │       - panther create <project_name> <directory>        │
-│           Create your project in current directory       │
+│           Create project in <directory> default is `.`   │
 │                                                          │
 │       - panther run [--reload | --help]                  │
 │           Run your project with uvicorn                  │

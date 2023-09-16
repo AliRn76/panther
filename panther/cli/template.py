@@ -9,7 +9,6 @@ from app.throttling import InfoThrottling
 
 from panther import status, version
 from panther.app import API
-from panther.configs import config
 from panther.request import Request
 from panther.response import Response
 
@@ -22,10 +21,9 @@ async def hello_world_api():
 @API(cache=True, throttling=InfoThrottling)
 async def info_api(request: Request):
     data = {
-        'version': version(),
+        'panther_version': version(),
         'datetime_now': datetime.now().isoformat(),
         'user_agent': request.headers.user_agent,
-        'db_engine': config['db_engine'],
     }
     return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 """

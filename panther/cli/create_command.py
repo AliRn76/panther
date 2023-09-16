@@ -14,7 +14,7 @@ def create(args: list) -> NoReturn:
     project_name = args[0]
 
     # Get Base Directory
-    base_directory: str = project_name
+    base_directory: str = '.'
     if len(args) > 1:
         base_directory = args[1]
 

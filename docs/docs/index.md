@@ -130,7 +130,6 @@
     from datetime import datetime, timedelta
 
     from panther.app import API
-    from panther.configs import config
     from panther import version, status
     from panther.request import Request
     from panther.response import Response
@@ -147,10 +146,9 @@
     @API(cache=True, throttling=InfoThrottling)
     async def info(request: Request):
         data = {
-            'version': version(),
+            'panther_version': version(),
             'datetime_now': datetime.now().isoformat(),
-            'user_agent': request.headers.user_agent,
-            'db_engine': config['db_engine'],
+            'user_agent': request.headers.user_agent
         }
         return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
     ```
@@ -169,3 +167,9 @@
 
 
 > **Writing Your First CRUD: [First CRUD](https://pantherpy.github.io/function_first_crud/)**
+
+---
+
+![roadmap](https://github.com/AliRn76/panther/raw/master/docs/docs/images/roadmap.jpg)
+
+---
