@@ -28,10 +28,10 @@ async def info_api(request: Request):
     return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 """
 
-models_py = """from panther.db import Model  # noqa: F401
+models_py = """from panther.db import Model
 """
 
-serializers_py = """from pydantic import BaseModel  # noqa: F401
+serializers_py = """from pydantic import BaseModel
 """
 
 throttling_py = """from datetime import timedelta

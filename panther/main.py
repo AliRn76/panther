@@ -15,7 +15,6 @@ from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
 from panther.request import Request
 from panther.response import Response
 from panther.routings import collect_path_variables, find_endpoint
-from panther.websocket import Websocket, WebsocketConnections
 
 """ We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
 
@@ -61,6 +60,7 @@ class Panther:
         config['models'] = collect_all_models()
 
         # Create websocket connections instance
+        from panther.websocket import WebsocketConnections
         config['websocket_connections'] = self.websocket_connections = WebsocketConnections()
         # Websocket Redis Connection
         for middleware in config['middlewares']:
@@ -105,7 +105,7 @@ class Panther:
 
     async def handle_ws(self, scope, receive, send):
         from panther.logger import logger
-        from panther.websocket import GenericWebsocket
+        from panther.websocket import Websocket, GenericWebsocket
 
         temp_connection = Websocket(scope=scope, receive=receive, send=send)
 

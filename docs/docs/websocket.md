@@ -65,5 +65,6 @@ urls = {
         await close_websocket_connection(connection_id='connection_id', code=status.WS_1008_POLICY_VIOLATION, reason='')
         ``` 
    
-10. Enjoy.
+10. WebSocket Echo Example -> [Https://GitHub.com/PantherPy/echo_websocket](https://github.com/PantherPy/echo_websocket)
+11. Enjoy.
 

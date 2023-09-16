@@ -8,7 +8,6 @@ from typing import Literal
 import orjson as json
 
 from panther import status
-from panther.db.connection import redis
 from panther.file_handler import File
 from panther.logger import logger
 
@@ -138,6 +137,8 @@ def clean_traceback_message(exception) -> str:
 
 
 def publish_to_ws_channel(connection_id: str, action: Literal['close', 'send'], data: any):
+    from panther.db.connection import redis
+
     if redis.is_connected:
         p_data = json.dumps({'connection_id': connection_id, 'action': action, 'data': data})
         redis.publish('websocket_connections', p_data)
