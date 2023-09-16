@@ -1,3 +1,16 @@
+### 3.0.0
+- Support **Websocket**
+- Implement **Built-in TestClient**
+- Support Single-File Structure
+- Support `bytes` as `Response.data`
+- Add `methods` to `API()`
+- Change `Request.pure_data` to `Request.data`
+- Change `Request.data` to `Request.validated_data`
+- Change `panther.middlewares.db.Middleware` to `panther.middlewares.db.DatabaseMiddleware`
+- Change `panther.middlewares.redis.Middleware` to `panther.middlewares.redis.RedisMiddleware`
+- Fix `panther run` command
+- Minor Improvement
+
 ### 2.4.2
 - Don't log content-type when it's not supported
 
