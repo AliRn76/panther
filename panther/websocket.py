@@ -15,33 +15,37 @@ class GenericWebsocket(Websocket):
         """
         await self.accept()
 
-    async def receive(self, text_data: str = None, bytes_data: bytes = None):
+    async def receive(self, data: str | bytes):
         """
-        Receive `text_data` or `bytes_data` from the connection
-        You may want to use json.loads() for the text_data
+        Received `data` of connection,
+        You may want to use json.loads() on the `data`
         """
 
-    async def disconnect(self):
-        """
-        Just a demonstration how you can `close()` a connection
-        """
-        await self.close(code=status.WS_1000_NORMAL_CLOSURE, reason='I just want to close it')
-
-    async def send(self, text_data: any = None, bytes_data: bytes = None):
+    async def send(self, data: any = None):
         """
         We are using this method to send message to the client,
         You may want to override it with your custom scenario. (not recommended)
         """
-        return await super().send(text_data=text_data, bytes_data=bytes_data)
+        return await super().send(data=data)
 
 
 async def send_message_to_websocket(connection_id: str, data: any):
     if redis.is_connected:
-        publish_to_ws_channel(connection_id=connection_id, data=data)
+        publish_to_ws_channel(connection_id=connection_id, action='send', data=data)
     else:
         websocket_connections: WebsocketConnections = config['websocket_connections']
         if connection := websocket_connections.connections.get(connection_id):
-            if isinstance(data, bytes):
-                await connection.send(bytes_data=data)
-            else:
-                await connection.send(text_data=data)
+            await connection.send(data=data)
+
+
+async def close_websocket_connection(connection_id: str, code: int = status.WS_1000_NORMAL_CLOSURE, reason: str = ''):
+    if redis.is_connected:
+        data = {
+            'code': code,
+            'reason': reason
+        }
+        publish_to_ws_channel(connection_id=connection_id, action='close', data=data)
+    else:
+        websocket_connections: WebsocketConnections = config['websocket_connections']
+        if connection := websocket_connections.connections.get(connection_id):
+            await connection.close(code=code, reason=reason)

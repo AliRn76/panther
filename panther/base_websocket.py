@@ -4,6 +4,7 @@ import asyncio
 from typing import TYPE_CHECKING
 
 import orjson as json
+from panther import status
 
 from panther._utils import generate_ws_connection_id
 from panther.base_request import BaseRequest
@@ -27,26 +28,41 @@ class WebsocketConnections(Singleton):
             logger.debug("Subscribing: 'websocket_connections'")
             for channel_data in subscriber.listen():
                 logger.debug(f'{channel_data=}')
+                # Check Type of PubSub Message
                 match channel_data['type']:
                     case 'subscribe':
                         continue
 
                     case 'message':
-                        data = json.loads(channel_data['data'].decode())
+                        loaded_data = json.loads(channel_data['data'].decode())
                         if (
-                                isinstance(data, dict)
-                                and 'connection_id' in data
-                                and (message := data.get('data'))
-                                and (connection := self.connections.get(connection_id := data['connection_id']))
-                        ):
-                            logger.debug(f'Sending Message to {connection_id}')
-                            if isinstance(message, bytes):
-                                asyncio.run(connection.send(bytes_data=message))
-                            else:
-                                asyncio.run(connection.send(text_data=message))
-
+                                isinstance(loaded_data, dict)
+                                and 'connection_id' in loaded_data
+                                and (data := loaded_data.get('data'))
+                                and (action := loaded_data.get('action'))
+                                and (connection := self.connections.get(connection_id := loaded_data['connection_id']))
+                       ):
+                            # Check Action of WS
+                            match action:
+                                case 'send':
+                                    logger.debug(f'Sending Message to {connection_id}')
+                                    asyncio.run(connection.send(data=data))
+                                case 'close':
+                                    try:
+                                        asyncio.run(connection.close(code=data['code'], reason=data['reason']))
+                                    except RuntimeError:
+                                        # We are trying to disconnect the connection between a thread and a user
+                                        # from another thread
+                                        # it's working, but we have to find another solution for close the connection
+                                        # Error:
+                                        # Task <Task pending coro=<Websocket.close()>> got Future
+                                        # <Task pending coro=<WebSocketCommonProtocol.transfer_data()>>
+                                        # attached to a different loop
+                                        pass
+                                case _:
+                                    logger.debug(f'Unknown Message Action: {action}')
                     case _:
-                        logger.debug(f'Unknown  Channel Type: {channel_data["type"]}')
+                        logger.debug(f'Unknown Channel Type: {channel_data["type"]}')
 
     async def new_connection(self, connection: Websocket):
         await connection.connect(**connection.path_variables)
@@ -56,7 +72,7 @@ class WebsocketConnections(Singleton):
             # Save New ConnectionID
             self.connections[connection.connection_id] = connection
 
-    async def remove_connection(self, connection: Websocket):
+    def remove_connection(self, connection: Websocket):
         self.connections_count -= 1
         del self.connections[connection.connection_id]
 
@@ -82,26 +98,27 @@ class Websocket(BaseRequest):
         # Set ConnectionID
         self.set_connection_id(connection_id)
 
-    async def receive(self, text_data: any = None, bytes_data: bytes = None):
+    async def receive(self, data: str | bytes):
         pass
 
-    async def send(self, text_data: any = None, bytes_data: bytes = None):
-        if text_data:
-            if not isinstance(text_data, str):
-                text_data = json.dumps(text_data)
-            await self.send_text(text_data=text_data)
-        else:
-            await self.send_bytes(bytes_data=bytes_data or b'')
+    async def send(self, data: any = None):
+        if data:
+            if isinstance(data, bytes):
+                await self.send_bytes(bytes_data=data)
+            elif isinstance(data, str):
+                await self.send_text(text_data=data)
+            else:
+                await self.send_text(text_data=json.dumps(data).decode())
 
-    async def send_text(self, text_data: str = None):
+    async def send_text(self, text_data: str):
         await self.asgi_send({'type': 'websocket.send', 'text': text_data})
 
-    async def send_bytes(self, bytes_data: bytes = None):
+    async def send_bytes(self, bytes_data: bytes):
         await self.asgi_send({'type': 'websocket.send', 'bytes': bytes_data})
 
-    async def close(self, code: int = 1000, reason: str = ''):
-        config['websocket_connections'].remove_connection(self)
+    async def close(self, code: int = status.WS_1000_NORMAL_CLOSURE, reason: str = ''):
         self.is_connected = False
+        config['websocket_connections'].remove_connection(self)
         await self.asgi_send({'type': 'websocket.close', 'code': code, 'reason': reason})
 
     async def listen(self):
@@ -114,9 +131,9 @@ class Websocket(BaseRequest):
                 break
 
             if 'text' in response:
-                await self.receive(text_data=response['text'])
+                await self.receive(data=response['text'])
             else:
-                await self.receive(bytes_data=response['bytes'])
+                await self.receive(data=response['bytes'])
 
     def set_path_variables(self, path_variables: dict):
         self._path_variables = path_variables

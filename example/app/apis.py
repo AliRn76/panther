@@ -12,7 +12,7 @@ from panther.logger import logger
 from panther.request import Request
 from panther.response import HTMLResponse, Response
 from panther.throttling import Throttling
-from panther.websocket import send_message_to_websocket
+from panther.websocket import send_message_to_websocket, close_websocket_connection
 
 
 class ReturnNone(GenericAPI):
@@ -203,4 +203,5 @@ class HTMLAPI(GenericAPI):
 @API()
 async def send_message_to_websocket_api(connection_id: str):
     await send_message_to_websocket(connection_id=connection_id, data='Hello From API')
+    await close_websocket_connection(connection_id=connection_id, reason='ok')
     return Response(status_code=status.HTTP_202_ACCEPTED)

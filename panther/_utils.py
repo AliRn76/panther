@@ -3,6 +3,7 @@ import random
 import re
 import string
 from traceback import TracebackException
+from typing import Literal
 
 import orjson as json
 
@@ -136,7 +137,7 @@ def clean_traceback_message(exception) -> str:
     return f'{exception}\n' + ''.join(tb.format(chain=False))
 
 
-def publish_to_ws_channel(connection_id: str, data: any):
+def publish_to_ws_channel(connection_id: str, action: Literal['close', 'send'], data: any):
     if redis.is_connected:
-        p_data = json.dumps({'connection_id': connection_id, 'type': 'message', 'data': data})
+        p_data = json.dumps({'connection_id': connection_id, 'action': action, 'data': data})
         redis.publish('websocket_connections', p_data)

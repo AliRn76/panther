@@ -20,12 +20,13 @@
 
 ### Why Use Panther ?
 - Document-oriented Databases ODM ([PantherDB](https://pypi.org/project/pantherdb/), MongoDB)
-- Visual API Monitoring (In Terminal)
+- Built-in Websocket Support
 - Cache APIs (In Memory, In Redis)
 - Built-in Authentication Classes (Customizable)
 - Built-in Permission Classes (Customizable)
 - Handle Custom Middlewares
 - Handle Custom Throttling 
+- Visual API Monitoring (In Terminal)
 ---
 
 

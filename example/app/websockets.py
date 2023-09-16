@@ -7,7 +7,5 @@ class UserWebsocket(GenericWebsocket):
         await self.accept()
         print(f'{self.connection_id=}')
 
-    async def receive(self, text_data: str = None, bytes_data: bytes = None):
-        print(f'{text_data=}')
-        print(f'{bytes_data=}')
-
+    async def receive(self, data: str | bytes):
+        await self.send(data=data)
