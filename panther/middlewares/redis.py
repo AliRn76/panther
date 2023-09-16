@@ -5,6 +5,7 @@ from panther.logger import logger
 from panther.middlewares.base import BaseMiddleware
 from panther.request import Request
 from panther.response import Response
+from panther.websocket import GenericWebsocket
 
 
 class RedisMiddleware(BaseMiddleware):
@@ -26,11 +27,11 @@ class RedisMiddleware(BaseMiddleware):
         if not isinstance(port, int):
             logger.critical('Redis "port" is not valid.')
 
-    async def before(self, request: Request) -> Request:
+    async def before(self, request: Request | GenericWebsocket) -> Request | GenericWebsocket:
         self.redis = RedisConnection(**self.kwargs)
         return request
 
-    async def after(self, response: Response) -> Response:
+    async def after(self, response: Response | GenericWebsocket) -> Response | GenericWebsocket:
         self.redis.close()
         return response
 
