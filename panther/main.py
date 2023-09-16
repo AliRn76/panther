@@ -122,8 +122,23 @@ class Panther:
         connection = endpoint(scope=scope, receive=receive, send=send)
         connection.set_path_variables(path_variables=path_variables)
 
-        await self.websocket_connections.new_connection(connection=connection)
-        await connection.listen()
+        # Call 'Before' Middlewares
+        for middleware in config['middlewares']:
+            try:
+                connection = await middleware.before(request=connection)
+            except APIException:
+                await connection.close()
+                break
+        else:
+            await self.websocket_connections.new_connection(connection=connection)
+            await connection.listen()
+
+        # Call 'After' Middleware
+        for middleware in config['reversed_middlewares']:
+            try:
+                await middleware.after(response=connection)
+            except APIException:
+                pass
 
     async def handle_http(self, scope, receive, send):
         from panther.logger import logger
