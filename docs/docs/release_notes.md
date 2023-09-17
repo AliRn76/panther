@@ -1,3 +1,7 @@
+### 3.0.1
+- Assume content-type is 'application/json' if it was empty
+- Fix an issue on creating instance of model when query is done
+
 ### 3.0.0
 - Support **Websocket**
 - Implement **Built-in TestClient**

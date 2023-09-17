@@ -30,6 +30,24 @@
 - Visual API Monitoring (In Terminal)
 ---
 
+
+### Benchmark
+
+| Framework  | Throughput (Request/Second) |
+|------------|-----------------------------|
+| Blacksheep | 5,339                       |
+| Muffin     | 5,320                       |
+| Panther    | 5,112                       |
+| Sanic      | 3,660                       |
+| FastAPI    | 3,260                       |
+| Tornado    | 2,081                       |
+| Bottle     | 2,045                       |
+| Django     | 821                         |
+| Flask      | 749                         |
+
+
+> **More Detail:** https://github.com/PantherPy/frameworks-benchmark
+
 ### Installation
 - <details open>
     <summary>Create a Virtual Environment</summary>

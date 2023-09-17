@@ -8,6 +8,7 @@ from pydantic import Field, field_validator
 
 from panther.configs import config
 from panther.db.connection import DBSession
+from panther.db.queries import Query
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 
 f = faker.Faker()
@@ -25,7 +26,7 @@ class Model(PydanticBaseModel):
         return self.id
 
 
-class Book(Model, BasePantherDBQuery):
+class Book(Model, BasePantherDBQuery, Query):
     name: str
     author: str
     pages_count: int

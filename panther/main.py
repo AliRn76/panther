@@ -5,7 +5,6 @@ from pathlib import Path
 from rich.console import Console
 from threading import Thread
 
-import panther
 from panther import status
 from panther._load_configs import *
 from panther._utils import clean_traceback_message, http_response
@@ -205,11 +204,8 @@ class Panther:
             response = self.handle_exceptions(e)
         except Exception as e:  # noqa: BLE001
             # Every unhandled exception in Panther or code will catch here
-            if config['monitoring']:
-                self.console.print_exception(show_locals=True, suppress=[panther])
-            else:
-                exception = clean_traceback_message(exception=e)
-                logger.critical(exception)
+            exception = clean_traceback_message(exception=e)
+            logger.critical(exception)
 
             return await http_response(
                 send,
