@@ -3,11 +3,12 @@ from typing import NoReturn
 
 from pydantic import ValidationError
 
+from panther import status
 from panther.configs import config
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.db.utils import log_query
-from panther.exceptions import DBException
+from panther.exceptions import DBException, APIException
 
 if config['db_engine'] == 'pantherdb':
     BaseQuery = BasePantherDBQuery
@@ -37,9 +38,21 @@ class Query(BaseQuery):
         try:
             cls(**data)
         except ValidationError as validation_error:
+            error = {
+                '.'.join(loc for loc in e['loc']): e['msg'] for e in validation_error.errors()
+                if not is_updating or e['type'] != 'missing'
+            }
+            if error:
+                raise APIException(detail=error, status_code=status.HTTP_400_BAD_REQUEST)
+
+    @classmethod
+    def create_model_instance(cls, document: dict):
+        try:
+            return cls(**document)
+        except ValidationError as validation_error:
             error = ', '.join(
-                '{field}="{error}"'.format(field=e['loc'][0], error=e['msg'])
-                for e in validation_error.errors() if not is_updating or e['type'] != 'missing')
+                '{field}="{error}"'.format(field='.'.join(loc for loc in e['loc']), error=e['msg'])
+                for e in validation_error.errors())
             if error:
                 message = f'{cls.__name__}({error})'
                 raise DBException(message)

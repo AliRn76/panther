@@ -21,18 +21,18 @@ class BasePantherDBQuery:
     @classmethod
     def find_one(cls, _data: dict = None, /, **kwargs) -> Self | None:
         if document := db.session.collection(cls.__name__).find_one(**cls._merge(_data, kwargs)):
-            return cls(**document)
+            return cls.create_model_instance(document=document)
 
     @classmethod
     def find(cls, _data: dict = None, /, **kwargs) -> list[Self]:
         documents = db.session.collection(cls.__name__).find(**cls._merge(_data, kwargs))
-        return [cls(**document) for document in documents]
+        return [cls.create_model_instance(document=document) for document in documents]
 
     # # # # # Insert # # # # #
     @classmethod
     def insert_one(cls, _data: dict = None, **kwargs) -> Self:
         document = db.session.collection(cls.__name__).insert_one(**cls._merge(_data, kwargs))
-        return cls(**document)
+        return cls.create_model_instance(document=document)
 
     # # # # # Delete # # # # #
     def delete(self) -> None:
