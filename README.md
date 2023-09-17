@@ -187,7 +187,9 @@
 
 
 
-> **Writing Your First CRUD: [First CRUD](https://pantherpy.github.io/first_crud)**
+> **Next Step: [First CRUD](https://pantherpy.github.io/first_crud)**
+
+> **Real Word Example: [Https://GitHub.com/PantherPy/panther-example](https://GitHub.com/PantherPy/panther-example)**
 
 ---
 
