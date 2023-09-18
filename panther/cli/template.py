@@ -64,7 +64,7 @@ env = load_env(BASE_DIR / '.env')
 
 SECRET_KEY = env['SECRET_KEY']
 
-# # # More Info: Https://PantherPy.GitHub.io/middlewares/
+# More Info: Https://PantherPy.GitHub.io/middlewares/
 MIDDLEWARES = [
     ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/database.pdb'}),
 ]
