@@ -43,13 +43,13 @@ urls = {
 4. Then `accept()` the connection with `self.accept()`
 5. Now you can see the unique `connection_id` which is specified to this user with `self.connection_id`, you may want to store it somewhere (`db`, `cache`, or etc.)
 6. If client sent you any message you are going to receive it in `receive()` method, the client message can be `str` or `bytes`.
-7. If you want to send anything to the client, 
-   - In websocket class scope: You can send it with `self.send()` which only takes `data`.
-   - Out of websocket class scope: You can send it with `send_message_to_websocket()` from `panther.websocket`, it's an `async` function which takes 2 args, `connection_id` and `data` which can have any type, like below:
-       ```python
-       from panther.websocket import send_message_to_websocket
-       await send_message_to_websocket(connection_id='connection_id', data='New Message From WS') 
-       ```
+7. If you want to send anything to the client:
+    - In websocket class scope: You can send it with `self.send()` which only takes `data`.
+    - Out of websocket class scope: You can send it with `send_message_to_websocket()` from `panther.websocket`, it's an `async` function which takes 2 args, `connection_id` and `data` which can have any type, like below:
+        ```python
+        from panther.websocket import send_message_to_websocket
+        await send_message_to_websocket(connection_id='connection_id', data='New Message From WS') 
+        ```
 8. If you want to use `webscoket` in `multi-tread` or `multi-instance` backend, you should add `RedisMiddleware` in your `configs` or it won't work well.
 [[Adding Redis Middleware]](https://pantherpy.github.io/middlewares/#redis-middleware)
 9. If you want to close a connection:
