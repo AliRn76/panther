@@ -7,7 +7,7 @@
 </p>
 
 <p>
-  <img alt="logo" style="width: 50px" src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png">
+  <img alt="logo" style="width: 50px" src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/jb_beam_50x50.png">
    <b>Supported by </b><a href="https://drive.google.com/file/d/17xe1hicIiRF7SQ-clg9SETdc19SktCbV/view?usp=sharing">JetBrains</a>
 </p>
 

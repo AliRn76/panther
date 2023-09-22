@@ -64,7 +64,19 @@ urls = {
         from panther.websocket import close_websocket_connection
         await close_websocket_connection(connection_id='connection_id', code=status.WS_1008_POLICY_VIOLATION, reason='')
         ``` 
-   
-10. WebSocket Echo Example -> [Https://GitHub.com/PantherPy/echo_websocket](https://github.com/PantherPy/echo_websocket)
-11. Enjoy.
+
+10. `Path Variables` are going to pass to `connect()` like below:
+   ```python
+    from panther.websocket import GenericWebsocket
+
+    class UserWebsocket(GenericWebsocket):
+        async def connect(self, user_id: int, room_id: str):
+            await self.accept()
+
+    url = {
+        '/ws/<user_id>/<room_id>/': UserWebsocket   
+    }
+   ``` 
+11. WebSocket Echo Example -> [Https://GitHub.com/PantherPy/echo_websocket](https://github.com/PantherPy/echo_websocket)
+12. Enjoy.
 
