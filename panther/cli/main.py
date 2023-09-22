@@ -13,7 +13,8 @@ from panther.cli.utils import clean_args, cli_error, help_message
 def shell() -> None:
     if sys.platform == "win32":
         cli_error("Currently this feature is not supported for Windows.")
-    os.system('bpython')
+    else:
+        os.system('bpython')
 
 
 def version() -> None:

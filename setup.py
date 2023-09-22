@@ -9,7 +9,7 @@ def panther_version() -> str:
 
 
 VERSION = panther_version()
-with open('README.md') as file:
+with open('README.md', encoding='utf-8') as file:
     DESCRIPTION = file.read()
 
 EXTRAS_REQUIRE = {
