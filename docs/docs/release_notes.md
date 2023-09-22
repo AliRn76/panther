@@ -1,3 +1,8 @@
+### 3.0.2
+- Added 'utf-8' encoding while opening the file "README.md" in setup.py
+- Fixed panther shell not working issue in windows.
+- Added a condition to raise error if no arguement is passed to panther command in cli.
+
 ### 3.0.1
 - Assume content-type is 'application/json' if it was empty
 - Fix an issue on creating instance of model when query is done

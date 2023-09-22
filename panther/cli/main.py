@@ -1,5 +1,6 @@
 import os
 import sys
+import platform
 
 from rich import print as rprint
 
@@ -11,8 +12,8 @@ from panther.cli.utils import clean_args, cli_error, help_message
 
 
 def shell() -> None:
-    if sys.platform == "win32":
-        cli_error("Currently this feature is not supported for Windows.")
+    if platform.system().lower() == "windows":
+        os.system('python')
     else:
         os.system('bpython')
 
@@ -22,21 +23,24 @@ def version() -> None:
 
 
 def start() -> None:
-    command = sys.argv and sys.argv[1] or None
-    args = clean_args(sys.argv[2:])
+    if len(sys.argv) < 2:
+        cli_error("Please pass some arguments to the command.")
+    else:
+        command = sys.argv and sys.argv[1] or None
+        args = clean_args(sys.argv[2:])
 
-    match command:
-        case '-h' | '--help':
-            rprint(help_message)
-        case 'create':
-            create(sys.argv[2:])
-        case 'run':
-            run(args)
-        case 'shell':
-            shell()
-        case 'monitor':
-            monitor()
-        case 'version':
-            version()
-        case _:
-            cli_error('Invalid Arguments.')
+        match command:
+            case '-h' | '--help':
+                rprint(help_message)
+            case 'create':
+                create(sys.argv[2:])
+            case 'run':
+                run(args)
+            case 'shell':
+                shell()
+            case 'monitor':
+                monitor()
+            case 'version':
+                version()
+            case _:
+                cli_error('Invalid Arguments.')
