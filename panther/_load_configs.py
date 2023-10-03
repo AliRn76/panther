@@ -89,8 +89,11 @@ def load_authentication_class(configs: dict, /) -> ModelMetaclass | None:
 def load_jwt_config(configs: dict, /) -> JWTConfig:
     """Only Collect JWT Config If Authentication Is JWTAuthentication"""
     if getattr(config['authentication'], '__name__', None) == 'JWTAuthentication':
-        user_config = configs.get('JWTConfig')
-        return JWTConfig(**user_config) if user_config else JWTConfig(key=config['secret_key'].decode())
+        user_config = configs.get('JWTConfig', {})
+        if 'key' not in user_config:
+            user_config['key'] = config['secret_key'].decode()
+
+        return JWTConfig(**user_config)
 
 
 def collect_all_models():

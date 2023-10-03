@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
 from typing import TypedDict
@@ -8,11 +7,21 @@ from pydantic._internal._model_construction import ModelMetaclass
 from panther.throttling import Throttling
 
 
-@dataclass(frozen=True)
 class JWTConfig:
-    key: str
-    algorithm: str = 'HS256'
-    life_time: timedelta | int = timedelta(days=1)
+    def __init__(
+            self,
+            key: str,
+            algorithm: str = 'HS256',
+            life_time: timedelta | int = timedelta(days=1),
+            refresh_life_time: timedelta | int = None,
+    ):
+        self.key = key
+        self.algorithm = algorithm
+        self.life_time = life_time
+        if refresh_life_time:
+            self.refresh_life_time = refresh_life_time
+        else:
+            self.refresh_life_time = self.life_time * 2
 
 
 class Config(TypedDict):

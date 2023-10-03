@@ -206,6 +206,20 @@ class Query(BaseQuery):
         else:
             return True, cls.insert_one(**kwargs)
 
+    @classmethod
+    @log_query
+    def find_or_raise(cls, **kwargs) -> Self:
+        """
+        Example:
+        -------
+            >>> from example.app.models import User
+            >>> user = User.find_or_raise(name='Ali')
+        """
+        if obj := cls.find_one(**kwargs):
+            return obj
+
+        raise APIException(detail=f'{cls.__name__} Does Not Exists', status_code=status.HTTP_404_NOT_FOUND)
+
     @log_query
     def save(self, **kwargs) -> None:
         """

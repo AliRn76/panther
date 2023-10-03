@@ -42,7 +42,12 @@ def round_datetime(dt: datetime, delta: timedelta):
     return datetime.min + round((dt - datetime.min) / delta) * delta
 
 
-def generate_hash_value_from_string(string_value: str) -> str:
+def generate_hash_value_from_string(string_value: str, /) -> str:
     # The point of this method is for maintenance, if we want to change
     # the hash algorithm in the future, it will be easy.
     return hashlib.sha256(string_value.encode('utf-8')).hexdigest()
+
+
+def encrypt_password(password: str) -> str:
+    return generate_hash_value_from_string(password)
+

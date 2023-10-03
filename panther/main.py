@@ -31,7 +31,9 @@ class Panther:
 
         try:
             self.load_configs()
-        except TypeError:
+        except Exception as e:
+            if type(e) != TypeError:
+                logger.error(clean_traceback_message(e))
             exit()
 
         Thread(target=self.websocket_connections, daemon=True, args=(self.ws_redis_connection,)).start()
@@ -42,8 +44,6 @@ class Panther:
 
         # Check & Read The Configs File
         self.configs = load_configs_file(self._configs)
-
-        self.console = Console()
 
         # Put Variables In "config" (Careful about the ordering)
         config['secret_key'] = load_secret_key(self.configs)
