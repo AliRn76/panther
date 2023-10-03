@@ -25,9 +25,8 @@ class WebsocketConnections(Singleton):
         if r:
             subscriber = r.pubsub()
             subscriber.subscribe('websocket_connections')
-            logger.debug("Subscribing: 'websocket_connections'")
+            logger.info("Subscribed to 'websocket_connections' channel")
             for channel_data in subscriber.listen():
-                logger.debug(f'{channel_data=}')
                 # Check Type of PubSub Message
                 match channel_data['type']:
                     case 'subscribe':

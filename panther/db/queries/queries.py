@@ -208,12 +208,12 @@ class Query(BaseQuery):
 
     @classmethod
     @log_query
-    def find_or_raise(cls, **kwargs) -> Self:
+    def find_one_or_raise(cls, **kwargs) -> Self:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> user = User.find_or_raise(name='Ali')
+            >>> user = User.find_one_or_raise(name='Ali')
         """
         if obj := cls.find_one(**kwargs):
             return obj

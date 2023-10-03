@@ -2,14 +2,13 @@ import asyncio
 import sys
 import types
 from pathlib import Path
-from rich.console import Console
 from threading import Thread
 
 from panther import status
 from panther._load_configs import *
 from panther._utils import clean_traceback_message, http_response
 from panther.configs import config
-from panther.exceptions import APIException
+from panther.exceptions import APIException, PantherException
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
 from panther.request import Request
 from panther.response import Response
@@ -32,7 +31,9 @@ class Panther:
         try:
             self.load_configs()
         except Exception as e:
-            if type(e) != TypeError:
+            if isinstance(e, PantherException):
+                logger.error(e.args[0])
+            else:
                 logger.error(clean_traceback_message(e))
             exit()
 

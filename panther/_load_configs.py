@@ -7,8 +7,8 @@ from importlib import import_module
 from pydantic._internal._model_construction import ModelMetaclass
 
 from panther._utils import import_class
-from panther.cli.utils import cli_error
 from panther.configs import JWTConfig, config
+from panther.exceptions import PantherException
 from panther.middlewares import BaseMiddleware
 from panther.routings import finalize_urls, flatten_urls
 from panther.throttling import Throttling
@@ -160,5 +160,4 @@ def load_panel_urls() -> dict:
 
 
 def _exception_handler(field: str, error: str | Exception):
-    cli_error(message=f"[Invalid '{field}'] {error}")
-    return TypeError
+    return PantherException(f"Invalid '{field}': {error}")

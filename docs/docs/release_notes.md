@@ -1,9 +1,11 @@
 ### 3.0.3
-- Add `find_or_raise` query
+- Add `find_one_or_raise` query
 - Add `last_login` to `BaseUser`
 - Add `refresh_life_time` to `JWTConfig`
 - Add `encode_refresh_token()` to `JWTAuthentication`
 - Add `encrypt_password()`
+- Handle `PantherException`
+- Handle `RedisConnection` without `connection_pool`
 
 ### 3.0.2
 - Added 'utf-8' encoding while opening the file "README.md" in setup.py
