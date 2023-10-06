@@ -1,10 +1,11 @@
 from abc import abstractmethod
 from datetime import datetime
+from typing import Literal
 
 from jose import JWTError, jwt
 
 from panther.configs import config
-from panther.db.models import BaseUser
+from panther.db.models import BaseUser, IDType
 from panther.exceptions import AuthenticationException
 from panther.logger import logger
 from panther.request import Request
@@ -73,15 +74,26 @@ class JWTAuthentication(BaseAuthentication):
         raise cls.exception('User not found')
 
     @classmethod
-    def encode_jwt(cls, user_id: int) -> str:
+    def encode_jwt(cls, user_id: IDType, token_type: Literal['access', 'refresh'] = 'access') -> str:
         """Encode JWT from user_id."""
-        expire = datetime.utcnow() + config['jwt_config'].life_time
-        access_payload = {
-            'token_type': 'access',
+        issued_at = datetime.utcnow()
+        if token_type == 'access':
+            expire = issued_at + config['jwt_config'].life_time
+        else:
+            expire = issued_at + config['jwt_config'].refresh_life_time
+
+        claims = {
+            'token_type': token_type,
             'user_id': user_id,
+            'iat': issued_at,
             'exp': expire,
         }
-        return jwt.encode(access_payload, config['jwt_config'].key, algorithm=config['jwt_config'].algorithm)
+        return jwt.encode(claims, key=config['jwt_config'].key, algorithm=config['jwt_config'].algorithm)
+
+    @classmethod
+    def encode_refresh_token(cls, user_id: IDType) -> str:
+        """Encode JWT from user_id."""
+        return cls.encode_jwt(user_id=user_id, token_type='refresh')
 
     @classmethod
     def decode_jwt(cls, token: str) -> dict:
@@ -96,12 +108,12 @@ class JWTAuthentication(BaseAuthentication):
             raise cls.exception(e)
 
     @classmethod
-    def login(cls, user_id: int) -> str:
+    def login(cls, user_id: IDType) -> str:
         """Alias of encode_jwt()"""
         return cls.encode_jwt(user_id=user_id)
 
     @staticmethod
-    def logout(user_id: int):
+    def logout(user_id: IDType):
         # TODO:
         #   1. Save the token in cache
         #   2. Check logout cached token in authentication()

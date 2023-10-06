@@ -57,10 +57,16 @@ class RedisConnection(Singleton, Redis):
     """
     is_connected: bool = False
 
-    def __init__(self, host: str | None = None, port: int | None = None, **kwargs):
+    def __init__(self, host: str = None, port: int = None, **kwargs):
         if host and port:
             super().__init__(host=host, port=port, **kwargs)
             self.is_connected = True
+
+    def execute_command(self, *args, **options):
+        if not hasattr(self, 'connection_pool'):
+            raise AttributeError(
+                f"'RedisConnection' object has no attribute 'connection_pool'. Hint: Check your redis middleware")
+        return super().execute_command(*args, **options)
 
 
 db: DBSession = DBSession()

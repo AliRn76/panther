@@ -3,7 +3,7 @@ import os
 import uvicorn
 from rich import print as rprint
 
-from panther.cli.utils import cli_error, run_help_message
+from panther.cli.utils import run_help_message
 
 
 def _handle_commands(args: dict[str, str | None]) -> dict:
@@ -74,7 +74,4 @@ def run(args: dict[str, str | None]) -> None:
     command.update(_handle_commands(args))
     command.update(args)
 
-    try:
-        uvicorn.run('main:app', **command)
-    except TypeError as e:
-        cli_error(e)
+    uvicorn.run('main:app', **command)

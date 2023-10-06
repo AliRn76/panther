@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import bson
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, field_validator
@@ -39,5 +41,9 @@ class Model(PydanticBaseModel, Query):
 
 
 class BaseUser(Model):
-    first_name: str | None
-    last_name: str | None
+    first_name: str = Field('', max_length=64)
+    last_name: str = Field('', max_length=64)
+    last_login: datetime = None
+
+    def update_last_login(self):
+        self.update(last_login=datetime.now())

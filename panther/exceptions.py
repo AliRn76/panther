@@ -1,6 +1,10 @@
 from panther import status
 
 
+class PantherException(Exception):
+    pass
+
+
 class DBException(Exception):
     pass
 

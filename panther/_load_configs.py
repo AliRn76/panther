@@ -7,8 +7,8 @@ from importlib import import_module
 from pydantic._internal._model_construction import ModelMetaclass
 
 from panther._utils import import_class
-from panther.cli.utils import cli_error
 from panther.configs import JWTConfig, config
+from panther.exceptions import PantherException
 from panther.middlewares import BaseMiddleware
 from panther.routings import finalize_urls, flatten_urls
 from panther.throttling import Throttling
@@ -89,8 +89,11 @@ def load_authentication_class(configs: dict, /) -> ModelMetaclass | None:
 def load_jwt_config(configs: dict, /) -> JWTConfig:
     """Only Collect JWT Config If Authentication Is JWTAuthentication"""
     if getattr(config['authentication'], '__name__', None) == 'JWTAuthentication':
-        user_config = configs.get('JWTConfig')
-        return JWTConfig(**user_config) if user_config else JWTConfig(key=config['secret_key'].decode())
+        user_config = configs.get('JWTConfig', {})
+        if 'key' not in user_config:
+            user_config['key'] = config['secret_key'].decode()
+
+        return JWTConfig(**user_config)
 
 
 def collect_all_models():
@@ -157,5 +160,4 @@ def load_panel_urls() -> dict:
 
 
 def _exception_handler(field: str, error: str | Exception):
-    cli_error(message=f"[Invalid '{field}'] {error}")
-    return TypeError
+    return PantherException(f"Invalid '{field}': {error}")
