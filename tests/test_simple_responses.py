@@ -1,4 +1,6 @@
 import sys
+
+from panther import Panther
 from panther.test import APIClient
 from unittest import TestCase
 
@@ -8,7 +10,8 @@ class TestSimpleResponses(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         sys.path.append('tests/app')
-        from tests.app.main import app
+        from tests.app.urls import simple_responses_urls
+        app = Panther(__name__, configs=sys.modules[__name__], urls=simple_responses_urls)
         cls.client = APIClient(app=app)
 
     @classmethod

@@ -142,12 +142,23 @@ def load_urls(configs: dict, /, urls: dict | None) -> dict:
         return urls
 
     try:
-        urls = import_class(configs.get('URLs'))
+        if url_routing := configs.get('URLs'):
+            if isinstance(url_routing, dict):
+                error = (
+                        "can't be 'dict', you may want to pass it's value directly to Panther(). "
+                        "Example: Panther(..., urls=...)"
+                    )
+                raise _exception_handler(field='URLs', error=error)
+            elif isinstance(url_routing, str):
+                urls = import_class(url_routing)
+            else:
+                error = 'should be dotted string.'
+                raise _exception_handler(field='URLs', error=error)
     except ModuleNotFoundError as e:
         raise _exception_handler(field='URLs', error=e)
 
     if not isinstance(urls, dict):
-        raise _exception_handler(field='URLs', error='should point to a dict')
+        raise _exception_handler(field='URLs', error='should point to a dict.')
 
     collected_urls = flatten_urls(urls)
     return finalize_urls(collected_urls)

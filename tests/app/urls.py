@@ -1,6 +1,6 @@
 from simple_response_apis import *
 from simple_request_apis import *
-from method_apis import *
+from request_method_apis import *
 
 
 simple_responses_urls = {
@@ -32,5 +32,3 @@ method_urls = {
     'delete': request_delete,
     'get-post-patch': request_get_post_patch,
 }
-
-url_routing = simple_responses_urls | simple_requests_urls | method_urls
