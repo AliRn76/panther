@@ -3,9 +3,14 @@ import time
 import datetime
 from threading import Thread
 from typing import Self
-
+from panther.logger import logger
 from panther._utils import is_function_async
 from panther.utils import Singleton
+
+__all__ = (
+    'BackgroundTask',
+    'background_tasks',
+)
 
 
 class BackgroundTask:
@@ -16,11 +21,10 @@ class BackgroundTask:
         self._interval = 1
         self._called_count = 0
         self._last_run = None
-        self._datetime = None
         self._timedelta = None
         self._time: datetime.time | None = None
 
-    def on_interval(self, interval: int, /) -> Self:
+    def interval(self, interval: int, /) -> Self:
         """
         interval = -1 --> Infinite
         """
@@ -29,15 +33,13 @@ class BackgroundTask:
             self._timedelta = datetime.timedelta(minutes=1)
         return self
 
-    def on_datetime(self, _datetime: datetime, /) -> Self:
-        self._datetime = _datetime
-        return self
-
     def interval_wait(self, _timedelta: datetime.timedelta, /) -> Self:
         """
         default is 1 minute
-        ** You can't use it with `on_time()`
         """
+        if self._time:
+            logger.warning("You can't use `BackgroundTask.interval_wait()` with `.on_time()`, "
+                           "`.on_time()` has higher priority.")
         self._timedelta = _timedelta
         return self
 
@@ -45,9 +47,9 @@ class BackgroundTask:
         return self._interval == -1 or (self._interval > self._called_count)
 
     def on_time(self, _time: datetime.time, /):
-        """
-        ** You can't use it with `interval_wait()`, it has higher priority than that
-        """
+        if self._timedelta:
+            logger.warning("You can't use `BackgroundTask.on_time()` with `.interval_wait()`, "
+                           "`.on_time()` has higher priority.")
         if isinstance(_time, datetime.datetime):
             _time = _time.time()
 
@@ -80,7 +82,12 @@ class BackgroundTask:
         if self.should_wait():
             return True
 
-        print(f'{self._func.__name__}({self._args[0]}) Called {self._called_count + 1}/ {self._interval}')
+        logger.info(
+            f'{self._func.__name__}('
+            f'{", ".join(a for a in self._args)}, '
+            f'{", ".join(f"{k}={v}" for k, v in self._kwargs.items())}'
+            f') Called {self._called_count + 1}/ {self._interval}'
+        )
         self._called_count += 1
         if is_function_async(self._func):
             asyncio.run(self._func(*self._args, **self._kwargs))
@@ -92,47 +99,55 @@ class BackgroundTask:
 
 class BackgroundTasks(Singleton):
     tasks: list = list()
+    _is_alive: bool = False
 
     def add_task(self, task: BackgroundTask):
-        self.tasks.append(task)
+        if not isinstance(task, BackgroundTask):
+            name = getattr(task, '__name__', task.__class__.__name__)
+            logger.error(f'`{name}` should be instance of `background_tasks.BackgroundTask`')
+            return
 
-    def run_task(self, task):
-        if task() is False:
-            self.tasks.remove(task)
-            del task
+        if task not in self.tasks:
+            self.tasks.append(task)
 
-    def run_tasks(self):
-        def _run_tasks():
-            i = 0
+    def _run_tasks(self):
+        """
+        We only call _run_tasks() once in the load_configs()
+        """
+
+        def __run_task(task):
+            if task() is False:
+                self.tasks.remove(task)
+                del task
+
+        def __run_tasks():
             while True:
                 time.sleep(1)
-                i += 1
                 for task in self.tasks[:]:
-                    Thread(target=self.run_task, args=(task,)).start()
-                else:
-                    print(i)
+                    Thread(target=__run_task, args=(task,)).start()
 
-        Thread(target=_run_tasks).start()
+        if self._is_alive is False:
+            self._is_alive = True
+            Thread(target=__run_tasks).start()
 
 
 background_tasks = BackgroundTasks()
 
+"""
+-------------------------------------------------------------
+Example:
+-------------------------------------------------------------
 
 async def hello(name: str):
     time.sleep(5)
-    print(f'done {name}')
-    with open(f'{name}.txt', 'a') as f:
-        f.writelines('ok')
+    print(f'Done {name}')
 
 
-task1 = (
-    BackgroundTask(hello, 'ali1')
-    .on_interval(2)
-    .on_time(datetime.time(hour=19, minute=18, second=10))
+task = (
+    BackgroundTask(hello, 'Ali')
+    .interval(2)
     .interval_wait(datetime.timedelta(seconds=5))
+    # .on_time(datetime.time(hour=19, minute=18, second=10))
 )
-background_tasks.add_task(task1)
-task2 = BackgroundTask(hello, 'arian')
-background_tasks.add_task(task2)
-
-background_tasks.run_tasks()
+background_tasks.add_task(task)
+"""

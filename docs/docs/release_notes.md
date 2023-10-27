@@ -1,3 +1,6 @@
+### 3.1.0
+- Add `BackgroundTasks`
+
 ### 3.0.3
 - Add `find_one_or_raise` query
 - Add `last_login` to `BaseUser`

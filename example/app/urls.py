@@ -34,4 +34,5 @@ urls = {
     '': single_user,
     'ws/<user_id>/': UserWebsocket,
     'send/<connection_id>/': send_message_to_websocket_api,
+    'bg-tasks/': run_background_tasks_api,
 }
