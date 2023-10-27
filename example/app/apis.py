@@ -1,3 +1,5 @@
+import datetime
+import time
 from datetime import timedelta
 
 from app.models import User
@@ -7,6 +9,7 @@ from core.permissions import UserPermission
 from panther import status
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
+from panther.background_tasks import background_tasks, BackgroundTask
 from panther.db.connection import redis
 from panther.logger import logger
 from panther.request import Request
@@ -205,3 +208,18 @@ async def send_message_to_websocket_api(connection_id: str):
     await send_message_to_websocket(connection_id=connection_id, data='Hello From API')
     await close_websocket_connection(connection_id=connection_id, reason='ok')
     return Response(status_code=status.HTTP_202_ACCEPTED)
+
+
+@API()
+async def run_background_tasks_api():
+    async def hello(name: str):
+        time.sleep(5)
+        print(f'Done {name}')
+    task = (
+        BackgroundTask(hello, 'ali1')
+        .interval(2)
+        .interval_wait(datetime.timedelta(seconds=2))
+        # .on_time(datetime.time(hour=19, minute=18, second=10))
+    )
+    background_tasks.add_task(task)
+    return Response()

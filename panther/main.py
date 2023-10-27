@@ -7,6 +7,7 @@ from threading import Thread
 from panther import status
 from panther._load_configs import *
 from panther._utils import clean_traceback_message, http_response
+from panther.background_tasks import background_tasks
 from panther.configs import config
 from panther.exceptions import APIException, PantherException
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
@@ -70,6 +71,9 @@ class Panther:
                 break
         else:
             self.ws_redis_connection = None
+
+        # Run Background Tasks
+        background_tasks._run_tasks()
 
         # Load URLs should be the last call in load_configs,
         #   because it will read all files and load them.
