@@ -32,3 +32,6 @@ inline-quotes = "single"
 "example/core/configs.py" = ["ERA001"]
 "example/app/urls.py" = ["F403", "F405"]
 "tests/*" = ["A003"]
+
+[format]
+quote-style = "single"

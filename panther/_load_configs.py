@@ -99,6 +99,7 @@ def load_jwt_config(configs: dict, /) -> JWTConfig:
 def collect_all_models():
     """Collecting all models for panel APIs"""
     from panther.db.models import Model
+
     collected_models = list()
 
     for root, _, files in os.walk(config['base_dir']):
@@ -116,24 +117,28 @@ def collect_all_models():
                     for n in node.body:
                         # Find classes in each element of files' body
                         if type(n) is ast.ClassDef and n.bases:
-                            class_path = file_path \
-                                .removesuffix(f'{slash}models.py') \
-                                .removeprefix(f'{config["base_dir"]}{slash}') \
+                            class_path = (
+                                file_path.removesuffix(f'{slash}models.py')
+                                .removeprefix(f'{config["base_dir"]}{slash}')
                                 .replace(slash, '.')
+                            )
                             # We don't need to import the package classes
                             if class_path.find('site-packages') == -1:
                                 # Import the class to check his parents and siblings
                                 klass = import_class(f'{class_path}.models.{n.name}')
 
-                                collected_models.extend([
-                                    {
-                                        'name': n.name,
-                                        'path': file_path,
-                                        'class': klass,
-                                        'app': class_path.split('.'),
-                                    }
-                                    for parent in klass.__mro__ if parent is Model
-                                ])
+                                collected_models.extend(
+                                    [
+                                        {
+                                            'name': n.name,
+                                            'path': file_path,
+                                            'class': klass,
+                                            'app': class_path.split('.'),
+                                        }
+                                        for parent in klass.__mro__
+                                        if parent is Model
+                                    ]
+                                )
     return collected_models
 
 
@@ -141,26 +146,28 @@ def load_urls(configs: dict, /, urls: dict | None) -> dict:
     if isinstance(urls, dict):
         return urls
 
+    if (url_routing := configs.get('URLs')) is None:
+        raise _exception_handler(field='URLs', error='is required.')
+
+    if isinstance(url_routing, dict):
+        error = (
+            "can't be 'dict', you may want to pass it's value directly to Panther(). " 'Example: Panther(..., urls=...)'
+        )
+        raise _exception_handler(field='URLs', error=error)
+
+    if not isinstance(url_routing, str):
+        error = 'should be dotted string.'
+        raise _exception_handler(field='URLs', error=error)
+
     try:
-        if url_routing := configs.get('URLs'):
-            if isinstance(url_routing, dict):
-                error = (
-                        "can't be 'dict', you may want to pass it's value directly to Panther(). "
-                        "Example: Panther(..., urls=...)"
-                    )
-                raise _exception_handler(field='URLs', error=error)
-            elif isinstance(url_routing, str):
-                urls = import_class(url_routing)
-            else:
-                error = 'should be dotted string.'
-                raise _exception_handler(field='URLs', error=error)
+        imported_urls = import_class(url_routing)
     except ModuleNotFoundError as e:
         raise _exception_handler(field='URLs', error=e)
 
-    if not isinstance(urls, dict):
+    if not isinstance(imported_urls, dict):
         raise _exception_handler(field='URLs', error='should point to a dict.')
 
-    collected_urls = flatten_urls(urls)
+    collected_urls = flatten_urls(imported_urls)
     return finalize_urls(collected_urls)
 
 

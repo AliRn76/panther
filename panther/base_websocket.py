@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from typing import TYPE_CHECKING
 
 import orjson as json
-from panther import status
 
+from panther import status
 from panther._utils import generate_ws_connection_id
 from panther.base_request import BaseRequest
 from panther.configs import config
@@ -36,10 +37,10 @@ class WebsocketConnections(Singleton):
                         loaded_data = json.loads(channel_data['data'].decode())
                         if (
                                 isinstance(loaded_data, dict)
-                                and 'connection_id' in loaded_data
+                                and (connection_id := loaded_data.get('connection_id'))
                                 and (data := loaded_data.get('data'))
                                 and (action := loaded_data.get('action'))
-                                and (connection := self.connections.get(connection_id := loaded_data['connection_id']))
+                                and (connection := self.connections.get(connection_id))
                        ):
                             # Check Action of WS
                             match action:
@@ -47,17 +48,15 @@ class WebsocketConnections(Singleton):
                                     logger.debug(f'Sending Message to {connection_id}')
                                     asyncio.run(connection.send(data=data))
                                 case 'close':
-                                    try:
+                                    with contextlib.suppress(RuntimeError):
                                         asyncio.run(connection.close(code=data['code'], reason=data['reason']))
-                                    except RuntimeError:
                                         # We are trying to disconnect the connection between a thread and a user
-                                        # from another thread
-                                        # it's working, but we have to find another solution for close the connection
+                                        # from another thread, it's working, but we have to find another solution it
+                                        #
                                         # Error:
                                         # Task <Task pending coro=<Websocket.close()>> got Future
                                         # <Task pending coro=<WebSocketCommonProtocol.transfer_data()>>
                                         # attached to a different loop
-                                        pass
                                 case _:
                                     logger.debug(f'Unknown Message Action: {action}')
                     case _:
@@ -150,4 +149,3 @@ class Websocket(BaseRequest):
         if connection_id is None:
             logger.error('You should first `self.accept()` the connection then use the `self.connection_id`')
         return connection_id
-

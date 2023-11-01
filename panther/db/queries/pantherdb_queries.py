@@ -7,11 +7,11 @@ if version_info.minor >= 11:
     from typing import Self
 else:
     from typing import TypeVar
+
     Self = TypeVar('Self', bound='BasePantherDBQuery')
 
 
 class BasePantherDBQuery:
-
     @classmethod
     def _merge(cls, *args) -> dict:
         prepare_id_for_query(*args)

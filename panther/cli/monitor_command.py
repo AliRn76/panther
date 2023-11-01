@@ -1,3 +1,4 @@
+import contextlib
 import os
 from collections import deque
 
@@ -46,13 +47,13 @@ def monitor() -> None:
         _, init_lines_count = os.get_terminal_size()
         messages = deque(maxlen=init_lines_count - 10)  # Save space for header and footer
 
-        with Live(_generate_table(messages), auto_refresh=False, vertical_overflow='visible', screen=True) as live:
-            try:
-                for _ in watch(monitoring_log_file):
-                    data = f.readline().split('|')
-                    # 2023-03-24 01:42:52 | GET | /user/317/ | 127.0.0.1:48856 |  0.0366 ms | 200
-                    messages.append(data)
-                    live.update(_generate_table(messages))
-                    live.refresh()
-            except KeyboardInterrupt:
-                pass
+        with (
+            Live(_generate_table(messages), auto_refresh=False, vertical_overflow='visible', screen=True) as live,
+            contextlib.suppress(KeyboardInterrupt),
+        ):
+            for _ in watch(monitoring_log_file):
+                data = f.readline().split('|')
+                # 2023-03-24 01:42:52 | GET | /user/317/ | 127.0.0.1:48856 |  0.0366 ms | 200
+                messages.append(data)
+                live.update(_generate_table(messages))
+                live.refresh()

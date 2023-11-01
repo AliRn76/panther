@@ -18,6 +18,7 @@ def log_query(func):
         class_name = args[0].__name__ if hasattr(args[0], '__name__') else args[0].__class__.__name__
         query_logger.info(f'\033[1mQuery -->\033[0m  {class_name}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
         return response
+
     return log
 
 

@@ -80,9 +80,7 @@ class Response:
 
         # Str | Bool | Bytes
         raise TypeError(
-            'Type of Response data is not match with `output_model`.'
-            '\n*hint: You may want to remove `output_model`'
-        )
+            'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`')
 
 
 class HTMLResponse(Response):

@@ -19,7 +19,7 @@ from panther.exceptions import (
 )
 from panther.logger import logger
 from panther.request import Request
-from panther.response import IterableDataTypes, Response
+from panther.response import Response
 from panther.throttling import Throttling, throttling_storage
 from panther.utils import round_datetime
 
@@ -37,7 +37,7 @@ class API:
             throttling: Throttling = None,
             cache: bool = False,
             cache_exp_time: timedelta | int | None = None,
-            methods: list[Literal["GET", "POST", "PUT", "PATCH", "DELETE"]] = None
+            methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] = None,
     ):
         self.input_model = input_model
         self.output_model = output_model
@@ -93,7 +93,7 @@ class API:
             # 10. Clean Output
             if not isinstance(response, Response):
                 response = Response(data=response)
-            response._clean_data_with_output_model(output_model=self.output_model)
+            response._clean_data_with_output_model(output_model=self.output_model)  # noqa: SLF001
 
             # 11. Set New Response To Cache
             if self.cache and self.request.method == 'GET':

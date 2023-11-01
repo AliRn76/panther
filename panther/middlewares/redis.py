@@ -9,7 +9,6 @@ from panther.websocket import GenericWebsocket
 
 
 class RedisMiddleware(BaseMiddleware):
-
     def __init__(self, **kwargs):
         self.kwargs = kwargs
         self.validate_host()

@@ -6,7 +6,6 @@ from panther.websocket import GenericWebsocket
 
 
 class DatabaseMiddleware(BaseMiddleware):
-
     def __init__(self, **kwargs):
         self.url = kwargs['url']
 

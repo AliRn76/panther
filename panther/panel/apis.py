@@ -44,7 +44,6 @@ async def single_document_api(request: Request, index: int, document_id: int | s
     model = config['models'][index]['class']
 
     if document := model.find_one(id=document_id):
-
         if request.method == 'PUT':
             validated_data = API.validate_input(model=model, request=request)
             document.update(**validated_data.model_dump(exclude=['id']))
@@ -59,4 +58,3 @@ async def single_document_api(request: Request, index: int, document_id: int | s
 
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
-

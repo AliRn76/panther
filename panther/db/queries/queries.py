@@ -8,7 +8,7 @@ from panther.configs import config
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.db.utils import log_query
-from panther.exceptions import DBException, APIException
+from panther.exceptions import APIException, DBException
 
 if config['db_engine'] == 'pantherdb':
     BaseQuery = BasePantherDBQuery
@@ -24,11 +24,11 @@ if sys.version_info.minor >= 11:
     from typing import Self
 else:
     from typing import TypeVar
+
     Self = TypeVar('Self', bound='Query')
 
 
 class Query(BaseQuery):
-
     @classmethod
     def validate_data(cls, *, data: dict, is_updating: bool = False) -> NoReturn:
         """
@@ -39,7 +39,8 @@ class Query(BaseQuery):
             cls(**data)
         except ValidationError as validation_error:
             error = {
-                '.'.join(loc for loc in e['loc']): e['msg'] for e in validation_error.errors()
+                '.'.join(loc for loc in e['loc']): e['msg']
+                for e in validation_error.errors()
                 if not is_updating or e['type'] != 'missing'
             }
             if error:
@@ -52,7 +53,8 @@ class Query(BaseQuery):
         except ValidationError as validation_error:
             error = ', '.join(
                 '{field}="{error}"'.format(field='.'.join(loc for loc in e['loc']), error=e['msg'])
-                for e in validation_error.errors())
+                for e in validation_error.errors()
+            )
             if error:
                 message = f'{cls.__name__}({error})'
                 raise DBException(message)

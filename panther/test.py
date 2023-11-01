@@ -1,9 +1,9 @@
 import asyncio
-from typing import Literal, Callable
+from typing import Callable, Literal
+
 import orjson as json
 
 from panther.response import Response
-
 
 __all__ = ('APIClient',)
 
@@ -20,9 +20,9 @@ class RequestClient:
 
     async def receive(self):
         return {
-            "type": "http.request",
+            'type': 'http.request',
             'body': self.payload,
-            'more_body': False
+            'more_body': False,
         }
 
     async def request(
@@ -51,12 +51,12 @@ class RequestClient:
         await self.app(
             scope=scope,
             receive=self.receive,
-            send=self.send
+            send=self.send,
         )
         return Response(
             data=json.loads(self.response.get('body', b'null')),
             status_code=self.header['status'],
-            headers=self.header['headers']
+            headers=self.header['headers'],
         )
 
 
@@ -103,7 +103,7 @@ class APIClient:
             payload: dict | None = None,
             headers: dict = None,
             query_params: dict = None,
-            content_type: Literal['application/json', 'multipart/form-data'] = 'application/json'
+            content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
         return self._send_request(
@@ -120,7 +120,7 @@ class APIClient:
             payload: dict | None = None,
             headers: dict = None,
             query_params: dict = None,
-            content_type: Literal['application/json', 'multipart/form-data'] = 'application/json'
+            content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
         return self._send_request(
@@ -137,7 +137,7 @@ class APIClient:
             payload: dict | None = None,
             headers: dict = None,
             query_params: dict = None,
-            content_type: Literal['application/json', 'multipart/form-data'] = 'application/json'
+            content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
         return self._send_request(

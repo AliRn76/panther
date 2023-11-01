@@ -4,7 +4,6 @@ import orjson as json
 
 from panther._utils import read_multipart_form_data
 from panther.base_request import BaseRequest
-from panther.configs import config
 from panther.logger import logger
 
 
@@ -25,8 +24,7 @@ class Request(BaseRequest):
                     self._data = read_multipart_form_data(boundary=boundary, body=self.__body)
                 case [unknown]:
                     # We don't know the `content-type` so just pass the payload to user
-                    if config['monitoring']:
-                        logger.warning(f"'{unknown}' Content-Type is not supported")
+                    logger.warning(f"'{unknown}' Content-Type is not supported")
                     self._data = self.__body
         return self._data
 

@@ -22,6 +22,8 @@ async def hello_world_api():
 async def info_api(request: Request):
     data = {
         'panther_version': version(),
+        'method': request.method,
+        'query_params': request.query_params,
         'datetime_now': datetime.now().isoformat(),
         'user_agent': request.headers.user_agent,
     }

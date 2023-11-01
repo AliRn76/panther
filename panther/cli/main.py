@@ -1,6 +1,6 @@
 import os
-import sys
 import platform
+import sys
 
 from rich import print as rprint
 
@@ -12,7 +12,7 @@ from panther.cli.utils import clean_args, cli_error, help_message
 
 
 def shell() -> None:
-    if platform.system().lower() == "windows":
+    if platform.system().lower() == 'windows':
         os.system('python')
     else:
         os.system('bpython')
@@ -24,7 +24,7 @@ def version() -> None:
 
 def start() -> None:
     if len(sys.argv) < 2:
-        cli_error("Please pass some arguments to the command.")
+        cli_error('Please pass some arguments to the command.')
     else:
         command = sys.argv and sys.argv[1] or None
         args = clean_args(sys.argv[2:])

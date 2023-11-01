@@ -2,10 +2,6 @@ from collections import namedtuple
 from dataclasses import dataclass
 from typing import Callable
 
-import orjson as json
-
-from panther._utils import read_multipart_form_data
-
 
 @dataclass(frozen=True)
 class Headers:

@@ -123,4 +123,3 @@ class JWTAuthentication(BaseAuthentication):
     def exception(message: str | JWTError, /):
         logger.error(f'JWT Authentication Error: "{message}"')
         return AuthenticationException
-

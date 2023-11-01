@@ -3,7 +3,6 @@ import random
 import re
 import string
 from traceback import TracebackException
-from typing import Literal
 
 import orjson as json
 
@@ -78,7 +77,11 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
     boundary = b'--' + boundary.encode()
     new_line = b'\r\n' if body[-2:] == b'\r\n' else b'\n'
 
-    field_pattern = rb'(Content-Disposition: form-data; name=")(.*)("' + 2 * new_line + b')(.*)'
+    field_pattern = (
+            rb'(Content-Disposition: form-data; name=")(.*)("'
+            + 2 * new_line
+            + b')(.*)'
+    )
     file_pattern = (
             rb'(Content-Disposition: form-data; name=")(.*)("; filename=")(.*)("'
             + new_line
@@ -87,8 +90,8 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
 
     data = dict()
     for row in body.split(boundary):
-
         row = row.removeprefix(new_line).removesuffix(new_line)
+
         if row == b'' or row == b'--':
             continue
 
@@ -98,6 +101,7 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
 
         else:
             file_meta_data, value = row.split(2 * new_line, 1)
+
             if match := re.match(pattern=file_pattern, string=file_meta_data):
                 _, field_name, _, file_name, _, content_type = match.groups()
                 file = File(
@@ -118,8 +122,8 @@ def generate_ws_connection_id() -> str:
 
 def is_function_async(func) -> bool:
     """
-        sync result is 0 --> False
-        async result is 128 --> True
+    sync result is 0 --> False
+    async result is 128 --> True
     """
     return bool(func.__code__.co_flags & (1 << 7))
 
@@ -134,11 +138,3 @@ def clean_traceback_message(exception) -> str:
         if t.filename.find('site-packages') != -1:
             tb.stack.remove(t)
     return f'{exception}\n' + ''.join(tb.format(chain=False))
-
-
-def publish_to_ws_channel(connection_id: str, action: Literal['close', 'send'], data: any):
-    from panther.db.connection import redis
-
-    if redis.is_connected:
-        p_data = json.dumps({'connection_id': connection_id, 'action': action, 'data': data})
-        redis.publish('websocket_connections', p_data)

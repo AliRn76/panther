@@ -7,7 +7,7 @@ from panther.logger import logger
 
 
 class Singleton(object):
-    _instances: ClassVar = {}
+    _instances: ClassVar[dict] = {}
 
     def __new__(cls, *args, **kwargs):
         if cls not in cls._instances:
@@ -35,6 +35,7 @@ def load_env(env_file: str | Path, /) -> dict[str, str]:
 
 def generate_secret_key() -> str:
     from cryptography.fernet import Fernet
+
     return Fernet.generate_key().decode()
 
 
@@ -50,4 +51,3 @@ def generate_hash_value_from_string(string_value: str, /) -> str:
 
 def encrypt_password(password: str) -> str:
     return generate_hash_value_from_string(password)
-

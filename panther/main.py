@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import sys
 import types
 from pathlib import Path
@@ -19,7 +20,6 @@ from panther.routings import collect_path_variables, find_endpoint
 
 
 class Panther:
-
     def __init__(self, name, configs=None, urls: dict | None = None):
         from panther.logger import logger
 
@@ -42,6 +42,7 @@ class Panther:
 
     def load_configs(self) -> None:
         from panther.logger import logger
+
         logger.debug(f'Base directory: {config["base_dir"]}')
 
         # Check & Read The Configs File
@@ -62,6 +63,7 @@ class Panther:
 
         # Create websocket connections instance
         from panther.websocket import WebsocketConnections
+
         config['websocket_connections'] = self.websocket_connections = WebsocketConnections()
         # Websocket Redis Connection
         for middleware in config['middlewares']:
@@ -72,8 +74,8 @@ class Panther:
         else:
             self.ws_redis_connection = None
 
-        # Run Background Tasks
-        background_tasks._run_tasks()
+        # Initialize Background Tasks
+        background_tasks.initialize()
 
         # Load URLs should be the last call in load_configs,
         #   because it will read all files and load them.
@@ -109,7 +111,7 @@ class Panther:
 
     async def handle_ws(self, scope, receive, send):
         from panther.logger import logger
-        from panther.websocket import Websocket, GenericWebsocket
+        from panther.websocket import GenericWebsocket, Websocket
 
         temp_connection = Websocket(scope=scope, receive=receive, send=send)
 
@@ -139,10 +141,8 @@ class Panther:
 
         # Call 'After' Middleware
         for middleware in config['reversed_middlewares']:
-            try:
+            with contextlib.suppress(APIException):
                 await middleware.after(response=connection)
-            except APIException:
-                pass
 
     async def handle_http(self, scope, receive, send):
         from panther.logger import logger
@@ -164,7 +164,10 @@ class Panther:
 
         if endpoint is None:
             return await http_response(
-                send, status_code=status.HTTP_404_NOT_FOUND, monitoring=monitoring_middleware, exception=True,
+                send,
+                status_code=status.HTTP_404_NOT_FOUND,
+                monitoring=monitoring_middleware,
+                exception=True,
             )
 
         try:  # They Both(middleware.before() & _endpoint()) Have The Same Exception (APIException)

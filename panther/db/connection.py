@@ -55,6 +55,7 @@ class RedisConnection(Singleton, Redis):
     """
     Redis connection here works for per request things (caching, ...)
     """
+
     is_connected: bool = False
 
     def __init__(self, host: str = None, port: int = None, **kwargs):
@@ -65,7 +66,7 @@ class RedisConnection(Singleton, Redis):
     def execute_command(self, *args, **options):
         if not hasattr(self, 'connection_pool'):
             raise AttributeError(
-                f"'RedisConnection' object has no attribute 'connection_pool'. Hint: Check your redis middleware")
+                "'RedisConnection' object has no attribute 'connection_pool'. Hint: Check your redis middleware")
         return super().execute_command(*args, **options)
 
 
