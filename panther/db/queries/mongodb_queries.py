@@ -1,5 +1,7 @@
 from sys import version_info
 
+from panther.exceptions import DBException
+
 from panther.db.connection import db
 from panther.db.utils import merge_dicts, prepare_id_for_query
 
@@ -27,6 +29,19 @@ class BaseMongoDBQuery:
     def find(cls, _data: dict = None, /, **kwargs) -> list[Self]:
         documents = db.session[cls.__name__].find(cls._merge(_data, kwargs))
         return [cls.create_model_instance(document=document) for document in documents]
+
+    @classmethod
+    def first(cls, _data: dict = None, /, **kwargs) -> Self | None:
+        return cls.find_one(_data, **kwargs)
+
+    @classmethod
+    def last(cls, _data: dict = None, /, **kwargs) -> Self | None:
+        raise DBException('last() is not supported in MongoDB yet.')
+
+    # # # # # Count # # # # #
+    @classmethod
+    def count(cls, _data: dict = None, /, **kwargs) -> int:
+        return db.session[cls.__name__].count_documents(cls._merge(_data, kwargs))
 
     # # # # # Insert # # # # #
     @classmethod
@@ -71,8 +86,3 @@ class BaseMongoDBQuery:
 
         result = db.session[cls.__name__].update_many(_filter, update_fields)
         return result.updated_count
-
-    # # # # # Other # # # # #
-    @classmethod
-    def count(cls, _data: dict = None, /, **kwargs) -> int:
-        return db.session[cls.__name__].count_documents(cls._merge(_data, kwargs))

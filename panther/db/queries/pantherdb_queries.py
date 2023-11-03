@@ -28,6 +28,21 @@ class BasePantherDBQuery:
         documents = db.session.collection(cls.__name__).find(**cls._merge(_data, kwargs))
         return [cls.create_model_instance(document=document) for document in documents]
 
+    @classmethod
+    def first(cls, _data: dict = None, /, **kwargs) -> Self | None:
+        if document := db.session.collection(cls.__name__).first(**cls._merge(_data, kwargs)):
+            return cls.create_model_instance(document=document)
+
+    @classmethod
+    def last(cls, _data: dict = None, /, **kwargs) -> Self | None:
+        if document := db.session.collection(cls.__name__).last(**cls._merge(_data, kwargs)):
+            return cls.create_model_instance(document=document)
+
+    # # # # # Count # # # # #
+    @classmethod
+    def count(cls, _data: dict = None, /, **kwargs) -> int:
+        return db.session.collection(cls.__name__).count(**cls._merge(_data, kwargs))
+
     # # # # # Insert # # # # #
     @classmethod
     def insert_one(cls, _data: dict = None, **kwargs) -> Self:
@@ -61,8 +76,3 @@ class BasePantherDBQuery:
     def update_many(cls, _filter, _data: dict = None, /, **kwargs) -> int:
         prepare_id_for_query(_filter)
         return db.session.collection(cls.__name__).update_many(_filter, **cls._merge(_data, kwargs))
-
-    # # # # # Other # # # # #
-    @classmethod
-    def count(cls, _data: dict = None, /, **kwargs) -> int:
-        return db.session.collection(cls.__name__).count(**cls._merge(_data, kwargs))

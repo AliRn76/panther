@@ -1,3 +1,7 @@
+### 3.1.1
+- Upgrade `PantherDB` version
+- Add `first()`, `last()` queries
+
 ### 3.1.0
 - Add `BackgroundTasks`
 

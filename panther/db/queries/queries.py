@@ -82,6 +82,41 @@ class Query(BaseQuery):
         """
         return super().find(_data, **kwargs)
 
+    @classmethod
+    @log_query
+    def first(cls, _data: dict = None, /, **kwargs) -> Self | None:
+        """
+        Example:
+        -------
+            >>> from example.app.models import User
+            >>> user = User.first(name='Ali')
+        * Alias of find_one()
+        """
+        return super().first(_data, **kwargs)
+
+    @classmethod
+    @log_query
+    def last(cls, _data: dict = None, /, **kwargs) -> Self | None:
+        """
+        Example:
+        -------
+            >>> from example.app.models import User
+            >>> user = User.last(name='Ali')
+        """
+        return super().last(_data, **kwargs)
+
+    # # # # # Count # # # # #
+    @classmethod
+    @log_query
+    def count(cls, _data: dict = None, /, **kwargs) -> int:
+        """
+        Example:
+        -------
+            >>> from example.app.models import User
+            >>> User.count(name='Ali')
+        """
+        return super().count(_data, **kwargs)
+
     # # # # # Insert # # # # #
     @classmethod
     @log_query
@@ -172,28 +207,6 @@ class Query(BaseQuery):
         return super().update_many(_filter, _data, **kwargs)
 
     # # # # # Other # # # # #
-    @classmethod
-    @log_query
-    def last(cls, _data: dict = None, /, **kwargs) -> Self | None:
-        """
-        Example:
-        -------
-            >>> from example.app.models import User
-            >>> user = User.last(name='Ali')
-        """
-        return super().last(_data, **kwargs)
-
-    @classmethod
-    @log_query
-    def count(cls, _data: dict = None, /, **kwargs) -> int:
-        """
-        Example:
-        -------
-            >>> from example.app.models import User
-            >>> User.count(name='Ali')
-        """
-        return super().count(_data, **kwargs)
-
     @classmethod
     @log_query
     def find_or_insert(cls, **kwargs) -> tuple[bool, any]:
