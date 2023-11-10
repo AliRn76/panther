@@ -40,6 +40,7 @@ class Config(TypedDict):
     urls: dict
     db_engine: str
     websocket_connections: any  # type: WebsocketConnections
+    background_tasks: bool
 
 
 config: Config = {
@@ -58,4 +59,5 @@ config: Config = {
     'urls': {},
     'db_engine': '',
     'websocket_connections': None,
+    'background_tasks': False,
 }

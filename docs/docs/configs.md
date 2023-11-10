@@ -74,3 +74,11 @@ _Example:_ `USER_MODEL = 'panther.db.models.User'`
 > <b>Type:</b> `dict | None` (<b>Default:</b> `JWTConfig = {'key': SECRET_KEY}`)
 
 We use it when you set `panther.authentications.JWTAuthentication` as `AUTHENTICATION`
+
+---
+### [BACKGROUND_TASKS](https://pantherpy.github.io/background_tasks/)
+> <b>Type:</b> `bool` (<b>Default:</b> `False`)
+
+If `True` it will:
+
+- `initialize()` the `background_tasks`

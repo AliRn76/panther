@@ -18,6 +18,7 @@ __all__ = (
     'load_secret_key',
     'load_monitoring',
     'load_log_queries',
+    'load_background_tasks',
     'load_throttling',
     'load_default_cache_exp',
     'load_middlewares',
@@ -52,6 +53,10 @@ def load_monitoring(configs: dict, /) -> bool:
 
 def load_log_queries(configs: dict, /) -> bool:
     return configs.get('LOG_QUERIES', config['log_queries'])
+
+
+def load_background_tasks(configs: dict, /) -> bool:
+    return configs.get('BACKGROUND_TASKS', config['background_tasks'])
 
 
 def load_throttling(configs: dict, /) -> Throttling | None:
