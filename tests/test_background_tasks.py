@@ -7,8 +7,6 @@ from panther.utils import Singleton
 class TestBackgroundTasks(TestCase):
     def setUp(self):
         self.obj = BackgroundTasks()
-        # Comment the line below to see the error :(
-        self.obj.tasks = []
 
     def tearDown(self):
         del Singleton._instances[BackgroundTasks]
@@ -38,12 +36,11 @@ class TestBackgroundTasks(TestCase):
 
         self.assertEqual(self.obj.tasks, [])
 
-        # # # Commented For Amin
-        # with self.assertLogs() as captured:
-        #     self.obj.add_task(func2)
-        #
-        # self.assertEqual(len(captured.records), 1)
-        # self.assertEqual(
-        #     captured.records[0].getMessage(),
-        #     f'`{func2.__name__}` should be instance of `background_tasks.BackgroundTask`'
-        # )
+        with self.assertLogs() as captured:
+            self.obj.add_task(func2)
+
+        self.assertEqual(len(captured.records), 1)
+        self.assertEqual(
+            captured.records[0].getMessage(),
+            f'`{func2.__name__}` should be instance of `background_tasks.BackgroundTask`'
+        )

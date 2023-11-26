@@ -173,8 +173,10 @@ class BackgroundTask:
 
 
 class BackgroundTasks(Singleton):
-    tasks: list = list()
     _initialized: bool = False
+    
+    def __init__(self):
+        self.tasks = []
 
     def add_task(self, task: BackgroundTask):
         if not isinstance(task, BackgroundTask):
