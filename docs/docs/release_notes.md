@@ -1,3 +1,12 @@
+### 3.1.2
+- Add new methods to `BackgroundTask`
+  - `every_seconds()`
+  - `every_minutes()`
+  - `every_hours()`
+  - `every_days()`
+  - `every_weeks()`
+  - `at()`
+
 ### 3.1.1
 - Upgrade `PantherDB` version
 - Add `first()`, `last()` queries

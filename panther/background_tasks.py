@@ -25,6 +25,10 @@ else:
 
 
 class BackgroundTask:
+    """
+    Default: Task is going to run once,
+    and if you only specify a custom interval, default interval time is 1 minutes
+    """
     def __init__(self, func, *args, **kwargs):
         self._func: Callable = func
         self._args: tuple = args
@@ -97,7 +101,8 @@ class BackgroundTask:
 
     def at(self, _time: datetime.time, /) -> Self:
         """
-        Set a time to schedule the task, useful on `.every_days()` and `.every_weeks()`
+        Set a time to schedule the task,
+        Only useful on `.every_days()` and `.every_weeks()`
         """
         if isinstance(_time, datetime.time):
             self._time = _time
@@ -158,7 +163,7 @@ class BackgroundTask:
 
         logger.info(
             f'{self._func.__name__}('
-            f'{", ".join(a for a in self._args)}, '
+            f'{", ".join(str(a) for a in self._args)}, '
             f'{", ".join(f"{k}={v}" for k, v in self._kwargs.items())}'
             f') Remaining Interval -> {"∞" if self._remaining_interval == -1 else self._remaining_interval - 1}',
         )
@@ -174,7 +179,7 @@ class BackgroundTask:
 
 class BackgroundTasks(Singleton):
     _initialized: bool = False
-    
+
     def __init__(self):
         self.tasks = []
 
@@ -197,8 +202,8 @@ class BackgroundTasks(Singleton):
 
         def __run_tasks():
             while True:
-                time.sleep(1)
                 [Thread(target=__run_task, args=(task,)).start() for task in self.tasks[:]]
+                time.sleep(1)
 
         if self._initialized is False:
             self._initialized = True
