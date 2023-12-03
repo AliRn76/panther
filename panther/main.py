@@ -56,6 +56,7 @@ class Panther:
         config['secret_key'] = load_secret_key(self.configs)
         config['monitoring'] = load_monitoring(self.configs)
         config['log_queries'] = load_log_queries(self.configs)
+        config['background_tasks'] = load_background_tasks(self.configs)
         config['throttling'] = load_throttling(self.configs)
         config['default_cache_exp'] = load_default_cache_exp(self.configs)
         config['middlewares'] = load_middlewares(self.configs)
@@ -78,7 +79,8 @@ class Panther:
             self.ws_redis_connection = None
 
         # Initialize Background Tasks
-        background_tasks.initialize()
+        if config['background_tasks']:
+            background_tasks.initialize()
 
         # Load URLs should be the last call in load_configs,
         #   because it will read all files and loads them.
