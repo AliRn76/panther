@@ -2,84 +2,97 @@
 Panther is going to run the background tasks as a thread in the background
 
 ## Usage
-import the `background_tasks` from `panther.background_tasks`:
-```python
-from panther.background_tasks import background_tasks
-```
-now you can add tasks to the `background_tasks`, but the task should be an instance of `BackgroundTask` which you can import it from `panther.background_tasks` too
-```python
-from panther.background_tasks import BackgroundTask, background_tasks
+- Add the `BACKGROUND_TASKS = True` in the `core/configs.py`  
 
-background_tasks.add_task(BackgroundTask(...))
-```
+- Import the `background_tasks` from `panther.background_tasks`:
+    ```python
+    from panther.background_tasks import background_tasks
+    ```
 
-### Create a new task
-Task should be an instance of `BackgroundTask` and you have to pass a function and its parameters to it
-
-```python
-from panther.background_tasks import BackgroundTask, background_tasks
-
-
-def send_otp(name: str):
-    print(f'OTP Sent To {name} In Background')
+- Create a `task`
+    ```python
+    from panther.background_tasks import background_tasks, BackgroundTask
     
-task = BackgroundTask(send_otp, name='Ali')
-background_tasks.add_task(task)
-```
-
-### Set Interval For A Task
-Assume we want to send this OTP 5 times.
-
-```python
-from panther.background_tasks import BackgroundTask, background_tasks
-
-
-def send_otp(name: str):
-    print(f'OTP Sent To {name} In Background')
+    def do_something(name: str, age: int):
+        pass
+  
+    task = BackgroundTask(do_something, name='Ali', age=26)
+    ```
+  
+- Now you can add your task to the `background_tasks`
+    ```python
+    from panther.background_tasks import background_tasks, BackgroundTask
     
-task = BackgroundTask(send_otp, name='Ali').interval(5)
-background_tasks.add_task(task)
-```
-
-### Set Wait For Intervals
-Now assume we want to send these 5 OTPs at 5-minute intervals
-
-```python
-from datetime import timedelta
-
-from panther.background_tasks import BackgroundTask, background_tasks
+    def do_something(name: str, age: int):
+        pass
+  
+    task = BackgroundTask(do_something, name='Ali', age=26)
+    background_tasks.add_task(task)
+    ```
 
 
-def send_otp(name: str):
-    print(f'OTP Sent To {name} In Background')
+## Options
+- ### Interval
+    You can set custom `interval` for the `task`, let's say we want to run the `task` below for `3 times`.
     
-task = BackgroundTask(send_otp, name='Ali').interval(5).interval_wait(timedelta(minutes=5))
-background_tasks.add_task(task)
-```
-
-### Run The Task At A Specific Time
-Let's Write a task which is going to send a 'Hello' message to a user every morning at 08:00 O'clock 
-
-```python
-from datetime import time
-
-from panther.background_tasks import BackgroundTask, background_tasks
-
-
-async def send_hello(name: str):
-    print(f'Hello {name}')
+    ```python
+    from panther.background_tasks import BackgroundTask, background_tasks
     
-task = BackgroundTask(send_hello, name='Ali').interval(-1).on_time(time(hour=8, minute=0))
-background_tasks.add_task(task)
-```
+    
+    def do_something(name: str, age: int):
+        pass
+        
+    task = BackgroundTask(do_something, name='Ali', age=26).interval(3)
+    background_tasks.add_task(task)
+    ```
+- ### Schedule
+  `BackgroundTask` has some methods to `schedule` the run time, (Default value of them is `1`)
+  - `every_seconds()`
+  - `every_minutes()` 
+  - `every_hours()` 
+  - `every_days()`
+  - `every_weeks()`
+  > You can pass your custom value to them too, 
+  > 
+  > **Example**: Run Every 4 days: `every_days(4)`.
+ 
 
-### PS
-> - The -1 interval means infinite, 
->
-> - Default interval is 1.
-> 
-> - The function can be sync or async
-> 
-> - You can't use on_time() and interval_wait() together
-> 
-> - on_time() has higher priority than interval_wait()
+- ### Time Specification
+  You can set a custom `time` to tasks too
+  
+  let's say we want to run the `task` below every day on `8:00` o'clock. 
+
+    ```python
+    from datetime import time
+    
+    from panther.background_tasks import BackgroundTask, background_tasks
+    
+    
+    def do_something(name: str, age: int):
+            pass
+        
+    task = BackgroundTask(do_something, name='Ali', age=26).at(time(hour=8))
+    background_tasks.add_task(task)
+    ```
+
+## Notice
+- > The `task` function can be `sync` or `async`
+
+- > You can pass the arguments to the task as `args` and `kwargs` 
+  
+    ```python
+    def do_something(name: str, age: int):
+            pass
+        
+    task = BackgroundTask(do_something, name='Ali', age=26)
+    or 
+    task = BackgroundTask(do_something, 'Ali', age=26)
+    or 
+    task = BackgroundTask(do_something, 'Ali', 26)
+    ```
+
+- > Default interval is 1.
+
+- > The -1 interval means infinite, 
+
+- > The `.at()` only useful when you are using `.every_days()` or `.every_weeks()`
