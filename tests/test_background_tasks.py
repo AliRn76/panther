@@ -2,15 +2,18 @@ import time
 from unittest import TestCase
 
 from panther.background_tasks import BackgroundTasks, BackgroundTask
+from panther.configs import config
 from panther.utils import Singleton
 
 
 class TestBackgroundTasks(TestCase):
     def setUp(self):
         self.obj = BackgroundTasks()
+        config['background_tasks'] = True
 
     def tearDown(self):
         del Singleton._instances[BackgroundTasks]
+        config['background_tasks'] = False
 
     def test_background_tasks_singleton(self):
         new_obj = BackgroundTasks()
@@ -46,6 +49,25 @@ class TestBackgroundTasks(TestCase):
             captured.records[0].getMessage(),
             f'`{func.__name__}` should be instance of `background_tasks.BackgroundTask`'
         )
+        self.assertEqual(self.obj.tasks, [])
+
+    def test_add_task_with_false_background_task(self):
+        config['background_tasks'] = False
+        numbers = []
+
+        def func(_numbers):
+            _numbers.append(1)
+
+        task = BackgroundTask(func, numbers)
+        self.obj.initialize()
+        with self.assertLogs() as captured:
+            self.obj.add_task(task)
+        self.assertEqual(len(captured.records), 1)
+        self.assertEqual(
+            captured.records[0].getMessage(),
+            'Task will be ignored, `BACKGROUND_TASKS` is not True in `core/configs.py`'
+        )
+        self.assertEqual(self.obj.tasks, [])
 
     def test_add_task_with_args(self):
         numbers = []
@@ -132,9 +154,9 @@ class TestBackgroundTasks(TestCase):
         self.obj.initialize()
         self.obj.add_task(task)
         self.assertEqual(self.obj.tasks, [task])
-        time.sleep(5)
+        time.sleep(3)
         self.assertEqual(len(numbers), 1)
-        time.sleep(1)
+        time.sleep(3)
         self.assertEqual(len(numbers), 2)
 
 

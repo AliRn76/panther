@@ -6,6 +6,7 @@ from threading import Thread
 from typing import Callable, Literal
 
 from panther._utils import is_function_async
+from panther.configs import config
 from panther.logger import logger
 from panther.utils import Singleton
 
@@ -137,9 +138,9 @@ class BackgroundTask:
 
         # Time is ok, so run
         if bool(
-            now.hour == self._time.hour and
-            now.minute == self._time.minute and
-            now.second == self._time.second,
+                now.hour == self._time.hour and
+                now.minute == self._time.minute and
+                now.second == self._time.second,
         ):
             self._last_run = now
             return False
@@ -184,6 +185,10 @@ class BackgroundTasks(Singleton):
         self.tasks = []
 
     def add_task(self, task: BackgroundTask):
+        if config['background_tasks'] is False:
+            logger.error('Task will be ignored, `BACKGROUND_TASKS` is not True in `core/configs.py`')
+            return
+
         if not isinstance(task, BackgroundTask):
             name = getattr(task, '__name__', task.__class__.__name__)
             logger.error(f'`{name}` should be instance of `background_tasks.BackgroundTask`')
