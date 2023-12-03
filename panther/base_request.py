@@ -1,6 +1,8 @@
 from collections import namedtuple
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
+
+from panther.db import Model
 
 
 @dataclass(frozen=True)
@@ -34,7 +36,7 @@ class BaseRequest:
         self._params: dict | None = None
 
     @property
-    def headers(self):
+    def headers(self) -> Headers:
         _headers = {header[0].decode('utf-8'): header[1].decode('utf-8') for header in self.scope['headers']}
         if self._headers is None:
             self._headers = Headers(
@@ -49,14 +51,13 @@ class BaseRequest:
                 sec_websocket_version=_headers.pop('sec_websocket_version', None),
                 sec_websocket_key=_headers.pop('sec_websocket_key', None),
                 upgrade=_headers.pop('upgrade', None),
-                # TODO: Others ...
             )
         return self._headers
 
     @property
     def query_params(self) -> dict:
         if self._params is None:
-            self._params = dict()
+            self._params = {}
             if (query_string := self.scope['query_string']) != b'':
                 query_string = query_string.decode('utf-8').split('&')
                 for param in query_string:
@@ -85,8 +86,8 @@ class BaseRequest:
         return self.scope['scheme']
 
     @property
-    def user(self):
+    def user(self) -> Model:
         return self._user
 
-    def set_user(self, user) -> None:
+    def set_user(self, user: Model) -> None:
         self._user = user

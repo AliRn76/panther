@@ -2,6 +2,7 @@ import importlib
 import random
 import re
 import string
+from collections.abc import Callable
 from traceback import TracebackException
 
 import orjson as json
@@ -11,7 +12,7 @@ from panther.file_handler import File
 from panther.logger import logger
 
 
-async def _http_response_start(send, /, headers: dict, status_code: int):
+async def _http_response_start(send: Callable, /, headers: dict, status_code: int) -> None:
     bytes_headers = [[k.encode(), v.encode()] for k, v in (headers or {}).items()]
     await send({
         'type': 'http.response.start',
@@ -20,7 +21,7 @@ async def _http_response_start(send, /, headers: dict, status_code: int):
     })
 
 
-async def _http_response_body(send, /, body: any = None):
+async def _http_response_body(send: Callable, /, body: bytes | None = None) -> None:
     if body is None:
         await send({'type': 'http.response.body'})
     else:
@@ -28,15 +29,15 @@ async def _http_response_body(send, /, body: any = None):
 
 
 async def http_response(
-        send,
+        send: Callable,
         /,
         *,
         status_code: int,
         monitoring=None,  # type: MonitoringMiddleware | None
-        headers: dict = None,
-        body: bytes = None,
+        headers: dict | None = None,
+        body: bytes | None = None,
         exception: bool = False,
-):
+) -> None:
     if exception:
         body = json.dumps({'detail': status.status_text[status_code]})
     elif status_code == status.HTTP_204_NO_CONTENT or body == b'null':
@@ -45,12 +46,11 @@ async def http_response(
     if monitoring is not None:
         await monitoring.after(status_code=status_code)
 
-    # TODO: Should we send 'access-control-allow-origin' in any case
     await _http_response_start(send, headers=headers, status_code=status_code)
     await _http_response_body(send, body=body)
 
 
-def import_class(dotted_path: str, /):
+def import_class(dotted_path: str, /) -> type:
     """
     Example:
     -------
@@ -73,7 +73,6 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
     ----------------------------449529189836774544725855
     --\r\n
     """
-
     boundary = b'--' + boundary.encode()
     new_line = b'\r\n' if body[-2:] == b'\r\n' else b'\n'
 
@@ -88,11 +87,11 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
             + b'Content-Type: )(.*)'
     )
 
-    data = dict()
-    for row in body.split(boundary):
-        row = row.removeprefix(new_line).removesuffix(new_line)
+    data = {}
+    for _row in body.split(boundary):
+        row = _row.removeprefix(new_line).removesuffix(new_line)
 
-        if row == b'' or row == b'--':
+        if row in (b'', b'--'):
             continue
 
         if match := re.match(pattern=field_pattern, string=row):
@@ -120,18 +119,16 @@ def generate_ws_connection_id() -> str:
     return ''.join(random.choices(string.ascii_letters, k=10))
 
 
-def is_function_async(func) -> bool:
+def is_function_async(func: Callable) -> bool:
     """
-    sync result is 0 --> False
+    Sync result is 0 --> False
     async result is 128 --> True
     """
     return bool(func.__code__.co_flags & (1 << 7))
 
 
-def clean_traceback_message(exception) -> str:
-    """
-    We are ignoring packages traceback message
-    """
+def clean_traceback_message(exception: Exception) -> str:
+    """We are ignoring packages traceback message"""
     tb = TracebackException(type(exception), exception, exception.__traceback__)
     stack = tb.stack.copy()
     for t in stack:

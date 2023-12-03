@@ -39,7 +39,8 @@ def _convert_to_object_id(_id: bson.ObjectId | str) -> bson.ObjectId:
     try:
         return bson.ObjectId(_id)
     except bson.objectid.InvalidId:
-        raise bson.errors.InvalidId(f'id={_id} is invalid bson.ObjectId')
+        msg = f'id={_id} is invalid bson.ObjectId'
+        raise bson.errors.InvalidId(msg)
 
 
 def merge_dicts(*args) -> dict:

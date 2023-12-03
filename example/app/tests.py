@@ -1,10 +1,11 @@
-from main import app
-from panther.test import APIClient
 from unittest import TestCase
+
+from main import app
+
+from panther.test import APIClient
 
 
 class Test1(TestCase):
-
     @classmethod
     def setUpClass(cls) -> None:
         cls.client = APIClient(app=app)

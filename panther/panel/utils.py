@@ -2,7 +2,7 @@ from panther.db.models import Model
 
 
 def get_model_fields(model):
-    result = dict()
+    result = {}
 
     for k, v in model.model_fields.items():
         try:

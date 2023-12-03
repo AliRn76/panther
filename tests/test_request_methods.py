@@ -1,16 +1,16 @@
 import sys
+from unittest import TestCase
 
 from panther import Panther
 from panther.test import APIClient
-from unittest import TestCase
 
 
 class TestMethods(TestCase):
-
     @classmethod
     def setUpClass(cls) -> None:
         sys.path.append('tests/app')
         from tests.app.urls import method_urls
+
         app = Panther(__name__, configs=sys.modules[__name__], urls=method_urls)
         cls.client = APIClient(app=app)
 

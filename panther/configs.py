@@ -13,13 +13,17 @@ class JWTConfig:
             key: str,
             algorithm: str = 'HS256',
             life_time: timedelta | int = timedelta(days=1),
-            refresh_life_time: timedelta | int = None,
+            refresh_life_time: timedelta | int | None = None,
     ):
         self.key = key
         self.algorithm = algorithm
-        self.life_time = life_time
+        self.life_time = life_time.total_seconds() if isinstance(life_time, timedelta) else life_time
+
         if refresh_life_time:
-            self.refresh_life_time = refresh_life_time
+            if isinstance(refresh_life_time, timedelta):
+                self.refresh_life_time = refresh_life_time.total_seconds()
+            else:
+                self.refresh_life_time = refresh_life_time
         else:
             self.refresh_life_time = self.life_time * 2
 

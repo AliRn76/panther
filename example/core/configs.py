@@ -2,7 +2,6 @@
 from datetime import timedelta
 from pathlib import Path
 
-from panther.throttling import Throttling
 from panther.utils import load_env
 
 BASE_DIR = Path(__name__).resolve().parent
@@ -24,7 +23,10 @@ DB_PASSWORD = env['DB_PASSWORD']
 MIDDLEWARES = [
     # TODO: change middleware
     # Go To https://framework.org/SupportedDatabase For More Options
-    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
+    (
+        'panther.middlewares.db.DatabaseMiddleware',
+        {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'},
+    ),
     # ('panther.middlewares.db.DatabaseMiddleware', {'url': f'mongodb://{DB_HOST}:27017/{DB_NAME}'}),
     ('panther.middlewares.redis.RedisMiddleware', {'host': '127.0.0.1', 'port': 6379}),
 ]

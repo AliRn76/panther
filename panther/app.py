@@ -1,4 +1,5 @@
 import functools
+from collections.abc import Callable
 from datetime import datetime, timedelta
 from typing import Literal
 
@@ -37,7 +38,7 @@ class API:
             throttling: Throttling = None,
             cache: bool = False,
             cache_exp_time: timedelta | int | None = None,
-            methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] = None,
+            methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
     ):
         self.input_model = input_model
         self.output_model = output_model
@@ -51,7 +52,7 @@ class API:
 
     def __call__(self, func):
         @functools.wraps(func)
-        async def wrapper(request: Request, **path_variables):
+        async def wrapper(request: Request, **path_variables) -> Response:
             self.request: Request = request  # noqa: Non-self attribute could not be type hinted
 
             # 1. Check Method
@@ -97,7 +98,11 @@ class API:
 
             # 11. Set New Response To Cache
             if self.cache and self.request.method == 'GET':
-                set_cache_response(request=self.request, response=response, cache_exp_time=self.cache_exp_time)
+                set_cache_response(
+                    request=self.request,
+                    response=response,
+                    cache_exp_time=self.cache_exp_time
+                )
 
             # 12. Warning CacheExpTime
             if self.cache_exp_time and self.cache is False:
@@ -151,7 +156,7 @@ class API:
             raise JsonDecodeException
 
     @staticmethod
-    def validate_path_variables(func, request_path_variables: dict):
+    def validate_path_variables(func: Callable, request_path_variables: dict):
         for name, value in request_path_variables.items():
             for variable_name, variable_type in func.__annotations__.items():
                 if name == variable_name:

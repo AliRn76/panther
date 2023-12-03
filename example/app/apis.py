@@ -3,7 +3,12 @@ import time
 from datetime import timedelta
 
 from app.models import User
-from app.serializers import FileSerializer, UserInputSerializer, UserOutputSerializer, UserUpdateSerializer
+from app.serializers import (
+    FileSerializer,
+    UserInputSerializer,
+    UserOutputSerializer,
+    UserUpdateSerializer,
+)
 from core.permissions import UserPermission
 
 from panther import status
@@ -15,7 +20,7 @@ from panther.logger import logger
 from panther.request import Request
 from panther.response import HTMLResponse, Response
 from panther.throttling import Throttling
-from panther.websocket import send_message_to_websocket, close_websocket_connection
+from panther.websocket import close_websocket_connection, send_message_to_websocket
 
 
 class ReturnNone(GenericAPI):
@@ -123,58 +128,8 @@ class PatchUser(GenericAPI):
 
 @API()
 async def single_user(request: Request):
-    # users = User.insert_one(username='Ali', password='1', age=12)
-    # users = User.find(id="64bd711cd73aa4a30786db77")
-    # print(f'{users=}')
-    # # print(f'{dir(request) = }')
-    # print(f'{request.data = }')
-    # # print(f'{request.query_params = }')
-    #
-    # user = User.create_and_commit(username='ali', password='123')
-    # # print(f'{user = }')
-    # # print(f'{user.username = }')
-    #
-    # redis.set('ali', '1')
-    # logger.debug(f"{redis.get('ali') = }")
-    #
-    # get_user = User.get_one(username='ali', password='123')
-    # # print(f'{get_user = }')
-    #
-    # get_users = User.list()
-    # # for u in get_users:
-    # #     print(f'{u.id = }')
-    # #     print(f'{u.username = }')
-    #
-    # last_user = User.last()
-    # # print(f'{last_user.id = }')
-    #
-    # # raise UserNotFound
-    # a = [
-    #     {
-    #         'id': 1,
-    #         'username': 'ali',
-    #         'password': '111',
-    #     },
-    #     {
-    #         'id': 2,
-    #         'username': 'ali2',
-    #         'password': '1112',
-    #     },
-    #     {
-    #         'id': 3,
-    #         'username': 'ali3',
-    #         'password': '1113',
-    #     }
-    # ]
-    # b = 'asdf'
-    # c = {1, 2, 4}
-    #
-    # class A:
-    #     ...
-    # d = A()
-    # e = True
-    # return Response(status_code=200, data=a)
-    return Response(status_code=200)
+    user = User.insert_one(username='Ali', password='1', age=12)
+    return Response(data=user, status_code=200)
 
 
 # @API(input=UserInputSerializer, output_model=UserSerializer)

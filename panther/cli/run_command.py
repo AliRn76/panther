@@ -24,7 +24,7 @@ def _handle_commands(args: dict[str, str | None]) -> dict:
     - ws_ping_interval
     - ws_ping_timeout
     """
-    _command = dict()
+    _command = {}
 
     if 'reload' in args:
         _command['reload'] = bool(args.pop('reload', None))

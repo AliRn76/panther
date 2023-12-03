@@ -1,13 +1,12 @@
 import sys
 import time
 from pathlib import Path
-from typing import NoReturn
 
 from panther.cli.template import Template
 from panther.cli.utils import cli_error
 
 
-def create(args: list) -> NoReturn:
+def create(args: list) -> None:
     # Get Project Name
     if len(args) == 0:
         return cli_error('Not Enough Parameters.')
@@ -36,17 +35,17 @@ def create(args: list) -> NoReturn:
             Path(sub_directory).mkdir()
 
             # Create Files of Sub Directory
-            for sub_file_name, sub_data in data.items():
+            for sub_file_name, _sub_data in data.items():
                 file_path = f'{sub_directory}/{sub_file_name}'
-                sub_data = sub_data.replace('{PROJECT_NAME}', project_name.lower())
-                with open(file_path, 'x') as file:
+                sub_data = _sub_data.replace('{PROJECT_NAME}', project_name.lower())
+                with Path(file_path).open('x') as file:
                     file.write(sub_data)
         else:
             # Create File
-            data = data.replace('{PROJECT_NAME}', project_name.lower())
+            new_data = data.replace('{PROJECT_NAME}', project_name.lower())
             file_path = f'{base_directory}/{file_name}'
-            with open(file_path, 'x') as file:
-                file.write(data)
+            with Path(file_path).open('x') as file:
+                file.write(new_data)
 
     print('Project Created Successfully.')
 
@@ -68,7 +67,7 @@ def check_all_directories(base_directory: str) -> str | None:
                     return file_path
 
 
-def load_animation() -> NoReturn:
+def load_animation() -> None:
     animation = [
         '■□□□□□□□□□□',
         '■■□□□□□□□□□',

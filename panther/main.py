@@ -1,7 +1,7 @@
-import asyncio
 import contextlib
 import sys
 import types
+from collections.abc import Callable
 from pathlib import Path
 from threading import Thread
 
@@ -20,25 +20,29 @@ from panther.routings import collect_path_variables, find_endpoint
 
 
 class Panther:
-    def __init__(self, name, configs=None, urls: dict | None = None):
+    def __init__(self, name: str, configs=None, urls: dict | None = None):
         from panther.logger import logger
 
         self._configs = configs
         self._urls = urls
         config['base_dir'] = Path(name).resolve().parent
-        if sys.version_info.minor < 11:
+        if sys.version_info < (3, 11):
             logger.warning('Use Python Version 3.11+ For Better Performance.')
 
         try:
             self.load_configs()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             if isinstance(e, PantherException):
                 logger.error(e.args[0])
             else:
                 logger.error(clean_traceback_message(e))
-            exit()
+            sys.exit()
 
-        Thread(target=self.websocket_connections, daemon=True, args=(self.ws_redis_connection,)).start()
+        Thread(
+            target=self.websocket_connections,
+            daemon=True,
+            args=(self.ws_redis_connection,),
+        ).start()
 
     def load_configs(self) -> None:
         from panther.logger import logger
@@ -68,7 +72,6 @@ class Panther:
         # Websocket Redis Connection
         for middleware in config['middlewares']:
             if middleware.__class__.__name__ == 'RedisMiddleware':
-                # TODO: What if user define a middleware with same name?
                 self.ws_redis_connection = middleware.redis_connection_for_ws()
                 break
         else:
@@ -78,16 +81,15 @@ class Panther:
         background_tasks.initialize()
 
         # Load URLs should be the last call in load_configs,
-        #   because it will read all files and load them.
+        #   because it will read all files and loads them.
         config['urls'] = load_urls(self.configs, urls=self._urls)
         config['urls']['_panel'] = load_panel_urls()
 
         if config['monitoring']:
             logger.info('Run "panther monitor" in another session for Monitoring.')
 
-    async def __call__(self, scope, receive, send) -> None:
+    async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
         """
-        We Used Python3.11+ For asyncio.TaskGroup()
         1.
             async with asyncio.TaskGroup() as tg:
                 tg.create_task(self.run(scope, receive, send))
@@ -102,14 +104,9 @@ class Panther:
                 e.submit(self.run, scope, receive, send)
         """
         func = self.handle_http if scope['type'] == 'http' else self.handle_ws
+        await func(scope=scope, receive=receive, send=send)
 
-        if sys.version_info.minor >= 11:
-            async with asyncio.TaskGroup() as tg:
-                tg.create_task(func(scope, receive, send))
-        else:
-            await func(scope, receive, send)
-
-    async def handle_ws(self, scope, receive, send):
+    async def handle_ws(self, scope: dict, receive: Callable, send: Callable) -> None:
         from panther.logger import logger
         from panther.websocket import GenericWebsocket, Websocket
 
@@ -143,8 +140,9 @@ class Panther:
         for middleware in config['reversed_middlewares']:
             with contextlib.suppress(APIException):
                 await middleware.after(response=connection)
+        return None
 
-    async def handle_http(self, scope, receive, send):
+    async def handle_http(self, scope: dict, receive: Callable, send: Callable) -> None:
         from panther.logger import logger
 
         request = Request(scope=scope, receive=receive, send=send)
@@ -238,7 +236,7 @@ class Panther:
         )
 
     @classmethod
-    def handle_exceptions(cls, e, /) -> Response:
+    def handle_exceptions(cls, e: APIException, /) -> Response:
         return Response(
             data=e.detail if isinstance(e.detail, dict) else {'detail': e.detail},
             status_code=e.status_code,

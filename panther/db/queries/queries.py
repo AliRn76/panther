@@ -1,5 +1,4 @@
 import sys
-from typing import NoReturn
 
 from pydantic import ValidationError
 
@@ -10,17 +9,12 @@ from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.db.utils import log_query
 from panther.exceptions import APIException, DBException
 
-if config['db_engine'] == 'pantherdb':
-    BaseQuery = BasePantherDBQuery
-else:
-    BaseQuery = BaseMongoDBQuery
+BaseQuery = BasePantherDBQuery if config['db_engine'] == 'pantherdb' else BaseMongoDBQuery
 
-__all__ = (
-    'Query',
-)
+__all__ = ('Query',)
 
 
-if sys.version_info.minor >= 11:
+if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing import TypeVar
@@ -30,7 +24,7 @@ else:
 
 class Query(BaseQuery):
     @classmethod
-    def validate_data(cls, *, data: dict, is_updating: bool = False) -> NoReturn:
+    def validate_data(cls, *, data: dict, is_updating: bool = False):
         """
         *. Validate the input of user with its class
         *. If is_updating is True & exception happens but the message was empty
@@ -62,7 +56,7 @@ class Query(BaseQuery):
     # # # # # Find # # # # #
     @classmethod
     @log_query
-    def find_one(cls, _data: dict = None, /, **kwargs) -> Self | None:
+    def find_one(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
         """
         Example:
         -------
@@ -73,7 +67,7 @@ class Query(BaseQuery):
 
     @classmethod
     @log_query
-    def find(cls, _data: dict = None, /, **kwargs) -> list[Self]:
+    def find(cls, _data: dict | None = None, /, **kwargs) -> list[Self]:
         """
         Example:
         -------
@@ -84,7 +78,7 @@ class Query(BaseQuery):
 
     @classmethod
     @log_query
-    def first(cls, _data: dict = None, /, **kwargs) -> Self | None:
+    def first(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
         """
         Example:
         -------
@@ -96,7 +90,7 @@ class Query(BaseQuery):
 
     @classmethod
     @log_query
-    def last(cls, _data: dict = None, /, **kwargs) -> Self | None:
+    def last(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
         """
         Example:
         -------
@@ -108,7 +102,7 @@ class Query(BaseQuery):
     # # # # # Count # # # # #
     @classmethod
     @log_query
-    def count(cls, _data: dict = None, /, **kwargs) -> int:
+    def count(cls, _data: dict | None = None, /, **kwargs) -> int:
         """
         Example:
         -------
@@ -120,7 +114,7 @@ class Query(BaseQuery):
     # # # # # Insert # # # # #
     @classmethod
     @log_query
-    def insert_one(cls, _data: dict = None, /, **kwargs) -> Self:
+    def insert_one(cls, _data: dict | None = None, /, **kwargs) -> Self:
         """
         Example:
         -------
@@ -132,8 +126,9 @@ class Query(BaseQuery):
 
     @classmethod
     @log_query
-    def insert_many(cls, _data: dict = None, /, **kwargs):
-        raise DBException('insert_many() is not supported yet.')
+    def insert_many(cls, _data: dict | None = None, /, **kwargs):
+        msg = 'insert_many() is not supported yet.'
+        raise DBException(msg)
 
     # # # # # Delete # # # # #
     @log_query
@@ -149,7 +144,7 @@ class Query(BaseQuery):
 
     @classmethod
     @log_query
-    def delete_one(cls, _data: dict = None, /, **kwargs) -> bool:
+    def delete_one(cls, _data: dict | None = None, /, **kwargs) -> bool:
         """
         Example:
         -------
@@ -160,7 +155,7 @@ class Query(BaseQuery):
 
     @classmethod
     @log_query
-    def delete_many(cls, _data: dict = None, /, **kwargs) -> int:
+    def delete_many(cls, _data: dict | None = None, /, **kwargs) -> int:
         """
         Example:
         -------
@@ -184,7 +179,7 @@ class Query(BaseQuery):
 
     @classmethod
     @log_query
-    def update_one(cls, _filter, _data: dict = None, /, **kwargs) -> bool:
+    def update_one(cls, _filter: dict, _data: dict | None = None, /, **kwargs) -> bool:
         """
         Example:
         -------
@@ -196,7 +191,7 @@ class Query(BaseQuery):
 
     @classmethod
     @log_query
-    def update_many(cls, _filter, _data: dict = None, /, **kwargs) -> int:
+    def update_many(cls, _filter: dict, _data: dict | None = None, /, **kwargs) -> int:
         """
         Example:
         -------
@@ -218,8 +213,7 @@ class Query(BaseQuery):
         """
         if obj := cls.find_one(**kwargs):
             return False, obj
-        else:
-            return True, cls.insert_one(**kwargs)
+        return True, cls.insert_one(**kwargs)
 
     @classmethod
     @log_query
@@ -233,7 +227,10 @@ class Query(BaseQuery):
         if obj := cls.find_one(**kwargs):
             return obj
 
-        raise APIException(detail=f'{cls.__name__} Does Not Exists', status_code=status.HTTP_404_NOT_FOUND)
+        raise APIException(
+            detail=f'{cls.__name__} Does Not Exists',
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
 
     @log_query
     def save(self, **kwargs) -> None:
@@ -245,4 +242,5 @@ class Query(BaseQuery):
             >>> user.name = 'Saba'
             >>> user.save()
         """
-        raise DBException('save() is not supported yet.')
+        msg = 'save() is not supported yet.'
+        raise DBException(msg) from None

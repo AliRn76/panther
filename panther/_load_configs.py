@@ -3,6 +3,7 @@ import os
 import platform
 from datetime import timedelta
 from importlib import import_module
+from pathlib import Path
 
 from pydantic._internal._model_construction import ModelMetaclass
 
@@ -30,7 +31,7 @@ __all__ = (
 )
 
 
-def load_configs_file(_configs, /):
+def load_configs_file(_configs, /) -> dict:
     """Read the config file and put it as dict in self.configs"""
     if _configs is None:
         try:
@@ -64,7 +65,7 @@ def load_default_cache_exp(configs: dict, /) -> timedelta | None:
 
 def load_middlewares(configs: dict, /) -> list:
     """Collect The Middlewares & Set db_engine If One Of Middlewares Was For DB"""
-    middlewares = list()
+    middlewares = []
 
     for path, data in configs.get('MIDDLEWARES', []):
         if path.find('panther.middlewares.db.DatabaseMiddleware') != -1:
@@ -86,7 +87,7 @@ def load_authentication_class(configs: dict, /) -> ModelMetaclass | None:
     return configs.get('AUTHENTICATION') and import_class(configs['AUTHENTICATION'])
 
 
-def load_jwt_config(configs: dict, /) -> JWTConfig:
+def load_jwt_config(configs: dict, /) -> JWTConfig | None:
     """Only Collect JWT Config If Authentication Is JWTAuthentication"""
     if getattr(config['authentication'], '__name__', None) == 'JWTAuthentication':
         user_config = configs.get('JWTConfig', {})
@@ -94,13 +95,14 @@ def load_jwt_config(configs: dict, /) -> JWTConfig:
             user_config['key'] = config['secret_key'].decode()
 
         return JWTConfig(**user_config)
+    return None
 
 
-def collect_all_models():
+def collect_all_models() -> list[dict]:
     """Collecting all models for panel APIs"""
     from panther.db.models import Model
 
-    collected_models = list()
+    collected_models = []
 
     for root, _, files in os.walk(config['base_dir']):
         # Traverse through each directory
@@ -111,7 +113,7 @@ def collect_all_models():
 
                 # If the file was "models.py" read it
                 file_path = f'{root}{slash}models.py'
-                with open(file_path) as file:
+                with Path(file_path).open() as file:
                     # Parse the file with ast
                     node = ast.parse(file.read())
                     for n in node.body:
@@ -177,5 +179,5 @@ def load_panel_urls() -> dict:
     return finalize_urls(flatten_urls(urls))
 
 
-def _exception_handler(field: str, error: str | Exception):
+def _exception_handler(field: str, error: str | Exception) -> PantherException:
     return PantherException(f"Invalid '{field}': {error}")

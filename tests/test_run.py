@@ -6,7 +6,6 @@ from panther import Panther
 
 
 class TestRun(TestCase):
-
     @classmethod
     def setUpClass(cls) -> None:
         sys.path.append('tests/run')
@@ -24,7 +23,7 @@ class TestRun(TestCase):
         with self.assertLogs(level='DEBUG') as captured:
             Panther(__name__)
 
-            if sys.version_info.minor < 11:
+            if sys.version_info < (3, 11):
                 self.assertEqual(len(captured.records), 2)
                 self.assertEqual(captured.records[0].getMessage(), 'Use Python Version 3.11+ For Better Performance.')
                 self.assertEqual(captured.records[1].getMessage(), f'Base directory: {base_dir}')
@@ -32,7 +31,7 @@ class TestRun(TestCase):
                 self.assertEqual(len(captured.records), 1)
                 self.assertEqual(captured.records[0].getMessage(), f'Base directory: {base_dir}')
 
-        if sys.version_info.minor < 11:
+        if sys.version_info < (3, 11):
             with self.assertLogs(level='INFO') as captured:
                 Panther(__name__)
                 self.assertEqual(len(captured.records), 1)
@@ -41,7 +40,7 @@ class TestRun(TestCase):
             with self.assertNoLogs(level='INFO'):
                 Panther(__name__)
 
-        if sys.version_info.minor < 11:
+        if sys.version_info < (3, 11):
             with self.assertLogs(level='WARNING') as captured:
                 Panther(__name__)
                 self.assertEqual(len(captured.records), 1)

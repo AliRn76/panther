@@ -1,4 +1,3 @@
-
 URLs = 'core.configs.urls'
 
 

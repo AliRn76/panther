@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 class WebsocketConnections(Singleton):
     def __init__(self):
-        self.connections = dict()
+        self.connections = {}
         self.connections_count = 0
 
     def __call__(self, r: Redis | None):
@@ -62,7 +62,7 @@ class WebsocketConnections(Singleton):
                     case _:
                         logger.debug(f'Unknown Channel Type: {channel_data["type"]}')
 
-    async def new_connection(self, connection: Websocket):
+    async def new_connection(self, connection: Websocket) -> None:
         await connection.connect(**connection.path_variables)
         if connection.is_connected:
             self.connections_count += 1
@@ -70,7 +70,7 @@ class WebsocketConnections(Singleton):
             # Save New ConnectionID
             self.connections[connection.connection_id] = connection
 
-    def remove_connection(self, connection: Websocket):
+    def remove_connection(self, connection: Websocket) -> None:
         self.connections_count -= 1
         del self.connections[connection.connection_id]
 
@@ -78,13 +78,11 @@ class WebsocketConnections(Singleton):
 class Websocket(BaseRequest):
     is_connected: bool = False
 
-    async def connect(self, **kwargs):
-        """
-        Check your conditions then self.accept() the connection
-        """
+    async def connect(self, **kwargs) -> None:
+        """Check your conditions then self.accept() the connection"""
         await self.accept()
 
-    async def accept(self, subprotocol: str = None, headers: dict = None):
+    async def accept(self, subprotocol: str | None = None, headers: dict | None = None) -> None:
         await self.asgi_send({'type': 'websocket.accept', 'subprotocol': subprotocol, 'headers': headers or {}})
         self.is_connected = True
 
@@ -96,10 +94,10 @@ class Websocket(BaseRequest):
         # Set ConnectionID
         self.set_connection_id(connection_id)
 
-    async def receive(self, data: str | bytes):
+    async def receive(self, data: str | bytes) -> None:
         pass
 
-    async def send(self, data: any = None):
+    async def send(self, data: any = None) -> None:
         if data:
             if isinstance(data, bytes):
                 await self.send_bytes(bytes_data=data)
@@ -108,18 +106,18 @@ class Websocket(BaseRequest):
             else:
                 await self.send_text(text_data=json.dumps(data).decode())
 
-    async def send_text(self, text_data: str):
+    async def send_text(self, text_data: str) -> None:
         await self.asgi_send({'type': 'websocket.send', 'text': text_data})
 
-    async def send_bytes(self, bytes_data: bytes):
+    async def send_bytes(self, bytes_data: bytes) -> None:
         await self.asgi_send({'type': 'websocket.send', 'bytes': bytes_data})
 
-    async def close(self, code: int = status.WS_1000_NORMAL_CLOSURE, reason: str = ''):
+    async def close(self, code: int = status.WS_1000_NORMAL_CLOSURE, reason: str = '') -> None:
         self.is_connected = False
         config['websocket_connections'].remove_connection(self)
         await self.asgi_send({'type': 'websocket.close', 'code': code, 'reason': reason})
 
-    async def listen(self):
+    async def listen(self) -> None:
         while self.is_connected:
             response = await self.asgi_receive()
             if response['type'] == 'websocket.connect':
@@ -133,14 +131,14 @@ class Websocket(BaseRequest):
             else:
                 await self.receive(data=response['bytes'])
 
-    def set_path_variables(self, path_variables: dict):
+    def set_path_variables(self, path_variables: dict) -> None:
         self._path_variables = path_variables
 
     @property
-    def path_variables(self):
+    def path_variables(self) -> dict:
         return getattr(self, '_path_variables', {})
 
-    def set_connection_id(self, connection_id):
+    def set_connection_id(self, connection_id: str) -> None:
         self._connection_id = connection_id
 
     @property

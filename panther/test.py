@@ -1,5 +1,6 @@
 import asyncio
-from typing import Callable, Literal
+from collections.abc import Callable
+from typing import Literal
 
 import orjson as json
 
@@ -86,8 +87,8 @@ class APIClient:
     def get(
             self,
             path: str,
-            headers: dict = None,
-            query_params: dict = None,
+            headers: dict | None = None,
+            query_params: dict | None = None,
     ) -> Response:
         return self._send_request(
             path=path,
@@ -101,8 +102,8 @@ class APIClient:
             self,
             path: str,
             payload: dict | None = None,
-            headers: dict = None,
-            query_params: dict = None,
+            headers: dict | None = None,
+            query_params: dict | None = None,
             content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
@@ -118,8 +119,8 @@ class APIClient:
             self,
             path: str,
             payload: dict | None = None,
-            headers: dict = None,
-            query_params: dict = None,
+            headers: dict | None = None,
+            query_params: dict | None = None,
             content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
@@ -135,8 +136,8 @@ class APIClient:
             self,
             path: str,
             payload: dict | None = None,
-            headers: dict = None,
-            query_params: dict = None,
+            headers: dict | None = None,
+            query_params: dict | None = None,
             content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
@@ -151,8 +152,8 @@ class APIClient:
     def delete(
             self,
             path: str,
-            headers: dict = None,
-            query_params: dict = None,
+            headers: dict | None = None,
+            query_params: dict | None = None,
     ) -> Response:
         return self._send_request(
             path=path,

@@ -45,4 +45,3 @@ async def return_response_list():
 @API()
 async def return_response_tuple():
     return Response(data=('car', 'home', 'phone', 'book'))
-

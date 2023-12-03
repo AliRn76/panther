@@ -45,7 +45,7 @@ def clean_args(args: list[str]) -> dict:
     Input: ['--reload', '--host', '127.0.0.1', ...]
     Output: {'--reload: None, 'host': '127.0.0.1', ...}
     """
-    _args = dict()
+    _args = {}
     for i, arg in enumerate(args):
         if arg.startswith('--'):
             if (i + 1) < len(args):

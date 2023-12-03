@@ -1,15 +1,14 @@
 import re
 from collections import Counter
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping, MutableMapping
 from copy import deepcopy
 from functools import partial, reduce
-from typing import Callable, MutableMapping
 
 from panther.configs import config
 
 
 def flatten_urls(urls: dict) -> dict:
-    return {k: v for k, v in _flattening_urls(urls)}
+    return dict(_flattening_urls(urls))
 
 
 def _flattening_urls(data: dict | Callable, url: str = ''):
@@ -45,9 +44,9 @@ def _is_url_endpoint_valid(url: str, endpoint: Callable) -> bool:
 
 def finalize_urls(urls: dict) -> dict:
     """Convert flat dict to nested"""
-    urls_list = list()
+    urls_list = []
     for url, endpoint in urls.items():
-        path = dict()
+        path = {}
         if url == '':
             # This condition only happen when
             #   user defines the root url == '' instead of '/'
@@ -67,7 +66,7 @@ def _merge(destination: MutableMapping, *sources) -> MutableMapping:
 
 
 def _simplify_urls(urls):
-    simplified_urls = dict()
+    simplified_urls = {}
 
     for key, value in urls.items():
         if isinstance(value, dict):
@@ -158,7 +157,7 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
 def collect_path_variables(request_path: str, found_path: str) -> dict:
     found_path = found_path.removesuffix('/').removeprefix('/')
     request_path = request_path.removesuffix('/').removeprefix('/')
-    path_variables = dict()
+    path_variables = {}
     for f_path, r_path in zip(found_path.split('/'), request_path.split('/')):
         if f_path.startswith('<'):
             path_variables[f_path[1:-1]] = r_path

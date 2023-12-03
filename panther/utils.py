@@ -16,7 +16,7 @@ class Singleton(object):
 
 
 def load_env(env_file: str | Path, /) -> dict[str, str]:
-    variables = dict()
+    variables = {}
 
     if env_file is None or not Path(env_file).is_file():
         logger.critical(f'"{env_file}" is not valid file for load_env()')

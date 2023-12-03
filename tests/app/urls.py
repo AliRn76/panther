@@ -1,7 +1,6 @@
-from simple_response_apis import *
-from simple_request_apis import *
 from request_method_apis import *
-
+from simple_request_apis import *
+from simple_response_apis import *
 
 simple_responses_urls = {
     'nothing': return_nothing,

@@ -1,6 +1,7 @@
 import contextlib
 import os
 from collections import deque
+from pathlib import Path
 
 from rich import box
 from rich.align import Align
@@ -15,7 +16,7 @@ from watchfiles import watch
 def monitor() -> None:
     monitoring_log_file = 'logs/monitoring.log'
 
-    def _generate_table(rows: deque):
+    def _generate_table(rows: deque) -> Panel:
         layout = Layout()
 
         rows = list(rows)
@@ -41,14 +42,19 @@ def monitor() -> None:
             border_style='bright_blue',
         )
 
-    with open(monitoring_log_file) as f:
+    with Path(monitoring_log_file).open() as f:
         f.readlines()  # Set cursor at the end of file
 
         _, init_lines_count = os.get_terminal_size()
         messages = deque(maxlen=init_lines_count - 10)  # Save space for header and footer
 
         with (
-            Live(_generate_table(messages), auto_refresh=False, vertical_overflow='visible', screen=True) as live,
+            Live(
+                _generate_table(messages),
+                auto_refresh=False,
+                vertical_overflow='visible',
+                screen=True,
+            ) as live,
             contextlib.suppress(KeyboardInterrupt),
         ):
             for _ in watch(monitoring_log_file):
