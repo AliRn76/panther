@@ -1,6 +1,7 @@
 import ast
 import os
 import platform
+import sys
 from datetime import timedelta
 from importlib import import_module
 from pathlib import Path
@@ -34,12 +35,14 @@ __all__ = (
 
 def load_configs_file(_configs, /) -> dict:
     """Read the config file and put it as dict in self.configs"""
-    if _configs is None:
+    if _configs:
+        _module = sys.modules[_configs]
+    else:
         try:
-            _configs = import_module('core.configs')
+            _module = import_module('core.configs')
         except ModuleNotFoundError:
             raise _exception_handler(field='core/configs.py', error='Not Found')
-    return _configs.__dict__
+    return _module.__dict__
 
 
 def load_secret_key(configs: dict, /) -> bytes | None:

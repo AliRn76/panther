@@ -11,7 +11,7 @@ class TestMethods(TestCase):
         sys.path.append('tests/app')
         from tests.app.urls import method_urls
 
-        app = Panther(__name__, configs=sys.modules[__name__], urls=method_urls)
+        app = Panther(__name__, configs=__name__, urls=method_urls)
         cls.client = APIClient(app=app)
 
     @classmethod

@@ -11,7 +11,7 @@ class TestSimpleResponses(TestCase):
         sys.path.append('tests/app')
         from tests.app.urls import simple_responses_urls
 
-        app = Panther(__name__, configs=sys.modules[__name__], urls=simple_responses_urls)
+        app = Panther(__name__, configs=__name__, urls=simple_responses_urls)
         cls.client = APIClient(app=app)
 
     @classmethod
