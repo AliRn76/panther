@@ -15,6 +15,7 @@ with open('README.md', encoding='utf-8') as file:
 EXTRAS_REQUIRE = {
     'full': [
         'pymongo~=4.4',
+        'bpython~=0.24',
     ],
 }
 
@@ -44,7 +45,6 @@ setup(
         'panther': ['cli/*'],
     },
     install_requires=[
-        'bpython~=0.24',
         'bson~=0.5',
         'httptools~=0.6',
         'pantherdb~=1.3',

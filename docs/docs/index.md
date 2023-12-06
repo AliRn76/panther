@@ -98,8 +98,6 @@
 
 - #### Python Shell
 
-    Panther Uses [bpython](https://bpython-interpreter.org) for shell
-    
     ```console
     $ panther shell 
     ```

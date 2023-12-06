@@ -9,7 +9,7 @@ from panther.cli.utils import cli_error
 def create(args: list) -> None:
     # Get Project Name
     if len(args) == 0:
-        return cli_error('Not Enough Parameters.')
+        return cli_error('Not Enough Arguments.')
     project_name = args[0]
 
     # Get Base Directory

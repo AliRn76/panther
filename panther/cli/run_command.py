@@ -67,7 +67,7 @@ def _handle_commands(args: dict[str, str | None]) -> dict:
 
 
 def run(args: dict[str, str | None]) -> None:
-    if 'h' in args or 'help' in args or '-h' in args or '--help' in args:
+    if any(a in args for a in ['h', 'help', '-h', '--help']):
         rprint(run_help_message)
         return
     command = {'app_dir': os.getcwd()}

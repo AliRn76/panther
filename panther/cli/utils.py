@@ -19,7 +19,7 @@ help_message = f"""╭{58 * '─'}╮
 │       - panther run [--reload | --help]                  │
 │           Run your project with uvicorn                  │
 │                                                          │
-│       - panther shell                                    │
+│       - panther shell [ bpython | ipython ]              │
 │           Run interactive python shell                   │
 │                                                          │
 │       - panther monitor                                  │
@@ -36,8 +36,20 @@ help_message = f"""╭{58 * '─'}╮
 run_help_message = """Run `uvicorn --help` for more help"""
 
 
-def cli_error(message: str | TypeError) -> None:
-    logger.error(f'Error: {message}\n\nUse panther -h for more help')
+def cli_error(message: str | Exception) -> None:
+    logger.error(message)
+    logger.error('Use "panther -h" for more help')
+
+
+def cli_warning(message: str | Exception, hint: str = None) -> None:
+    logger.warning(message)
+    if hint:
+        logger.info(hint)
+
+
+def cli_info(message: str) -> None:
+    logger.info(message)
+    logger.info('Use "panther -h" for more help\n')
 
 
 def clean_args(args: list[str]) -> dict:

@@ -3,6 +3,7 @@
 - Add `size` to `File` base class
 - Improve the way of loading `configs` in `single-file` structure
 - Improve `background_tasks.py`, `generate_ws_connection_id()`
+- `bpython` removed from being the default python shell
 - Add `requirements.txt` for development 
 - Update `roadmap.jpg`, `README.md`
  
