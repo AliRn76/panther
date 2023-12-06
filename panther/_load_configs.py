@@ -151,7 +151,8 @@ def collect_all_models() -> list[dict]:
 
 def load_urls(configs: dict, /, urls: dict | None) -> dict:
     if isinstance(urls, dict):
-        return urls
+        collected_urls = flatten_urls(urls)
+        return finalize_urls(collected_urls)
 
     if (url_routing := configs.get('URLs')) is None:
         raise _exception_handler(field='URLs', error='is required.')
