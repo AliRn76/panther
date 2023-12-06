@@ -1,4 +1,3 @@
-import datetime
 import time
 from datetime import timedelta
 
@@ -8,6 +7,7 @@ from app.serializers import (
     UserInputSerializer,
     UserOutputSerializer,
     UserUpdateSerializer,
+    ImageSerializer,
 )
 from core.permissions import UserPermission
 
@@ -173,8 +173,28 @@ async def run_background_tasks_api():
     task = (
         BackgroundTask(hello, 'ali1')
         .interval(2)
-        .interval_wait(datetime.timedelta(seconds=2))
+        .every_seconds(2)
         # .on_time(datetime.time(hour=19, minute=18, second=10))
     )
     background_tasks.add_task(task)
     return Response()
+
+
+class CustomResponse:
+    detail = 'Hi Mom'
+    is_it_ok = True
+
+
+@API()
+async def custom_response_class_api():
+    return CustomResponse()
+
+
+class ImageAPI(GenericAPI):
+    input_model = ImageSerializer
+
+    def post(self, request: Request, *args, **kwargs):
+        body: ImageSerializer = request.validated_data
+        with open(body.image.file_name, 'wb') as file:
+            file.write(body.image.file)
+        return body.image.size
