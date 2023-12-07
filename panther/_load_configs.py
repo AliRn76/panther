@@ -155,10 +155,13 @@ def collect_all_models() -> list[dict]:
     return collected_models
 
 
-def load_urls(configs: dict, /, urls: dict | None) -> dict:
+def load_urls(configs: dict, /, urls: dict | None) -> tuple[dict, dict]:
+    """
+    Return tuple of all urls (as a flat dict) and (as a nested dict)
+    """
     if isinstance(urls, dict):
         collected_urls = flatten_urls(urls)
-        return finalize_urls(collected_urls)
+        return collected_urls, finalize_urls(collected_urls)
 
     if (url_routing := configs.get('URLs')) is None:
         raise _exception_handler(field='URLs', error='is required.')
@@ -182,7 +185,7 @@ def load_urls(configs: dict, /, urls: dict | None) -> dict:
         raise _exception_handler(field='URLs', error='should point to a dict.')
 
     collected_urls = flatten_urls(imported_urls)
-    return finalize_urls(collected_urls)
+    return collected_urls, finalize_urls(collected_urls)
 
 
 def load_panel_urls() -> dict:

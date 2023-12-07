@@ -49,7 +49,7 @@ setup(
         'httptools~=0.6',
         'pantherdb~=1.3',
         'pydantic~=2.1',
-        'redis~=5.0',
+        'redis==5.0.1',
         'rich~=13.5',
         'uvicorn~=0.23',
         'watchfiles~=0.19',

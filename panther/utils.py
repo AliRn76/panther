@@ -1,3 +1,4 @@
+import os
 import hashlib
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -30,6 +31,9 @@ def load_env(env_file: str | Path, /) -> dict[str, str]:
                 key = key.strip()
                 value = value.strip().strip('"\'')
                 variables[key] = value
+
+                # Load them as system environment variable
+                os.environ[key] = value
     return variables
 
 

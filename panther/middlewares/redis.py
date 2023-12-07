@@ -35,4 +35,6 @@ class RedisMiddleware(BaseMiddleware):
         return response
 
     def redis_connection_for_ws(self) -> Redis:
-        return Redis(**self.kwargs)
+        r = Redis(**self.kwargs)
+        r.ping()
+        return r

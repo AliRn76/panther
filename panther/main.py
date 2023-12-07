@@ -38,18 +38,15 @@ class Panther:
             sys.exit()
 
         # Start Websocket Listener (Redis Required)
-        Thread(
-            target=self.websocket_connections,
-            daemon=True,
-            args=(self.ws_redis_connection,),
-        ).start()
+        if config['has_ws']:
+            Thread(
+                target=self.websocket_connections,
+                daemon=True,
+                args=(self.ws_redis_connection,),
+            ).start()
 
         # Print Info
         print_info(config)
-        if config['monitoring']:
-            logger.info('Run "panther monitor" in another session for Monitoring.')
-        if sys.version_info < (3, 11):
-            logger.warning('Use Python Version 3.11+ For Better Performance.')
 
     def load_configs(self) -> None:
         from panther.logger import logger
@@ -71,41 +68,54 @@ class Panther:
         config['jwt_config'] = load_jwt_config(self.configs)
         config['models'] = collect_all_models()
 
-        # Create websocket connections instance
-        from panther.websocket import WebsocketConnections
-
-        config['websocket_connections'] = self.websocket_connections = WebsocketConnections()
-        # Websocket Redis Connection
-        for middleware in config['middlewares']:
-            if middleware.__class__.__name__ == 'RedisMiddleware':
-                self.ws_redis_connection = middleware.redis_connection_for_ws()
-                break
-        else:
-            self.ws_redis_connection = None
-
         # Initialize Background Tasks
         if config['background_tasks']:
             background_tasks.initialize()
 
-        # Load URLs should be the last call in load_configs,
+        # Load URLs should be one of the last calls in load_configs,
         #   because it will read all files and loads them.
-        config['urls'] = load_urls(self.configs, urls=self._urls)
+        config['flat_urls'], config['urls'] = load_urls(self.configs, urls=self._urls)
         config['urls']['_panel'] = load_panel_urls()
+
+        self._create_ws_connections_instance()
+
+    def _create_ws_connections_instance(self):
+        from panther.base_websocket import Websocket
+        from panther.websocket import WebsocketConnections
+
+        # Check do we have ws endpoint
+        for endpoint in config['flat_urls'].values():
+            if not isinstance(endpoint, types.FunctionType) and issubclass(endpoint, Websocket):
+                config['has_ws'] = True
+                break
+        else:
+            config['has_ws'] = False
+
+        # Create websocket connections instance
+        if config['has_ws']:
+            config['websocket_connections'] = self.websocket_connections = WebsocketConnections()
+            # Websocket Redis Connection
+            for middleware in config['middlewares']:
+                if middleware.__class__.__name__ == 'RedisMiddleware':
+                    self.ws_redis_connection = middleware.redis_connection_for_ws()
+                    break
+            else:
+                self.ws_redis_connection = None
 
     async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
         """
         1.
-            async with asyncio.TaskGroup() as tg:
-                tg.create_task(self.run(scope, receive, send))
+            await func(scope, receive, send)
         2.
-            await self.run(scope, receive, send)
+            async with asyncio.TaskGroup() as tg:
+                tg.create_task(func(scope, receive, send))
         3.
             async with anyio.create_task_group() as task_group:
-                task_group.start_soon(self.run, scope, receive, send)
-                await anyio.to_thread.run_sync(self.run, scope, receive, send)
+                task_group.start_soon(func, scope, receive, send)
+                await anyio.to_thread.run_sync(func, scope, receive, send)
         4.
             with ProcessPoolExecutor() as e:
-                e.submit(self.run, scope, receive, send)
+                e.submit(func, scope, receive, send)
         """
         func = self.handle_http if scope['type'] == 'http' else self.handle_ws
         await func(scope=scope, receive=receive, send=send)
