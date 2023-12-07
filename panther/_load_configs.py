@@ -78,8 +78,11 @@ def load_middlewares(configs: dict, /) -> list:
     for path, data in configs.get('MIDDLEWARES', []):
         if path.find('panther.middlewares.db.DatabaseMiddleware') != -1:
             config['db_engine'] = data['url'].split(':')[0]
+        try:
+            Middleware = import_class(path)  # noqa: N806
+        except AttributeError:
+            raise _exception_handler(field='MIDDLEWARES', error=f'{path} is not a valid middleware path')
 
-        Middleware = import_class(path)  # noqa: N806
         if not issubclass(Middleware, BaseMiddleware):
             raise _exception_handler(field='MIDDLEWARES', error='is not a sub class of BaseMiddleware')
 

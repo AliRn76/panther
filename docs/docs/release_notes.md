@@ -4,6 +4,7 @@
 - Improve the way of loading `configs` in `single-file` structure
 - Improve `background_tasks.py`, `generate_ws_connection_id()`
 - `bpython` removed from being the default python shell
+- Improve `load_middlewares()` error handling 
 - Add `requirements.txt` for development 
 - Update `roadmap.jpg`, `README.md`
  
