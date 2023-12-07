@@ -1,4 +1,6 @@
+from panther.db.connection import redis
 from panther.logger import logger
+from rich import print as rprint
 
 logo = r"""│    ____                 __    __                         │
 │   /\  _`\              /\ \__/\ \                        │
@@ -19,7 +21,7 @@ help_message = f"""╭{58 * '─'}╮
 │       - panther run [--reload | --help]                  │
 │           Run your project with uvicorn                  │
 │                                                          │
-│       - panther shell                                    │
+│       - panther shell [ bpython | ipython ]              │
 │           Run interactive python shell                   │
 │                                                          │
 │       - panther monitor                                  │
@@ -33,11 +35,21 @@ help_message = f"""╭{58 * '─'}╮
 ╰{58 * '─'}╯
 """
 
-run_help_message = """Run `uvicorn --help` for more help"""
+
+def cli_error(message: str | Exception) -> None:
+    logger.error(message)
+    logger.error('Use "panther -h" for more help')
 
 
-def cli_error(message: str | TypeError) -> None:
-    logger.error(f'Error: {message}\n\nUse panther -h for more help')
+def cli_warning(message: str | Exception, hint: str = None) -> None:
+    logger.warning(message)
+    if hint:
+        logger.info(hint)
+
+
+def cli_info(message: str) -> None:
+    logger.info(message)
+    logger.info('Use "panther -h" for more help\n')
 
 
 def clean_args(args: list[str]) -> dict:
@@ -53,3 +65,34 @@ def clean_args(args: list[str]) -> dict:
             else:
                 _args[arg[2:]] = True
     return _args
+
+
+def print_help_message():
+    rprint(help_message)
+
+
+def print_uvicorn_help_message():
+    rprint('Run `uvicorn --help` for more help')
+
+
+def print_info(config: dict):
+    mo = config['monitoring']
+    lq = config['log_queries']
+    rc = redis.is_connected
+    bt = config['background_tasks']
+    bd = '{0:<39}'.format(str(config['base_dir']))
+    if len(bd) > 39:
+        bd = f'{bd[:36]}...'
+
+    info_message = f"""
+╭{58 * '─'}╮
+{logo}│{58 * ' '}│
+│                                                          │
+│   Monitoring: {mo}                                  \t   │
+│   Log Queries: {lq}                                 \t   │
+│   Redis Is Connected: {rc}                          \t   │
+│   Background Tasks: {bt}                            \t   │
+│   Base directory: {bd}│
+╰{58 * '─'}╯
+"""
+    rprint(info_message)

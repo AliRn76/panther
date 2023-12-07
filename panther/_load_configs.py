@@ -1,6 +1,7 @@
 import ast
 import os
 import platform
+import sys
 from datetime import timedelta
 from importlib import import_module
 from pathlib import Path
@@ -34,12 +35,14 @@ __all__ = (
 
 def load_configs_file(_configs, /) -> dict:
     """Read the config file and put it as dict in self.configs"""
-    if _configs is None:
+    if _configs:
+        _module = sys.modules[_configs]
+    else:
         try:
-            _configs = import_module('core.configs')
+            _module = import_module('core.configs')
         except ModuleNotFoundError:
             raise _exception_handler(field='core/configs.py', error='Not Found')
-    return _configs.__dict__
+    return _module.__dict__
 
 
 def load_secret_key(configs: dict, /) -> bytes | None:
@@ -75,8 +78,11 @@ def load_middlewares(configs: dict, /) -> list:
     for path, data in configs.get('MIDDLEWARES', []):
         if path.find('panther.middlewares.db.DatabaseMiddleware') != -1:
             config['db_engine'] = data['url'].split(':')[0]
+        try:
+            Middleware = import_class(path)  # noqa: N806
+        except AttributeError:
+            raise _exception_handler(field='MIDDLEWARES', error=f'{path} is not a valid middleware path')
 
-        Middleware = import_class(path)  # noqa: N806
         if not issubclass(Middleware, BaseMiddleware):
             raise _exception_handler(field='MIDDLEWARES', error='is not a sub class of BaseMiddleware')
 
@@ -151,7 +157,8 @@ def collect_all_models() -> list[dict]:
 
 def load_urls(configs: dict, /, urls: dict | None) -> dict:
     if isinstance(urls, dict):
-        return urls
+        collected_urls = flatten_urls(urls)
+        return finalize_urls(collected_urls)
 
     if (url_routing := configs.get('URLs')) is None:
         raise _exception_handler(field='URLs', error='is required.')

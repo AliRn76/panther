@@ -6,7 +6,6 @@ from threading import Thread
 from typing import Callable, Literal
 
 from panther._utils import is_function_async
-from panther.configs import config
 from panther.logger import logger
 from panther.utils import Singleton
 
@@ -185,14 +184,13 @@ class BackgroundTasks(Singleton):
         self.tasks = []
 
     def add_task(self, task: BackgroundTask):
-        if config['background_tasks'] is False:
+        if self._initialized is False:
             logger.error('Task will be ignored, `BACKGROUND_TASKS` is not True in `core/configs.py`')
             return
 
-        if not isinstance(task, BackgroundTask):
-            name = getattr(task, '__name__', task.__class__.__name__)
-            logger.error(f'`{name}` should be instance of `background_tasks.BackgroundTask`')
+        if not self._is_instance_of_task(task):
             return
+
         if task not in self.tasks:
             self.tasks.append(task)
 
@@ -213,6 +211,14 @@ class BackgroundTasks(Singleton):
         if self._initialized is False:
             self._initialized = True
             Thread(target=__run_tasks, daemon=True).start()
+
+    @classmethod
+    def _is_instance_of_task(cls, task, /):
+        if not isinstance(task, BackgroundTask):
+            name = getattr(task, '__name__', task.__class__.__name__)
+            logger.error(f'`{name}` should be instance of `background_tasks.BackgroundTask`')
+            return False
+        return True
 
 
 background_tasks = BackgroundTasks()

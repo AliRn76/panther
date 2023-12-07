@@ -1,6 +1,6 @@
 from pydantic import BaseModel, constr
 
-from panther.file_handler import File
+from panther.file_handler import File, Image
 
 
 class UserInputSerializer(BaseModel):
@@ -20,3 +20,7 @@ class FileSerializer(BaseModel):
     name: str
     image: File
     age: int
+
+
+class ImageSerializer(BaseModel):
+    image: Image

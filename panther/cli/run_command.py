@@ -1,9 +1,8 @@
 import os
 
 import uvicorn
-from rich import print as rprint
 
-from panther.cli.utils import run_help_message
+from panther.cli.utils import print_uvicorn_help_message
 
 
 def _handle_commands(args: dict[str, str | None]) -> dict:
@@ -67,8 +66,8 @@ def _handle_commands(args: dict[str, str | None]) -> dict:
 
 
 def run(args: dict[str, str | None]) -> None:
-    if 'h' in args or 'help' in args or '-h' in args or '--help' in args:
-        rprint(run_help_message)
+    if any(a in args for a in ['h', 'help', '-h', '--help']):
+        print_uvicorn_help_message()
         return
     command = {'app_dir': os.getcwd()}
     command.update(_handle_commands(args))

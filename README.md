@@ -3,7 +3,7 @@
 
 
 ## Panther 
-<b>Is A Fast &  Friendly Web Framework For Building Async APIs With Python 3.11+</b> 
+<b>Is A Fast &  Friendly Web Framework For Building Async APIs With Python 3.10+</b> 
 
 <p align="center">
   <img src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/logo-vertical.png" alt="logo" style="width: 450px">
@@ -101,10 +101,8 @@
 
 - #### Python Shell
 
-    Panther Uses [bpython](https://bpython-interpreter.org) for shell
-    
     ```console
-    $ panther shell 
+    $ panther shell
     ```
 ---
 

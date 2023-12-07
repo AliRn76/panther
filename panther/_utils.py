@@ -1,9 +1,8 @@
 import importlib
-import random
 import re
-import string
 from collections.abc import Callable
 from traceback import TracebackException
+from uuid import uuid4
 
 import orjson as json
 
@@ -116,7 +115,7 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
 
 
 def generate_ws_connection_id() -> str:
-    return ''.join(random.choices(string.ascii_letters, k=10))
+    return uuid4().hex
 
 
 def is_function_async(func: Callable) -> bool:
@@ -134,4 +133,5 @@ def clean_traceback_message(exception: Exception) -> str:
     for t in stack:
         if t.filename.find('site-packages') != -1:
             tb.stack.remove(t)
-    return f'{exception}\n' + ''.join(tb.format(chain=False))
+    _traceback = list(tb.format(chain=False))
+    return exception if len(_traceback) == 1 else f'{exception}\n' + ''.join(_traceback)
