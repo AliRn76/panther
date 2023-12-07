@@ -9,6 +9,7 @@ from panther import status
 from panther._load_configs import *
 from panther._utils import clean_traceback_message, http_response
 from panther.background_tasks import background_tasks
+from panther.cli.utils import print_info
 from panther.configs import config
 from panther.exceptions import APIException, PantherException
 from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
@@ -26,8 +27,6 @@ class Panther:
         self._configs = configs
         self._urls = urls
         config['base_dir'] = Path(name).resolve().parent
-        if sys.version_info < (3, 11):
-            logger.warning('Use Python Version 3.11+ For Better Performance.')
 
         try:
             self.load_configs()
@@ -38,16 +37,22 @@ class Panther:
                 logger.error(clean_traceback_message(e))
             sys.exit()
 
+        # Start Websocket Listener (Redis Required)
         Thread(
             target=self.websocket_connections,
             daemon=True,
             args=(self.ws_redis_connection,),
         ).start()
 
+        # Print Info
+        print_info(config)
+        if config['monitoring']:
+            logger.info('Run "panther monitor" in another session for Monitoring.')
+        if sys.version_info < (3, 11):
+            logger.warning('Use Python Version 3.11+ For Better Performance.')
+
     def load_configs(self) -> None:
         from panther.logger import logger
-
-        logger.debug(f'Base directory: {config["base_dir"]}')
 
         # Check & Read The Configs File
         self.configs = load_configs_file(self._configs)
@@ -86,9 +91,6 @@ class Panther:
         #   because it will read all files and loads them.
         config['urls'] = load_urls(self.configs, urls=self._urls)
         config['urls']['_panel'] = load_panel_urls()
-
-        if config['monitoring']:
-            logger.info('Run "panther monitor" in another session for Monitoring.')
 
     async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
         """

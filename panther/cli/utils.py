@@ -1,4 +1,6 @@
+from panther.db.connection import redis
 from panther.logger import logger
+from rich import print as rprint
 
 logo = r"""│    ____                 __    __                         │
 │   /\  _`\              /\ \__/\ \                        │
@@ -33,8 +35,6 @@ help_message = f"""╭{58 * '─'}╮
 ╰{58 * '─'}╯
 """
 
-run_help_message = """Run `uvicorn --help` for more help"""
-
 
 def cli_error(message: str | Exception) -> None:
     logger.error(message)
@@ -65,3 +65,34 @@ def clean_args(args: list[str]) -> dict:
             else:
                 _args[arg[2:]] = True
     return _args
+
+
+def print_help_message():
+    rprint(help_message)
+
+
+def print_uvicorn_help_message():
+    rprint('Run `uvicorn --help` for more help')
+
+
+def print_info(config: dict):
+    mo = config['monitoring']
+    lq = config['log_queries']
+    rc = redis.is_connected
+    bt = config['background_tasks']
+    bd = '{0:<39}'.format(str(config['base_dir']))
+    if len(bd) > 39:
+        bd = f'{bd[:36]}...'
+
+    info_message = f"""
+╭{58 * '─'}╮
+{logo}│{58 * ' '}│
+│                                                          │
+│   Monitoring: {mo}                                  \t   │
+│   Log Queries: {lq}                                 \t   │
+│   Redis Is Connected: {rc}                          \t   │
+│   Background Tasks: {bt}                            \t   │
+│   Base directory: {bd}│
+╰{58 * '─'}╯
+"""
+    rprint(info_message)

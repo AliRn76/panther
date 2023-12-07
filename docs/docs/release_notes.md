@@ -5,6 +5,7 @@
 - Improve `background_tasks.py`, `generate_ws_connection_id()`
 - `bpython` removed from being the default python shell
 - Improve `load_middlewares()` error handling 
+- Print `configs` on the `run`
 - Add `requirements.txt` for development 
 - Update `roadmap.jpg`, `README.md`
  

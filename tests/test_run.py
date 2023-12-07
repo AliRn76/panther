@@ -19,17 +19,14 @@ class TestRun(TestCase):
         self.assertIsInstance(app, Panther)
 
     def test_init_logs(self):
-        base_dir = Path(__name__).resolve().parent
-        with self.assertLogs(level='DEBUG') as captured:
-            Panther(__name__)
-
-            if sys.version_info < (3, 11):
-                self.assertEqual(len(captured.records), 2)
-                self.assertEqual(captured.records[0].getMessage(), 'Use Python Version 3.11+ For Better Performance.')
-                self.assertEqual(captured.records[1].getMessage(), f'Base directory: {base_dir}')
-            else:
+        if sys.version_info < (3, 11):
+            with self.assertLogs(level='DEBUG') as captured:
+                Panther(__name__)
                 self.assertEqual(len(captured.records), 1)
-                self.assertEqual(captured.records[0].getMessage(), f'Base directory: {base_dir}')
+                self.assertEqual(captured.records[0].getMessage(), 'Use Python Version 3.11+ For Better Performance.')
+        else:
+            with self.assertNoLogs(level='DEBUG'):
+                Panther(__name__)
 
         if sys.version_info < (3, 11):
             with self.assertLogs(level='INFO') as captured:

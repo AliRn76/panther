@@ -1,13 +1,11 @@
 import os
 import sys
 
-from rich import print as rprint
-
 from panther import version as panther_version
 from panther.cli.create_command import create
 from panther.cli.monitor_command import monitor
 from panther.cli.run_command import run
-from panther.cli.utils import clean_args, cli_error, cli_info, cli_warning, help_message
+from panther.cli.utils import clean_args, cli_error, cli_info, cli_warning, print_help_message
 
 
 def shell(args: list) -> None:
@@ -52,7 +50,7 @@ def start() -> None:
 
         match command:
             case '-h' | '--help':
-                rprint(help_message)
+                print_help_message()
             case 'create':
                 create(sys.argv[2:])
             case 'run':
