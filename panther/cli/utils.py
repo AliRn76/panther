@@ -1,6 +1,9 @@
-from panther.db.connection import redis
-from panther.logger import logger
+import logging
 from rich import print as rprint
+
+
+logger = logging.getLogger('panther')
+
 
 logo = r"""│    ____                 __    __                         │
 │   /\  _`\              /\ \__/\ \                        │
@@ -78,21 +81,26 @@ def print_uvicorn_help_message():
 def print_info(config: dict):
     mo = config['monitoring']
     lq = config['log_queries']
-    rc = redis.is_connected
     bt = config['background_tasks']
+    ws = config['has_ws']
     bd = '{0:<39}'.format(str(config['base_dir']))
     if len(bd) > 39:
         bd = f'{bd[:36]}...'
 
+    if config['monitoring']:
+        monitor = '│ * Run "panther monitor" in another session for Monitoring│'
+    else:
+        monitor = f'│{58 * " "}│'
+
     info_message = f"""
 ╭{58 * '─'}╮
 {logo}│{58 * ' '}│
-│                                                          │
 │   Monitoring: {mo}                                  \t   │
 │   Log Queries: {lq}                                 \t   │
-│   Redis Is Connected: {rc}                          \t   │
 │   Background Tasks: {bt}                            \t   │
+│   Websocket: {ws}                                   \t   │
 │   Base directory: {bd}│
+{monitor}
 ╰{58 * '─'}╯
 """
     rprint(info_message)

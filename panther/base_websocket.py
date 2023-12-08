@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import logging
 from typing import TYPE_CHECKING
 
 import orjson as json
@@ -10,11 +11,13 @@ from panther import status
 from panther._utils import generate_ws_connection_id
 from panther.base_request import BaseRequest
 from panther.configs import config
-from panther.logger import logger
 from panther.utils import Singleton
 
 if TYPE_CHECKING:
     from redis import Redis
+
+
+logger = logging.getLogger('panther')
 
 
 class WebsocketConnections(Singleton):

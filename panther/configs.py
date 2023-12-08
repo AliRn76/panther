@@ -41,10 +41,12 @@ class Config(TypedDict):
     authentication: ModelMetaclass | None
     jwt_config: JWTConfig | None
     models: list[dict]
+    flat_urls: dict
     urls: dict
     db_engine: str
     websocket_connections: any  # type: WebsocketConnections
     background_tasks: bool
+    has_ws: bool
 
 
 config: Config = {
@@ -60,8 +62,10 @@ config: Config = {
     'authentication': None,
     'jwt_config': None,
     'models': [],
+    'flat_urls': {},
     'urls': {},
     'db_engine': '',
     'websocket_connections': None,
     'background_tasks': False,
+    'has_ws': False,
 }

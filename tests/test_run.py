@@ -18,40 +18,6 @@ class TestRun(TestCase):
         app = Panther(__name__)
         self.assertIsInstance(app, Panther)
 
-    def test_init_logs(self):
-        if sys.version_info < (3, 11):
-            with self.assertLogs(level='DEBUG') as captured:
-                Panther(__name__)
-                self.assertEqual(len(captured.records), 1)
-                self.assertEqual(captured.records[0].getMessage(), 'Use Python Version 3.11+ For Better Performance.')
-        else:
-            with self.assertNoLogs(level='DEBUG'):
-                Panther(__name__)
-
-        if sys.version_info < (3, 11):
-            with self.assertLogs(level='INFO') as captured:
-                Panther(__name__)
-                self.assertEqual(len(captured.records), 1)
-                self.assertEqual(captured.records[0].getMessage(), 'Use Python Version 3.11+ For Better Performance.')
-        else:
-            with self.assertNoLogs(level='INFO'):
-                Panther(__name__)
-
-        if sys.version_info < (3, 11):
-            with self.assertLogs(level='WARNING') as captured:
-                Panther(__name__)
-                self.assertEqual(len(captured.records), 1)
-                self.assertEqual(captured.records[0].getMessage(), 'Use Python Version 3.11+ For Better Performance.')
-        else:
-            with self.assertNoLogs(level='INFO'):
-                Panther(__name__)
-
-        with self.assertNoLogs(level='ERROR'):
-            Panther(__name__)
-
-        with self.assertNoLogs(level='CRITICAL'):
-            Panther(__name__)
-
     def test_load_configs(self):
         from panther.configs import config
         from panther.db.models import BaseUser

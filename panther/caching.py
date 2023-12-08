@@ -1,15 +1,18 @@
 from collections import namedtuple
 from datetime import timedelta
+import logging
 from types import NoneType
 
 import orjson as json
 
 from panther.configs import config
 from panther.db.connection import redis
-from panther.logger import logger
 from panther.request import Request
 from panther.response import Response, ResponseDataTypes
 from panther.utils import generate_hash_value_from_string
+
+
+logger = logging.getLogger('panther')
 
 caches = {}
 CachedResponse = namedtuple('Cached', ['data', 'status_code'])

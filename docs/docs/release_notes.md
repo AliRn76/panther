@@ -1,3 +1,9 @@
+### 3.1.4
+- Check ws redis connection on the `init`
+- Refactor `Monitoring` class and usage
+- Improve `logging` config
+- Check database connection before query
+
 ### 3.1.3
 - Add `Image` base class 
 - Add `size` to `File` base class

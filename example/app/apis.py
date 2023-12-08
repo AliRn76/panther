@@ -1,3 +1,4 @@
+import logging
 import time
 from datetime import timedelta
 
@@ -16,11 +17,13 @@ from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
 from panther.background_tasks import background_tasks, BackgroundTask
 from panther.db.connection import redis
-from panther.logger import logger
 from panther.request import Request
 from panther.response import HTMLResponse, Response
 from panther.throttling import Throttling
 from panther.websocket import close_websocket_connection, send_message_to_websocket
+
+
+logger = logging.getLogger('panther')
 
 
 class ReturnNone(GenericAPI):

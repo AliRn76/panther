@@ -1,10 +1,13 @@
 import contextlib
+import logging
 import sys
 import types
 from collections.abc import Callable
+from logging.config import dictConfig
 from pathlib import Path
 from threading import Thread
 
+import panther.logging
 from panther import status
 from panther._load_configs import *
 from panther._utils import clean_traceback_message, http_response
@@ -12,18 +15,18 @@ from panther.background_tasks import background_tasks
 from panther.cli.utils import print_info
 from panther.configs import config
 from panther.exceptions import APIException, PantherException
-from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
+from panther.monitoring import Monitoring
 from panther.request import Request
 from panther.response import Response
 from panther.routings import collect_path_variables, find_endpoint
 
-""" We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
+
+dictConfig(panther.logging.LOGGING)
+logger = logging.getLogger('panther')
 
 
 class Panther:
     def __init__(self, name: str, configs=None, urls: dict | None = None):
-        from panther.logger import logger
-
         self._configs = configs
         self._urls = urls
         config['base_dir'] = Path(name).resolve().parent
@@ -37,22 +40,21 @@ class Panther:
                 logger.error(clean_traceback_message(e))
             sys.exit()
 
-        # Start Websocket Listener (Redis Required)
-        Thread(
-            target=self.websocket_connections,
-            daemon=True,
-            args=(self.ws_redis_connection,),
-        ).start()
+        # Monitoring
+        self.monitoring = Monitoring(is_active=config['monitoring'])
 
         # Print Info
         print_info(config)
-        if config['monitoring']:
-            logger.info('Run "panther monitor" in another session for Monitoring.')
-        if sys.version_info < (3, 11):
-            logger.warning('Use Python Version 3.11+ For Better Performance.')
+
+        # Start Websocket Listener (Redis Required)
+        if config['has_ws']:
+            Thread(
+                target=self.websocket_connections,
+                daemon=True,
+                args=(self.ws_redis_connection,),
+            ).start()
 
     def load_configs(self) -> None:
-        from panther.logger import logger
 
         # Check & Read The Configs File
         self.configs = load_configs_file(self._configs)
@@ -71,47 +73,59 @@ class Panther:
         config['jwt_config'] = load_jwt_config(self.configs)
         config['models'] = collect_all_models()
 
-        # Create websocket connections instance
-        from panther.websocket import WebsocketConnections
-
-        config['websocket_connections'] = self.websocket_connections = WebsocketConnections()
-        # Websocket Redis Connection
-        for middleware in config['middlewares']:
-            if middleware.__class__.__name__ == 'RedisMiddleware':
-                self.ws_redis_connection = middleware.redis_connection_for_ws()
-                break
-        else:
-            self.ws_redis_connection = None
-
         # Initialize Background Tasks
         if config['background_tasks']:
             background_tasks.initialize()
 
-        # Load URLs should be the last call in load_configs,
+        # Load URLs should be one of the last calls in load_configs,
         #   because it will read all files and loads them.
-        config['urls'] = load_urls(self.configs, urls=self._urls)
+        config['flat_urls'], config['urls'] = load_urls(self.configs, urls=self._urls)
         config['urls']['_panel'] = load_panel_urls()
+
+        self._create_ws_connections_instance()
+
+    def _create_ws_connections_instance(self):
+        from panther.base_websocket import Websocket
+        from panther.websocket import WebsocketConnections
+
+        # Check do we have ws endpoint
+        for endpoint in config['flat_urls'].values():
+            if not isinstance(endpoint, types.FunctionType) and issubclass(endpoint, Websocket):
+                config['has_ws'] = True
+                break
+        else:
+            config['has_ws'] = False
+
+        # Create websocket connections instance
+        if config['has_ws']:
+            config['websocket_connections'] = self.websocket_connections = WebsocketConnections()
+            # Websocket Redis Connection
+            for middleware in config['middlewares']:
+                if middleware.__class__.__name__ == 'RedisMiddleware':
+                    self.ws_redis_connection = middleware.redis_connection_for_ws()
+                    break
+            else:
+                self.ws_redis_connection = None
 
     async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
         """
         1.
-            async with asyncio.TaskGroup() as tg:
-                tg.create_task(self.run(scope, receive, send))
+            await func(scope, receive, send)
         2.
-            await self.run(scope, receive, send)
+            async with asyncio.TaskGroup() as tg:
+                tg.create_task(func(scope, receive, send))
         3.
             async with anyio.create_task_group() as task_group:
-                task_group.start_soon(self.run, scope, receive, send)
-                await anyio.to_thread.run_sync(self.run, scope, receive, send)
+                task_group.start_soon(func, scope, receive, send)
+                await anyio.to_thread.run_sync(func, scope, receive, send)
         4.
             with ProcessPoolExecutor() as e:
-                e.submit(self.run, scope, receive, send)
+                e.submit(func, scope, receive, send)
         """
         func = self.handle_http if scope['type'] == 'http' else self.handle_ws
         await func(scope=scope, receive=receive, send=send)
 
     async def handle_ws(self, scope: dict, receive: Callable, send: Callable) -> None:
-        from panther.logger import logger
         from panther.websocket import GenericWebsocket, Websocket
 
         temp_connection = Websocket(scope=scope, receive=receive, send=send)
@@ -147,15 +161,10 @@ class Panther:
         return None
 
     async def handle_http(self, scope: dict, receive: Callable, send: Callable) -> None:
-        from panther.logger import logger
-
         request = Request(scope=scope, receive=receive, send=send)
 
-        # Monitoring Middleware
-        monitoring_middleware = None
-        if config['monitoring']:
-            monitoring_middleware = MonitoringMiddleware()
-            await monitoring_middleware.before(request=request)
+        # Monitoring
+        await self.monitoring.before(request=request)
 
         # Read Request Payload
         await request.read_body()
@@ -168,7 +177,7 @@ class Panther:
             return await http_response(
                 send,
                 status_code=status.HTTP_404_NOT_FOUND,
-                monitoring=monitoring_middleware,
+                monitoring=self.monitoring,
                 exception=True,
             )
 
@@ -185,7 +194,7 @@ class Panther:
                     return await http_response(
                         send,
                         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-                        monitoring=monitoring_middleware,
+                        monitoring=self.monitoring,
                         exception=True,
                     )
 
@@ -201,7 +210,7 @@ class Panther:
                     return await http_response(
                         send,
                         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-                        monitoring=monitoring_middleware,
+                        monitoring=self.monitoring,
                         exception=True,
                     )
                 # Declare Endpoint
@@ -220,7 +229,7 @@ class Panther:
             return await http_response(
                 send,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                monitoring=monitoring_middleware,
+                monitoring=self.monitoring,
                 exception=True,
             )
 
@@ -234,7 +243,7 @@ class Panther:
         await http_response(
             send,
             status_code=response.status_code,
-            monitoring=monitoring_middleware,
+            monitoring=self.monitoring,
             headers=response.headers,
             body=response.body,
         )

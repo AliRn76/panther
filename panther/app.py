@@ -1,6 +1,7 @@
 import functools
 from collections.abc import Callable
 from datetime import datetime, timedelta
+import logging
 from typing import Literal
 
 from orjson import JSONDecodeError
@@ -18,13 +19,15 @@ from panther.exceptions import (
     MethodNotAllowed,
     ThrottlingException,
 )
-from panther.logger import logger
 from panther.request import Request
 from panther.response import Response
 from panther.throttling import Throttling, throttling_storage
 from panther.utils import round_datetime
 
 __all__ = ('API', 'GenericAPI')
+
+
+logger = logging.getLogger('panther')
 
 
 class API:
