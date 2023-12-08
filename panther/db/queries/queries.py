@@ -6,7 +6,7 @@ from panther import status
 from panther.configs import config
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
-from panther.db.utils import log_query
+from panther.db.utils import log_query, check_connection
 from panther.exceptions import APIException, DBException
 
 BaseQuery = BasePantherDBQuery if config['db_engine'] == 'pantherdb' else BaseMongoDBQuery
@@ -55,6 +55,7 @@ class Query(BaseQuery):
 
     # # # # # Find # # # # #
     @classmethod
+    @check_connection
     @log_query
     def find_one(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
         """
@@ -66,6 +67,7 @@ class Query(BaseQuery):
         return super().find_one(_data, **kwargs)
 
     @classmethod
+    @check_connection
     @log_query
     def find(cls, _data: dict | None = None, /, **kwargs) -> list[Self]:
         """
@@ -77,6 +79,7 @@ class Query(BaseQuery):
         return super().find(_data, **kwargs)
 
     @classmethod
+    @check_connection
     @log_query
     def first(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
         """
@@ -89,6 +92,7 @@ class Query(BaseQuery):
         return super().first(_data, **kwargs)
 
     @classmethod
+    @check_connection
     @log_query
     def last(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
         """
@@ -101,6 +105,7 @@ class Query(BaseQuery):
 
     # # # # # Count # # # # #
     @classmethod
+    @check_connection
     @log_query
     def count(cls, _data: dict | None = None, /, **kwargs) -> int:
         """
@@ -113,6 +118,7 @@ class Query(BaseQuery):
 
     # # # # # Insert # # # # #
     @classmethod
+    @check_connection
     @log_query
     def insert_one(cls, _data: dict | None = None, /, **kwargs) -> Self:
         """
@@ -125,12 +131,14 @@ class Query(BaseQuery):
         return super().insert_one(_data, **kwargs)
 
     @classmethod
+    @check_connection
     @log_query
     def insert_many(cls, _data: dict | None = None, /, **kwargs):
         msg = 'insert_many() is not supported yet.'
         raise DBException(msg)
 
     # # # # # Delete # # # # #
+    @check_connection
     @log_query
     def delete(self) -> None:
         """
@@ -143,6 +151,7 @@ class Query(BaseQuery):
         return super().delete()
 
     @classmethod
+    @check_connection
     @log_query
     def delete_one(cls, _data: dict | None = None, /, **kwargs) -> bool:
         """
@@ -154,6 +163,7 @@ class Query(BaseQuery):
         return super().delete_one(_data, **kwargs)
 
     @classmethod
+    @check_connection
     @log_query
     def delete_many(cls, _data: dict | None = None, /, **kwargs) -> int:
         """
@@ -165,6 +175,7 @@ class Query(BaseQuery):
         return super().delete_many(_data, **kwargs)
 
     # # # # # Update # # # # #
+    @check_connection
     @log_query
     def update(self, **kwargs) -> None:
         """
@@ -178,6 +189,7 @@ class Query(BaseQuery):
         return super().update(**kwargs)
 
     @classmethod
+    @check_connection
     @log_query
     def update_one(cls, _filter: dict, _data: dict | None = None, /, **kwargs) -> bool:
         """
@@ -190,6 +202,7 @@ class Query(BaseQuery):
         return super().update_one(_filter, _data, **kwargs)
 
     @classmethod
+    @check_connection
     @log_query
     def update_many(cls, _filter: dict, _data: dict | None = None, /, **kwargs) -> int:
         """
@@ -203,7 +216,6 @@ class Query(BaseQuery):
 
     # # # # # Other # # # # #
     @classmethod
-    @log_query
     def find_or_insert(cls, **kwargs) -> tuple[bool, any]:
         """
         Example:
@@ -216,7 +228,6 @@ class Query(BaseQuery):
         return True, cls.insert_one(**kwargs)
 
     @classmethod
-    @log_query
     def find_one_or_raise(cls, **kwargs) -> Self:
         """
         Example:
@@ -232,6 +243,7 @@ class Query(BaseQuery):
             status_code=status.HTTP_404_NOT_FOUND,
         )
 
+    @check_connection
     @log_query
     def save(self, **kwargs) -> None:
         """

@@ -13,6 +13,11 @@ logger = logging.getLogger('query')
 
 def log_query(func):
     def log(*args, **kwargs):
+        # Check Database Connection
+        if config['db_engine'] == '':
+            msg = "You don't have active database connection, Check your middlewares"
+            raise NotImplementedError(msg)
+
         if config['log_queries'] is False:
             return func(*args, **kwargs)
         start = perf_counter()
@@ -22,6 +27,15 @@ def log_query(func):
         logger.info(f'\033[1mQuery -->\033[0m  {class_name}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
         return response
     return log
+
+
+def check_connection(func):
+    def wrapper(*args, **kwargs):
+        if config['db_engine'] == '':
+            msg = "You don't have active database connection, Check your middlewares"
+            raise NotImplementedError(msg)
+        return func(*args, **kwargs)
+    return wrapper
 
 
 def prepare_id_for_query(*args, is_mongo: bool = False):

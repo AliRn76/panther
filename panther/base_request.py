@@ -2,8 +2,6 @@ from collections import namedtuple
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from panther.db import Model
-
 
 @dataclass(frozen=True)
 class Headers:
@@ -86,8 +84,8 @@ class BaseRequest:
         return self.scope['scheme']
 
     @property
-    def user(self) -> Model:
+    def user(self):
         return self._user
 
-    def set_user(self, user: Model) -> None:
+    def set_user(self, user) -> None:
         self._user = user
