@@ -12,9 +12,12 @@ from rich.panel import Panel
 from rich.table import Table
 from watchfiles import watch
 
+from panther.cli.utils import cli_error
+from panther.configs import config
+
 
 def monitor() -> None:
-    monitoring_log_file = 'logs/monitoring.log'
+    monitoring_log_file = Path(config['base_dir'] / 'logs' / 'monitoring.log')
 
     def _generate_table(rows: deque) -> Panel:
         layout = Layout()
@@ -42,7 +45,10 @@ def monitor() -> None:
             border_style='bright_blue',
         )
 
-    with Path(monitoring_log_file).open() as f:
+    if not monitoring_log_file.exists():
+        return cli_error('Monitoring file not found. (You need at least one monitoring record for this action)')
+
+    with monitoring_log_file.open() as f:
         f.readlines()  # Set cursor at the end of file
 
         _, init_lines_count = os.get_terminal_size()

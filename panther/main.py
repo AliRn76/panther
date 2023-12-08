@@ -15,7 +15,7 @@ from panther.background_tasks import background_tasks
 from panther.cli.utils import print_info
 from panther.configs import config
 from panther.exceptions import APIException, PantherException
-from panther.middlewares.monitoring import Middleware as MonitoringMiddleware
+from panther.monitoring import Monitoring
 from panther.request import Request
 from panther.response import Response
 from panther.routings import collect_path_variables, find_endpoint
@@ -40,6 +40,12 @@ class Panther:
                 logger.error(clean_traceback_message(e))
             sys.exit()
 
+        # Monitoring
+        self.monitoring = Monitoring(is_active=config['monitoring'])
+
+        # Print Info
+        print_info(config)
+
         # Start Websocket Listener (Redis Required)
         if config['has_ws']:
             Thread(
@@ -47,9 +53,6 @@ class Panther:
                 daemon=True,
                 args=(self.ws_redis_connection,),
             ).start()
-
-        # Print Info
-        print_info(config)
 
     def load_configs(self) -> None:
 
@@ -160,11 +163,8 @@ class Panther:
     async def handle_http(self, scope: dict, receive: Callable, send: Callable) -> None:
         request = Request(scope=scope, receive=receive, send=send)
 
-        # Monitoring Middleware
-        monitoring_middleware = None
-        if config['monitoring']:
-            monitoring_middleware = MonitoringMiddleware()
-            await monitoring_middleware.before(request=request)
+        # Monitoring
+        await self.monitoring.before(request=request)
 
         # Read Request Payload
         await request.read_body()
@@ -177,7 +177,7 @@ class Panther:
             return await http_response(
                 send,
                 status_code=status.HTTP_404_NOT_FOUND,
-                monitoring=monitoring_middleware,
+                monitoring=self.monitoring,
                 exception=True,
             )
 
@@ -194,7 +194,7 @@ class Panther:
                     return await http_response(
                         send,
                         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-                        monitoring=monitoring_middleware,
+                        monitoring=self.monitoring,
                         exception=True,
                     )
 
@@ -210,7 +210,7 @@ class Panther:
                     return await http_response(
                         send,
                         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-                        monitoring=monitoring_middleware,
+                        monitoring=self.monitoring,
                         exception=True,
                     )
                 # Declare Endpoint
@@ -229,7 +229,7 @@ class Panther:
             return await http_response(
                 send,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                monitoring=monitoring_middleware,
+                monitoring=self.monitoring,
                 exception=True,
             )
 
@@ -243,7 +243,7 @@ class Panther:
         await http_response(
             send,
             status_code=response.status_code,
-            monitoring=monitoring_middleware,
+            monitoring=self.monitoring,
             headers=response.headers,
             body=response.body,
         )

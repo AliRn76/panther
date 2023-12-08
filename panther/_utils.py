@@ -45,8 +45,7 @@ async def http_response(
     elif status_code == status.HTTP_204_NO_CONTENT or body == b'null':
         body = None
 
-    if monitoring is not None:
-        await monitoring.after(status_code=status_code)
+    await monitoring.after(status_code=status_code)
 
     await _http_response_start(send, headers=headers, status_code=status_code)
     await _http_response_body(send, body=body)
