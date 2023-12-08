@@ -1,10 +1,13 @@
 import contextlib
+import logging
 import sys
 import types
 from collections.abc import Callable
+from logging.config import dictConfig
 from pathlib import Path
 from threading import Thread
 
+import panther.logging
 from panther import status
 from panther._load_configs import *
 from panther._utils import clean_traceback_message, http_response
@@ -17,13 +20,13 @@ from panther.request import Request
 from panther.response import Response
 from panther.routings import collect_path_variables, find_endpoint
 
-""" We can't import logger on the top cause it needs config['base_dir'] ans its fill in __init__ """
+
+dictConfig(panther.logging.LOGGING)
+logger = logging.getLogger('panther')
 
 
 class Panther:
     def __init__(self, name: str, configs=None, urls: dict | None = None):
-        from panther.logger import logger
-
         self._configs = configs
         self._urls = urls
         config['base_dir'] = Path(name).resolve().parent
@@ -49,7 +52,6 @@ class Panther:
         print_info(config)
 
     def load_configs(self) -> None:
-        from panther.logger import logger
 
         # Check & Read The Configs File
         self.configs = load_configs_file(self._configs)
@@ -121,7 +123,6 @@ class Panther:
         await func(scope=scope, receive=receive, send=send)
 
     async def handle_ws(self, scope: dict, receive: Callable, send: Callable) -> None:
-        from panther.logger import logger
         from panther.websocket import GenericWebsocket, Websocket
 
         temp_connection = Websocket(scope=scope, receive=receive, send=send)
@@ -157,8 +158,6 @@ class Panther:
         return None
 
     async def handle_http(self, scope: dict, receive: Callable, send: Callable) -> None:
-        from panther.logger import logger
-
         request = Request(scope=scope, receive=receive, send=send)
 
         # Monitoring Middleware

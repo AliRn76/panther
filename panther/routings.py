@@ -1,3 +1,4 @@
+import logging
 import re
 from collections import Counter
 from collections.abc import Callable, Mapping, MutableMapping
@@ -5,6 +6,9 @@ from copy import deepcopy
 from functools import partial, reduce
 
 from panther.configs import config
+
+
+logger = logging.getLogger('panther')
 
 
 def flatten_urls(urls: dict) -> dict:
@@ -29,8 +33,6 @@ def _flattening_urls(data: dict | Callable, url: str = ''):
 
 
 def _is_url_endpoint_valid(url: str, endpoint: Callable) -> bool:
-    from panther.logger import logger
-
     if endpoint is ...:
         logger.error(f"URL Can't Point To Ellipsis. ('{url}' -> ...)")
     elif endpoint is None:

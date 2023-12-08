@@ -1,3 +1,4 @@
+import logging
 import operator
 from functools import reduce
 from time import perf_counter
@@ -5,7 +6,9 @@ from time import perf_counter
 import bson
 
 from panther.configs import config
-from panther.logger import query_logger
+
+
+logger = logging.getLogger('query')
 
 
 def log_query(func):
@@ -16,9 +19,8 @@ def log_query(func):
         response = func(*args, **kwargs)
         end = perf_counter()
         class_name = args[0].__name__ if hasattr(args[0], '__name__') else args[0].__class__.__name__
-        query_logger.info(f'\033[1mQuery -->\033[0m  {class_name}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
+        logger.info(f'\033[1mQuery -->\033[0m  {class_name}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
         return response
-
     return log
 
 

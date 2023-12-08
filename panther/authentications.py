@@ -1,5 +1,6 @@
 import time
 from abc import abstractmethod
+import logging
 from typing import Literal
 
 from jose import JWTError, jwt
@@ -7,8 +8,10 @@ from jose import JWTError, jwt
 from panther.configs import config
 from panther.db.models import BaseUser, IDType, Model
 from panther.exceptions import AuthenticationException
-from panther.logger import logger
 from panther.request import Request
+
+
+logger = logging.getLogger('panther')
 
 
 class BaseAuthentication:

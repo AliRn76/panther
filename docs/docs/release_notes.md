@@ -1,5 +1,7 @@
 ### 3.1.4
 - Check ws redis connection on the `init`
+- Refactor the usage of `Monitoring`
+- Improve logging config
  
 ### 3.1.3
 - Add `Image` base class 

@@ -1,10 +1,12 @@
+import logging
 import os
 import hashlib
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import ClassVar
 
-from panther.logger import logger
+
+logger = logging.getLogger('panther')
 
 
 class Singleton(object):

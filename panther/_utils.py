@@ -1,4 +1,5 @@
 import importlib
+import logging
 import re
 from collections.abc import Callable
 from traceback import TracebackException
@@ -8,7 +9,9 @@ import orjson as json
 
 from panther import status
 from panther.file_handler import File
-from panther.logger import logger
+
+
+logger = logging.getLogger('panther')
 
 
 async def _http_response_start(send: Callable, /, headers: dict, status_code: int) -> None:

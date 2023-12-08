@@ -1,12 +1,12 @@
 import asyncio
 import datetime
+import logging
 import sys
 import time
 from threading import Thread
 from typing import Callable, Literal
 
 from panther._utils import is_function_async
-from panther.logger import logger
 from panther.utils import Singleton
 
 
@@ -14,6 +14,9 @@ __all__ = (
     'BackgroundTask',
     'background_tasks',
 )
+
+
+logger = logging.getLogger('panther')
 
 
 if sys.version_info.minor >= 11:

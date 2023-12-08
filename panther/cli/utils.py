@@ -1,5 +1,9 @@
-from panther.logger import logger
+import logging
 from rich import print as rprint
+
+
+logger = logging.getLogger('panther')
+
 
 logo = r"""│    ____                 __    __                         │
 │   /\  _`\              /\ \__/\ \                        │
