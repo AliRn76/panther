@@ -8,16 +8,11 @@ from panther.response import Response
 
 @API()
 async def models_api():
-    result = []
-    for i, m in enumerate(config['models']):
-        data = {
-            'name': m['name'],
-            'app': '.'.join(a for a in m['app']),
-            'path': m['path'],
-            'index': i
-        }
-        result.append(data)
-    return result
+    return [{
+        'name': m['name'],
+        'module': m['module'],
+        'index': i
+    } for i, m in enumerate(config['models'])]
 
 
 @API()

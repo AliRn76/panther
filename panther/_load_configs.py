@@ -1,5 +1,4 @@
 import ast
-import os
 import platform
 import sys
 from datetime import timedelta
@@ -11,7 +10,6 @@ from pydantic._internal._model_construction import ModelMetaclass
 from panther._utils import import_class
 from panther.configs import JWTConfig, config
 from panther.exceptions import PantherException
-from panther.middlewares import BaseMiddleware
 from panther.routings import finalize_urls, flatten_urls
 from panther.throttling import Throttling
 
@@ -73,6 +71,8 @@ def load_default_cache_exp(configs: dict, /) -> timedelta | None:
 
 def load_middlewares(configs: dict, /) -> list:
     """Collect The Middlewares & Set db_engine If One Of Middlewares Was For DB"""
+    from panther.middlewares import BaseMiddleware
+
     middlewares = []
 
     for path, data in configs.get('MIDDLEWARES', []):
@@ -113,46 +113,48 @@ def collect_all_models() -> list[dict]:
     """Collecting all models for panel APIs"""
     from panther.db.models import Model
 
-    collected_models = []
+    # Just load all the python files from 'base_dir',
+    #   so Model.__subclasses__ can find all the subclasses
+    slash = '\\' if platform.system() == 'Windows' else '/'
+    python_files = [
+        f for f in config['base_dir'].rglob('*.py')
+        if not f.name.startswith('_') and 'site-packages' not in f.parents._parts
+    ]
+    for file in python_files:
+        # Analyse the file
+        with Path(file).open() as f:
+            node = ast.parse(f.read())
 
-    for root, _, files in os.walk(config['base_dir']):
-        # Traverse through each directory
-        for f in files:
-            # Traverse through each file of directory
-            if f == 'models.py':
-                slash = '\\' if platform.system() == 'Windows' else '/'
+        model_imported = False
+        panther_imported = False
+        panther_called = False
+        for n in node.body:
+            match n:
+                case ast.ImportFrom(module='panther.db', names=[ast.alias(name='Model')]):
+                    model_imported = True
 
-                # If the file was "models.py" read it
-                file_path = f'{root}{slash}models.py'
-                with Path(file_path).open() as file:
-                    # Parse the file with ast
-                    node = ast.parse(file.read())
-                    for n in node.body:
-                        # Find classes in each element of files' body
-                        if type(n) is ast.ClassDef and n.bases:
-                            class_path = (
-                                file_path.removesuffix(f'{slash}models.py')
-                                .removeprefix(f'{config["base_dir"]}{slash}')
-                                .replace(slash, '.')
-                            )
-                            # We don't need to import the package classes
-                            if class_path.find('site-packages') == -1:
-                                # Import the class to check his parents and siblings
-                                klass = import_class(f'{class_path}.models.{n.name}')
+                case ast.ImportFrom(module='panther', names=[ast.alias(name='Panther')]):
+                    panther_imported = True
 
-                                collected_models.extend(
-                                    [
-                                        {
-                                            'name': n.name,
-                                            'path': file_path,
-                                            'class': klass,
-                                            'app': class_path.split('.'),
-                                        }
-                                        for parent in klass.__mro__
-                                        if parent is Model
-                                    ]
-                                )
-    return collected_models
+                case ast.Assign(value=ast.Call(func=ast.Name(id='Panther'))):
+                    panther_called = True
+
+        # Panther() should not be called in the file and Model() should be imported,
+        #   We check the import of the Panther to make sure he is calling the panther.Panther and not any Panther
+        if panther_imported and panther_called or not model_imported:
+            continue
+
+        # Load the module
+        dotted_f = str(file).removeprefix(f'{config["base_dir"]}{slash}').removesuffix('.py').replace(slash, '.')
+        import_module(dotted_f)
+
+    return [
+        {
+            'name': m.__name__,
+            'module': m.__module__,
+            'class': m
+        } for m in Model.__subclasses__() if m.__module__ != 'panther.db.models'
+    ]
 
 
 def load_urls(configs: dict, /, urls: dict | None) -> tuple[dict, dict]:
