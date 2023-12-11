@@ -10,7 +10,7 @@ from threading import Thread
 import panther.logging
 from panther import status
 from panther._load_configs import *
-from panther._utils import clean_traceback_message, http_response
+from panther._utils import clean_traceback_message, http_response, run_sync_async_function
 from panther.background_tasks import background_tasks
 from panther.cli.utils import print_info
 from panther.configs import config
@@ -50,8 +50,7 @@ class Panther:
         print_info(config)
 
         # Startup
-        if startup := config['startup'] or self._startup:
-            startup()
+        self.handle_startup()
 
         # Start Websocket Listener (Redis Required)
         if config['has_ws']:
@@ -266,9 +265,16 @@ class Panther:
             body=response.body,
         )
 
-    def __del__(self):
+    def handle_startup(self):
+        if startup := config['startup'] or self._startup:
+            run_sync_async_function(startup)
+
+    def handle_shutdown(self):
         if shutdown := config['shutdown'] or self._shutdown:
-            shutdown()
+            run_sync_async_function(shutdown)
+
+    def __del__(self):
+        self.handle_shutdown()
 
     @classmethod
     def handle_exceptions(cls, e: APIException, /) -> Response:

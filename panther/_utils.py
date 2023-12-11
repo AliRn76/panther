@@ -1,3 +1,4 @@
+import asyncio
 import importlib
 import logging
 import re
@@ -126,6 +127,28 @@ def is_function_async(func: Callable) -> bool:
     async result is 128 --> True
     """
     return bool(func.__code__.co_flags & (1 << 7))
+
+
+def run_sync_async_function(func: Callable):
+    # Async
+    if is_function_async(func):
+        # Get Event Loop
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        # Add Coroutine To Event Loop
+        if loop and loop.is_running():
+            loop.create_task(func())
+
+        # Start New Event Loop
+        else:
+            asyncio.run(func())
+
+    # Sync
+    else:
+        func()
 
 
 def clean_traceback_message(exception: Exception) -> str:

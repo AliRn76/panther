@@ -56,11 +56,11 @@ DEFAULT_CACHE_EXP = timedelta(seconds=10)
 # THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))
 
 
-def startup():
+async def startup():
     print('inside startup function')
 
 
-def shutdown():
+async def shutdown():
     print('inside shutdown function')
 
 
