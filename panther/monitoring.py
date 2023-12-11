@@ -1,7 +1,8 @@
 import logging
 from time import perf_counter
+from typing import Literal
 
-from panther.request import Request
+from panther.base_request import BaseRequest
 
 
 logger = logging.getLogger('monitoring')
@@ -10,18 +11,31 @@ logger = logging.getLogger('monitoring')
 class Monitoring:
     """
     Create Log Message Like Below:
-    [method] path | ip:port | response_time ms | status_code
+    date time | method | path | ip:port | response_time [ms, s] | status
     """
-    def __init__(self, is_active: bool):
+    def __init__(self, is_active: bool, is_ws: bool = False):
         self.is_active = is_active
+        self.is_ws = is_ws
 
-    async def before(self, request: Request):
+    async def before(self, request: BaseRequest):
         if self.is_active:
             ip, port = request.client
-            self.log = f'{request.method} | {request.path} | {ip}:{port}'
+
+            if self.is_ws:
+                method = 'WS'
+            else:
+                method = request.scope['method']
+
+            self.log = f'{method} | {request.path} | {ip}:{port}'
             self.start_time = perf_counter()
 
-    async def after(self, status_code: int):
+    async def after(self, status: int | Literal['Accepted', 'Rejected', 'Closed'], /):
         if self.is_active:
-            response_time = (perf_counter() - self.start_time) * 1_000
-            logger.info(f'{self.log} | {response_time: .3} ms | {status_code}')
+            response_time = perf_counter() - self.start_time
+            time_unit = ' s'
+
+            if response_time < 0.01:
+                response_time = response_time * 1_000
+                time_unit = 'ms'
+
+            logger.info(f'{self.log} | {round(response_time, 4)} {time_unit} | {status}')

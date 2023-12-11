@@ -127,16 +127,20 @@ class Panther:
 
     async def handle_ws(self, scope: dict, receive: Callable, send: Callable) -> None:
         from panther.websocket import GenericWebsocket, Websocket
+        monitoring = Monitoring(is_active=config['monitoring'], is_ws=True)
 
         temp_connection = Websocket(scope=scope, receive=receive, send=send)
+        await monitoring.before(request=temp_connection)
 
         endpoint, found_path = find_endpoint(path=temp_connection.path)
         if endpoint is None:
+            await monitoring.after('Rejected')
             return await temp_connection.close(status.WS_1000_NORMAL_CLOSURE)
         path_variables: dict = collect_path_variables(request_path=temp_connection.path, found_path=found_path)
 
         if not issubclass(endpoint, GenericWebsocket):
             logger.critical(f'You may have forgotten to inherit from GenericWebsocket on the {endpoint.__name__}()')
+            await monitoring.after('Rejected')
             return await temp_connection.close(status.WS_1014_BAD_GATEWAY)
 
         del temp_connection
@@ -152,12 +156,15 @@ class Panther:
                 break
         else:
             await self.websocket_connections.new_connection(connection=connection)
+            await monitoring.after('Accepted')
             await connection.listen()
 
         # Call 'After' Middleware
         for middleware in config['reversed_middlewares']:
             with contextlib.suppress(APIException):
                 await middleware.after(response=connection)
+
+        await monitoring.after('Closed')
         return None
 
     async def handle_http(self, scope: dict, receive: Callable, send: Callable) -> None:
