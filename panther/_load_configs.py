@@ -130,12 +130,28 @@ def collect_all_models() -> list[dict]:
         panther_called = False
         for n in node.body:
             match n:
+
+                # from panther.db import Model
                 case ast.ImportFrom(module='panther.db', names=[ast.alias(name='Model')]):
                     model_imported = True
 
-                case ast.ImportFrom(module='panther', names=[ast.alias(name='Panther')]):
+                # from panther.db.models import ..., Model, ...
+                case ast.ImportFrom(module='panther.db.models', names=[*names]):
+                    try:
+                        next(v for v in names if v.name == 'Model')
+                        model_imported = True
+                    except StopIteration:
+                        pass
+
+                # from panther import Panther, ...
+                case ast.ImportFrom(module='panther', names=[ast.alias(name='Panther'), *_]):
                     panther_imported = True
 
+                # from panther import ..., Panther
+                case ast.ImportFrom(module='panther', names=[*_, ast.alias(name='Panther')]):
+                    panther_imported = True
+
+                # ... = Panther(...)
                 case ast.Assign(value=ast.Call(func=ast.Name(id='Panther'))):
                     panther_called = True
 
