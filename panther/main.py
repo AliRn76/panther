@@ -26,9 +26,12 @@ logger = logging.getLogger('panther')
 
 
 class Panther:
-    def __init__(self, name: str, configs=None, urls: dict | None = None):
+    def __init__(self, name: str, configs=None, urls: dict | None = None, startup: Callable = None, shutdown: Callable = None):
         self._configs = configs
         self._urls = urls
+        self._startup = startup
+        self._shutdown = shutdown
+
         config['base_dir'] = Path(name).resolve().parent
 
         try:
@@ -45,6 +48,10 @@ class Panther:
 
         # Print Info
         print_info(config)
+
+        # Startup
+        if startup := config['startup'] or self._startup:
+            startup()
 
         # Start Websocket Listener (Redis Required)
         if config['has_ws']:
@@ -71,6 +78,8 @@ class Panther:
         config['user_model'] = load_user_model(self.configs)
         config['authentication'] = load_authentication_class(self.configs)
         config['jwt_config'] = load_jwt_config(self.configs)
+        config['startup'] = load_startup(self.configs)
+        config['shutdown'] = load_shutdown(self.configs)
         config['models'] = collect_all_models()
 
         # Initialize Background Tasks
@@ -122,6 +131,8 @@ class Panther:
             with ProcessPoolExecutor() as e:
                 e.submit(func, scope, receive, send)
         """
+        if scope['type'] == 'lifespan':
+            return
         func = self.handle_http if scope['type'] == 'http' else self.handle_ws
         await func(scope=scope, receive=receive, send=send)
 
@@ -197,7 +208,7 @@ class Panther:
             if isinstance(endpoint, types.FunctionType):
                 # Function Doesn't Have @API Decorator
                 if not hasattr(endpoint, '__wrapped__'):
-                    logger.critical(f'You may have forgotten to use @API on the {endpoint.__name__}()')
+                    logger.critical(f'You may have forgotten to use @API() on the {endpoint.__name__}()')
                     return await http_response(
                         send,
                         status_code=status.HTTP_501_NOT_IMPLEMENTED,
@@ -254,6 +265,10 @@ class Panther:
             headers=response.headers,
             body=response.body,
         )
+
+    def __del__(self):
+        if shutdown := config['shutdown'] or self._shutdown:
+            shutdown()
 
     @classmethod
     def handle_exceptions(cls, e: APIException, /) -> Response:

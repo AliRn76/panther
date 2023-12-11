@@ -1,8 +1,11 @@
+### 3.2.0
+- Support `Startup` & `Shutdown` Events
+
 ### 3.1.5
 - Support `Websocket` in the `monitoring` 
 - Refactor `collect_all_models()`
 
-- ### 3.1.4
+### 3.1.4
 - Check ws redis connection on the `init`
 - Refactor `Monitoring` class and usage
 - Improve `logging` config
