@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import logging
 import sys
@@ -10,7 +11,7 @@ from threading import Thread
 import panther.logging
 from panther import status
 from panther._load_configs import *
-from panther._utils import clean_traceback_message, http_response, run_sync_async_function
+from panther._utils import clean_traceback_message, http_response, is_function_async
 from panther.background_tasks import background_tasks
 from panther.cli.utils import print_info
 from panther.configs import config
@@ -48,9 +49,6 @@ class Panther:
 
         # Print Info
         print_info(config)
-
-        # Startup
-        self.handle_startup()
 
         # Start Websocket Listener (Redis Required)
         if config['has_ws']:
@@ -131,7 +129,11 @@ class Panther:
                 e.submit(func, scope, receive, send)
         """
         if scope['type'] == 'lifespan':
+            message = await receive()
+            if message["type"] == "lifespan.startup":
+                await self.handle_startup()
             return
+
         func = self.handle_http if scope['type'] == 'http' else self.handle_ws
         await func(scope=scope, receive=receive, send=send)
 
@@ -265,13 +267,19 @@ class Panther:
             body=response.body,
         )
 
-    def handle_startup(self):
+    async def handle_startup(self):
         if startup := config['startup'] or self._startup:
-            run_sync_async_function(startup)
+            if is_function_async(startup):
+                await startup()
+            else:
+                startup()
 
     def handle_shutdown(self):
         if shutdown := config['shutdown'] or self._shutdown:
-            run_sync_async_function(shutdown)
+            if is_function_async(shutdown):
+                asyncio.run(shutdown())
+            else:
+                shutdown()
 
     def __del__(self):
         self.handle_shutdown()

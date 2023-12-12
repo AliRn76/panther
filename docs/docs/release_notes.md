@@ -1,4 +1,7 @@
 ### 3.2.0
+- Move `Startup` to `__call__`
+
+### 3.2.0
 - Support `Startup` & `Shutdown` Events
 
 ### 3.1.5
