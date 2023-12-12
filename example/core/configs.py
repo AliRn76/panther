@@ -54,3 +54,15 @@ USER_MODEL = 'app.models.User'
 DEFAULT_CACHE_EXP = timedelta(seconds=10)
 
 # THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))
+
+
+async def startup():
+    print('inside startup function')
+
+
+async def shutdown():
+    print('inside shutdown function')
+
+
+STARTUP = 'core.configs.startup'
+SHUTDOWN = 'core.configs.shutdown'
