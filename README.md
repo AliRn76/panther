@@ -191,7 +191,7 @@
 
 ---
 
-![roadmap](https://github.com/AliRn76/panther/raw/master/docs/docs/images/roadmap.jpg)
+![roadmap](https://raw.githubusercontent.com/AliRn76/panther/master/docs/docs/images/roadmap.jpg)
 
 ---
 

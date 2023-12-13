@@ -69,7 +69,7 @@ def run(args: dict[str, str | None]) -> None:
     if any(a in args for a in ['h', 'help', '-h', '--help']):
         print_uvicorn_help_message()
         return
-    command = {'app_dir': os.getcwd(), 'lifespan': 'off'}
+    command = {'app_dir': os.getcwd()}
     command.update(_handle_commands(args))
     command.update(args)
 

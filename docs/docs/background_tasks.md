@@ -45,6 +45,7 @@ Panther is going to run the background tasks as a thread in the background
     task = BackgroundTask(do_something, name='Ali', age=26).interval(3)
     background_tasks.add_task(task)
     ```
+  
 - ### Schedule
   `BackgroundTask` has some methods to `schedule` the run time, (Default value of them is `1`)
   - `every_seconds()`
@@ -62,18 +63,18 @@ Panther is going to run the background tasks as a thread in the background
   
   let's say we want to run the `task` below every day on `8:00` o'clock. 
 
-    ```python
-    from datetime import time
-    
-    from panther.background_tasks import BackgroundTask, background_tasks
-    
-    
-    def do_something(name: str, age: int):
-            pass
-        
-    task = BackgroundTask(do_something, name='Ali', age=26).at(time(hour=8))
-    background_tasks.add_task(task)
-    ```
+  ```python
+  from datetime import time
+  
+  from panther.background_tasks import BackgroundTask, background_tasks
+  
+  
+  def do_something(name: str, age: int):
+          pass
+      
+  task = BackgroundTask(do_something, name='Ali', age=26).at(time(hour=8))
+  background_tasks.add_task(task)
+  ```
 
 ## Notice
 - > The `task` function can be `sync` or `async`

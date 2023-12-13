@@ -11,18 +11,10 @@ It will create a `monitoring.log` file and log the records
 Then you can watch them live with: `panther monitor`
 
 
-#### The Monitoring Middleware:
+#### Log Example:
 
 ```python
-    async def before(self, request: Request) -> Request:
-        ip, port = request.client
-        self.log = f'{request.method} | {request.path} | {ip}:{port}'
-        self.start_time = perf_counter()
-        return request
-```
+date time | method | path | ip:port | response_time [ms, s] | status
 
-```python
-    async def after(self, status_code: int):
-        response_time = (perf_counter() - self.start_time) * 1_000
-        monitoring_logger.info(f'{self.log} | {response_time: .3} ms | {status_code}')
+2023-12-11 18:23:42 | GET | /login | 127.0.0.1:55710 | 2.8021 ms | 200
 ```

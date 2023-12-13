@@ -19,7 +19,7 @@ and it should be `dict`.
 
 - core/configs.py
     ```python
-    `URLs = 'core.urls.url_routing`
+    URLs = 'core.urls.url_routing
     ```
 - core/urls.py
     ```python
