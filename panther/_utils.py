@@ -1,27 +1,21 @@
+import asyncio
 import importlib
+import logging
 import re
+from collections.abc import Callable
 from traceback import TracebackException
+from uuid import uuid4
 
 import orjson as json
 
 from panther import status
 from panther.file_handler import File
-from panther.logger import logger
 
 
-async def read_body(receive) -> bytes:
-    """Read and return the entire body from an incoming ASGI message."""
-    body = b''
-    more_body = True
-    while more_body:
-        message = await receive()
-        # {'type': 'lifespan.startup'}
-        body += message.get('body', b'')
-        more_body = message.get('more_body', False)
-    return body
+logger = logging.getLogger('panther')
 
 
-async def _http_response_start(send, /, headers: dict, status_code: int):
+async def _http_response_start(send: Callable, /, headers: dict, status_code: int) -> None:
     bytes_headers = [[k.encode(), v.encode()] for k, v in (headers or {}).items()]
     await send({
         'type': 'http.response.start',
@@ -30,7 +24,7 @@ async def _http_response_start(send, /, headers: dict, status_code: int):
     })
 
 
-async def _http_response_body(send, /, body: any = None):
+async def _http_response_body(send: Callable, /, body: bytes | None = None) -> None:
     if body is None:
         await send({'type': 'http.response.body'})
     else:
@@ -38,29 +32,27 @@ async def _http_response_body(send, /, body: any = None):
 
 
 async def http_response(
-        send,
+        send: Callable,
         /,
         *,
         status_code: int,
         monitoring=None,  # type: MonitoringMiddleware | None
-        headers: dict = None,
-        body: bytes = None,
+        headers: dict | None = None,
+        body: bytes | None = None,
         exception: bool = False,
-):
+) -> None:
     if exception:
         body = json.dumps({'detail': status.status_text[status_code]})
     elif status_code == status.HTTP_204_NO_CONTENT or body == b'null':
         body = None
 
-    if monitoring is not None:
-        await monitoring.after(status_code=status_code)
+    await monitoring.after(status_code)
 
-    # TODO: Should we send 'access-control-allow-origin' in any case
     await _http_response_start(send, headers=headers, status_code=status_code)
     await _http_response_body(send, body=body)
 
 
-def import_class(dotted_path: str, /):
+def import_class(dotted_path: str, /) -> type:
     """
     Example:
     -------
@@ -73,7 +65,7 @@ def import_class(dotted_path: str, /):
 
 
 def read_multipart_form_data(boundary: str, body: bytes) -> dict:
-    """
+    r"""
     ----------------------------449529189836774544725855
     \r\nContent-Disposition: form-data; name="name"\r\n\r\nali\r\n
     ----------------------------449529189836774544725855
@@ -83,18 +75,25 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
     ----------------------------449529189836774544725855
     --\r\n
     """
-
     boundary = b'--' + boundary.encode()
     new_line = b'\r\n' if body[-2:] == b'\r\n' else b'\n'
 
-    field_pattern = rb'(Content-Disposition: form-data; name=")(.*)("' + 2 * new_line + b')(.*)'
-    file_pattern = rb'(Content-Disposition: form-data; name=")(.*)("; filename=")(.*)("' + new_line + b'Content-Type: )(.*)'
+    field_pattern = (
+            rb'(Content-Disposition: form-data; name=")(.*)("'
+            + 2 * new_line
+            + b')(.*)'
+    )
+    file_pattern = (
+            rb'(Content-Disposition: form-data; name=")(.*)("; filename=")(.*)("'
+            + new_line
+            + b'Content-Type: )(.*)'
+    )
 
-    data = dict()
-    for row in body.split(boundary):
+    data = {}
+    for _row in body.split(boundary):
+        row = _row.removeprefix(new_line).removesuffix(new_line)
 
-        row = row.removeprefix(new_line).removesuffix(new_line)
-        if row == b'' or row == b'--':
+        if row in (b'', b'--'):
             continue
 
         if match := re.match(pattern=field_pattern, string=row):
@@ -103,6 +102,7 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
 
         else:
             file_meta_data, value = row.split(2 * new_line, 1)
+
             if match := re.match(pattern=file_pattern, string=file_meta_data):
                 _, field_name, _, file_name, _, content_type = match.groups()
                 file = File(
@@ -117,21 +117,46 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
     return data
 
 
-def is_function_async(func) -> bool:
+def generate_ws_connection_id() -> str:
+    return uuid4().hex
+
+
+def is_function_async(func: Callable) -> bool:
     """
-        sync result is 0 --> False
-        async result is 128 --> True
+    Sync result is 0 --> False
+    async result is 128 --> True
     """
     return bool(func.__code__.co_flags & (1 << 7))
 
 
-def clean_traceback_message(exception) -> str:
-    """
-    We are ignoring packages traceback message
-    """
+def run_sync_async_function(func: Callable):
+    # Async
+    if is_function_async(func):
+        # Get Event Loop
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        # Add Coroutine To Event Loop
+        if loop and loop.is_running():
+            loop.create_task(func())
+
+        # Start New Event Loop
+        else:
+            asyncio.run(func())
+
+    # Sync
+    else:
+        func()
+
+
+def clean_traceback_message(exception: Exception) -> str:
+    """We are ignoring packages traceback message"""
     tb = TracebackException(type(exception), exception, exception.__traceback__)
     stack = tb.stack.copy()
     for t in stack:
         if t.filename.find('site-packages') != -1:
             tb.stack.remove(t)
-    return f'{exception}\n' + ''.join(tb.format(chain=False))
+    _traceback = list(tb.format(chain=False))
+    return exception if len(_traceback) == 1 else f'{exception}\n' + ''.join(_traceback)

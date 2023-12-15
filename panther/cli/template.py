@@ -9,7 +9,6 @@ from app.throttling import InfoThrottling
 
 from panther import status, version
 from panther.app import API
-from panther.configs import config
 from panther.request import Request
 from panther.response import Response
 
@@ -22,18 +21,19 @@ async def hello_world_api():
 @API(cache=True, throttling=InfoThrottling)
 async def info_api(request: Request):
     data = {
-        'version': version(),
+        'panther_version': version(),
+        'method': request.method,
+        'query_params': request.query_params,
         'datetime_now': datetime.now().isoformat(),
         'user_agent': request.headers.user_agent,
-        'db_engine': config['db_engine'],
     }
     return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 """
 
-models_py = """from panther.db import Model  # noqa: F401
+models_py = """from panther.db import Model
 """
 
-serializers_py = """from pydantic import BaseModel  # noqa: F401
+serializers_py = """from pydantic import BaseModel
 """
 
 throttling_py = """from datetime import timedelta
@@ -66,9 +66,9 @@ env = load_env(BASE_DIR / '.env')
 
 SECRET_KEY = env['SECRET_KEY']
 
-# # # More Info: Https://PantherPy.GitHub.io/middlewares/
+# More Info: Https://PantherPy.GitHub.io/middlewares/
 MIDDLEWARES = [
-    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/database.pdb'}),
+    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/database.pdb'}),
 ]
 
 # More Info: https://PantherPy.GitHub.io/configs/#user_model

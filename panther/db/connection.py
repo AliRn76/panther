@@ -1,21 +1,13 @@
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from pantherdb import PantherDB
 from redis import Redis
 
 from panther.configs import config
+from panther.utils import Singleton
 
 if TYPE_CHECKING:
     from pymongo.database import Database
-
-
-class Singleton(object):
-    _instances: ClassVar = {}
-
-    def __new__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__new__(cls, *args, **kwargs)
-        return cls._instances[cls]
 
 
 class DBSession(Singleton):
@@ -33,7 +25,8 @@ class DBSession(Singleton):
                 case 'pantherdb':
                     self._create_pantherdb_session(db_url[12:])
                 case _:
-                    raise ValueError(f'We are not support "{self._db_name}" database yet')
+                    msg = f'We are not support "{self._db_name}" database yet'
+                    raise ValueError(msg)
 
     @property
     def session(self):
@@ -49,10 +42,10 @@ class DBSession(Singleton):
         self._client: MongoClient = MongoClient(db_url)
         self._session: Database = self._client.get_database()
 
-    def _create_pantherdb_session(self, db_url: str):
+    def _create_pantherdb_session(self, db_url: str) -> None:
         self._session: PantherDB = PantherDB(db_url, return_dict=True, secret_key=config['secret_key'])
 
-    def close(self):
+    def close(self) -> None:
         if self._db_name == 'mongodb':
             self._client.close()
         else:
@@ -60,12 +53,20 @@ class DBSession(Singleton):
 
 
 class RedisConnection(Singleton, Redis):
+    """Redis connection here works for per request things (caching, ...)"""
+
     is_connected: bool = False
 
     def __init__(self, host: str | None = None, port: int | None = None, **kwargs):
         if host and port:
             super().__init__(host=host, port=port, **kwargs)
             self.is_connected = True
+
+    def execute_command(self, *args, **options) -> any:
+        if not hasattr(self, 'connection_pool'):
+            msg = "'RedisConnection' object has no attribute 'connection_pool'. Hint: Check your redis middleware"
+            raise AttributeError(msg)
+        return super().execute_command(*args, **options)
 
 
 db: DBSession = DBSession()

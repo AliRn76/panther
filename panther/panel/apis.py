@@ -8,15 +8,11 @@ from panther.response import Response
 
 @API()
 async def models_api():
-    result = list()
-    for i, m in enumerate(config['models']):
-        data = dict()
-        data['name'] = m['name']
-        data['app'] = '.'.join(a for a in m['app'])
-        data['path'] = m['path']
-        data['index'] = i
-        result.append(data)
-    return result
+    return [{
+        'name': m['name'],
+        'module': m['module'],
+        'index': i
+    } for i, m in enumerate(config['models'])]
 
 
 @API()
@@ -44,7 +40,6 @@ async def single_document_api(request: Request, index: int, document_id: int | s
     model = config['models'][index]['class']
 
     if document := model.find_one(id=document_id):
-
         if request.method == 'PUT':
             validated_data = API.validate_input(model=model, request=request)
             document.update(**validated_data.model_dump(exclude=['id']))
@@ -59,4 +54,3 @@ async def single_document_api(request: Request, index: int, document_id: int | s
 
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
-

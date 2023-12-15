@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest import TestCase
@@ -8,113 +9,89 @@ from panther.utils import generate_hash_value_from_string, load_env, round_datet
 class TestLoadEnvFile(TestCase):
     file_path = 'tests/env-test'
 
-    secret_key = 'SecretKey'
-    db_name = 'panther'
+    is_active = True
     db_host = '127.0.0.1'
     db_port = 27017
-    db_username = 'Username'
-    db_password = 'Password'
 
     def tearDown(self) -> None:
         Path(self.file_path).unlink()
 
-    def create_env_file(self, file_data):
+    def _create_env_file(self, file_data):
         with open(self.file_path, 'w') as file:
             file.write(file_data)
 
     def test_load_env_double_quote(self):
-        self.create_env_file(f"""
-SECRET_KEY = "{self.secret_key}"
-
-DB_NAME = "{self.db_name}"
+        self._create_env_file(f"""
+IS_ACTIVE = "{self.is_active}"
 DB_HOST = "{self.db_host}"
 DB_PORT = "{self.db_port}"
-DB_USERNAME = "{self.db_username}"
-DB_PASSWORD = "{self.db_password}"
         """)
+
         variables = load_env(self.file_path)
-        self.assertEqual(variables['SECRET_KEY'], self.secret_key)
-        self.assertEqual(variables['DB_NAME'], self.db_name)
+        self.assertEqual(variables['IS_ACTIVE'] == 'True', self.is_active)
         self.assertEqual(variables['DB_HOST'], self.db_host)
         self.assertEqual(variables['DB_PORT'], str(self.db_port))
-        self.assertEqual(variables['DB_USERNAME'], self.db_username)
-        self.assertEqual(variables['DB_PASSWORD'], self.db_password)
 
     def test_load_env_single_quote(self):
-        self.create_env_file(f"""
-SECRET_KEY = '{self.secret_key}'
-
-DB_NAME = '{self.db_name}'
+        self._create_env_file(f"""
+IS_ACTIVE = '{self.is_active}'
 DB_HOST = '{self.db_host}'
 DB_PORT = '{self.db_port}'
-DB_USERNAME = '{self.db_username}'
-DB_PASSWORD = '{self.db_password}'
                 """)
 
         variables = load_env(self.file_path)
-        self.assertEqual(variables['SECRET_KEY'], self.secret_key)
-        self.assertEqual(variables['DB_NAME'], self.db_name)
+        self.assertEqual(variables['IS_ACTIVE'] == 'True', self.is_active)
         self.assertEqual(variables['DB_HOST'], self.db_host)
         self.assertEqual(variables['DB_PORT'], str(self.db_port))
-        self.assertEqual(variables['DB_USERNAME'], self.db_username)
-        self.assertEqual(variables['DB_PASSWORD'], self.db_password)
 
     def test_load_env_no_quote(self):
-        self.create_env_file(f"""
-SECRET_KEY = {self.secret_key}
-
-DB_NAME = {self.db_name}
+        self._create_env_file(f"""
+IS_ACTIVE = {self.is_active}
 DB_HOST = {self.db_host}
 DB_PORT = {self.db_port}
-DB_USERNAME = {self.db_username}
-DB_PASSWORD = {self.db_password}
+
                     """)
 
         variables = load_env(self.file_path)
-        self.assertEqual(variables['SECRET_KEY'], self.secret_key)
-        self.assertEqual(variables['DB_NAME'], self.db_name)
+        self.assertEqual(variables['IS_ACTIVE'] == 'True', self.is_active)
         self.assertEqual(variables['DB_HOST'], self.db_host)
         self.assertEqual(variables['DB_PORT'], str(self.db_port))
-        self.assertEqual(variables['DB_USERNAME'], self.db_username)
-        self.assertEqual(variables['DB_PASSWORD'], self.db_password)
 
     def test_load_env_no_space(self):
-        self.create_env_file(f"""
-SECRET_KEY={self.secret_key}
-
-DB_NAME={self.db_name}
+        self._create_env_file(f"""
+IS_ACTIVE={self.is_active}
 DB_HOST={self.db_host}
 DB_PORT={self.db_port}
-DB_USERNAME={self.db_username}
-DB_PASSWORD={self.db_password}
                     """)
 
         variables = load_env(self.file_path)
-        self.assertEqual(variables['SECRET_KEY'], self.secret_key)
-        self.assertEqual(variables['DB_NAME'], self.db_name)
+        self.assertEqual(variables['IS_ACTIVE'] == 'True', self.is_active)
         self.assertEqual(variables['DB_HOST'], self.db_host)
         self.assertEqual(variables['DB_PORT'], str(self.db_port))
-        self.assertEqual(variables['DB_USERNAME'], self.db_username)
-        self.assertEqual(variables['DB_PASSWORD'], self.db_password)
 
     def test_load_env_not_striped(self):
-        self.create_env_file(f"""
-        SECRET_KEY = {self.secret_key}
-
-        DB_NAME = {self.db_name}
+        self._create_env_file(f"""
+        IS_ACTIVE = {self.is_active}
         DB_HOST = {self.db_host}
         DB_PORT = {self.db_port}
-        DB_USERNAME={self.db_username}
-        DB_PASSWORD = {self.db_password}
                     """)
 
         variables = load_env(self.file_path)
-        self.assertEqual(variables['SECRET_KEY'], self.secret_key)
-        self.assertEqual(variables['DB_NAME'], self.db_name)
+        self.assertEqual(variables['IS_ACTIVE'] == 'True', self.is_active)
         self.assertEqual(variables['DB_HOST'], self.db_host)
         self.assertEqual(variables['DB_PORT'], str(self.db_port))
-        self.assertEqual(variables['DB_USERNAME'], self.db_username)
-        self.assertEqual(variables['DB_PASSWORD'], self.db_password)
+
+    def test_load_env_and_read_from_system_env(self):
+        self._create_env_file(f"""
+IS_ACTIVE = '{self.is_active}'
+DB_HOST = '{self.db_host}'
+DB_PORT = '{self.db_port}'
+                """)
+
+        load_env(self.file_path)
+        self.assertEqual(os.environ['IS_ACTIVE'] == 'True', self.is_active)
+        self.assertEqual(os.environ['DB_HOST'], self.db_host)
+        self.assertEqual(os.environ['DB_PORT'], str(self.db_port))
 
 
 class TestUtilFunctions(TestCase):

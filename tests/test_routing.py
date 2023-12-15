@@ -1,13 +1,18 @@
 import random
 from unittest import TestCase
 
-from panther.routings import collect_path_variables, finalize_urls, find_endpoint, flatten_urls
+from panther.routings import (
+    collect_path_variables,
+    finalize_urls,
+    find_endpoint,
+    flatten_urls,
+)
 
 
 class TestRoutingFunctions(TestCase):
-
     def tearDown(self) -> None:
         from panther.configs import config
+
         config['urls'] = {}
 
     # Collecting
@@ -24,9 +29,18 @@ class TestRoutingFunctions(TestCase):
             collected_urls = flatten_urls(urls)
 
         self.assertEqual(len(captured.records), 3)
-        self.assertEqual(captured.records[0].getMessage(), "URL Can't Point To Ellipsis. ('user/<user_id>/' -> ...)")
-        self.assertEqual(captured.records[1].getMessage(), "URL Can't Point To Ellipsis. ('user/profile/' -> ...)")
-        self.assertEqual(captured.records[2].getMessage(), "URL Can't Point To Ellipsis. ('user/list/' -> ...)")
+        self.assertEqual(
+            captured.records[0].getMessage(),
+            "URL Can't Point To Ellipsis. ('user/<user_id>/' -> ...)",
+        )
+        self.assertEqual(
+            captured.records[1].getMessage(),
+            "URL Can't Point To Ellipsis. ('user/profile/' -> ...)",
+        )
+        self.assertEqual(
+            captured.records[2].getMessage(),
+            "URL Can't Point To Ellipsis. ('user/list/' -> ...)",
+        )
 
         self.assertDictEqual(collected_urls, {})
 
@@ -43,14 +57,24 @@ class TestRoutingFunctions(TestCase):
             collected_urls = flatten_urls(urls)
 
         self.assertEqual(len(captured.records), 3)
-        self.assertEqual(captured.records[0].getMessage(), "URL Can't Point To None. ('user/<user_id>/' -> None)")
-        self.assertEqual(captured.records[1].getMessage(), "URL Can't Point To None. ('user/profile/' -> None)")
-        self.assertEqual(captured.records[2].getMessage(), "URL Can't Point To None. ('user/list/' -> None)")
+        self.assertEqual(
+            captured.records[0].getMessage(),
+            "URL Can't Point To None. ('user/<user_id>/' -> None)",
+        )
+        self.assertEqual(
+            captured.records[1].getMessage(),
+            "URL Can't Point To None. ('user/profile/' -> None)",
+        )
+        self.assertEqual(
+            captured.records[2].getMessage(),
+            "URL Can't Point To None. ('user/list/' -> None)",
+        )
 
         self.assertDictEqual(collected_urls, {})
 
     def test_collect_invalid_urls(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             'user/': {
@@ -71,7 +95,8 @@ class TestRoutingFunctions(TestCase):
         self.assertDictEqual(collected_urls, {})
 
     def test_collect_empty_url(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '': temp_func,
@@ -85,7 +110,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(collected_urls, expected_result)
 
     def test_collect_empty_url_nested(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '': {
@@ -113,7 +139,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(collected_urls, expected_result)
 
     def test_collect_root_url(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '/': temp_func,
@@ -127,7 +154,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(collected_urls, expected_result)
 
     def test_collect_root_url_nested(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '/': {
@@ -155,7 +183,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(collected_urls, expected_result)
 
     def test_collect_simple_urls(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '<user_id>/': temp_func,
@@ -173,7 +202,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(collected_urls, expected_result)
 
     def test_collect_simple_nested_urls(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             'user/': {
@@ -193,7 +223,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(collected_urls, expected_result)
 
     def test_collect_simple_nested_urls_without_slash_at_end(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             'user': {
@@ -213,7 +244,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(collected_urls, expected_result)
 
     def test_collect_complex_nested_urls(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             'user/': {
@@ -239,9 +271,7 @@ class TestRoutingFunctions(TestCase):
                     },
                 },
             },
-            'admin/v2': {
-
-            },
+            'admin/v2': {},
         }
 
         collected_urls = flatten_urls(urls)
@@ -262,7 +292,8 @@ class TestRoutingFunctions(TestCase):
 
     # Finalize
     def test_finalize_empty_url(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '': temp_func,
@@ -277,7 +308,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(finalized_urls, expected_result)
 
     def test_finalize_empty_url_nested(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '': {
@@ -308,7 +340,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(finalized_urls, expected_result)
 
     def test_finalize_root_url(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '/': temp_func,
@@ -323,7 +356,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(finalized_urls, expected_result)
 
     def test_finalize_root_url_nested(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '/': {
@@ -354,7 +388,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(finalized_urls, expected_result)
 
     def test_finalize_root_and_empty_url_nested(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '/': {
@@ -385,7 +420,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(finalized_urls, expected_result)
 
     def test_finalize_empty_and_root_url_nested(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '': {
@@ -416,7 +452,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(finalized_urls, expected_result)
 
     def test_finalize_urls(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             'user/': {
@@ -442,9 +479,7 @@ class TestRoutingFunctions(TestCase):
                     },
                 },
             },
-            'admin/v2': {
-
-            },
+            'admin/v2': {},
         }
 
         collected_urls = flatten_urls(urls)
@@ -484,7 +519,8 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(finalized_urls, expected_result)
 
     def test_finalize_urls_same_pre_path_variable(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '': temp_func,
@@ -505,7 +541,8 @@ class TestRoutingFunctions(TestCase):
 
     # Find Endpoint
     def test_find_endpoint_root_url(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         from panther.configs import config
 
@@ -518,19 +555,26 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(_func, temp_func)
 
     def test_find_endpoint_success(self):
-        def user_id_profile_id(): pass
+        def user_id_profile_id():
+            pass
 
-        def user_profile(): pass
+        def user_profile():
+            pass
 
-        def payment(): pass
+        def payment():
+            pass
 
-        def admin_v1_profile_avatar(): pass
+        def admin_v1_profile_avatar():
+            pass
 
-        def admin_v1_id(): pass
+        def admin_v1_id():
+            pass
 
-        def admin_v2_users_list_registered(): pass
+        def admin_v2_users_list_registered():
+            pass
 
-        def admin_v2_users_detail_not_registered(): pass
+        def admin_v2_users_detail_not_registered():
+            pass
 
         from panther.configs import config
 
@@ -579,22 +623,32 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(admin_v1_profile_avatar_func, admin_v1_profile_avatar)
         self.assertEqual(admin_v1_id_func, admin_v1_id)
         self.assertEqual(admin_v2_users_list_registered_func, admin_v2_users_list_registered)
-        self.assertEqual(admin_v2_users_detail_not_registered_func, admin_v2_users_detail_not_registered)
+        self.assertEqual(
+            admin_v2_users_detail_not_registered_func,
+            admin_v2_users_detail_not_registered,
+        )
 
     def test_find_endpoint_success_path(self):
-        def user_id_profile_id(): pass
+        def user_id_profile_id():
+            pass
 
-        def user_profile(): pass
+        def user_profile():
+            pass
 
-        def payment(): pass
+        def payment():
+            pass
 
-        def admin_v1_profile_avatar(): pass
+        def admin_v1_profile_avatar():
+            pass
 
-        def admin_v1_id(): pass
+        def admin_v1_id():
+            pass
 
-        def admin_v2_users_list_registered(): pass
+        def admin_v2_users_list_registered():
+            pass
 
-        def admin_v2_users_detail_not_registered(): pass
+        def admin_v2_users_detail_not_registered():
+            pass
 
         from panther.configs import config
 
@@ -643,10 +697,14 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(admin_v1_profile_avatar_path, 'admin/v1/profile/avatar/')
         self.assertEqual(admin_v1_id_path, 'admin/v1/<user_id>/')
         self.assertEqual(admin_v2_users_list_registered_path, 'admin/v1/users/list/registered/')
-        self.assertEqual(admin_v2_users_detail_not_registered_path, 'admin/v1/users/detail/not-registered/')
+        self.assertEqual(
+            admin_v2_users_detail_not_registered_path,
+            'admin/v1/users/detail/not-registered/',
+        )
 
     def test_find_endpoint_not_found(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         from panther.configs import config
 
@@ -672,7 +730,8 @@ class TestRoutingFunctions(TestCase):
         self.assertIsNone(admin_v2_users_detail_not_registered_func)
 
     def test_find_endpoint_not_found_path(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         from panther.configs import config
 
@@ -698,11 +757,14 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(admin_v2_users_detail_not_registered_path, '')
 
     def test_find_endpoint_same_pre_path_variable(self):
-        def temp_1(): pass
+        def temp_1():
+            pass
 
-        def temp_2(): pass
+        def temp_2():
+            pass
 
-        def temp_3(): pass
+        def temp_3():
+            pass
 
         from panther.configs import config
 
@@ -721,13 +783,15 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(temp_2_func, temp_2)
         self.assertEqual(temp_3_func, temp_3)
 
-
     def test_find_endpoint_same_pre_path_variable_path(self):
-        def temp_1(): pass
+        def temp_1():
+            pass
 
-        def temp_2(): pass
+        def temp_2():
+            pass
 
-        def temp_3(): pass
+        def temp_3():
+            pass
 
         from panther.configs import config
 
@@ -747,11 +811,14 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(temp_3_path, '<index>/<id>/')
 
     def test_find_endpoint_same_pre_key(self):
-        def temp_1(): pass
+        def temp_1():
+            pass
 
-        def temp_2(): pass
+        def temp_2():
+            pass
 
-        def temp_3(): pass
+        def temp_3():
+            pass
 
         from panther.configs import config
 
@@ -772,11 +839,14 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(temp_3_func, temp_3)
 
     def test_find_endpoint_same_pre_key_path(self):
-        def temp_1(): pass
+        def temp_1():
+            pass
 
-        def temp_2(): pass
+        def temp_2():
+            pass
 
-        def temp_3(): pass
+        def temp_3():
+            pass
 
         from panther.configs import config
 
@@ -798,7 +868,8 @@ class TestRoutingFunctions(TestCase):
 
     # Collect PathVariables
     def test_collect_path_variables(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         from panther.configs import config
 

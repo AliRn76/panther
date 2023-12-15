@@ -1,3 +1,80 @@
+### 3.2.1
+- Move `Startup` to `__call__`
+
+### 3.2.0
+- Support `Startup` & `Shutdown` Events
+
+### 3.1.5
+- Support `Websocket` in the `monitoring` 
+- Refactor `collect_all_models()`
+
+### 3.1.4
+- Check ws redis connection on the `init`
+- Refactor `Monitoring` class and usage
+- Improve `logging` config
+- Check database connection before query
+
+### 3.1.3
+- Add `Image` base class 
+- Add `size` to `File` base class
+- Improve the way of loading `configs` in `single-file` structure
+- Improve `background_tasks.py`, `generate_ws_connection_id()`
+- `bpython` removed from being the default python shell
+- Improve `load_middlewares()` error handling 
+- Print `configs` on the `run`
+- Add `requirements.txt` for development 
+- Update `roadmap.jpg`, `README.md`
+ 
+### 3.1.2
+- Add new methods to `BackgroundTask`
+  - `every_seconds()`
+  - `every_minutes()`
+  - `every_hours()`
+  - `every_days()`
+  - `every_weeks()`
+  - `at()`
+
+### 3.1.1
+- Upgrade `PantherDB` version
+- Add `first()`, `last()` queries
+
+### 3.1.0
+- Add `BackgroundTasks`
+
+### 3.0.3
+- Add `find_one_or_raise` query
+- Add `last_login` to `BaseUser`
+- Add `refresh_life_time` to `JWTConfig`
+- Add `encode_refresh_token()` to `JWTAuthentication`
+- Add `encrypt_password()`
+- Handle `PantherException`
+- Handle `RedisConnection` without `connection_pool`
+
+### 3.0.2
+- Added 'utf-8' encoding while opening the file "README.md" in setup.py
+- Fixed panther shell not working issue in windows.
+- Added a condition to raise error if no argument is passed to panther command in cli.
+
+### 3.0.1
+- Assume content-type is 'application/json' if it was empty
+- Fix an issue on creating instance of model when query is done
+
+### 3.0.0
+- Support **Websocket**
+- Implement **Built-in TestClient**
+- Support Single-File Structure
+- Support `bytes` as `Response.data`
+- Add `methods` to `API()`
+- Change `Request.pure_data` to `Request.data`
+- Change `Request.data` to `Request.validated_data`
+- Change `panther.middlewares.db.Middleware` to `panther.middlewares.db.DatabaseMiddleware`
+- Change `panther.middlewares.redis.Middleware` to `panther.middlewares.redis.RedisMiddleware`
+- Fix `panther run` command
+- Minor Improvement
+
+### 2.4.2
+- Don't log content-type when it's not supported
+
 ### 2.4.1
 - Fix an issue in collect_all_models() in Windows
 

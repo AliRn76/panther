@@ -9,12 +9,13 @@ def panther_version() -> str:
 
 
 VERSION = panther_version()
-with open('README.md') as file:
+with open('README.md', encoding='utf-8') as file:
     DESCRIPTION = file.read()
 
 EXTRAS_REQUIRE = {
     'full': [
         'pymongo~=4.4',
+        'bpython~=0.24',
     ],
 }
 
@@ -44,12 +45,11 @@ setup(
         'panther': ['cli/*'],
     },
     install_requires=[
-        'bpython~=0.24',
         'bson~=0.5',
         'httptools~=0.6',
-        'pantherdb~=1.2',
+        'pantherdb~=1.3',
         'pydantic~=2.1',
-        'redis~=5.0',
+        'redis==5.0.1',
         'rich~=13.5',
         'uvicorn~=0.23',
         'watchfiles~=0.19',

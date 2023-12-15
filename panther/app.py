@@ -1,7 +1,10 @@
 import functools
+from collections.abc import Callable
 from datetime import datetime, timedelta
+import logging
+from typing import Literal
 
-from orjson.orjson import JSONDecodeError
+from orjson import JSONDecodeError
 from pydantic import ValidationError
 
 from panther import status
@@ -16,13 +19,15 @@ from panther.exceptions import (
     MethodNotAllowed,
     ThrottlingException,
 )
-from panther.logger import logger
 from panther.request import Request
-from panther.response import IterableDataTypes, Response
+from panther.response import Response
 from panther.throttling import Throttling, throttling_storage
 from panther.utils import round_datetime
 
 __all__ = ('API', 'GenericAPI')
+
+
+logger = logging.getLogger('panther')
 
 
 class API:
@@ -36,6 +41,7 @@ class API:
             throttling: Throttling = None,
             cache: bool = False,
             cache_exp_time: timedelta | int | None = None,
+            methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
     ):
         self.input_model = input_model
         self.output_model = output_model
@@ -44,56 +50,64 @@ class API:
         self.throttling = throttling
         self.cache = cache
         self.cache_exp_time = cache_exp_time
+        self.methods = methods
         self.request: Request | None = None
 
     def __call__(self, func):
         @functools.wraps(func)
-        async def wrapper(request: Request, **path_variables):
+        async def wrapper(request: Request, **path_variables) -> Response:
             self.request: Request = request  # noqa: Non-self attribute could not be type hinted
 
-            # 1. Authentication
+            # 1. Check Method
+            if self.methods and self.request.method not in self.methods:
+                raise MethodNotAllowed
+
+            # 2. Authentication
             self.handle_authentications()
 
-            # 2. Throttling
+            # 3. Throttling
             self.handle_throttling()
 
-            # 3. Permissions
+            # 4. Permissions
             self.handle_permissions()
 
-            # 4. Validate Input
+            # 5. Validate Input
             if self.request.method in ['POST', 'PUT', 'PATCH']:
                 self.set_validated_input()
 
-            # 5. Validate Path Variables
+            # 6. Validate Path Variables
             self.validate_path_variables(func, path_variables)
 
-            # 6. Get Cached Response
+            # 7. Get Cached Response
             if self.cache and self.request.method == 'GET':
                 if cached := get_cached_response_data(request=self.request):
                     return Response(data=cached.data, status_code=cached.status_code)
 
-            # 7. Put Request In kwargs (If User Wants It)
+            # 8. Put Request In kwargs (If User Wants It)
             kwargs = path_variables
             if req_arg := [k for k, v in func.__annotations__.items() if v == Request]:
                 kwargs[req_arg[0]] = self.request
 
-            # 8. Call Endpoint
+            # 9. Call Endpoint
             if is_function_async(func):
                 response = await func(**kwargs)
             else:
                 response = func(**kwargs)
 
-            # 9. Clean Output
+            # 10. Clean Output
             if not isinstance(response, Response):
                 response = Response(data=response)
-            data = self.serialize_response_data(data=response._data)  # noqa: SLF001
-            response.set_data(data)
+            response._clean_data_with_output_model(output_model=self.output_model)  # noqa: SLF001
 
-            # 10. Set New Response To Cache
+            # 11. Set New Response To Cache
             if self.cache and self.request.method == 'GET':
-                set_cache_response(request=self.request, response=response, cache_exp_time=self.cache_exp_time)
+                set_cache_response(
+                    request=self.request,
+                    response=response,
+                    cache_exp_time=self.cache_exp_time
+                )
 
-            # 11. Warning CacheExpTime
+            # 12. Warning CacheExpTime
             if self.cache_exp_time and self.cache is False:
                 logger.warning('"cache_exp_time" won\'t work while "cache" is False')
 
@@ -135,40 +149,17 @@ class API:
     @classmethod
     def validate_input(cls, model, request: Request):
         try:
-            return model(**request.pure_data)
+            if isinstance(request.data, bytes):
+                raise APIException(detail='Content-Type is not valid', status_code=status.HTTP_400_BAD_REQUEST)
+            return model(**request.data)
         except ValidationError as validation_error:
             error = {'.'.join(loc for loc in e['loc']): e['msg'] for e in validation_error.errors()}
-            raise APIException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+            raise APIException(detail=error, status_code=status.HTTP_400_BAD_REQUEST)
         except JSONDecodeError:
             raise JsonDecodeException
 
-    def serialize_response_data(self, data):
-        """
-        We serializer the response here instead of response.py file
-        because we don't have access to the "output_model" there.
-        """
-
-        # None or Unchanged
-        if data is None or self.output_model is None:
-            return data
-
-        return self.serialize_with_output_model(data)
-
-    def serialize_with_output_model(self, data: any):
-        # Dict
-        if isinstance(data, dict):
-            return self.output_model(**data).model_dump()
-
-        # Iterable
-        if isinstance(data, IterableDataTypes):
-            return [self.serialize_with_output_model(d) for d in data]
-
-        # Str | Bool
-        raise TypeError('Type of Response data is not match with output_model. '
-                        '\n*hint: You may want to pass None to output_model')
-
     @staticmethod
-    def validate_path_variables(func, request_path_variables: dict):
+    def validate_path_variables(func: Callable, request_path_variables: dict):
         for name, value in request_path_variables.items():
             for variable_name, variable_type in func.__annotations__.items():
                 if name == variable_name:

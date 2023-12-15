@@ -1,12 +1,17 @@
+import logging
+from redis import Redis
+
 from panther.db.connection import RedisConnection
-from panther.logger import logger
 from panther.middlewares.base import BaseMiddleware
 from panther.request import Request
 from panther.response import Response
+from panther.websocket import GenericWebsocket
 
 
-class Middleware(BaseMiddleware):
+logger = logging.getLogger('panther')
 
+
+class RedisMiddleware(BaseMiddleware):
     def __init__(self, **kwargs):
         self.kwargs = kwargs
         self.validate_host()
@@ -24,10 +29,15 @@ class Middleware(BaseMiddleware):
         if not isinstance(port, int):
             logger.critical('Redis "port" is not valid.')
 
-    async def before(self, request: Request) -> Request:
+    async def before(self, request: Request | GenericWebsocket) -> Request | GenericWebsocket:
         self.redis = RedisConnection(**self.kwargs)
         return request
 
-    async def after(self, response: Response) -> Response:
+    async def after(self, response: Response | GenericWebsocket) -> Response | GenericWebsocket:
         self.redis.close()
         return response
+
+    def redis_connection_for_ws(self) -> Redis:
+        r = Redis(**self.kwargs)
+        r.ping()
+        return r

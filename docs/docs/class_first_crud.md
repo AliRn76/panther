@@ -64,7 +64,7 @@ Add one database middleware in `core/configs.py` `MIDDLEWARES`, we are going to 
 ...
 
 MIDDLEWARES = [
-    ('panther.middlewares.db.Middleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
+    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
 ]
 ```
 
@@ -137,7 +137,7 @@ Now we are going to create a book on `post` request, We need to:
         input_model = BookSerializer
    
         def post(self, request: Request):
-            body: BookSerializer = request.data
+            body: BookSerializer = request.validated_data
             ...
     ```
 
@@ -155,7 +155,7 @@ Now we are going to create a book on `post` request, We need to:
         input_model = BookSerializer
     
         def post(self, request: Request):
-            body: BookSerializer = request.data
+            body: BookSerializer = request.validated_data
             Book.insert_one(
                 name=body.name,
                 author=body.author,
@@ -179,7 +179,7 @@ Now we are going to create a book on `post` request, We need to:
         input_model = BookSerializer
     
         def post(self, request: Request):
-            body: BookSerializer = request.data
+            body: BookSerializer = request.validated_data
             book = Book.insert_one(
                 name=body.name,
                 author=body.author,
@@ -410,7 +410,7 @@ For `retrieve`, `update` and `delete` API, we are going to
                 ...
             
             def put(self, request: Request, book_id: int):
-                body: BookSerializer = request.data
+                body: BookSerializer = request.validated_data
        
                 book: Book = Book.find_one(id=book_id)
                 book.update(
@@ -440,7 +440,7 @@ For `retrieve`, `update` and `delete` API, we are going to
                 ...
             
             def put(self, request: Request, book_id: int):
-                is_updated: bool = Book.update_one({'id': book_id}, request.data.dict())
+                is_updated: bool = Book.update_one({'id': book_id}, request.validated_data.model_dump())
                 data = {'is_updated': is_updated}
                 return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
         ```
@@ -464,7 +464,7 @@ For `retrieve`, `update` and `delete` API, we are going to
                 ...
             
             def put(self, request: Request, book_id: int):
-                updated_count: int = Book.update_many({'id': book_id}, request.data.dict())
+                updated_count: int = Book.update_many({'id': book_id}, request.validated_data.model_dump())
                 data = {'updated_count': updated_count}
                 return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
         ```

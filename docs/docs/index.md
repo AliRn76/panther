@@ -7,7 +7,7 @@
 </p>
 
 <p>
-  <img alt="logo" style="width: 50px" src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png">
+  <img alt="logo" style="width: 50px" src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/jb_beam_50x50.png">
    <b>Supported by </b><a href="https://drive.google.com/file/d/17xe1hicIiRF7SQ-clg9SETdc19SktCbV/view?usp=sharing">JetBrains</a>
 </p>
 
@@ -21,13 +21,32 @@
 
 ### Why Use Panther ?
 - Document-oriented Databases ODM ([PantherDB](https://pypi.org/project/pantherdb/), MongoDB)
-- Visual API Monitoring (In Terminal)
+- Built-in Websocket Support
 - Cache APIs (In Memory, In Redis)
 - Built-in Authentication Classes (Customizable)
 - Built-in Permission Classes (Customizable)
 - Handle Custom Middlewares
 - Handle Custom Throttling 
+- Visual API Monitoring (In Terminal)
 ---
+
+
+### Benchmark
+
+| Framework  | Throughput (Request/Second) |
+|------------|-----------------------------|
+| Blacksheep | 5,339                       |
+| Muffin     | 5,320                       |
+| Panther    | 5,112                       |
+| Sanic      | 3,660                       |
+| FastAPI    | 3,260                       |
+| Tornado    | 2,081                       |
+| Bottle     | 2,045                       |
+| Django     | 821                         |
+| Flask      | 749                         |
+
+
+> **More Detail:** https://github.com/PantherPy/frameworks-benchmark
 
 ### Installation
 - <details open>
@@ -79,8 +98,6 @@
 
 - #### Python Shell
 
-    Panther Uses [bpython](https://bpython-interpreter.org) for shell
-    
     ```console
     $ panther shell 
     ```
@@ -130,7 +147,6 @@
     from datetime import datetime, timedelta
 
     from panther.app import API
-    from panther.configs import config
     from panther import version, status
     from panther.request import Request
     from panther.response import Response
@@ -147,10 +163,9 @@
     @API(cache=True, throttling=InfoThrottling)
     async def info(request: Request):
         data = {
-            'version': version(),
+            'panther_version': version(),
             'datetime_now': datetime.now().isoformat(),
-            'user_agent': request.headers.user_agent,
-            'db_engine': config['db_engine'],
+            'user_agent': request.headers.user_agent
         }
         return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
     ```
@@ -169,3 +184,9 @@
 
 
 > **Writing Your First CRUD: [First CRUD](https://pantherpy.github.io/function_first_crud/)**
+
+---
+
+![roadmap](https://raw.githubusercontent.com/AliRn76/panther/master/docs/docs/images/roadmap.jpg)
+
+---

@@ -1,23 +1,34 @@
+import logging
+import time
 from datetime import timedelta
 
 from app.models import User
-from app.serializers import FileSerializer, UserInputSerializer, UserOutputSerializer, UserUpdateSerializer
+from app.serializers import (
+    FileSerializer,
+    UserInputSerializer,
+    UserOutputSerializer,
+    UserUpdateSerializer,
+    ImageSerializer,
+)
 from core.permissions import UserPermission
 
+from panther import status
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
+from panther.background_tasks import background_tasks, BackgroundTask
 from panther.db.connection import redis
-from panther.logger import logger
 from panther.request import Request
 from panther.response import HTMLResponse, Response
 from panther.throttling import Throttling
+from panther.websocket import close_websocket_connection, send_message_to_websocket
+
+
+logger = logging.getLogger('panther')
 
 
 class ReturnNone(GenericAPI):
-    cache = True
-
     async def get(self, request: Request):
-        return {'detail': 'ok'}
+        return None
 
 
 @API()
@@ -62,12 +73,15 @@ async def return_response_tuple():
 
 @API(input_model=UserInputSerializer)
 async def res_request_data(request: Request):
-    return Response(data=request.data)
+    print('ok')
+    print(f'{request.data=}')
+    print(f'{request.validated_data=}')
+    return Response(data=request.validated_data, status_code=204)
 
 
 @API(input_model=UserInputSerializer, output_model=UserOutputSerializer)
 async def res_request_data_with_output_model(request: Request):
-    return Response(data=request.data)
+    return Response(data=request.validated_data)
 
 
 @API(input_model=UserInputSerializer)
@@ -102,7 +116,7 @@ async def rate_limit():
 @API(input_model=UserUpdateSerializer)
 async def patch_user(request: Request):
     _, user = User.find_or_insert(username='Ali', password='1', age=12)
-    user.update(**request.data.model_dump())
+    user.update(**request.validated_data.model_dump())
     return Response(data=user)
 
 
@@ -111,64 +125,14 @@ class PatchUser(GenericAPI):
 
     def patch(self, request: Request, *args, **kwargs):
         _, user = User.find_or_insert(username='Ali', password='1', age=12)
-        user.update(**request.data.model_dump())
+        user.update(**request.validated_data.model_dump())
         return Response(data=user)
 
 
 @API()
 async def single_user(request: Request):
-    # users = User.insert_one(username='Ali', password='1', age=12)
-    # users = User.find(id="64bd711cd73aa4a30786db77")
-    # print(f'{users=}')
-    # # print(f'{dir(request) = }')
-    # print(f'{request.data = }')
-    # # print(f'{request.query_params = }')
-    #
-    # user = User.create_and_commit(username='ali', password='123')
-    # # print(f'{user = }')
-    # # print(f'{user.username = }')
-    #
-    # redis.set('ali', '1')
-    # logger.debug(f"{redis.get('ali') = }")
-    #
-    # get_user = User.get_one(username='ali', password='123')
-    # # print(f'{get_user = }')
-    #
-    # get_users = User.list()
-    # # for u in get_users:
-    # #     print(f'{u.id = }')
-    # #     print(f'{u.username = }')
-    #
-    # last_user = User.last()
-    # # print(f'{last_user.id = }')
-    #
-    # # raise UserNotFound
-    # a = [
-    #     {
-    #         'id': 1,
-    #         'username': 'ali',
-    #         'password': '111',
-    #     },
-    #     {
-    #         'id': 2,
-    #         'username': 'ali2',
-    #         'password': '1112',
-    #     },
-    #     {
-    #         'id': 3,
-    #         'username': 'ali3',
-    #         'password': '1113',
-    #     }
-    # ]
-    # b = 'asdf'
-    # c = {1, 2, 4}
-    #
-    # class A:
-    #     ...
-    # d = A()
-    # e = True
-    # return Response(status_code=200, data=a)
-    return Response(status_code=200)
+    user = User.insert_one(username='Ali', password='1', age=12)
+    return Response(data=user, status_code=200)
 
 
 # @API(input=UserInputSerializer, output_model=UserSerializer)
@@ -180,7 +144,7 @@ class FileAPI(GenericAPI):
     input_model = FileSerializer
 
     def post(self, request: Request, *args, **kwargs):
-        body: FileSerializer = request.data
+        body: FileSerializer = request.validated_data
         with open(body.image.file_name, 'wb') as file:
             file.write(body.image.file)
         return {'detail': 'ok'}
@@ -195,3 +159,45 @@ class HTMLAPI(GenericAPI):
     </body>
 </html>"""
         return HTMLResponse(data=html_data)
+
+
+@API()
+async def send_message_to_websocket_api(connection_id: str):
+    await send_message_to_websocket(connection_id=connection_id, data='Hello From API')
+    await close_websocket_connection(connection_id=connection_id, reason='ok')
+    return Response(status_code=status.HTTP_202_ACCEPTED)
+
+
+@API()
+async def run_background_tasks_api():
+    async def hello(name: str):
+        time.sleep(5)
+        print(f'Done {name}')
+    task = (
+        BackgroundTask(hello, 'ali1')
+        .interval(2)
+        .every_seconds(2)
+        # .on_time(datetime.time(hour=19, minute=18, second=10))
+    )
+    background_tasks.add_task(task)
+    return Response()
+
+
+class CustomResponse:
+    detail = 'Hi Mom'
+    is_it_ok = True
+
+
+@API()
+async def custom_response_class_api():
+    return CustomResponse()
+
+
+class ImageAPI(GenericAPI):
+    input_model = ImageSerializer
+
+    def post(self, request: Request, *args, **kwargs):
+        body: ImageSerializer = request.validated_data
+        with open(body.image.file_name, 'wb') as file:
+            file.write(body.image.file)
+        return body.image.size

@@ -1,6 +1,10 @@
 from panther import status
 
 
+class PantherException(Exception):
+    pass
+
+
 class DBException(Exception):
     pass
 
@@ -43,4 +47,3 @@ class InvalidPathVariableException(APIException):
     def __init__(self, value: str, variable_type: type):
         detail = f"Path variable '{value}' should be '{variable_type.__name__}'"
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)
-

@@ -41,7 +41,7 @@ _Example:_ `AUTHENTICATION = 'panther.authentications.JWTAuthentication'`
 
 It should be the address of your `urls` `dict`
 
-_Example:_ `URLS = 'configs.urls.url_routing'`
+_Example:_ `URLS = 'core.configs.urls.url_routing'`
 
 ---
 ### [DEFAULT_CACHE_EXP](https://pantherpy.github.io/caching)
@@ -74,3 +74,29 @@ _Example:_ `USER_MODEL = 'panther.db.models.User'`
 > <b>Type:</b> `dict | None` (<b>Default:</b> `JWTConfig = {'key': SECRET_KEY}`)
 
 We use it when you set `panther.authentications.JWTAuthentication` as `AUTHENTICATION`
+
+---
+### [BACKGROUND_TASKS](https://pantherpy.github.io/background_tasks/)
+> <b>Type:</b> `bool` (<b>Default:</b> `False`)
+
+If `True` it will:
+
+- `initialize()` the `background_tasks`
+
+---
+### [STARTUP](https://pantherpy.github.io/startup)
+> <b>Type:</b> `str | None` (<b>Default:</b> `None`)
+
+It should be dotted address of your `startup` function,
+this function can be `sync` or `async`
+
+_Example:_ `URLS = 'core.configs.startup'`
+
+---
+### [SHUTDOWN](https://pantherpy.github.io/shutdown)
+> <b>Type:</b> `str | None` (<b>Default:</b> `None`)
+
+It should be dotted address of your `shutdown` function
+this function can be `sync` or `async`
+
+_Example:_ `URLS = 'core.configs.shutdown'`

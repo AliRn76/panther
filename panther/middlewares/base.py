@@ -3,7 +3,6 @@ from panther.response import Response
 
 
 class BaseMiddleware:
-
     async def before(self, request: Request):
         return request
 

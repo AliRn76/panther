@@ -19,10 +19,9 @@
 - &#x2705; Handle ClassBase APIs
 - &#x2705; Handle File 
 - &#x2705; Handle Complex Multipart-FormData
+- &#x2705; Handle Testing
+- &#x2705; Handle WS 
 - &#9744; Handle Cookie
-- &#9744; Handle WS 
-- &#9744; Handle GraphQL
-- &#9744; Handle Testing
 - &#9744; Generate Swagger For APIs
 
 #### Database:
@@ -46,8 +45,8 @@
 - &#x2705; Update Many
 - &#x2705; Update Itself
 - &#x2705; Find or Insert
+- &#x2705; Find or Raise
 - &#x2705; Save
-- &#9744; Find or Raise
 - &#9744; Find with Pagination
 - &#9744; Aggregation
 - &#9744; Complex Pipelines
@@ -82,6 +81,7 @@
 - &#x2705; Create Project with Options
 - &#x2705; Monitoring With Textual
 - &#x2705; Monitor Requests, Response & Time
+- &#9744; Create Project With TUI
     
 #### Documentation 
 - &#x2705; Create MkDocs For Project 
@@ -92,4 +92,4 @@
 
 #### Tests 
 - &#x2705; Start Writing Tests For Panther 
-- &#9744; Test Client
+- &#x2705; Test Client

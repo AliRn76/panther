@@ -1,66 +1,75 @@
-If you want to work with `Panther` in a single-file structure, follow the steps below.
+If you want to work with `Panther` in a `single-file` structure, follow the steps below.
 
 ## Steps
 
-1.  Create your file (ex: `main.py`)
-2.  Create `app` and pass the current `module` as `configs` to it.
+1. Write your `APIs` as you like
 
     ```python
-    import sys
-    from panther import Panther
+    from panther.app import API
     
-    app = Panther(__name__, configs=sys.modules[__name__])
-    ```
-    
-3.  Define a `URLs` which is pointing to `urls dict`(ex: `url_routing`) of `main.py`.
-    ```python
-    URLs = 'main.url_routing'
+    @API()
+    async def hello_world_api():
+        return {'detail': 'Hello World'}
     ```
 
-4.  Write your `APIs` as you like.
-5.  Add your `APIs` to your `urls dict` (ex: `url_routing`)
+2. Add your `APIs` to a `dict` (ex: `url_routing`)
+
     ```python
+    from panther.app import API
+    
+    @API()
+    async def hello_world_api():
+        return {'detail': 'Hello World'}
+    
     url_routing = {
-        ...
+        '/': hello_world_api,
     }
     ```
+3. Create an `app` and pass your current `module name` and `urls` to it.
 
-## Example
-
-```python
-import sys
-from datetime import datetime
-
-from panther import Panther, status, version
-from panther.app import API
-from panther.configs import config
-from panther.request import Request
-from panther.response import Response
-
-URLs = 'main.url_routing'
-
-
-@API()
-async def hello_world_api():
-    return {'detail': 'Hello World'}
-
-
-@API()
-async def info_api(request: Request):
-    data = {
-        'version': version(),
-        'datetime_now': datetime.now().isoformat(),
-        'user_agent': request.headers.user_agent,
-        'db_engine': config['db_engine'],
+    ```python
+    from panther import Panther
+    from panther.app import API
+    
+    @API()
+    async def hello_world_api():
+        return {'detail': 'Hello World'}
+    
+    url_routing = {
+        '/': hello_world_api,
     }
-    return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
+    
+    app = Panther(__name__, configs=__name__, urls=url_routing)
+    ```
+4. Run the project
+    ```bash
+    panther run 
+    ```
 
+> `URLs` is a required config unless you pass the `urls` to the `Panther`  
 
-url_routing = {
-    '/': hello_world_api,
-    'info/': info_api,
-}
+> When you pass the `configs` to the `Panther(configs=...)`, Panther is going to load the configs from this file,
+> else it is going to load `core/configs.py` file
 
-app = Panther(__name__, configs=sys.modules[__name__])
+> You can pass the `startup` and `shutdown` functions to the `Panther()` too.
 
-```
+   ```python
+   from panther import Panther
+   from panther.app import API
+   
+   @API()
+   async def hello_world_api():
+        return {'detail': 'Hello World'}
+   
+   url_routing = {
+        '/': hello_world_api,
+   }
+   
+   def startup():
+      pass
+   
+   def shutdown():
+      pass
+   
+   app = Panther(__name__, configs=__name__, urls=url_routing, startup=startup, shutdown=shutdown)
+   ```
