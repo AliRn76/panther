@@ -4,7 +4,7 @@ import orjson as json
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic._internal._model_construction import ModelMetaclass
 
-ResponseDataTypes = list | tuple | set | dict | int | str | bool | bytes | NoneType | ModelMetaclass
+ResponseDataTypes = list | tuple | set | dict | int | float | str | bool | bytes | NoneType | ModelMetaclass
 IterableDataTypes = list | tuple | set
 
 
@@ -18,7 +18,7 @@ class Response:
         status_code: int = 200,
     ):
         """
-        :param data: should be int | dict | list | tuple | set | str | bool | bytes | NoneType
+        :param data: should be int | float | dict | list | tuple | set | str | bool | bytes | NoneType
             or instance of Pydantic.BaseModel
         :param status_code: should be int
         """
@@ -51,7 +51,7 @@ class Response:
         elif isinstance(data, dict):
             return {key: self._clean_data_type(value) for key, value in data.items()}
 
-        elif isinstance(data, (int | str | bool | bytes | NoneType)):
+        elif isinstance(data, (int | float | str | bool | bytes | NoneType)):
             return data
 
         else:
