@@ -1,4 +1,7 @@
 ### 3.2.1
+- Minor Improvement
+
+### 3.2.1
 - Move `Startup` to `__call__`
 
 ### 3.2.0

@@ -127,9 +127,10 @@ def collect_all_models() -> list[dict]:
     # Just load all the python files from 'base_dir',
     #   so Model.__subclasses__ can find all the subclasses
     slash = '\\' if platform.system() == 'Windows' else '/'
+    _parts = '_tail' if sys.version_info >= (3, 12) else '_parts'
     python_files = [
         f for f in config['base_dir'].rglob('*.py')
-        if not f.name.startswith('_') and 'site-packages' not in f.parents._parts
+        if not f.name.startswith('_') and 'site-packages' not in getattr(f.parents, _parts)
     ]
     for file in python_files:
         # Analyse the file
