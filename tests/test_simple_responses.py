@@ -1,22 +1,74 @@
-import sys
 from unittest import TestCase
 
 from panther import Panther
+from panther.app import API
+from panther.response import Response
 from panther.test import APIClient
+
+
+@API()
+async def return_nothing():
+    pass
+
+
+@API()
+async def return_none():
+    return None
+
+
+@API()
+async def return_dict():
+    return {'detail': 'ok'}
+
+
+@API()
+async def return_list():
+    return [1, 2, 3]
+
+
+@API()
+async def return_tuple():
+    return 1, 2, 3, 4
+
+
+@API()
+async def return_response_none():
+    return Response()
+
+
+@API()
+async def return_response_dict():
+    return Response(data={'detail': 'ok'})
+
+
+@API()
+async def return_response_list():
+    return Response(data=['car', 'home', 'phone'])
+
+
+@API()
+async def return_response_tuple():
+    return Response(data=('car', 'home', 'phone', 'book'))
+
+
+urls = {
+    'nothing': return_nothing,
+    'none': return_none,
+    'dict': return_dict,
+    'list': return_list,
+    'tuple': return_tuple,
+    'response-none': return_response_none,
+    'response-dict': return_response_dict,
+    'response-list': return_response_list,
+    'response-tuple': return_response_tuple,
+}
 
 
 class TestSimpleResponses(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        sys.path.append('tests/app')
-        from tests.app.urls import simple_responses_urls
-
-        app = Panther(__name__, configs=__name__, urls=simple_responses_urls)
+        app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        sys.path.pop()
 
     def test_nothing(self):
         res = self.client.get('nothing/')

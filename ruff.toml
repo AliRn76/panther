@@ -12,7 +12,7 @@ ignore = [
 ]
 
 line-length = 120
-
+target-version = "py310"
 [flake8-quotes]
 inline-quotes = "single"
 

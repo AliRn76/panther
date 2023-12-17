@@ -1,22 +1,50 @@
-import sys
 from unittest import TestCase
 
 from panther import Panther
+from panther.app import API
+from panther.request import Request
 from panther.test import APIClient
+
+
+@API()
+async def request_header(request: Request):
+    return request.headers.__dict__
+
+
+@API()
+async def request_path(request: Request):
+    return request.path
+
+
+@API()
+async def request_client(request: Request):
+    return request.client
+
+
+@API()
+async def request_query_params(request: Request):
+    return request.query_params
+
+
+@API()
+async def request_data(request: Request):
+    return request.data
+
+
+urls = {
+    'request-header': request_header,
+    'request-path': request_path,
+    'request-client': request_client,
+    'request-query_params': request_query_params,
+    'request-data': request_data,
+}
 
 
 class TestSimpleRequests(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        sys.path.append('tests/app')
-        from tests.app.urls import simple_requests_urls
-
-        app = Panther(__name__, configs=__name__, urls=simple_requests_urls)
+        app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        sys.path.pop()
 
     def test_header(self):
         res = self.client.get('request-header/')
