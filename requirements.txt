@@ -1,3 +1,4 @@
 .
+python-jose
 faker
 coverage

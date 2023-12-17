@@ -1,9 +1,10 @@
 import logging
+
 from rich import print as rprint
 
+from panther.exceptions import PantherException
 
 logger = logging.getLogger('panther')
-
 
 logo = r"""│    ____                 __    __                         │
 │   /\  _`\              /\ \__/\ \                        │
@@ -39,9 +40,16 @@ help_message = f"""╭{58 * '─'}╮
 """
 
 
+def import_error(message: str | Exception, hint: str | None = None) -> None:
+    msg = str(message)
+    if hint:
+        msg += f' -> Hint: `{hint}`'
+    raise PantherException(msg)
+
+
 def cli_error(message: str | Exception) -> None:
     logger.error(message)
-    logger.error('Use "panther -h" for more help')
+    logger.info('Use "panther -h" for more help')
 
 
 def cli_warning(message: str | Exception, hint: str = None) -> None:

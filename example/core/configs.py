@@ -57,11 +57,11 @@ DEFAULT_CACHE_EXP = timedelta(seconds=10)
 
 
 async def startup():
-    print('inside startup function')
+    print('Starting Up')
 
 
 async def shutdown():
-    print('inside shutdown function')
+    print('Shutting Down')
 
 
 STARTUP = 'core.configs.startup'

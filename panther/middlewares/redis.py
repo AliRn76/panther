@@ -1,12 +1,16 @@
 import logging
-from redis import Redis
 
+from panther.cli.utils import import_error
 from panther.db.connection import RedisConnection
 from panther.middlewares.base import BaseMiddleware
 from panther.request import Request
 from panther.response import Response
 from panther.websocket import GenericWebsocket
 
+try:
+    from redis import Redis
+except ModuleNotFoundError as e:
+    import_error(e, hint='pip install redis')
 
 logger = logging.getLogger('panther')
 
