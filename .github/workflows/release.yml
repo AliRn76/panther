@@ -8,7 +8,7 @@ on:
 jobs:
 
   test-windows:
-    name: Test python${{ matrix.python-version }}
+    name: Test Windows Python${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
 #      fail-fast: false
