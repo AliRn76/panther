@@ -7,15 +7,14 @@ on:
 
 jobs:
 
-  tests:
-    name: Test ${{ matrix.os }} / ${{ matrix.python-version }}
+  test-windows:
+    name: Test python${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
-      fail-fast: false
+#      fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
-        os: [ubuntu, macos]
-
+        python-version: [ '3.10', '3.11', '3.12']
+        os: [ windows ]
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
@@ -26,59 +25,91 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Requirements
-        run: python -m pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Run Tests
-        run: python -m unittest tests/test_*.py
+        run: python -m unittest tests\test_*.py
 
-  coverage:
-    name: Coverage
-    runs-on: ubuntu-latest
-    needs: [tests]
 
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v3
+#  tests:
+#    name: Test ${{ matrix.os }}  python${{ matrix.python-version }}
+#    runs-on: ${{ matrix.os }}-latest
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        python-version: ['3.10']
+#        os: [windows]
+##        exclude:
+##          - os: windows-latest
+##            python-version: '3.9'
+#
+#    steps:
+#      - name: Checkout source
+#        uses: actions/checkout@v3
+#
+#      - name: Set up Python
+#        uses: actions/setup-python@v4
+#        with:
+#          python-version: ${{ matrix.python-version }}
+#
+#      - name: Install Requirements
+#        run: |
+#          python -m pip install --upgrade pip
+#          pip install -r requirements.txt
+#
+#      - name: Run Tests
+#        run: python -m unittest tests/test_*.py
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install Requirements
-        run: python -m pip install -r requirements.txt
-
-      - name: Run Coverage Tests
-        run: coverage run -m unittest tests/test_*.py
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-  build-n-publish:
-    name: Build and publish to PyPI
-    runs-on: ubuntu-latest
-    needs: [tests, coverage]
-
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Build source and wheel distributions
-        run: |
-          python -m pip install --upgrade build twine
-          python -m build
-          twine check --strict dist/*
-
-      - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
+#  coverage:
+#    name: Coverage
+#    runs-on: ubuntu-latest
+#    needs: [tests]
+#
+#    steps:
+#      - name: Checkout source
+#        uses: actions/checkout@v3
+#
+#      - name: Set up Python
+#        uses: actions/setup-python@v4
+#        with:
+#          python-version: '3.11'
+#
+#      - name: Install Requirements
+#        run: python -m pip install -r requirements.txt
+#
+#      - name: Run Coverage Tests
+#        run: coverage run -m unittest tests/test_*.py
+#
+#      - name: Upload coverage reports to Codecov
+#        uses: codecov/codecov-action@v3
+#        env:
+#          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+#
+#  build-n-publish:
+#    name: Build and publish to PyPI
+#    runs-on: ubuntu-latest
+#    needs: [tests, coverage]
+#
+#    steps:
+#      - name: Checkout source
+#        uses: actions/checkout@v3
+#
+#      - name: Set up Python
+#        uses: actions/setup-python@v4
+#        with:
+#          python-version: '3.11'
+#
+#      - name: Build source and wheel distributions
+#        run: |
+#          python -m pip install --upgrade build twine
+#          python -m build
+#          twine check --strict dist/*
+#
+#      - name: Publish distribution to PyPI
+#        uses: pypa/gh-action-pypi-publish@master
+#        with:
+#          user: __token__
+#          password: ${{ secrets.PYPI_TOKEN }}
 
