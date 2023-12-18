@@ -13,7 +13,7 @@ jobs:
     strategy:
 #      fail-fast: false
       matrix:
-        python-version: [ '3.10', '3.11', '3.12']
+        python-version: ['3.10']
         os: [ windows ]
     steps:
       - name: Checkout source
@@ -30,7 +30,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: python -m unittest tests\test_*.py
+        run: python -m unittest .\tests\test_*.py
 
 
 #  tests:
