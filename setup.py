@@ -30,10 +30,9 @@ setup(
     long_description=DESCRIPTION,
     long_description_content_type='text/markdown',
     include_package_data=True,
-    license='MIT',
+    license='BSD-3-Clause license',
     classifiers=[
         'Operating System :: OS Independent',
-        'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
@@ -54,7 +53,6 @@ setup(
         'uvicorn~=0.23',
         'watchfiles~=0.19',
         'python-jose~=3.3',
-        'greenlet~=3.0.0a1',
     ],
     extras_require=EXTRAS_REQUIRE,
 )

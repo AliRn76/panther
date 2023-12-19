@@ -1,22 +1,62 @@
-import sys
 from unittest import TestCase
 
 from panther import Panther
+from panther.app import API
+from panther.response import Response
 from panther.test import APIClient
+
+
+@API()
+async def request_all():
+    return Response()
+
+
+@API(methods=['GET'])
+async def request_get():
+    return Response()
+
+
+@API(methods=['POST'])
+async def request_post():
+    return Response()
+
+
+@API(methods=['PUT'])
+async def request_put():
+    return Response()
+
+
+@API(methods=['PATCH'])
+async def request_patch():
+    return Response()
+
+
+@API(methods=['DELETE'])
+async def request_delete():
+    return Response()
+
+
+@API(methods=['GET', 'POST', 'PATCH'])
+async def request_get_post_patch():
+    return Response()
+
+
+urls = {
+    'all': request_all,
+    'get': request_get,
+    'post': request_post,
+    'put': request_put,
+    'patch': request_patch,
+    'delete': request_delete,
+    'get-post-patch': request_get_post_patch,
+}
 
 
 class TestMethods(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        sys.path.append('tests/app')
-        from tests.app.urls import method_urls
-
-        app = Panther(__name__, configs=__name__, urls=method_urls)
+        app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        sys.path.pop()
 
     def test_all(self):
         res = self.client.get('all/')

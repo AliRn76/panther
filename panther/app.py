@@ -80,7 +80,7 @@ class API:
 
             # 7. Get Cached Response
             if self.cache and self.request.method == 'GET':
-                if cached := get_cached_response_data(request=self.request):
+                if cached := get_cached_response_data(request=self.request,  cache_exp_time=self.cache_exp_time):
                     return Response(data=cached.data, status_code=cached.status_code)
 
             # 8. Put Request In kwargs (If User Wants It)

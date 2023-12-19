@@ -28,7 +28,7 @@ logger = logging.getLogger('panther')
 
 class Panther:
     def __init__(self, name: str, configs=None, urls: dict | None = None, startup: Callable = None, shutdown: Callable = None):
-        self._configs = configs
+        self._configs_module_name = configs
         self._urls = urls
         self._startup = startup
         self._shutdown = shutdown
@@ -61,22 +61,22 @@ class Panther:
     def load_configs(self) -> None:
 
         # Check & Read The Configs File
-        self.configs = load_configs_file(self._configs)
+        self._configs_module = load_configs_module(self._configs_module_name)
 
         # Put Variables In "config" (Careful about the ordering)
-        config['secret_key'] = load_secret_key(self.configs)
-        config['monitoring'] = load_monitoring(self.configs)
-        config['log_queries'] = load_log_queries(self.configs)
-        config['background_tasks'] = load_background_tasks(self.configs)
-        config['throttling'] = load_throttling(self.configs)
-        config['default_cache_exp'] = load_default_cache_exp(self.configs)
-        config['middlewares'] = load_middlewares(self.configs)
+        config['secret_key'] = load_secret_key(self._configs_module)
+        config['monitoring'] = load_monitoring(self._configs_module)
+        config['log_queries'] = load_log_queries(self._configs_module)
+        config['background_tasks'] = load_background_tasks(self._configs_module)
+        config['throttling'] = load_throttling(self._configs_module)
+        config['default_cache_exp'] = load_default_cache_exp(self._configs_module)
+        config['middlewares'] = load_middlewares(self._configs_module)
         config['reversed_middlewares'] = config['middlewares'][::-1]
-        config['user_model'] = load_user_model(self.configs)
-        config['authentication'] = load_authentication_class(self.configs)
-        config['jwt_config'] = load_jwt_config(self.configs)
-        config['startup'] = load_startup(self.configs)
-        config['shutdown'] = load_shutdown(self.configs)
+        config['user_model'] = load_user_model(self._configs_module)
+        config['authentication'] = load_authentication_class(self._configs_module)
+        config['jwt_config'] = load_jwt_config(self._configs_module)
+        config['startup'] = load_startup(self._configs_module)
+        config['shutdown'] = load_shutdown(self._configs_module)
         config['models'] = collect_all_models()
 
         # Initialize Background Tasks
@@ -85,7 +85,7 @@ class Panther:
 
         # Load URLs should be one of the last calls in load_configs,
         #   because it will read all files and loads them.
-        config['flat_urls'], config['urls'] = load_urls(self.configs, urls=self._urls)
+        config['flat_urls'], config['urls'] = load_urls(self._configs_module, urls=self._urls)
         config['urls']['_panel'] = load_panel_urls()
 
         self._create_ws_connections_instance()

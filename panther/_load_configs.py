@@ -15,7 +15,7 @@ from panther.routings import finalize_urls, flatten_urls
 from panther.throttling import Throttling
 
 __all__ = (
-    'load_configs_file',
+    'load_configs_module',
     'load_secret_key',
     'load_monitoring',
     'load_log_queries',
@@ -34,7 +34,7 @@ __all__ = (
 )
 
 
-def load_configs_file(_configs, /) -> dict:
+def load_configs_module(_configs, /) -> dict:
     """Read the config file and put it as dict in self.configs"""
     if _configs:
         _module = sys.modules[_configs]
@@ -127,9 +127,10 @@ def collect_all_models() -> list[dict]:
     # Just load all the python files from 'base_dir',
     #   so Model.__subclasses__ can find all the subclasses
     slash = '\\' if platform.system() == 'Windows' else '/'
+    _parts = '_tail' if sys.version_info >= (3, 12) else '_parts'
     python_files = [
         f for f in config['base_dir'].rglob('*.py')
-        if not f.name.startswith('_') and 'site-packages' not in f.parents._parts
+        if not f.name.startswith('_') and 'site-packages' not in getattr(f.parents, _parts)
     ]
     for file in python_files:
         # Analyse the file
