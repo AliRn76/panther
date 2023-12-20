@@ -1,6 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
-from typing import TypedDict, Callable
+from typing import TypedDict
 
 from pydantic._internal._model_construction import ModelMetaclass
 
@@ -47,8 +47,6 @@ class Config(TypedDict):
     websocket_connections: any  # type: WebsocketConnections
     background_tasks: bool
     has_ws: bool
-    startup: Callable
-    shutdown: Callable
 
 
 config: Config = {
@@ -70,6 +68,4 @@ config: Config = {
     'websocket_connections': None,
     'background_tasks': False,
     'has_ws': False,
-    'startup': None,
-    'shutdown': None,
 }

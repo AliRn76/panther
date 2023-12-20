@@ -27,11 +27,11 @@ logger = logging.getLogger('panther')
 
 
 class Panther:
-    def __init__(self, name: str, configs=None, urls: dict | None = None, startup: Callable = None, shutdown: Callable = None):
+    def __init__(self, name: str, configs=None, urls: dict | None = None):
         self._configs_module_name = configs
         self._urls = urls
-        self._startup = startup
-        self._shutdown = shutdown
+        self._startup = []
+        self._shutdown = []
 
         config['base_dir'] = Path(name).resolve().parent
 
@@ -75,8 +75,6 @@ class Panther:
         config['user_model'] = load_user_model(self._configs_module)
         config['authentication'] = load_authentication_class(self._configs_module)
         config['jwt_config'] = load_jwt_config(self._configs_module)
-        config['startup'] = load_startup(self._configs_module)
-        config['shutdown'] = load_shutdown(self._configs_module)
         config['models'] = collect_all_models()
 
         # Initialize Background Tasks
@@ -267,15 +265,27 @@ class Panther:
             body=response.body,
         )
 
+    def on_event(self, event_type: str):
+        def inner(func: Callable):
+            match event_type:
+                case 'startup':
+                    self._startup.append(func)
+                case 'shutdown':
+                    self._shutdown.append(func)
+                case _:
+                    logger.error(f'Not valid event type "{event_type}"')
+
+        return inner
+
     async def handle_startup(self):
-        if startup := config['startup'] or self._startup:
+        for startup in self._startup:
             if is_function_async(startup):
                 await startup()
             else:
                 startup()
 
     def handle_shutdown(self):
-        if shutdown := config['shutdown'] or self._shutdown:
+        for shutdown in self._shutdown:
             if is_function_async(shutdown):
                 asyncio.run(shutdown())
             else:

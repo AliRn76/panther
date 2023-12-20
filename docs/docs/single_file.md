@@ -51,8 +51,6 @@ If you want to work with `Panther` in a `single-file` structure, follow the step
 > When you pass the `configs` to the `Panther(configs=...)`, Panther is going to load the configs from this file,
 > else it is going to load `core/configs.py` file
 
-> You can pass the `startup` and `shutdown` functions to the `Panther()` too.
-
    ```python
    from panther import Panther
    from panther.app import API
@@ -65,11 +63,6 @@ If you want to work with `Panther` in a `single-file` structure, follow the step
         '/': hello_world_api,
    }
    
-   def startup():
-      pass
-   
-   def shutdown():
-      pass
-   
-   app = Panther(__name__, configs=__name__, urls=url_routing, startup=startup, shutdown=shutdown)
+   app = Panther(__name__, configs=__name__, urls=url_routing)
+
    ```

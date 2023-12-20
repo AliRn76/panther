@@ -40,6 +40,7 @@ nav:
   - URLs: 'urls.md'
   - Throttling: 'throttling.md'
   - Background Tasks: 'background_tasks.md'
+  - Events: 'events.md'
 #  - Caching: 'caching.md'
 #  - UserModel: 'user_model.md'
   - Single-File: 'single_file.md'
