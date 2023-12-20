@@ -4,7 +4,6 @@ import sys
 from datetime import timedelta
 from importlib import import_module
 from pathlib import Path
-from typing import Callable
 
 from pydantic._internal._model_construction import ModelMetaclass
 
@@ -26,8 +25,6 @@ __all__ = (
     'load_user_model',
     'load_authentication_class',
     'load_jwt_config',
-    'load_startup',
-    'load_shutdown',
     'collect_all_models',
     'load_urls',
     'load_panel_urls',
@@ -110,14 +107,6 @@ def load_jwt_config(configs: dict, /) -> JWTConfig | None:
 
         return JWTConfig(**user_config)
     return None
-
-
-def load_startup(configs: dict, /) -> Callable:
-    return configs.get('STARTUP') and import_class(configs['STARTUP'])
-
-
-def load_shutdown(configs: dict, /) -> Callable:
-    return configs.get('SHUTDOWN') and import_class(configs['SHUTDOWN'])
 
 
 def collect_all_models() -> list[dict]:

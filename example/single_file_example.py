@@ -10,13 +10,13 @@ url_routing = {
     '/': hello_world_api,
 }
 
+app = Panther(__name__, configs=__name__, urls=url_routing)
 
+@app.on_event('startup')
 def startup():
-    print("Its startup")
+    print('Its startup')
 
 
+@app.on_event('shutdown')
 def shutdown():
-    print("Its shutdown")
-
-
-app = Panther(__name__, configs=__name__, urls=url_routing, startup=startup, shutdown=shutdown)
+    print('Its shutdown')
