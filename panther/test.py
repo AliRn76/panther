@@ -34,7 +34,7 @@ class RequestClient:
             headers: dict,
             query_params: dict,
     ) -> Response:
-        headers = [(k.encode(), v.encode()) for k, v in headers.items()]
+        headers = [(k.encode(), v.encode() if isinstance(v, str) else str(v).encode()) for k, v in headers.items()]
         if not path.startswith('/'):
             path = f'/{path}'
 

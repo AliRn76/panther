@@ -35,19 +35,19 @@ class BaseRequest:
 
     @property
     def headers(self) -> Headers:
-        _headers = {header[0].decode('utf-8'): header[1].decode('utf-8') for header in self.scope['headers']}
+        _headers = {header[0].decode('utf-8').lower(): header[1].decode('utf-8') for header in self.scope['headers']}
         if self._headers is None:
             self._headers = Headers(
                 accept_encoding=_headers.pop('accept-encoding', None),
-                content_length=_headers.pop('content_length', None),
+                content_length=_headers.pop('content-length', None),
                 authorization=_headers.pop('authorization', None),
                 content_type=_headers.pop('content-type', None),
                 user_agent=_headers.pop('user-agent', None),
                 connection=_headers.pop('connection', None),
                 accept=_headers.pop('accept', None),
                 host=_headers.pop('host', None),
-                sec_websocket_version=_headers.pop('sec_websocket_version', None),
-                sec_websocket_key=_headers.pop('sec_websocket_key', None),
+                sec_websocket_version=_headers.pop('sec-websocket-version', None),
+                sec_websocket_key=_headers.pop('sec-websocket-key', None),
                 upgrade=_headers.pop('upgrade', None),
             )
         return self._headers
