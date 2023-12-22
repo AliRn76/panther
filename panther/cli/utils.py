@@ -35,7 +35,7 @@ help_message = f"""╭{58 * '─'}╮
 │       - panther version                                  │
 │           Print the current version of Panther           │
 │                                                          │
-│       - panther help | --help | -h                       │
+│       - panther h | help | --help | -h                   │
 │           Show this message and exit                     │
 ╰{58 * '─'}╯
 """
@@ -97,11 +97,11 @@ def print_info(config: dict):
     if platform.system() != 'Windows':
         try:
             import uvloop
-            uvloop = f'│{58 * " "}│'
+            uvloop = None
         except ImportError:
             uvloop = (
                 '│ * You may want to install `uvloop` for better performance│\n'
-                '│   `pip install uvloop`                                   │')
+                '│   `pip install uvloop`                                   │\n')
     else:
         uvloop = None
 
@@ -118,5 +118,5 @@ def print_info(config: dict):
         info_message += monitor
     if uvloop:
         info_message += uvloop
-    info_message += f"\n╰{58 * '─'}╯"
+    info_message += f"╰{58 * '─'}╯"
     rprint(info_message)
