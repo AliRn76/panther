@@ -1,6 +1,6 @@
 ### 3.2.4
 - Add all() query
-- Add tests for `pantherdb`, `load_configs()`, `status.py`
+- Add tests for `pantherdb`, `load_configs()`, `status.py`, `Panel`, `multipart`
 - Minor Improvement
 
 ### 3.2.1
