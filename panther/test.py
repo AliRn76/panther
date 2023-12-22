@@ -30,15 +30,15 @@ class RequestClient:
             self,
             path: str,
             method: Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-            payload: dict | None,
+            payload: bytes | dict | None,
             headers: dict,
             query_params: dict,
     ) -> Response:
-        headers = [(k.encode(), v.encode()) for k, v in headers.items()]
+        headers = [(k.encode(), v.encode() if isinstance(v, str) else str(v).encode()) for k, v in headers.items()]
         if not path.startswith('/'):
             path = f'/{path}'
 
-        self.payload = json.dumps(payload)
+        self.payload = payload if isinstance(payload, bytes) else json.dumps(payload)
         query_params = '&'.join(f'{k}={v}' for k, v in query_params.items())
         scope = {
             'type': 'http',
@@ -101,10 +101,10 @@ class APIClient:
     def post(
             self,
             path: str,
-            payload: dict | None = None,
+            payload: bytes | dict | None = None,
             headers: dict | None = None,
             query_params: dict | None = None,
-            content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
+            content_type: str = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
         return self._send_request(
@@ -118,7 +118,7 @@ class APIClient:
     def put(
             self,
             path: str,
-            payload: dict | None = None,
+            payload: bytes | dict | None = None,
             headers: dict | None = None,
             query_params: dict | None = None,
             content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
@@ -135,7 +135,7 @@ class APIClient:
     def patch(
             self,
             path: str,
-            payload: dict | None = None,
+            payload: bytes | dict | None = None,
             headers: dict | None = None,
             query_params: dict | None = None,
             content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',

@@ -45,8 +45,9 @@ def prepare_id_for_query(*args, is_mongo: bool = False):
         if 'id' in d:
             d['_id'] = d.pop('id')
 
-        if is_mongo and '_id' in d:
-            d['_id'] = _convert_to_object_id(d['_id'])
+        if '_id' in d:
+            _converter = _convert_to_object_id if is_mongo else int
+            d['_id'] = _converter(d['_id'])
 
 
 def _convert_to_object_id(_id: bson.ObjectId | str) -> bson.ObjectId:

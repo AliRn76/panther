@@ -156,7 +156,7 @@ def clean_traceback_message(exception: Exception) -> str:
     tb = TracebackException(type(exception), exception, exception.__traceback__)
     stack = tb.stack.copy()
     for t in stack:
-        if t.filename.find('site-packages') != -1:
+        if t.filename.find('site-packages/panther') != -1:
             tb.stack.remove(t)
     _traceback = list(tb.format(chain=False))
     return exception if len(_traceback) == 1 else f'{exception}\n' + ''.join(_traceback)

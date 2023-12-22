@@ -9,3 +9,4 @@ build/
 *.pdb
 .ruff_cache/
 docs/site/*
+*coverage*

@@ -78,15 +78,28 @@ def load_middlewares(configs: dict, /) -> list:
 
     middlewares = []
 
-    for path, data in configs.get('MIDDLEWARES', []):
+    for middleware in configs.get('MIDDLEWARES') or []:
+        if not isinstance(middleware, list | tuple):
+            raise _exception_handler(field='MIDDLEWARES', error=f'{middleware} should have 2 part: (path, kwargs)')
+
+        if len(middleware) == 1:
+            path = middleware[0]
+            data = {}
+
+        elif len(middleware) > 2:
+            raise _exception_handler(field='MIDDLEWARES', error=f'{middleware} too many arguments')
+
+        else:
+            path, data = middleware
+
         if path.find('panther.middlewares.db.DatabaseMiddleware') != -1:
             config['db_engine'] = data['url'].split(':')[0]
         try:
             Middleware = import_class(path)  # noqa: N806
-        except AttributeError:
+        except (AttributeError, ModuleNotFoundError):
             raise _exception_handler(field='MIDDLEWARES', error=f'{path} is not a valid middleware path')
 
-        if not issubclass(Middleware, BaseMiddleware):
+        if issubclass(Middleware, BaseMiddleware) is False:
             raise _exception_handler(field='MIDDLEWARES', error='is not a sub class of BaseMiddleware')
 
         middlewares.append(Middleware(**data))  # noqa: Py Argument List

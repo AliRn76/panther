@@ -3,7 +3,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest import TestCase
 
-from panther.utils import generate_hash_value_from_string, load_env, round_datetime
+from panther import Panther
+from panther.middlewares import BaseMiddleware
+from panther.utils import generate_hash_value_from_string, load_env, round_datetime, encrypt_password
 
 
 class TestLoadEnvFile(TestCase):
@@ -14,11 +16,18 @@ class TestLoadEnvFile(TestCase):
     db_port = 27017
 
     def tearDown(self) -> None:
-        Path(self.file_path).unlink()
+        Path(self.file_path).unlink(missing_ok=True)
 
     def _create_env_file(self, file_data):
         with open(self.file_path, 'w') as file:
             file.write(file_data)
+
+    def test_load_env_invalid_file(self):
+        with self.assertLogs(level='ERROR') as captured:
+            load_env('fake.file')
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == '"fake.file" is not valid file for load_env()'
 
     def test_load_env_double_quote(self):
         self._create_env_file(f"""
@@ -167,3 +176,172 @@ class TestUtilFunctions(TestCase):
 
         self.assertEqual(hashed_1, hashed_2)
         self.assertNotEqual(text, hashed_1)
+
+    def test_encrypt_password(self):
+        password = 'Password'
+        encrypted = encrypt_password(password=password)
+        assert password != encrypted
+
+
+class TestLoadConfigs(TestCase):
+    def test_urls_not_found(self):
+        global URLs, MIDDLEWARES
+        URLs = None
+        MIDDLEWARES = []
+
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__)
+            except SystemExit:
+                assert True
+            else:
+                assert False
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == "Invalid 'URLs': is required."
+
+    def test_urls_cant_be_dict(self):
+        global URLs, MIDDLEWARES
+        URLs = {}
+        MIDDLEWARES = None
+
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__)
+            except SystemExit:
+                assert True
+            else:
+                assert False
+
+        assert len(captured.records) == 1
+        msg = (
+            "Invalid 'URLs': can't be 'dict', you may want to pass it's value directly to Panther(). "
+            "Example: Panther(..., urls=...)"
+        )
+        assert captured.records[0].getMessage() == msg
+
+    def test_urls_not_string(self):
+        global URLs, MIDDLEWARES
+        URLs = True
+        MIDDLEWARES = None
+
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__)
+            except SystemExit:
+                assert True
+            else:
+                assert False
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == "Invalid 'URLs': should be dotted string."
+
+    def test_urls_invalid_target(self):
+        global URLs, MIDDLEWARES
+        URLs = 'tests.test_utils.TestLoadConfigs'
+        MIDDLEWARES = None
+
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__)
+            except SystemExit:
+                assert True
+            else:
+                assert False
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == "Invalid 'URLs': should point to a dict."
+
+    def test_urls_invalid_module_path(self):
+        global URLs, MIDDLEWARES
+        URLs = 'fake.module'
+        MIDDLEWARES = None
+
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__)
+            except SystemExit:
+                assert True
+            else:
+                assert False
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == "Invalid 'URLs': No module named 'fake'"
+
+    def test_middlewares_invalid_path(self):
+        global MIDDLEWARES
+        MIDDLEWARES = [
+            ('fake.module', {})
+        ]
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__, urls={})
+            except SystemExit:
+                assert True
+            else:
+                assert False
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': fake.module is not a valid middleware path"
+
+    def test_middlewares_invalid_structure(self):
+        global MIDDLEWARES
+        MIDDLEWARES = ['fake.module']
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__, urls={})
+            except SystemExit:
+                assert True
+            else:
+                assert False
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': fake.module should have 2 part: (path, kwargs)"
+
+    def test_middlewares_too_many_args(self):
+        global MIDDLEWARES
+        MIDDLEWARES = [
+            ('fake.module', 1, 2)
+        ]
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__, urls={})
+            except SystemExit:
+                assert True
+            else:
+                assert False
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': ('fake.module', 1, 2) too many arguments"
+
+    def test_middlewares_without_args(self):
+        global MIDDLEWARES
+        MIDDLEWARES = [
+            ('tests.test_utils.CorrectTestMiddleware', )
+        ]
+        with self.assertNoLogs(level='ERROR'):
+            Panther(name=__name__, configs=__name__, urls={})
+
+    def test_middlewares_invalid_middleware_parent(self):
+        global MIDDLEWARES
+        MIDDLEWARES = [
+            ('tests.test_utils.TestMiddleware', )
+        ]
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__, urls={})
+            except SystemExit:
+                assert True
+            else:
+                assert False
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': is not a sub class of BaseMiddleware"
+
+
+class CorrectTestMiddleware(BaseMiddleware):
+    pass
+
+
+class TestMiddleware:
+    pass

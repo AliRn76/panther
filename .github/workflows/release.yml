@@ -37,7 +37,6 @@ jobs:
     runs-on: windows-latest
     needs: [tests-linux]
     strategy:
-      fail-fast: false
       matrix:
         python-version: ['3.10', '3.11', '3.12']
 
@@ -62,12 +61,14 @@ jobs:
           python -m unittest .\tests\test_caching.py
           python -m unittest .\tests\test_cli.py
           python -m unittest .\tests\test_mongodb.py
+          python -m unittest .\tests\multipart.py
+          python -m unittest .\tests\panel_apis.py
           python -m unittest .\tests\test_pantherdb.py
-          python -m unittest .\tests\test_request_methods.py
+          python -m unittest .\tests\test_request.py
           python -m unittest .\tests\test_routing.py
           python -m unittest .\tests\test_run.py
-          python -m unittest .\tests\test_simple_requests.py
           python -m unittest .\tests\test_simple_responses.py
+          python -m unittest .\tests\test_status.py
           python -m unittest .\tests\test_utils.py
 
   tests-macos:
@@ -75,7 +76,6 @@ jobs:
     runs-on: macos-latest
     needs: [tests-linux]
     strategy:
-      fail-fast: false
       matrix:
         python-version: ['3.10', '3.11', '3.12']
 
