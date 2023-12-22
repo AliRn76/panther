@@ -1,3 +1,8 @@
+### 3.2.4
+- Add all() query
+- Add tests for `pantherdb`, `load_configs()`, `status.py`
+- Minor Improvement
+
 ### 3.2.1
 - Minor Improvement
 

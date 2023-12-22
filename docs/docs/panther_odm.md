@@ -23,6 +23,14 @@
 	users: list[User] = User.find({'id': 1}, name='Ali')  
 	```  
   
+### all
+- List all the documents  
+- Example:  
+  
+	```python  
+	users: list[User] = User.all()
+	```  
+  
 ### insert_one  
 - Insert only one document into database  
 - Example:  
@@ -127,4 +135,12 @@ and pass the fields you want to update as `kwargs` or another `dictionary` as `s
   
 	```python  
 	user: User = User.find_or_insert(name='Ali')
+	```
+
+### find_one_or_raise
+- Find the match document or Raise an `APIException`
+- Example:  
+  
+	```python  
+	user: User = User.find_one_or_raise(name='Ali')
 	```

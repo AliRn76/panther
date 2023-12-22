@@ -33,7 +33,7 @@ help_message = f"""╭{58 * '─'}╮
 │       - panther version                                  │
 │           Print the current version of Panther           │
 │                                                          │
-│       - panther [--help | -h ]                           │
+│       - panther help | --help | -h                       │
 │           Show this message and exit                     │
 ╰{58 * '─'}╯
 """

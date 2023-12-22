@@ -12,11 +12,6 @@ def without_cache_api():
     return {'detail': time.time()}
 
 
-@API()
-def without_cache_api():
-    return {'detail': time.time()}
-
-
 @API(cache=True)
 def with_cache_api():
     return {'detail': time.time()}
