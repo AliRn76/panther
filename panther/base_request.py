@@ -1,22 +1,54 @@
 from collections import namedtuple
 from collections.abc import Callable
-from dataclasses import dataclass
 
 
-@dataclass(frozen=True)
 class Headers:
-    accept_encoding: str
-    content_length: int
-    authorization: str
-    content_type: str
-    user_agent: str
-    connection: str
     accept: str
+    accept_encoding: str
+    accept_language: str
+    authorization: str
+    cache_control: str
+    connection: str
+    content_length: str
+    content_type: str
     host: str
+    origin: str
+    pragma: str
+    referer: str
+    sec_fetch_dest: str
+    sec_fetch_mode: str
+    sec_fetch_site: str
+    user_agent: str
 
-    sec_websocket_version: int
-    sec_websocket_key: str
     upgrade: str
+    sec_websocket_version: str
+    sec_websocket_key: str
+
+    def __init__(self, headers):
+        self.__headers = headers
+        self.__pythonic_headers = {k.lower().replace('-', '_'): v for k, v in headers.items()}
+
+    def __getattr__(self, item: str):
+        if result := self.__pythonic_headers.get(item):
+            return result
+        else:
+            return self.__headers.get(item)
+
+    def __getitem__(self, item: str):
+        if result := self.__headers.get(item):
+            return result
+        else:
+            return self.__pythonic_headers.get(item)
+
+    def __str__(self):
+        items = ', '.join(f'{k}={v}' for k, v in self.__headers.items())
+        return f'Headers({items})'
+
+    __repr__ = __str__
+
+    @property
+    def __dict__(self):
+        return self.__headers
 
 
 Address = namedtuple('Client', ['ip', 'port'])
@@ -35,21 +67,9 @@ class BaseRequest:
 
     @property
     def headers(self) -> Headers:
-        _headers = {header[0].decode('utf-8').lower(): header[1].decode('utf-8') for header in self.scope['headers']}
+        _headers = {header[0].decode('utf-8'): header[1].decode('utf-8') for header in self.scope['headers']}
         if self._headers is None:
-            self._headers = Headers(
-                accept_encoding=_headers.pop('accept-encoding', None),
-                content_length=_headers.pop('content-length', None),
-                authorization=_headers.pop('authorization', None),
-                content_type=_headers.pop('content-type', None),
-                user_agent=_headers.pop('user-agent', None),
-                connection=_headers.pop('connection', None),
-                accept=_headers.pop('accept', None),
-                host=_headers.pop('host', None),
-                sec_websocket_version=_headers.pop('sec-websocket-version', None),
-                sec_websocket_key=_headers.pop('sec-websocket-key', None),
-                upgrade=_headers.pop('upgrade', None),
-            )
+            self._headers = Headers(_headers)
         return self._headers
 
     @property
