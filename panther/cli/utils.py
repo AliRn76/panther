@@ -1,4 +1,6 @@
 import logging
+import platform
+
 from rich import print as rprint
 
 
@@ -88,9 +90,20 @@ def print_info(config: dict):
         bd = f'{bd[:36]}...'
 
     if config['monitoring']:
-        monitor = '│ * Run "panther monitor" in another session for Monitoring│'
+        monitor = '│ * Run "panther monitor" in another session for Monitoring│\n'
     else:
-        monitor = f'│{58 * " "}│'
+        monitor = None
+
+    if platform.system() != 'Windows':
+        try:
+            import uvloop
+            uvloop = f'│{58 * " "}│'
+        except ImportError:
+            uvloop = (
+                '│ * You may want to install `uvloop` for better performance│\n'
+                '│   `pip install uvloop`                                   │')
+    else:
+        uvloop = None
 
     info_message = f"""
 ╭{58 * '─'}╮
@@ -100,7 +113,10 @@ def print_info(config: dict):
 │   Background Tasks: {bt}                            \t   │
 │   Websocket: {ws}                                   \t   │
 │   Base directory: {bd}│
-{monitor}
-╰{58 * '─'}╯
 """
+    if monitor:
+        info_message += monitor
+    if uvloop:
+        info_message += uvloop
+    info_message += f"\n╰{58 * '─'}╯"
     rprint(info_message)
