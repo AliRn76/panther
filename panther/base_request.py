@@ -67,8 +67,8 @@ class BaseRequest:
 
     @property
     def headers(self) -> Headers:
-        _headers = {header[0].decode('utf-8'): header[1].decode('utf-8') for header in self.scope['headers']}
         if self._headers is None:
+            _headers = {header[0].decode('utf-8'): header[1].decode('utf-8') for header in self.scope['headers']}
             self._headers = Headers(_headers)
         return self._headers
 

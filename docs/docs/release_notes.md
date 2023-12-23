@@ -1,3 +1,7 @@
+### 3.3.1
+- Check `ruff` installation on startup
+- Fix an issue in `routing`
+
 ### 3.3.0
 - Add Auto Reformat Code
 

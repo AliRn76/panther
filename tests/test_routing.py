@@ -722,6 +722,58 @@ class TestRoutingFunctions(TestCase):
         self.assertEqual(admin_v2_users_list_registered_path, '')
         self.assertEqual(admin_v2_users_detail_not_registered_path, '')
 
+    def test_find_endpoint_not_found_last_is_path_variable(self):
+        def temp_func(): pass
+
+        from panther.configs import config
+
+        config['urls'] = {
+            'user': {
+                '<name>': temp_func,
+            },
+        }
+        user_id_profile_id_func, _ = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
+        user_profile_func, _ = find_endpoint('user/ali/')
+        payment_func, _ = find_endpoint('payments/')
+        admin_v1_profile_avatar_func, _ = find_endpoint('admin/v1/profile/avatar')
+        admin_v1_id_func, _ = find_endpoint(f'admin/v1/{random.randint(0, 100)}')
+        admin_v2_users_list_registered_func, _ = find_endpoint('admin/v1/users/list/registered/')
+        admin_v2_users_detail_not_registered_func, _ = find_endpoint('admin/v1/users/detail/not-registered')
+
+        self.assertIsNone(user_id_profile_id_func)
+        self.assertIsNotNone(user_profile_func)
+        self.assertIsNone(payment_func)
+        self.assertIsNone(admin_v1_profile_avatar_func)
+        self.assertIsNone(admin_v1_id_func)
+        self.assertIsNone(admin_v2_users_list_registered_func)
+        self.assertIsNone(admin_v2_users_detail_not_registered_func)
+
+    def test_find_endpoint_not_found_path_last_is_path_variable(self):
+        def temp_func(): pass
+
+        from panther.configs import config
+
+        config['urls'] = {
+            'user': {
+                '<name>': temp_func,
+            },
+        }
+        _, user_id_profile_id_path = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
+        _, user_profile_path = find_endpoint('user/ali/')
+        _, payment_path = find_endpoint('payments/')
+        _, admin_v1_profile_avatar_path = find_endpoint('admin/v1/profile/avatar')
+        _, admin_v1_id_path = find_endpoint(f'admin/v1/{random.randint(0, 100)}')
+        _, admin_v2_users_list_registered_path = find_endpoint('admin/v1/users/list/registered/')
+        _, admin_v2_users_detail_not_registered_path = find_endpoint('admin/v1/users/detail/not-registered')
+
+        self.assertEqual(user_id_profile_id_path, '')
+        self.assertNotEqual(user_profile_path, '')
+        self.assertEqual(payment_path, '')
+        self.assertEqual(admin_v1_profile_avatar_path, '')
+        self.assertEqual(admin_v1_id_path, '')
+        self.assertEqual(admin_v2_users_list_registered_path, '')
+        self.assertEqual(admin_v2_users_detail_not_registered_path, '')
+
     def test_find_endpoint_same_pre_path_variable(self):
         def temp_1(): pass
 

@@ -131,7 +131,6 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
             continue
 
         # `found` is None
-        _continue = False
         for key, value in urls.items():
             if key.startswith('<'):
                 if last_path:
@@ -139,19 +138,23 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
                         found_path += f'{key}/'
                         return value, found_path
 
-                    if isinstance(value, dict) and '' in value:
+                    elif isinstance(value, dict) and '' in value:
                         found_path += f'{key}/'
                         return value[''], found_path
 
+                    else:
+                        return None, ''
+
+                elif isinstance(value, dict):
+                    urls = value
+                    found_path += f'{key}/'
+                    break
+
+                else:
                     return None, ''
 
-                urls = value
-                found_path += f'{key}/'
-                _continue = True
-                break
-
-        if _continue:
-            continue
+        else:
+            return None, ''
 
     return None, ''
 

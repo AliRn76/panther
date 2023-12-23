@@ -38,15 +38,13 @@ class Panther:
 
         try:
             self.load_configs()
+            self.reformat_code()
         except Exception as e:  # noqa: BLE001
             if isinstance(e, PantherException):
                 logger.error(e.args[0])
             else:
                 logger.error(clean_traceback_message(e))
             sys.exit()
-
-        # Reformat Code
-        self.reformat_code()
 
         # Monitoring
         self.monitoring = Monitoring(is_active=config['monitoring'])
@@ -121,8 +119,11 @@ class Panther:
     @classmethod
     def reformat_code(cls):
         if config['auto_reformat']:
-            subprocess.run(['ruff', 'format', config['base_dir']])
-            subprocess.run(['ruff', 'check', '--select', 'I', '--fix', config['base_dir']])
+            try:
+                subprocess.run(['ruff', 'format', config['base_dir']])
+                subprocess.run(['ruff', 'check', '--select', 'I', '--fix', config['base_dir']])
+            except FileNotFoundError:
+                raise PantherException("Module 'ruff' not found, Hint: `pip install ruff`")
 
     async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
         """
@@ -159,12 +160,13 @@ class Panther:
         if endpoint is None:
             await monitoring.after('Rejected')
             return await temp_connection.close(status.WS_1000_NORMAL_CLOSURE)
-        path_variables: dict = collect_path_variables(request_path=temp_connection.path, found_path=found_path)
 
         if not issubclass(endpoint, GenericWebsocket):
             logger.critical(f'You may have forgotten to inherit from GenericWebsocket on the {endpoint.__name__}()')
             await monitoring.after('Rejected')
             return await temp_connection.close(status.WS_1014_BAD_GATEWAY)
+
+        path_variables: dict = collect_path_variables(request_path=temp_connection.path, found_path=found_path)
 
         del temp_connection
         connection = endpoint(scope=scope, receive=receive, send=send)

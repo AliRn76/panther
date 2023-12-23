@@ -42,7 +42,7 @@ class Request(BaseRequest):
         return getattr(self, '_validated_data', None)
 
     async def read_body(self) -> None:
-        """Read and return the entire body from an incoming ASGI message."""
+        """Read the entire body from an incoming ASGI message."""
         self.__body = b''
         more_body = True
         while more_body:

@@ -65,16 +65,6 @@ def import_class(dotted_path: str, /) -> type:
 
 
 def read_multipart_form_data(boundary: str, body: bytes) -> dict:
-    r"""
-    ----------------------------449529189836774544725855
-    \r\nContent-Disposition: form-data; name="name"\r\n\r\nali\r\n
-    ----------------------------449529189836774544725855
-    \r\nContent-Disposition: form-data; name="image"; filename="ali.txt"\r\nContent-Type: text/plain\r\n\r\nHello\n\r\n
-    ----------------------------449529189836774544725855
-    \r\nContent-Disposition: form-data; name="age"\r\n\r\n12\r\n
-    ----------------------------449529189836774544725855
-    --\r\n
-    """
     boundary = b'--' + boundary.encode()
     new_line = b'\r\n' if body[-2:] == b'\r\n' else b'\n'
 
