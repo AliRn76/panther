@@ -30,7 +30,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: python -m unittest tests/test_*.py
+        run: pytest tests
 
   tests-windows:
     name: Test Windows Python${{ matrix.python-version }}
@@ -55,21 +55,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        # https://github.com/python/cpython/issues/90579#issuecomment-1860222956
-        run: |
-          python -m unittest .\tests\test_background_tasks.py
-          python -m unittest .\tests\test_caching.py
-          python -m unittest .\tests\test_cli.py
-          python -m unittest .\tests\test_mongodb.py
-          python -m unittest .\tests\multipart.py
-          python -m unittest .\tests\panel_apis.py
-          python -m unittest .\tests\test_pantherdb.py
-          python -m unittest .\tests\test_request.py
-          python -m unittest .\tests\test_routing.py
-          python -m unittest .\tests\test_run.py
-          python -m unittest .\tests\test_simple_responses.py
-          python -m unittest .\tests\test_status.py
-          python -m unittest .\tests\test_utils.py
+        run: pytest tests
 
   tests-macos:
     name: Test MacOS Python${{ matrix.python-version }}
@@ -94,7 +80,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: python -m unittest tests/test_*.py
+        run: pytest tests
 
   coverage:
     name: Coverage
