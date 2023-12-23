@@ -1,15 +1,18 @@
+import logging
 import time
 from abc import abstractmethod
-import logging
 from typing import Literal
 
-from jose import JWTError, jwt
-
+from panther.cli.utils import import_error
 from panther.configs import config
 from panther.db.models import BaseUser, IDType, Model
 from panther.exceptions import AuthenticationException
 from panther.request import Request
 
+try:
+    from jose import JWTError, jwt
+except ModuleNotFoundError as e:
+    import_error(e, package='python-jose')
 
 logger = logging.getLogger('panther')
 

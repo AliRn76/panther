@@ -1,10 +1,17 @@
 from typing import TYPE_CHECKING
 
 from pantherdb import PantherDB
-from redis import Redis
 
 from panther.configs import config
 from panther.utils import Singleton
+
+try:
+    from redis import Redis
+except ModuleNotFoundError:
+    # This 'Redis' is not going to be used,
+    #   If he really wants to use redis,
+    #   we are going to force him to install it in 'panther.middlewares.redis'
+    Redis = type('Redis')
 
 if TYPE_CHECKING:
     from pymongo.database import Database
