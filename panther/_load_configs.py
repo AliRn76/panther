@@ -28,6 +28,7 @@ __all__ = (
     'load_jwt_config',
     'load_startup',
     'load_shutdown',
+    'load_auto_reformat',
     'collect_all_models',
     'load_urls',
     'load_panel_urls',
@@ -131,6 +132,10 @@ def load_startup(configs: dict, /) -> Callable:
 
 def load_shutdown(configs: dict, /) -> Callable:
     return configs.get('SHUTDOWN') and import_class(configs['SHUTDOWN'])
+
+
+def load_auto_reformat(configs: dict, /) -> bool:
+    return configs.get('AUTO_REFORMAT', config['auto_reformat'])
 
 
 def collect_all_models() -> list[dict]:
