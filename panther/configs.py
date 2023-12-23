@@ -49,6 +49,7 @@ class Config(TypedDict):
     has_ws: bool
     startup: Callable
     shutdown: Callable
+    auto_reformat: bool
 
 
 config: Config = {
@@ -72,4 +73,5 @@ config: Config = {
     'has_ws': False,
     'startup': None,
     'shutdown': None,
+    'auto_reformat': False,
 }

@@ -9,6 +9,7 @@ from panther.response import Response
 async def test(*args, **kwargs):
     return Response(data={'detail': 'this is for test'})
 
+
 urls = {
     'none-class/': ReturnNone,
     'none/': return_none,

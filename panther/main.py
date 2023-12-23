@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import subprocess
 import sys
 import types
 from collections.abc import Callable
@@ -44,6 +45,9 @@ class Panther:
                 logger.error(clean_traceback_message(e))
             sys.exit()
 
+        # Reformat Code
+        self.reformat_code()
+
         # Monitoring
         self.monitoring = Monitoring(is_active=config['monitoring'])
 
@@ -77,6 +81,7 @@ class Panther:
         config['jwt_config'] = load_jwt_config(self._configs_module)
         config['startup'] = load_startup(self._configs_module)
         config['shutdown'] = load_shutdown(self._configs_module)
+        config['auto_reformat'] = load_auto_reformat(self._configs_module)
         config['models'] = collect_all_models()
 
         # Initialize Background Tasks
@@ -112,6 +117,12 @@ class Panther:
                     break
             else:
                 self.ws_redis_connection = None
+
+    @classmethod
+    def reformat_code(cls):
+        if config['auto_reformat']:
+            subprocess.run(['ruff', 'format', config['base_dir']])
+            subprocess.run(['ruff', 'check', '--select', 'I', '--fix', config['base_dir']])
 
     async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
         """

@@ -5,23 +5,22 @@ from datetime import timedelta
 from app.models import User
 from app.serializers import (
     FileSerializer,
+    ImageSerializer,
     UserInputSerializer,
     UserOutputSerializer,
     UserUpdateSerializer,
-    ImageSerializer,
 )
 from core.permissions import UserPermission
 
 from panther import status
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
-from panther.background_tasks import background_tasks, BackgroundTask
+from panther.background_tasks import BackgroundTask, background_tasks
 from panther.db.connection import redis
 from panther.request import Request
 from panther.response import HTMLResponse, Response
 from panther.throttling import Throttling
 from panther.websocket import close_websocket_connection, send_message_to_websocket
-
 
 logger = logging.getLogger('panther')
 
@@ -173,10 +172,9 @@ async def run_background_tasks_api():
     async def hello(name: str):
         time.sleep(5)
         print(f'Done {name}')
+
     task = (
-        BackgroundTask(hello, 'ali1')
-        .interval(2)
-        .every_seconds(2)
+        BackgroundTask(hello, 'ali1').interval(2).every_seconds(2)
         # .on_time(datetime.time(hour=19, minute=18, second=10))
     )
     background_tasks.add_task(task)
