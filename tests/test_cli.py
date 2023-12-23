@@ -54,7 +54,7 @@ class TestCLI(TestCase):
     def test_create_not_enough_arguments(self):
         with self.assertLogs(level='ERROR') as captured:
             create([])
-        assert len(captured.records), 1
+        assert len(captured.records) == 1
         assert captured.records[0].getMessage() == 'Not Enough Arguments.'
 
         with self.assertLogs(level='INFO') as captured:
@@ -68,7 +68,7 @@ class TestCLI(TestCase):
         os.mkdir(project_path)
         with self.assertLogs(level='ERROR') as captured:
             create(['test_project', project_path])
-        assert len(captured.records), 1
+        assert len(captured.records) == 1
         assert captured.records[0].getMessage() == f'"{project_path}" Directory Already Exists.'
 
         with self.assertLogs(level='INFO') as captured:
