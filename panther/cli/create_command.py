@@ -76,7 +76,7 @@ class CreateProject:
             # },
             # {
             #     'field': 'auto_reformat',
-            #     'message': 'Do You Want To Use Auto Reformat (default is n)',
+            #     'message': 'Do You Want To Use Auto Reformat',
             #     'is_boolean': True,
             # },
         ]
@@ -97,14 +97,6 @@ class CreateProject:
             if len(args) > 1:
                 self.base_directory = args[1]
 
-        print(
-            self.database_encryption,
-            self.authentication,
-            self.monitoring,
-            self.log_queries,
-            self.auto_reformat,
-            self.single_file,
-        )
         template = SingleFileTemplate if self.single_file else Template
 
         # Create Base Directory
@@ -135,28 +127,32 @@ class CreateProject:
         self.progress(0)
 
         for i, question in enumerate(self.questions):
+            # Clean Question Data
+            default = getattr(self, question['field'])
+            is_boolean = question.get('is_boolean', False)
+            clean_output = str  # Do Nothing
+            if is_boolean:
+                question['message'] += f' (default is {self._to_str(default)})'
+                question['validation_func'] = self._is_boolean
+                question['error_message'] = "Invalid Choice, '{}' not in ['y', 'n']"
+                clean_output = self._to_boolean
+
+            # Check Question Condition
             if 'condition' in question and eval(question.pop('condition')) is False:
                 print(flush=True)
+            # Ask Question
             else:
-                clean_output = self._to_boolean if question.get('is_boolean', False) else str
                 setattr(self, question['field'], clean_output(self.ask(**question)))
             self.progress(i + 1)
 
     def ask(
             self,
-            field: str,
             message: str,
-            error_message: str = 'Invalid Input',
-            validation_func: Callable = str,
-            is_boolean: bool = False,
+            default: str | bool,
+            error_message: str,
+            validation_func: Callable,
             show_validation_error: bool = False,
     ) -> str:
-        default = getattr(self, field)
-        if is_boolean:
-            message += f' (default is {self._to_str(default)})'
-            validation_func = self._is_boolean
-            error_message = "Invalid Choice, '{}' not in ['y', 'n']"
-
         value = Prompt.ask(message, console=self.input_console).lower() or default
         while not validation_func(value):
             [print(end=self.REMOVE_LAST_LINE, flush=True) for _ in range(message.count('\n') + 1)]
