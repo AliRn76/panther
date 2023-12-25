@@ -40,7 +40,7 @@ class TestCLI(TestCase):
 │   Log Queries: True                                      │
 │   Background Tasks: False                                │
 │   Websocket: False                                       │
-│   Base directory: /home/ali/dev/panther                  │
+│   Base directory: /home/runner/work/panther/panther      │
 │ * Run "panther monitor" in another session for Monitoring│
 ╰──────────────────────────────────────────────────────────╯"""
         with patch('sys.stdout', new=StringIO()) as fake_out2:
