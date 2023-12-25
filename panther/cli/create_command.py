@@ -98,9 +98,8 @@ def load_animation() -> None:
             '■■■■■■■■■■■',
         ]
 
-    for i in range(len(animation)):
+    for state in animation:
         time.sleep(0.2)
-        sys.stdout.write('\r' + 'Creating Your Project: ' + animation[i % len(animation)])
-        sys.stdout.flush()
+        print(f'Creating Your Project: {state}', end='\r', flush=True)
 
     print('\n')
