@@ -8,6 +8,7 @@ from rich.prompt import Prompt
 
 from panther import version
 from panther.cli.template import Template, SingleFileTemplate
+from panther.cli.utils import cli_error
 
 
 class CreateProject:
@@ -97,6 +98,10 @@ class CreateProject:
             if len(args) > 1:
                 self.base_directory = args[1]
 
+            existence = self._check_all_directories(self.base_directory, return_error=True)
+            if existence is not True:
+                return cli_error(f'"{existence}" Directory Already Exists.')
+
         template = SingleFileTemplate if self.single_file else Template
 
         # Create Base Directory
@@ -128,11 +133,12 @@ class CreateProject:
 
         for i, question in enumerate(self.questions):
             # Clean Question Data
-            default = getattr(self, question['field'])
-            is_boolean = question.get('is_boolean', False)
+            field_name = question.pop('field')
+            question['default'] = getattr(self, field_name)
+            is_boolean = question.pop('is_boolean', False)
             clean_output = str  # Do Nothing
             if is_boolean:
-                question['message'] += f' (default is {self._to_str(default)})'
+                question['message'] += f' (default is {self._to_str(question["default"])})'
                 question['validation_func'] = self._is_boolean
                 question['error_message'] = "Invalid Choice, '{}' not in ['y', 'n']"
                 clean_output = self._to_boolean
@@ -142,7 +148,7 @@ class CreateProject:
                 print(flush=True)
             # Ask Question
             else:
-                setattr(self, question['field'], clean_output(self.ask(**question)))
+                setattr(self, field_name, clean_output(self.ask(**question)))
             self.progress(i + 1)
 
     def ask(
