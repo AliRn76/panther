@@ -23,11 +23,12 @@ class TestCLI(TestCase):
     def tearDownClass(cls) -> None:
         sys.path.pop()
 
-    def test_init(self):
+    def test_print_info(self):
         with patch('sys.stdout', new=StringIO()) as fake_out1:
             app = Panther(__name__)
 
-        expected_value = r"""╭──────────────────────────────────────────────────────────╮
+        base_dir = '{0:<39}'.format(str(Path(__name__).absolute().parent))
+        expected_value = fr"""╭──────────────────────────────────────────────────────────╮
 │    ____                 __    __                         │
 │   /\  _`\              /\ \__/\ \                        │
 │   \ \ \L\ \ __      ___\ \ ,_\ \ \___      __   _ __     │
@@ -40,12 +41,11 @@ class TestCLI(TestCase):
 │   Log Queries: True                                      │
 │   Background Tasks: False                                │
 │   Websocket: False                                       │
-│   Base directory: /home/runner/work/panther/panther      │
+│   Base directory: {base_dir}│
 │ * Run "panther monitor" in another session for Monitoring│
 ╰──────────────────────────────────────────────────────────╯"""
         with patch('sys.stdout', new=StringIO()) as fake_out2:
             rprint(expected_value)
-
         assert fake_out1.getvalue() == fake_out2.getvalue()
 
     @patch('builtins.input', lambda: 'n')
