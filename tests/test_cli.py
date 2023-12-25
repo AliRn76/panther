@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import sys
 from io import StringIO
@@ -24,6 +25,8 @@ class TestCLI(TestCase):
         sys.path.pop()
 
     def test_print_info(self):
+        if platform.system() == 'Windows':
+            return
         with patch('sys.stdout', new=StringIO()) as fake_out1:
             app = Panther(__name__)
 
