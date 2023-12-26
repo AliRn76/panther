@@ -64,27 +64,7 @@ from panther.utils import load_env
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-SECRET_KEY = env['SECRET_KEY']
-
-# More Info: Https://PantherPy.GitHub.io/middlewares/
-MIDDLEWARES = [
-    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/database.pdb'}),
-]
-
-# More Info: https://PantherPy.GitHub.io/configs/#user_model
-USER_MODEL = 'panther.db.models.BaseUser'
-
-# More Info: https://PantherPy.GitHub.io/authentications/
-AUTHENTICATION = 'panther.authentications.JWTAuthentication'
-
-# More Info: https://PantherPy.GitHub.io/monitoring/
-MONITORING = True
-
-# More Info: https://PantherPy.GitHub.io/log_queries/
-LOG_QUERIES = True
-
-# More Info: https://PantherPy.GitHub.io/throttling/
-THROTTLING = Throttling(rate=60, duration=timedelta(minutes=1))
+SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}
 
 # More Info: https://PantherPy.GitHub.io/urls/
 URLs = 'core.urls.url_routing'
@@ -118,7 +98,7 @@ logs/
 requirements = """panther==%s
 """ % version()
 
-Template = {
+TEMPLATE = {
     'app': {
         'apis.py': apis_py,
         'models.py': models_py,
@@ -152,24 +132,7 @@ from panther.utils import load_env
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-SECRET_KEY = env['SECRET_KEY']
-
-# More Info: Https://PantherPy.GitHub.io/middlewares/
-MIDDLEWARES = [
-    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/database.pdb'}),
-]
-
-# More Info: https://PantherPy.GitHub.io/configs/#user_model
-USER_MODEL = 'panther.db.models.BaseUser'
-
-# More Info: https://PantherPy.GitHub.io/authentications/
-AUTHENTICATION = 'panther.authentications.JWTAuthentication'
-
-# More Info: https://PantherPy.GitHub.io/monitoring/
-MONITORING = True
-
-# More Info: https://PantherPy.GitHub.io/log_queries/
-LOG_QUERIES = True
+SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}
 
 InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
 
@@ -189,7 +152,7 @@ async def info_api(request: Request):
         'user_agent': request.headers.user_agent,
     }
     return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
-    
+
 
 url_routing = {
     '/': hello_world_api,
@@ -198,9 +161,48 @@ url_routing = {
 app = Panther(__name__, configs=__name__, urls=url_routing)
 """
 
-SingleFileTemplate = {
+SINGLE_FILE_TEMPLATE = {
     'main.py': single_main_py,
     '.env': env,
     '.gitignore': git_ignore,
     'requirements.txt': requirements,
 }
+
+DATABASE_PANTHERDB_PART = """
+# More Info: Https://PantherPy.GitHub.io/middlewares/
+
+MIDDLEWARES = [
+    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/database.pdb'}),
+]"""
+
+DATABASE_MONGODB_PART = """
+# More Info: Https://PantherPy.GitHub.io/middlewares/
+
+MIDDLEWARES = [
+    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'mongodb://127.0.0.1:27017/{PROJECT_NAME}'}),
+]"""
+
+USER_MODEL_PART = """
+
+# More Info: https://PantherPy.GitHub.io/configs/#user_model
+USER_MODEL = 'panther.db.models.BaseUser'"""
+
+AUTHENTICATION_PART = """
+
+# More Info: https://PantherPy.GitHub.io/authentications/
+AUTHENTICATION = 'panther.authentications.JWTAuthentication'"""
+
+MONITORING_PART = """
+
+# More Info: https://PantherPy.GitHub.io/monitoring/
+MONITORING = True"""
+
+LOG_QUERIES_PART = """
+
+# More Info: https://PantherPy.GitHub.io/log_queries/
+LOG_QUERIES = True"""
+
+AUTO_REFORMAT_PART = """
+
+# More Info: https://pantherpy.github.io/configs/#auto_reformat/
+AUTO_REFORMAT = True"""

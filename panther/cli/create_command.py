@@ -7,7 +7,17 @@ from rich.progress import ProgressBar
 from rich.prompt import Prompt
 
 from panther import version
-from panther.cli.template import Template, SingleFileTemplate
+from panther.cli.template import (
+    TEMPLATE,
+    SINGLE_FILE_TEMPLATE,
+    AUTHENTICATION_PART,
+    MONITORING_PART,
+    LOG_QUERIES_PART,
+    AUTO_REFORMAT_PART,
+    DATABASE_PANTHERDB_PART,
+    DATABASE_MONGODB_PART,
+    USER_MODEL_PART,
+)
 from panther.cli.utils import cli_error
 
 
@@ -48,38 +58,38 @@ class CreateProject:
                 'message': 'Do You Want To Work With Single File Structure',
                 'is_boolean': True,
             },
-            # {
-            #     'field': 'database',
-            #     'message': '    0: PantherDB\n    1: MongoDB\n    2: No Database\nChoose Your Database (default is 0)',
-            #     'validation_func': lambda x: x in ['0', '1', '2'],
-            #     'error_message': "Invalid Choice, '{}' not in ['0', '1', '2']",
-            # },
+            {
+                'field': 'database',
+                'message': '    0: PantherDB\n    1: MongoDB\n    2: No Database\nChoose Your Database (default is 0)',
+                'validation_func': lambda x: x in ['0', '1', '2'],
+                'error_message': "Invalid Choice, '{}' not in ['0', '1', '2']",
+            },
             # {
             #     'field': 'database_encryption',
             #     'message': 'Do You Want Encryption For Your Database',
             #     'is_boolean': True,
             #     'condition': "self.database == '0'"
             # },
-            # {
-            #     'field': 'authentication',
-            #     'message': 'Do You Want To Use JWT Authentication',
-            #     'is_boolean': True,
-            # },
-            # {
-            #     'field': 'monitoring',
-            #     'message': 'Do You Want To Use Built-in Monitoring',
-            #     'is_boolean': True,
-            # },
-            # {
-            #     'field': 'log_queries',
-            #     'message': 'Do You Want To Log Queries',
-            #     'is_boolean': True,
-            # },
-            # {
-            #     'field': 'auto_reformat',
-            #     'message': 'Do You Want To Use Auto Reformat',
-            #     'is_boolean': True,
-            # },
+            {
+                'field': 'authentication',
+                'message': 'Do You Want To Use JWT Authentication',
+                'is_boolean': True,
+            },
+            {
+                'field': 'monitoring',
+                'message': 'Do You Want To Use Built-in Monitoring',
+                'is_boolean': True,
+            },
+            {
+                'field': 'log_queries',
+                'message': 'Do You Want To Log Queries',
+                'is_boolean': True,
+            },
+            {
+                'field': 'auto_reformat',
+                'message': 'Do You Want To Use Auto Reformat',
+                'is_boolean': True,
+            },
         ]
         self.progress_len = len(self.questions)
         self.bar = ProgressBar(total=self.progress_len, width=40)
@@ -102,7 +112,7 @@ class CreateProject:
             if existence is not True:
                 return cli_error(f'"{existence}" Directory Already Exists.')
 
-        template = SingleFileTemplate if self.single_file else Template
+        template = SINGLE_FILE_TEMPLATE if self.single_file else TEMPLATE
 
         # Create Base Directory
         if self.base_directory != '.':
@@ -123,6 +133,25 @@ class CreateProject:
                     self._create_file(path=inner_path, data=sub_data)
 
     def _create_file(self, *, path: str, data: str):
+        user_model_part = USER_MODEL_PART if self.authentication else ''
+        authentication_part = AUTHENTICATION_PART if self.authentication else ''
+        monitoring_part = MONITORING_PART if self.monitoring else ''
+        log_queries_part = LOG_QUERIES_PART if self.log_queries else ''
+        auto_reformat_part = AUTO_REFORMAT_PART if self.auto_reformat else ''
+        if self.database == '0':
+            database_part = DATABASE_PANTHERDB_PART
+        elif self.database == '1':
+            database_part = DATABASE_MONGODB_PART
+        else:
+            database_part = ''
+
+        data = data.replace('{USER_MODEL}', user_model_part)
+        data = data.replace('{AUTHENTICATION}', authentication_part)
+        data = data.replace('{MONITORING}', monitoring_part)
+        data = data.replace('{LOG_QUERIES}', log_queries_part)
+        data = data.replace('{AUTO_REFORMAT}', auto_reformat_part)
+        data = data.replace('{DATABASE}', database_part)
+
         data = data.replace('{PROJECT_NAME}', self.project_name.lower())
         data = data.replace('{PANTHER_VERSION}', version())
         with Path(path).open('x') as file:
@@ -197,7 +226,7 @@ class CreateProject:
         if base_directory != '.' and Path(base_directory).is_dir():
             return base_directory if return_error else False
 
-        for file_name, data in Template.items():
+        for file_name, data in TEMPLATE.items():
             sub_directory = f'{base_directory}/{file_name}'
             if Path(sub_directory).exists():
                 return sub_directory if return_error else False

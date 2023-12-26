@@ -1,17 +1,39 @@
 import os
-import platform
 import shutil
 import sys
 from io import StringIO
 from pathlib import Path
-from unittest import TestCase
+from unittest import TestCase, skipIf
 from unittest.mock import patch
 
 from rich import print as rprint
 
 from panther import Panther
 from panther.cli.create_command import CreateProject
-from panther.cli.template import Template, SingleFileTemplate
+from panther.cli.template import TEMPLATE, SINGLE_FILE_TEMPLATE
+
+interactive_cli_1_index = 0
+interactive_cli_2_index = 0
+
+
+def interactive_cli_1_mock_responses(index=None):
+    global interactive_cli_1_index
+    if index is None:
+        index = interactive_cli_1_index
+    responses = ['project1', 'project1_dir', 'n', '0', 'y', 'y', 'y', 'y']
+    response = responses[index]
+    interactive_cli_1_index += 1
+    return response
+
+
+def interactive_cli_2_mock_responses(index=None):
+    global interactive_cli_2_index
+    if index is None:
+        index = interactive_cli_2_index
+    responses = ['project2', 'project2_dir', 'y', '0', 'y', 'y', 'y', 'y']
+    response = responses[index]
+    interactive_cli_2_index += 1
+    return response
 
 
 class TestCLI(TestCase):
@@ -24,9 +46,8 @@ class TestCLI(TestCase):
     def tearDownClass(cls) -> None:
         sys.path.pop()
 
+    @skipIf(sys.platform.startswith('win'), 'Not supported in windows')
     def test_print_info(self):
-        if platform.system() == 'Windows':
-            return
         with patch('sys.stdout', new=StringIO()) as fake_out1:
             app = Panther(__name__)
 
@@ -46,17 +67,19 @@ class TestCLI(TestCase):
 │   Websocket: False                                       │
 │   Base directory: {base_dir}│
 │ * Run "panther monitor" in another session for Monitoring│
+│ * You may want to install `uvloop` for better performance│
+│   `pip install uvloop`                                   │
 ╰──────────────────────────────────────────────────────────╯"""
         with patch('sys.stdout', new=StringIO()) as fake_out2:
             rprint(expected_value)
         assert fake_out1.getvalue() == fake_out2.getvalue()
 
-    @patch('builtins.input', lambda: 'n')
+    @patch('builtins.input', interactive_cli_1_mock_responses)
     def test_create_normal_template_with_interactive_cli(self):
         CreateProject().create([])
 
-        project_path = 'n'
-        for file_name, data in SingleFileTemplate.items():
+        project_path = interactive_cli_1_mock_responses(1)
+        for file_name, data in SINGLE_FILE_TEMPLATE.items():
             sub_directory = f'{project_path}/{file_name}'
             assert Path(sub_directory).exists()
 
@@ -66,12 +89,12 @@ class TestCLI(TestCase):
                     assert Path(file_path).exists()
         shutil.rmtree(project_path)
 
-    @patch('builtins.input', lambda: 'y')
+    @patch('builtins.input', interactive_cli_2_mock_responses)
     def test_create_single_file_template_with_interactive_cli(self):
         CreateProject().create([])
 
-        project_path = 'y'
-        for file_name, data in SingleFileTemplate.items():
+        project_path = interactive_cli_2_mock_responses(1)
+        for file_name, data in SINGLE_FILE_TEMPLATE.items():
             sub_directory = f'{project_path}/{file_name}'
             assert Path(sub_directory).exists()
 
@@ -96,7 +119,7 @@ class TestCLI(TestCase):
         project_path = 'test-project-directory'
         CreateProject().create(['test_project', project_path])
 
-        for file_name, data in Template.items():
+        for file_name, data in TEMPLATE.items():
             sub_directory = f'{project_path}/{file_name}'
             assert Path(sub_directory).exists()
 

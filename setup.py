@@ -52,7 +52,6 @@ setup(
         'redis==5.0.1',
         'rich~=13.5',
         'uvicorn~=0.23',
-        'uvloop; platform_system != "Windows"',
         'watchfiles~=0.19',
         'python-jose~=3.3',
     ],
