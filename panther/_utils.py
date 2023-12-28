@@ -2,6 +2,8 @@ import asyncio
 import importlib
 import logging
 import re
+import subprocess
+import types
 from collections.abc import Callable
 from traceback import TracebackException
 from uuid import uuid4
@@ -9,8 +11,8 @@ from uuid import uuid4
 import orjson as json
 
 from panther import status
+from panther.exceptions import PantherException
 from panther.file_handler import File
-
 
 logger = logging.getLogger('panther')
 
@@ -150,3 +152,29 @@ def clean_traceback_message(exception: Exception) -> str:
             tb.stack.remove(t)
     _traceback = list(tb.format(chain=False))
     return exception if len(_traceback) == 1 else f'{exception}\n' + ''.join(_traceback)
+
+
+def reformat_code(base_dir):
+    try:
+        subprocess.run(['ruff', 'format', base_dir])
+        subprocess.run(['ruff', 'check', '--select', 'I', '--fix', base_dir])
+    except FileNotFoundError:
+        raise PantherException("Module 'ruff' not found, Hint: `pip install ruff`")
+
+
+def check_function_type_endpoint(endpoint: types.FunctionType) -> Callable:
+    # Function Doesn't Have @API Decorator
+    if not hasattr(endpoint, '__wrapped__'):
+        logger.critical(f'You may have forgotten to use @API() on the {endpoint.__name__}()')
+        raise TypeError
+    return endpoint
+
+
+def check_class_type_endpoint(endpoint: Callable) -> Callable:
+    from panther.app import GenericAPI
+
+    if not issubclass(endpoint, GenericAPI):
+        logger.critical(f'You may have forgotten to inherit from GenericAPI on the {endpoint.__name__}()')
+        raise TypeError
+
+    return endpoint.call_method
