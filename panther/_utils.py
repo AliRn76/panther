@@ -16,7 +16,7 @@ logger = logging.getLogger('panther')
 
 
 async def _http_response_start(send: Callable, /, headers: dict, status_code: int) -> None:
-    bytes_headers = [[k.encode(), v.encode()] for k, v in (headers or {}).items()]
+    bytes_headers = [[k.encode(), str(v).encode()] for k, v in (headers or {}).items()]
     await send({
         'type': 'http.response.start',
         'status': status_code,
