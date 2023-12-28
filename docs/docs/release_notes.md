@@ -1,3 +1,6 @@
+### 3.3.2
+- Add `content-length` to response header
+
 ### 3.3.1
 - Check `ruff` installation on startup
 - Fix an issue in `routing`
