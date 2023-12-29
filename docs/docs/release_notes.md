@@ -1,3 +1,6 @@
+### 3.5.0
+- Add `WebsocketTestClient`
+
 ### 3.4.0
 - Support `WebsocketMiddleware`
 
