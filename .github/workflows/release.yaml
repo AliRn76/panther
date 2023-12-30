@@ -30,7 +30,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: pytest tests
+        run: pytest -m "not mongodb"  tests
 
   tests-windows:
     name: Test Windows Python${{ matrix.python-version }}
@@ -55,7 +55,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: pytest tests
+        run: pytest -m "not mongodb"  tests
 
   tests-macos:
     name: Test MacOS Python${{ matrix.python-version }}
@@ -80,12 +80,14 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: pytest tests
+        run: pytest -m "not mongodb"  tests
 
-  coverage:
-    name: Coverage
+  tests-mongodb:
+    name: Test MongoDB
     runs-on: ubuntu-latest
-    needs: [tests-linux, tests-macos, tests-windows]
+    strategy:
+      matrix:
+        mongodb-version: ['4.2', '4.4', '5.0', '6.0']
 
     steps:
       - name: Checkout source
@@ -100,6 +102,48 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Install pymongo
+        run: |
+          pip uninstall -y bson
+          pip install pymongo
+
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.10.0
+        with:
+          mongodb-version: ${{ matrix.mongodb-version }}
+
+      - name: Run Tests
+        run: pytest -m "mongodb" tests
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    needs: [tests-linux, tests-mongodb, tests-macos, tests-windows]
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install pymongo
+        run: |
+          pip uninstall -y bson
+          pip install pymongo
+
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.10.0
+        with:
+          mongodb-version: '4.4'
 
       - name: Run Coverage Tests
         run: coverage run -m unittest tests/test_*.py

@@ -1,11 +1,11 @@
 import asyncio
 import random
-import sys
 from pathlib import Path
-from unittest import TestCase, skipUnless
+from unittest import TestCase
 
 import bson
 import faker
+import pytest
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, field_validator
 
@@ -517,7 +517,7 @@ class TestPantherDB(_BaseDatabaseTestCase, TestCase):
             asyncio.run(middleware.after(response=None))
 
 
-@skipUnless(sys.platform.startswith('linux'), 'Only Run in Linux')
+@pytest.mark.mongodb
 class TestMongoDB(_BaseDatabaseTestCase, TestCase):
     DB_NAME = 'test.pdb'
 
