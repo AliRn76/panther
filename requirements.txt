@@ -2,4 +2,3 @@
 faker
 coverage
 pytest
-pymongo

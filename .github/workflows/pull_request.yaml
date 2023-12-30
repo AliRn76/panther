@@ -23,6 +23,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install pymongo
+        run: |
+          pip uninstall bson
+          pip install pymongo
+
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.10.0
         with:
