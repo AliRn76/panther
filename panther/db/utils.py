@@ -13,11 +13,6 @@ logger = logging.getLogger('query')
 
 def log_query(func):
     def log(*args, **kwargs):
-        # Check Database Connection
-        if config['db_engine'] == '':
-            msg = "You don't have active database connection, Check your middlewares"
-            raise NotImplementedError(msg)
-
         if config['log_queries'] is False:
             return func(*args, **kwargs)
         start = perf_counter()

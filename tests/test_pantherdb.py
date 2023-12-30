@@ -45,11 +45,11 @@ class TestPantherDB(TestCase):
         Panther(__name__, configs=__name__, urls={})
 
     def setUp(self) -> None:
-        for middleware in config['middlewares']:
+        for middleware in config['http_middlewares']:
             asyncio.run(middleware.before(request=None))
 
     def tearDown(self) -> None:
-        for middleware in config['reversed_middlewares']:
+        for middleware in config['reversed_http_middlewares']:
             asyncio.run(middleware.after(response=None))
         Path(DB_PATH).unlink()
 

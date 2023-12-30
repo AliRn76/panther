@@ -43,7 +43,11 @@ class JWTAuthentication(BaseAuthentication):
             raise cls.exception(msg) from None
 
         if isinstance(auth, str):
-            auth = auth.encode(JWTAuthentication.HTTP_HEADER_ENCODING)
+            try:
+                auth = auth.encode(JWTAuthentication.HTTP_HEADER_ENCODING)
+            except UnicodeEncodeError as e:
+                raise cls.exception(e) from None
+
         return auth
 
     @classmethod
@@ -123,6 +127,6 @@ class JWTAuthentication(BaseAuthentication):
         return cls.encode_jwt(user_id=user_id)
 
     @staticmethod
-    def exception(message: str | JWTError, /) -> type[AuthenticationException]:
+    def exception(message: str | JWTError | UnicodeEncodeError, /) -> type[AuthenticationException]:
         logger.error(f'JWT Authentication Error: "{message}"')
         return AuthenticationException

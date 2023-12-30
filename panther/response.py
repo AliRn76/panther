@@ -84,6 +84,13 @@ class Response:
         msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'
         raise TypeError(msg)
 
+    def __str__(self):
+        if len(data := str(self.data)) > 30:
+            data = f'{data:.27}...'
+        return f'Response(status_code={self.status_code}, data={data})'
+
+    __repr__ = __str__
+
 
 class HTMLResponse(Response):
     content_type = 'text/html; charset=utf-8'

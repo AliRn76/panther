@@ -127,6 +127,8 @@ def load_jwt_config(configs: dict, /) -> JWTConfig | None:
     if getattr(config['authentication'], '__name__', None) == 'JWTAuthentication':
         user_config = configs.get('JWTConfig', {})
         if 'key' not in user_config:
+            if config['secret_key'] is None:
+                raise PantherException('"SECRET_KEY" is required when using "JWTAuthentication"')
             user_config['key'] = config['secret_key'].decode()
 
         return JWTConfig(**user_config)
