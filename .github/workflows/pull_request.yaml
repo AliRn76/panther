@@ -33,6 +33,9 @@ jobs:
         with:
           mongodb-version: '4.4'
 
+      - name: Remove Build Directory
+        run: rm -rf build/
+
       - name: Run Tests
         run: coverage run -m pytest tests
 
