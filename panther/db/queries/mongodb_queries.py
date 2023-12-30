@@ -86,4 +86,4 @@ class BaseMongoDBQuery:
         update_fields = {'$set': cls._merge(_data, kwargs)}
 
         result = db.session[cls.__name__].update_many(_filter, update_fields)
-        return result.updated_count
+        return result.modified_count
