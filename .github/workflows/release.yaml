@@ -83,7 +83,7 @@ jobs:
         run: pytest -m "not mongodb"  tests
 
   tests-mongodb:
-    name: Test MongoDB
+    name: Test MongoDB ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
