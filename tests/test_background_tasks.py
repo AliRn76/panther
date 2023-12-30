@@ -155,5 +155,3 @@ class TestBackgroundTasks(TestCase):
         time.sleep(3)
         self.assertEqual(len(numbers), 2)
 
-
-# TODO: Run tests for every_minutes(), every_hours(), every_days(), every_weeks(), at()

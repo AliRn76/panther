@@ -56,16 +56,10 @@ def check_all_directories(base_directory: str) -> str | None:
     if base_directory != '.' and Path(base_directory).is_dir():
         return base_directory
 
-    for file_name, data in Template.items():
+    for file_name, _ in Template.items():
         sub_directory = f'{base_directory}/{file_name}'
         if Path(sub_directory).exists():
             return sub_directory
-
-        if isinstance(data, dict):
-            for sub_file_name in data:
-                file_path = f'{sub_directory}/{sub_file_name}'
-                if Path(file_path).exists():
-                    return file_path
 
 
 def load_animation() -> None:
