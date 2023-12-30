@@ -25,7 +25,7 @@ jobs:
 
       - name: Install pymongo
         run: |
-          pip uninstall bson
+          pip uninstall -y bson
           pip install pymongo
 
       - name: Start MongoDB
