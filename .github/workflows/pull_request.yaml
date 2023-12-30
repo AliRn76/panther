@@ -36,7 +36,7 @@ jobs:
       - name: Run Tests
         run: coverage run -m pytest tests
 
-      - name: Print Coverage
+      - name: Show Coverage
         run: coverage report
 
   tests-windows:

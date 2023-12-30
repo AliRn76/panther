@@ -1,7 +1,8 @@
 import asyncio
 import random
+import sys
 from pathlib import Path
-from unittest import TestCase
+from unittest import TestCase, skipUnless
 
 import bson
 import faker
@@ -516,6 +517,7 @@ class TestPantherDB(_BaseDatabaseTestCase, TestCase):
             asyncio.run(middleware.after(response=None))
 
 
+@skipUnless(sys.platform.startswith('linux'), 'Only Run in Linux')
 class TestMongoDB(_BaseDatabaseTestCase, TestCase):
     DB_NAME = 'test.pdb'
 
