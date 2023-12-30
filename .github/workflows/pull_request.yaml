@@ -34,7 +34,10 @@ jobs:
           mongodb-version: '4.4'
 
       - name: Run Tests
-        run: pytest tests
+        run: coverage run -m pytest tests
+
+      - name: Print Coverage
+        run: coverage report
 
   tests-windows:
     name: Test Windows
