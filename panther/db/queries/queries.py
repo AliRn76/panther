@@ -216,6 +216,17 @@ class Query(BaseQuery):
 
     # # # # # Other # # # # #
     @classmethod
+    def all(cls) -> list[Self]:
+        """
+        Example:
+        -------
+            >>> from example.app.models import User
+            >>> User.all()
+        * Alias of find() without args
+        """
+        return cls.find()
+
+    @classmethod
     def find_or_insert(cls, **kwargs) -> tuple[bool, any]:
         """
         Example:
@@ -245,7 +256,7 @@ class Query(BaseQuery):
 
     @check_connection
     @log_query
-    def save(self, **kwargs) -> None:
+    def save(self) -> None:
         """
         Example:
         -------

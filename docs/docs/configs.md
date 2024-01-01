@@ -100,3 +100,15 @@ It should be dotted address of your `shutdown` function
 this function can be `sync` or `async`
 
 _Example:_ `URLS = 'core.configs.shutdown'`
+
+---
+### [AUTO_REFORMAT](https://pantherpy.github.io/auto_reformat)
+> <b>Type:</b> `bool` (<b>Default:</b> `False`)
+
+It will reformat your code on every reload (on every change if you run the project with `--reload`) 
+
+You may want to write your custom `ruff.toml` in root of your project.
+
+Reference: [https://docs.astral.sh/ruff/formatter/](https://docs.astral.sh/ruff/formatter/)
+
+_Example:_ `AUTO_REFORMAT = True`

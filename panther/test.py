@@ -6,7 +6,7 @@ import orjson as json
 
 from panther.response import Response
 
-__all__ = ('APIClient',)
+__all__ = ('APIClient', 'WebsocketClient')
 
 
 class RequestClient:
@@ -30,15 +30,15 @@ class RequestClient:
             self,
             path: str,
             method: Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-            payload: dict | None,
+            payload: bytes | dict | None,
             headers: dict,
             query_params: dict,
     ) -> Response:
-        headers = [(k.encode(), v.encode()) for k, v in headers.items()]
+        headers = [(k.encode(), str(v).encode()) for k, v in headers.items()]
         if not path.startswith('/'):
             path = f'/{path}'
 
-        self.payload = json.dumps(payload)
+        self.payload = payload if isinstance(payload, bytes) else json.dumps(payload)
         query_params = '&'.join(f'{k}={v}' for k, v in query_params.items())
         scope = {
             'type': 'http',
@@ -101,10 +101,10 @@ class APIClient:
     def post(
             self,
             path: str,
-            payload: dict | None = None,
+            payload: bytes | dict | None = None,
             headers: dict | None = None,
             query_params: dict | None = None,
-            content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
+            content_type: str = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
         return self._send_request(
@@ -118,7 +118,7 @@ class APIClient:
     def put(
             self,
             path: str,
-            payload: dict | None = None,
+            payload: bytes | dict | None = None,
             headers: dict | None = None,
             query_params: dict | None = None,
             content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
@@ -135,7 +135,7 @@ class APIClient:
     def patch(
             self,
             path: str,
-            payload: dict | None = None,
+            payload: bytes | dict | None = None,
             headers: dict | None = None,
             query_params: dict | None = None,
             content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
@@ -162,3 +162,51 @@ class APIClient:
             headers=headers or {},
             query_params=query_params or {},
         )
+
+
+class WebsocketClient:
+    def __init__(self, app: Callable):
+        self.app = app
+        self.responses = []
+
+    async def send(self, data: dict):
+        self.responses.append(data)
+
+    async def receive(self):
+        return {
+            'type': 'websocket.connect'
+        }
+
+    def connect(
+            self,
+            path: str,
+            headers: dict | None = None,
+            query_params: dict | None = None,
+    ):
+        headers = [(k.encode(), str(v).encode()) for k, v in (headers or {}).items()]
+        if not path.startswith('/'):
+            path = f'/{path}'
+
+        query_params = '&'.join(f'{k}={v}' for k, v in (query_params or {}).items())
+        scope = {
+            'type': 'websocket',
+            'asgi': {'version': '3.0', 'spec_version': '2.3'},
+            'http_version': '1.1',
+            'scheme': 'ws',
+            'server': ('127.0.0.1', 8000),
+            'client': ('127.0.0.1', 55330),
+            'path': path,
+            'raw_path': path.encode(),
+            'query_string': query_params.encode(),
+            'headers': headers,
+            'subprotocols': [],
+            'state': {}
+        }
+        asyncio.run(
+            self.app(
+                scope=scope,
+                receive=self.receive,
+                send=self.send,
+            )
+        )
+        return self.responses

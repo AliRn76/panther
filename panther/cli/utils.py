@@ -1,41 +1,60 @@
 import logging
+import platform
+
 from rich import print as rprint
 
 
 logger = logging.getLogger('panther')
 
 
-logo = r"""│    ____                 __    __                         │
-│   /\  _`\              /\ \__/\ \                        │
-│   \ \ \L\ \ __      ___\ \ ,_\ \ \___      __   _ __     │
-│    \ \ ,__/'__`\  /' _ `\ \ \/\ \  _ `\  /'__`\/\`'__\   │
-│     \ \ \/\ \L\.\_/\ \/\ \ \ \_\ \ \ \ \/\  __/\ \ \/    │
-│      \ \_\ \__/.\_\ \_\ \_\ \__\\ \_\ \_\ \____\\ \_\    │
-│       \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/    │
-"""
+if platform.system() == 'Windows':
+    h = '|'
+    v = '_'
+    tr = ' '
+    tl = ' '
+    br = ' '
+    bl = ' '
+else:
+    h = '│'
+    v = '─'
+    tr = '╮'
+    tl = '╭'
+    br = '╯'
+    bl = '╰'
 
-help_message = f"""╭{58 * '─'}╮
-{logo}│{58 * ' '}│
-│                                                          │
-│   usage:                                                 │
-│       - panther create <project_name> <directory>        │
-│           Create project in <directory> default is `.`   │
-│                                                          │
-│       - panther run [--reload | --help]                  │
-│           Run your project with uvicorn                  │
-│                                                          │
-│       - panther shell [ bpython | ipython ]              │
-│           Run interactive python shell                   │
-│                                                          │
-│       - panther monitor                                  │
-│           Show the monitor :)                            │
-│                                                          │
-│       - panther version                                  │
-│           Print the current version of Panther           │
-│                                                          │
-│       - panther [--help | -h ]                           │
-│           Show this message and exit                     │
-╰{58 * '─'}╯
+top = f'{tl}{58 * v}{tr}'
+bottom = f'{bl}{58 * v}{br}'
+
+logo = rf"""{top}
+{h}    ____                 __    __                         {h}
+{h}   /\  _`\              /\ \__/\ \                        {h}
+{h}   \ \ \L\ \ __      ___\ \ ,_\ \ \___      __   _ __     {h}
+{h}    \ \ ,__/'__`\  /' _ `\ \ \/\ \  _ `\  /'__`\/\`'__\   {h}
+{h}     \ \ \/\ \L\.\_/\ \/\ \ \ \_\ \ \ \ \/\  __/\ \ \/    {h}
+{h}      \ \_\ \__/.\_\ \_\ \_\ \__\\ \_\ \_\ \____\\ \_\    {h}
+{h}       \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/    {h}
+{h}                                                          {h}"""
+
+help_message = f"""{logo}
+{h}   usage:                                                 {h}
+{h}       - panther create <project_name> <directory>        {h}
+{h}           Create project in <directory> default is `.`   {h}
+{h}                                                          {h}
+{h}       - panther run [--reload | --help]                  {h}
+{h}           Run your project with uvicorn                  {h}
+{h}                                                          {h}
+{h}       - panther shell [ bpython | ipython ]              {h}
+{h}           Run interactive python shell                   {h}
+{h}                                                          {h}
+{h}       - panther monitor                                  {h}
+{h}           Show the monitor :)                            {h}
+{h}                                                          {h}
+{h}       - panther version                                  {h}
+{h}           Print the current version of Panther           {h}
+{h}                                                          {h}
+{h}       - panther h | help | --help | -h                   {h}
+{h}           Show this message and exit                     {h}
+{bottom}
 """
 
 
@@ -87,20 +106,35 @@ def print_info(config: dict):
     if len(bd) > 39:
         bd = f'{bd[:36]}...'
 
+    # Monitoring
     if config['monitoring']:
-        monitor = '│ * Run "panther monitor" in another session for Monitoring│'
+        monitor = f'{h} * Run "panther monitor" in another session for Monitoring{h}\n'
     else:
-        monitor = f'│{58 * " "}│'
+        monitor = None
 
-    info_message = f"""
-╭{58 * '─'}╮
-{logo}│{58 * ' '}│
-│   Monitoring: {mo}                                  \t   │
-│   Log Queries: {lq}                                 \t   │
-│   Background Tasks: {bt}                            \t   │
-│   Websocket: {ws}                                   \t   │
-│   Base directory: {bd}│
-{monitor}
-╰{58 * '─'}╯
+    # Uvloop
+    if platform.system() != 'Windows':
+        try:
+            import uvloop
+            uvloop = None
+        except ImportError:
+            uvloop = (
+                f'{h} * You may want to install `uvloop` for better performance{h}\n'
+                f'{h}   `pip install uvloop`                                   {h}\n')
+    else:
+        uvloop = None
+
+    # Message
+    info_message = f"""{logo}
+{h}   Monitoring: {mo}                                  \t   {h}
+{h}   Log Queries: {lq}                                 \t   {h}
+{h}   Background Tasks: {bt}                            \t   {h}
+{h}   Websocket: {ws}                                   \t   {h}
+{h}   Base directory: {bd}{h}
 """
+    if monitor:
+        info_message += monitor
+    if uvloop:
+        info_message += uvloop
+    info_message += bottom
     rprint(info_message)

@@ -6,7 +6,7 @@ from panther.request import Request
 from panther.response import Response
 
 
-@API()
+@API(methods=['GET'])
 async def models_api():
     return [{
         'name': m['name'],
@@ -15,7 +15,7 @@ async def models_api():
     } for i, m in enumerate(config['models'])]
 
 
-@API()
+@API(methods=['GET', 'POST'])
 async def documents_api(request: Request, index: int):
     model = config['models'][index]['class']
 
@@ -35,7 +35,7 @@ async def documents_api(request: Request, index: int):
         return result
 
 
-@API()
+@API(methods=['PUT', 'DELETE', 'GET'])
 async def single_document_api(request: Request, index: int, document_id: int | str):
     model = config['models'][index]['class']
 

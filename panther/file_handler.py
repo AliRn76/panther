@@ -22,7 +22,6 @@ class File(BaseModel):
 
 
 class Image(File):
-
     @field_validator('content_type')
     @classmethod
     def validate_content_type(cls, content_type: str) -> str:

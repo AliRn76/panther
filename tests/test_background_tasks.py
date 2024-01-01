@@ -37,8 +37,7 @@ class TestBackgroundTasks(TestCase):
         self.assertEqual(self.obj.tasks, [task])
 
     def test_add_wrong_task(self):
-        def func():
-            pass
+        def func(): pass
 
         self.obj.initialize()
         self.assertEqual(self.obj.tasks, [])
@@ -56,8 +55,7 @@ class TestBackgroundTasks(TestCase):
     def test_add_task_with_false_background_task(self):
         numbers = []
 
-        def func(_numbers):
-            _numbers.append(1)
+        def func(_numbers): _numbers.append(1)
 
         task = BackgroundTask(func, numbers)
         with self.assertLogs() as captured:

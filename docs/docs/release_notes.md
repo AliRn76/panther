@@ -1,4 +1,24 @@
-### 3.2.1
+### 3.5.0
+- Add `WebsocketTestClient`
+
+### 3.4.0
+- Support `WebsocketMiddleware`
+
+### 3.3.2
+- Add `content-length` to response header
+
+### 3.3.1
+- Check `ruff` installation on startup
+- Fix an issue in `routing`
+
+### 3.3.0
+- Add Auto Reformat Code
+
+### 3.2.4
+- Add all() query
+- Add tests for `pantherdb`, `load_configs()`, `status.py`, `Panel`, `multipart`, `request headers`
+- Refactor `Headers()` class
+- Check `uvloop` installation on `Panther init`
 - Minor Improvement
 
 ### 3.2.1

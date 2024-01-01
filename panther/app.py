@@ -73,28 +73,28 @@ class API:
 
             # 5. Validate Input
             if self.request.method in ['POST', 'PUT', 'PATCH']:
-                self.set_validated_input()
+                self.handle_input_validation()
 
-            # 6. Validate Path Variables
-            self.validate_path_variables(func, path_variables)
-
-            # 7. Get Cached Response
+            # 6. Get Cached Response
             if self.cache and self.request.method == 'GET':
                 if cached := get_cached_response_data(request=self.request,  cache_exp_time=self.cache_exp_time):
                     return Response(data=cached.data, status_code=cached.status_code)
 
+            # 7. Clean Path Variables
+            self.clean_path_variables(func, path_variables)
+
             # 8. Put Request In kwargs (If User Wants It)
-            kwargs = path_variables
+            kwargs = {}
             if req_arg := [k for k, v in func.__annotations__.items() if v == Request]:
                 kwargs[req_arg[0]] = self.request
 
             # 9. Call Endpoint
             if is_function_async(func):
-                response = await func(**kwargs)
+                response = await func(**kwargs, **path_variables)
             else:
-                response = func(**kwargs)
+                response = func(**kwargs, **path_variables)
 
-            # 10. Clean Output
+            # 10. Clean Response
             if not isinstance(response, Response):
                 response = Response(data=response)
             response._clean_data_with_output_model(output_model=self.output_model)  # noqa: SLF001
@@ -141,7 +141,7 @@ class API:
             if perm.authorization(request=self.request) is False:
                 raise AuthorizationException
 
-    def set_validated_input(self):
+    def handle_input_validation(self):
         if self.input_model:
             validated_data = self.validate_input(model=self.input_model, request=self.request)
             self.request.set_validated_data(validated_data)
@@ -159,7 +159,7 @@ class API:
             raise JsonDecodeException
 
     @staticmethod
-    def validate_path_variables(func: Callable, request_path_variables: dict):
+    def clean_path_variables(func: Callable, request_path_variables: dict):
         for name, value in request_path_variables.items():
             for variable_name, variable_type in func.__annotations__.items():
                 if name == variable_name:
@@ -180,7 +180,7 @@ class GenericAPI:
     output_model = None
     auth: bool = False
     permissions: list | None = None
-    throttling: Throttling = None
+    throttling: Throttling | None = None
     cache: bool = False
     cache_exp_time: timedelta | int | None = None
 

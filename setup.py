@@ -16,6 +16,8 @@ EXTRAS_REQUIRE = {
     'full': [
         'pymongo~=4.4',
         'bpython~=0.24',
+        'ruff~=0.1.9',
+        'websockets~=12.0',
     ],
 }
 

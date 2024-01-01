@@ -35,8 +35,10 @@ class Config(TypedDict):
     default_cache_exp: timedelta | None
     throttling: Throttling | None
     secret_key: bytes | None
-    middlewares: list
-    reversed_middlewares: list
+    http_middlewares: list
+    ws_middlewares: list
+    reversed_http_middlewares: list
+    reversed_ws_middlewares: list
     user_model: ModelMetaclass | None
     authentication: ModelMetaclass | None
     jwt_config: JWTConfig | None
@@ -49,6 +51,7 @@ class Config(TypedDict):
     has_ws: bool
     startup: Callable
     shutdown: Callable
+    auto_reformat: bool
 
 
 config: Config = {
@@ -72,4 +75,5 @@ config: Config = {
     'has_ws': False,
     'startup': None,
     'shutdown': None,
+    'auto_reformat': False,
 }

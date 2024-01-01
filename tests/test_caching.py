@@ -5,25 +5,24 @@ from unittest import TestCase
 from panther import Panther
 from panther.app import API
 from panther.test import APIClient
+from tests._utils import check_two_dicts
 
 
 @API()
 def without_cache_api():
-    return {'detail': time.time()}
-
-
-@API()
-def without_cache_api():
+    time.sleep(0.01)
     return {'detail': time.time()}
 
 
 @API(cache=True)
 def with_cache_api():
+    time.sleep(0.01)
     return {'detail': time.time()}
 
 
 @API(cache=True, cache_exp_time=timedelta(seconds=5))
 def expired_cache_api():
+    time.sleep(0.01)
     return {'detail': time.time()}
 
 
@@ -47,7 +46,7 @@ class TestCaching(TestCase):
         res2 = self.client.get('without-cache')
         assert res2.status_code == 200
 
-        assert res1.data != res2.data
+        assert check_two_dicts(res1.data, res2.data) is False
 
     def test_with_cache(self):
         res1 = self.client.get('with-cache')
@@ -56,7 +55,7 @@ class TestCaching(TestCase):
         res2 = self.client.get('with-cache')
         assert res2.status_code == 200
 
-        assert res1.data == res2.data
+        assert check_two_dicts(res1.data, res2.data) is True
 
     def test_with_cache_5second_exp_time(self):
         # First Request
@@ -73,7 +72,7 @@ class TestCaching(TestCase):
         assert res2.status_code == 200
 
         # Response should be cached
-        assert res1.data == res2.data
+        assert check_two_dicts(res1.data, res2.data) is True
 
         time.sleep(5)
 
@@ -82,5 +81,5 @@ class TestCaching(TestCase):
         assert res3.status_code == 200
 
         # After 5 seconds we should have a new response
-        assert res1.data != res3.data
+        assert check_two_dicts(res1.data, res3.data) is False
 

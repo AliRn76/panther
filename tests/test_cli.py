@@ -55,7 +55,7 @@ class TestCLI(TestCase):
         with self.assertLogs(level='ERROR') as captured:
             create([])
 
-        assert len(captured.records), 2
+        assert len(captured.records) == 2
         assert captured.records[0].getMessage() == 'Not Enough Arguments.'
         assert captured.records[1].getMessage() == 'Use "panther -h" for more help'
 
@@ -65,7 +65,7 @@ class TestCLI(TestCase):
         with self.assertLogs(level='ERROR') as captured:
             create(['test_project', project_path])
 
-        assert len(captured.records), 2
+        assert len(captured.records) == 2
         assert captured.records[0].getMessage() == f'"{project_path}" Directory Already Exists.'
         assert captured.records[1].getMessage() == 'Use "panther -h" for more help'
         os.removedirs(project_path)

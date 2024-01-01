@@ -35,7 +35,7 @@ class JWTAuthentication(BaseAuthentication):
     HTTP_HEADER_ENCODING = 'iso-8859-1'  # Header encoding (see RFC5987)
 
     @classmethod
-    def get_authorization_header(cls, request: Request) -> str:
+    def get_authorization_header(cls, request: Request) -> bytes:
         auth = request.headers.authorization
 
         if auth is None:

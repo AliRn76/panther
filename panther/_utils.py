@@ -2,6 +2,8 @@ import asyncio
 import importlib
 import logging
 import re
+import subprocess
+import types
 from collections.abc import Callable
 from traceback import TracebackException
 from uuid import uuid4
@@ -9,14 +11,14 @@ from uuid import uuid4
 import orjson as json
 
 from panther import status
+from panther.exceptions import PantherException
 from panther.file_handler import File
-
 
 logger = logging.getLogger('panther')
 
 
 async def _http_response_start(send: Callable, /, headers: dict, status_code: int) -> None:
-    bytes_headers = [[k.encode(), v.encode()] for k, v in (headers or {}).items()]
+    bytes_headers = [[k.encode(), str(v).encode()] for k, v in (headers or {}).items()]
     await send({
         'type': 'http.response.start',
         'status': status_code,
@@ -65,16 +67,6 @@ def import_class(dotted_path: str, /) -> type:
 
 
 def read_multipart_form_data(boundary: str, body: bytes) -> dict:
-    r"""
-    ----------------------------449529189836774544725855
-    \r\nContent-Disposition: form-data; name="name"\r\n\r\nali\r\n
-    ----------------------------449529189836774544725855
-    \r\nContent-Disposition: form-data; name="image"; filename="ali.txt"\r\nContent-Type: text/plain\r\n\r\nHello\n\r\n
-    ----------------------------449529189836774544725855
-    \r\nContent-Disposition: form-data; name="age"\r\n\r\n12\r\n
-    ----------------------------449529189836774544725855
-    --\r\n
-    """
     boundary = b'--' + boundary.encode()
     new_line = b'\r\n' if body[-2:] == b'\r\n' else b'\n'
 
@@ -156,7 +148,33 @@ def clean_traceback_message(exception: Exception) -> str:
     tb = TracebackException(type(exception), exception, exception.__traceback__)
     stack = tb.stack.copy()
     for t in stack:
-        if t.filename.find('site-packages') != -1:
+        if t.filename.find('site-packages/panther') != -1:
             tb.stack.remove(t)
     _traceback = list(tb.format(chain=False))
     return exception if len(_traceback) == 1 else f'{exception}\n' + ''.join(_traceback)
+
+
+def reformat_code(base_dir):
+    try:
+        subprocess.run(['ruff', 'format', base_dir])
+        subprocess.run(['ruff', 'check', '--select', 'I', '--fix', base_dir])
+    except FileNotFoundError:
+        raise PantherException("Module 'ruff' not found, Hint: `pip install ruff`")
+
+
+def check_function_type_endpoint(endpoint: types.FunctionType) -> Callable:
+    # Function Doesn't Have @API Decorator
+    if not hasattr(endpoint, '__wrapped__'):
+        logger.critical(f'You may have forgotten to use @API() on the {endpoint.__name__}()')
+        raise TypeError
+    return endpoint
+
+
+def check_class_type_endpoint(endpoint: Callable) -> Callable:
+    from panther.app import GenericAPI
+
+    if not issubclass(endpoint, GenericAPI):
+        logger.critical(f'You may have forgotten to inherit from GenericAPI on the {endpoint.__name__}()')
+        raise TypeError
+
+    return endpoint.call_method

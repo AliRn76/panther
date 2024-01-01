@@ -2,7 +2,7 @@ import os
 
 import uvicorn
 
-from panther.cli.utils import print_uvicorn_help_message
+from panther.cli.utils import print_uvicorn_help_message, clean_args, cli_error
 
 
 def _handle_commands(args: dict[str, str | None]) -> dict:
@@ -65,12 +65,16 @@ def _handle_commands(args: dict[str, str | None]) -> dict:
     return _command
 
 
-def run(args: dict[str, str | None]) -> None:
+def run(args: list[str]) -> None:
+    args = clean_args(args)
+
     if any(a in args for a in ['h', 'help', '-h', '--help']):
         print_uvicorn_help_message()
         return
     command = {'app_dir': os.getcwd()}
     command.update(_handle_commands(args))
     command.update(args)
-
-    uvicorn.run('main:app', **command)
+    try:
+        uvicorn.run('main:app', **command)
+    except TypeError as e:
+        cli_error(e)
