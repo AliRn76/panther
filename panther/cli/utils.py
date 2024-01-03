@@ -38,8 +38,12 @@ logo = rf"""{top}
 
 help_message = f"""{logo}
 {h}   usage:                                                 {h}
+{h}       - panther create                                   {h}
+{h}           Create project interactive                     {h}
+{h}                                                          {h}
 {h}       - panther create <project_name> <directory>        {h}
-{h}           Create project in <directory> default is `.`   {h}
+{h}           Default<directory> is `.`                      {h}
+{h}           * It will create the project non-interactive   {h}
 {h}                                                          {h}
 {h}       - panther run [--reload | --help]                  {h}
 {h}           Run your project with uvicorn                  {h}
