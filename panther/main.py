@@ -72,6 +72,7 @@ class Panther:
         config['background_tasks'] = load_background_tasks(self._configs_module)
         config['throttling'] = load_throttling(self._configs_module)
         config['default_cache_exp'] = load_default_cache_exp(self._configs_module)
+        config['pantherdb_encryption'] = load_pantherdb_encryption(self._configs_module)
         config['middlewares'] = load_middlewares(self._configs_module)
         config['reversed_middlewares'] = config['middlewares'][::-1]
         config['user_model'] = load_user_model(self._configs_module)

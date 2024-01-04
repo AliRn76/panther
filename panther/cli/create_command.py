@@ -17,6 +17,7 @@ from panther.cli.template import (
     DATABASE_PANTHERDB_PART,
     DATABASE_MONGODB_PART,
     USER_MODEL_PART,
+    PANTHERDB_ENCRYPTION,
 )
 from panther.cli.utils import cli_error
 
@@ -33,7 +34,7 @@ class CreateProject:
         self.project_name = ''
         self.base_directory = '.'
         self.database = '0'
-        self.database_encryption = True
+        self.database_encryption = False
         self.authentication = False
         self.monitoring = True
         self.log_queries = True
@@ -64,12 +65,12 @@ class CreateProject:
                 'validation_func': lambda x: x in ['0', '1', '2'],
                 'error_message': "Invalid Choice, '{}' not in ['0', '1', '2']",
             },
-            # {
-            #     'field': 'database_encryption',
-            #     'message': 'Do You Want Encryption For Your Database',
-            #     'is_boolean': True,
-            #     'condition': "self.database == '0'"
-            # },
+            {
+                'field': 'database_encryption',
+                'message': 'Do You Want Encryption For Your Database',
+                'is_boolean': True,
+                'condition': "self.database == '0'"
+            },
             {
                 'field': 'authentication',
                 'message': 'Do You Want To Use JWT Authentication',
@@ -138,6 +139,7 @@ class CreateProject:
         monitoring_part = MONITORING_PART if self.monitoring else ''
         log_queries_part = LOG_QUERIES_PART if self.log_queries else ''
         auto_reformat_part = AUTO_REFORMAT_PART if self.auto_reformat else ''
+        database_encryption = PANTHERDB_ENCRYPTION if self.database_encryption else ''
         if self.database == '0':
             database_part = DATABASE_PANTHERDB_PART
         elif self.database == '1':
@@ -151,6 +153,7 @@ class CreateProject:
         data = data.replace('{LOG_QUERIES}', log_queries_part)
         data = data.replace('{AUTO_REFORMAT}', auto_reformat_part)
         data = data.replace('{DATABASE}', database_part)
+        data = data.replace('{PANTHERDB_ENCRYPTION}', database_encryption)
 
         data = data.replace('{PROJECT_NAME}', self.project_name.lower())
         data = data.replace('{PANTHER_VERSION}', version())

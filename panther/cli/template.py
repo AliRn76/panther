@@ -64,7 +64,7 @@ from panther.utils import load_env
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}
+SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}{PANTHERDB_ENCRYPTION}
 
 # More Info: https://PantherPy.GitHub.io/urls/
 URLs = 'core.urls.url_routing'
@@ -132,7 +132,7 @@ from panther.utils import load_env
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}
+SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}{PANTHERDB_ENCRYPTION}
 
 InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
 
@@ -206,3 +206,7 @@ AUTO_REFORMAT_PART = """
 
 # More Info: https://pantherpy.github.io/configs/#auto_reformat/
 AUTO_REFORMAT = True"""
+
+PANTHERDB_ENCRYPTION = """
+
+PANTHERDB_ENCRYPTION = True"""

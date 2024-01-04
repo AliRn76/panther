@@ -47,7 +47,7 @@ setup(
     install_requires=[
         'bson~=0.5',
         'httptools~=0.6',
-        'pantherdb~=1.3',
+        'pantherdb==1.3.5',
         'pydantic~=2.1',
         'redis==5.0.1',
         'rich~=13.5',
