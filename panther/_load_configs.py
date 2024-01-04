@@ -11,6 +11,7 @@ from pydantic._internal._model_construction import ModelMetaclass
 from panther._utils import import_class
 from panther.configs import JWTConfig, config
 from panther.exceptions import PantherException
+from panther.middlewares.base import WebsocketMiddleware, HTTPMiddleware
 from panther.routings import finalize_urls, flatten_urls
 from panther.throttling import Throttling
 
@@ -22,6 +23,7 @@ __all__ = (
     'load_background_tasks',
     'load_throttling',
     'load_default_cache_exp',
+    'load_pantherdb_encryption',
     'load_middlewares',
     'load_user_model',
     'load_authentication_class',
@@ -73,11 +75,17 @@ def load_default_cache_exp(configs: dict, /) -> timedelta | None:
     return configs.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
 
 
-def load_middlewares(configs: dict, /) -> list:
-    """Collect The Middlewares & Set db_engine If One Of Middlewares Was For DB"""
+def load_pantherdb_encryption(configs: dict, /) -> bool:
+    return configs.get('PANTHERDB_ENCRYPTION', config['pantherdb_encryption'])
+
+
+def load_middlewares(configs: dict, /) -> dict:
+    """
+    Collect The Middlewares & Set db_engine If One Of Middlewares Was For DB
+    And Return a dict with two list, http and ws middlewares"""
     from panther.middlewares import BaseMiddleware
 
-    middlewares = []
+    middlewares = {'http': [], 'ws': []}
 
     for middleware in configs.get('MIDDLEWARES') or []:
         if not isinstance(middleware, list | tuple):
@@ -103,7 +111,11 @@ def load_middlewares(configs: dict, /) -> list:
         if issubclass(Middleware, BaseMiddleware) is False:
             raise _exception_handler(field='MIDDLEWARES', error='is not a sub class of BaseMiddleware')
 
-        middlewares.append(Middleware(**data))  # noqa: Py Argument List
+        middleware_instance = Middleware(**data)
+        if isinstance(middleware_instance, BaseMiddleware | HTTPMiddleware):
+            middlewares['http'].append(middleware_instance)
+        if isinstance(middleware_instance, BaseMiddleware | WebsocketMiddleware):
+            middlewares['ws'].append(middleware_instance)
     return middlewares
 
 

@@ -19,6 +19,8 @@ EXTRAS_REQUIRE = {
         'bpython~=0.24',
         'ruff~=0.1.9',
         'python-jose~=3.3',
+        'websockets~=12.0',
+        'cryptography~=41.0',
     ],
 }
 
@@ -49,7 +51,7 @@ setup(
     install_requires=[
         'bson~=0.5',
         'httptools~=0.6',
-        'pantherdb~=1.3',
+        'pantherdb==1.3.5',
         'pydantic~=2.1',
         'rich~=13.5',
         'uvicorn~=0.23',

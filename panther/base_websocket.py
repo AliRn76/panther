@@ -67,6 +67,10 @@ class WebsocketConnections(Singleton):
 
     async def new_connection(self, connection: Websocket) -> None:
         await connection.connect(**connection.path_variables)
+        if not hasattr(connection, '_connection_id'):
+            # User didn't even call the `self.accept()` so close the connection
+            await connection.close()
+
         if connection.is_connected:
             self.connections_count += 1
 
@@ -74,8 +78,9 @@ class WebsocketConnections(Singleton):
             self.connections[connection.connection_id] = connection
 
     def remove_connection(self, connection: Websocket) -> None:
-        self.connections_count -= 1
-        del self.connections[connection.connection_id]
+        if connection.is_connected:
+            self.connections_count -= 1
+            del self.connections[connection.connection_id]
 
 
 class Websocket(BaseRequest):
