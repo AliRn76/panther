@@ -1,3 +1,4 @@
+import base64
 import logging
 import os
 import hashlib
@@ -40,9 +41,7 @@ def load_env(env_file: str | Path, /) -> dict[str, str]:
 
 
 def generate_secret_key() -> str:
-    from cryptography.fernet import Fernet
-
-    return Fernet.generate_key().decode()
+    return base64.urlsafe_b64encode(os.urandom(32)).decode()
 
 
 def round_datetime(dt: datetime, delta: timedelta):
