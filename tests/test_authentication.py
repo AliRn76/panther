@@ -10,6 +10,7 @@ from panther.db.queries import Query
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.request import Request
 from panther.test import APIClient
+from tests._utils import check_two_dicts
 
 
 @API()
@@ -178,9 +179,11 @@ class TestAuthentication(TestCase):
         with self.assertNoLogs(level='ERROR'):
             res = self.client.get('auth-required', headers=self.TOKEN)
 
+        expected_response = {
+            'id': 1,
+            'username': 'Username',
+            'password': 'Password'
+        }
         assert res.status_code == 200
-        assert [*res.data.keys()] == ['id', 'username', 'password']
-        assert res.data['id'] == 1
-        assert res.data['username'] == 'Username'
-        assert res.data['password'] == 'Password'
+        assert check_two_dicts(res.data, expected_response)
 
