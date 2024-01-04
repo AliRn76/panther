@@ -16,16 +16,16 @@ And you can write your own custom middlewares too
 ## Structure of middlewares
 `MIDDLEWARES` itself is a `list` of `tuples` which each `tuple` is like below:
 
-(`Address of Middleware Class`, `kwargs as dict`)
+(`Dotted Address of The Middleware Class`, `kwargs as dict`)
 
 
 ## Database Middleware
-This middleware will create a `db` connection that uses in `ODM` or you can use it manually from:
+This middleware will create a `db` connection which is used in `ODM` and you can use it manually too, it gives you a database connection:
 ```python
 from panther.db.connection import db
 ```
 
-We only support 2 database: `PantherDB` & `MongoDB`
+We only support 2 database for now: `PantherDB` & `MongoDB`
 
 - Address of Middleware: `panther.middlewares.db.DatabaseMiddleware`
 - kwargs:
@@ -36,13 +36,13 @@ We only support 2 database: `PantherDB` & `MongoDB`
 - Example of `PantherDB` (`Built-in Local Storage`):
   ```python
   MIDDLEWARES = [
-      ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
+      ('panther.middlewares.db.DatabaseMiddleware', {'url': 'pantherdb://project_directory/database.pdb'}),
   ]
   ```
 - Example of `MongoDB`:
   ```python
   MIDDLEWARES = [
-      ('panther.middlewares.db.DatabaseMiddleware', {'url': f'mongodb://{DB_HOST}:27017/{DB_NAME}'}),
+      ('panther.middlewares.db.DatabaseMiddleware', {'url': 'mongodb://127.0.0.1:27017/example'}),
   ]
   ```
   
@@ -61,43 +61,88 @@ We only support 2 database: `PantherDB` & `MongoDB`
   ```
   
 ## Custom Middleware
-Write a `class` and inherit from
-```python
-from panther.middlewares.base import BaseMiddleware
-```
+### Middleware Types
+  We have 3 type of Middlewares, make sure that you are inheriting from the correct one:
+  - `Base Middleware`: which is used for both `websocket` and `http` requests 
+    - `HTTP Middleware`: which is only used for `http` requests
+    - `Websocket Middleware`: which is only used for `websocket` requests
 
-Then you can write your custom `before()` and `after()` methods
+### Write Custom Middleware
+  - Write a `class` and inherit from one of the classes below
+    ```python
+    # For HTTP Requests
+    from panther.middlewares.base import HTTPMiddleware
+    
+    # For Websocket Requests
+    from panther.middlewares.base import WebsocketMiddleware
+    
+    # For Both HTTP and Websocket Requests
+    from panther.middlewares.base import BaseMiddleware
+    ```
 
-- The `methods` should be `async`
-- `before()` should have `request` parameter
-- `after()` should have `response` parameter
-- overwriting the `before()` and `after()` are optional
-- The `methods` can get `kwargs` from their `__init__`
+  - Then you can write your custom `before()` and `after()` methods
 
-### Custom Middleware Example
-core/middlewares.py
-```python
-from panther.request import Request
-from panther.response import Response
-from panther.middlewares.base import BaseMiddleware
+  - The `methods` should be `async`
+  - `before()` should have `request` parameter
+  - `after()` should have `response` parameter
+  - overwriting the `before()` and `after()` are optional
+  - The `methods` can get `kwargs` from their `__init__`
+
+### Custom HTTP Middleware Example
+- **core/middlewares.py**
+    ```python
+    from panther.middlewares.base import HTTPMiddleware
+    from panther.request import Request
+    from panther.response import Response
 
 
-class CustomMiddleware(BaseMiddleware):
+    class CustomMiddleware(HTTPMiddleware):
 
-    def __init__(self, something):
-        self.something = something
+        def __init__(self, something):
+            self.something = something
 
-    async def before(self, request: Request) -> Request:
-        print('Before Endpoint', self.something)
-        return request
+        async def before(self, request: Request) -> Request:
+            print('Before Endpoint', self.something)
+            return request
 
-    async def after(self, response: Response) -> Response:
-        print('After Endpoint', self.something)
-        return response
-```
-core/configs.py
-```python
-  MIDDLEWARES = [
-      ('core.middlewares.CustomMiddleware', {'something': 'hello-world'}),
-  ]
-```
+        async def after(self, response: Response) -> Response:
+            print('After Endpoint', self.something)
+            return response
+    ```
+
+- **core/configs.py**
+    ```python
+    MIDDLEWARES = [
+          ('core.middlewares.CustomMiddleware', {'something': 'hello-world'}),
+    ]
+    ```
+  
+### Custom HTTP + Websocket Middleware Example
+- **core/middlewares.py**
+    ```python
+    from panther.middlewares.base import BaseMiddleware
+    from panther.request import Request
+    from panther.response import Response
+    from panther.websocket import GenericWebsocket 
+
+
+    class SayHiMiddleware(BaseMiddleware):
+
+        def __init__(self, name):
+            self.name = name
+
+        async def before(self, request: Request | GenericWebsocket) -> Request | GenericWebsocket:
+            print('Hello ', self.name)
+            return request
+
+        async def after(self, response: Response | GenericWebsocket) -> Response | GenericWebsocket:
+            print('Goodbye ', self.name)
+            return response
+    ```
+
+- **core/configs.py**
+    ```python
+    MIDDLEWARES = [
+          ('core.middlewares.SayHiMiddleware', {'name': 'Ali Rn'}),
+    ]
+    ```

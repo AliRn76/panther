@@ -37,6 +37,7 @@ class Response:
     def headers(self) -> dict:
         return {
             'content-type': self.content_type,
+            'content-length': len(self.body),
             'access-control-allow-origin': '*',
         } | (self._headers or {})
 
