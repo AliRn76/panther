@@ -23,6 +23,7 @@ __all__ = (
     'load_background_tasks',
     'load_throttling',
     'load_default_cache_exp',
+    'load_pantherdb_encryption',
     'load_middlewares',
     'load_user_model',
     'load_authentication_class',
@@ -72,6 +73,10 @@ def load_throttling(configs: dict, /) -> Throttling | None:
 
 def load_default_cache_exp(configs: dict, /) -> timedelta | None:
     return configs.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
+
+
+def load_pantherdb_encryption(configs: dict, /) -> bool:
+    return configs.get('PANTHERDB_ENCRYPTION', config['pantherdb_encryption'])
 
 
 def load_middlewares(configs: dict, /) -> dict:

@@ -1,10 +1,18 @@
 from typing import TYPE_CHECKING
 
 from pantherdb import PantherDB
-from redis import Redis
 
+from panther.cli.utils import import_error
 from panther.configs import config
 from panther.utils import Singleton
+
+try:
+    from redis import Redis
+except ModuleNotFoundError:
+    # This 'Redis' is not going to be used,
+    #   If he really wants to use redis,
+    #   we are going to force him to install it in 'panther.middlewares.redis'
+    Redis = type('Redis')
 
 if TYPE_CHECKING:
     from pymongo.database import Database
@@ -46,6 +54,11 @@ class DBSession(Singleton):
         self._session: Database = self._client.get_database()
 
     def _create_pantherdb_session(self, db_url: str) -> None:
+        if config['pantherdb_encryption']:
+            try:
+                import cryptography
+            except ModuleNotFoundError as e:
+                import_error(e, package='cryptography')
         self._session: PantherDB = PantherDB(db_url, return_dict=True, secret_key=config['secret_key'])
 
     def close(self) -> None:

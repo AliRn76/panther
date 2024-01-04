@@ -1,7 +1,7 @@
 
 async def startup():
-    print('inside startup function')
+    print('Starting Up')
 
 
 async def shutdown():
-    print('inside shutdown function')
+    print('Shutting Down')

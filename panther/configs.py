@@ -1,3 +1,4 @@
+import typing
 from datetime import timedelta
 from pathlib import Path
 from typing import TypedDict, Callable
@@ -46,12 +47,13 @@ class Config(TypedDict):
     flat_urls: dict
     urls: dict
     db_engine: str
-    websocket_connections: any  # type: WebsocketConnections
+    websocket_connections: typing.Any  # type: WebsocketConnections
     background_tasks: bool
     has_ws: bool
     startup: Callable
     shutdown: Callable
     auto_reformat: bool
+    pantherdb_encryption: bool
 
 
 config: Config = {
@@ -78,4 +80,5 @@ config: Config = {
     'startup': None,
     'shutdown': None,
     'auto_reformat': False,
+    'pantherdb_encryption': False,
 }
