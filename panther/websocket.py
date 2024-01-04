@@ -15,7 +15,6 @@ class GenericWebsocket(Websocket):
         """
         Check your conditions then `accept()` the connection
         """
-        await self.accept()
 
     async def receive(self, data: str | bytes):
         """

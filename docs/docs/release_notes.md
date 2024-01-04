@@ -1,3 +1,6 @@
+### 3.5.1
+Set default behavior of `GenericWebsocket.connect` to ignore the connection (`reject`)
+
 ### 3.5.0
 - Add `WebsocketTestClient`
 
