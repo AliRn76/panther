@@ -68,3 +68,5 @@ STARTUP = 'core.configs.startup'
 SHUTDOWN = 'core.configs.shutdown'
 
 AUTO_REFORMAT = True
+
+PANTHERDB_ENCRYPTION = True

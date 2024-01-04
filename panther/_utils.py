@@ -159,7 +159,7 @@ def reformat_code(base_dir):
         subprocess.run(['ruff', 'format', base_dir])
         subprocess.run(['ruff', 'check', '--select', 'I', '--fix', base_dir])
     except FileNotFoundError:
-        raise PantherException("Module 'ruff' not found, Hint: `pip install ruff`")
+        raise PantherException("No module named 'ruff', Hint: `pip install ruff`")
 
 
 def check_function_type_endpoint(endpoint: types.FunctionType) -> Callable:

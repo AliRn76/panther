@@ -107,13 +107,24 @@ class TestCLI(TestCase):
     def test_create_on_existence_directory(self):
         project_path = 'test-project-directory'
         os.mkdir(project_path)
-        with self.assertLogs(level='ERROR') as captured:
+
+        with self.assertLogs(level='ERROR') as captured_error:
             CreateProject().create(['test_project', project_path])
 
-        assert len(captured.records) == 2
-        assert captured.records[0].getMessage() == f'"{project_path}" Directory Already Exists.'
-        assert captured.records[1].getMessage() == 'Use "panther -h" for more help'
-        os.removedirs(project_path)
+        with self.assertLogs(level='INFO') as captured_info:
+            CreateProject().create(['test_project', project_path])
+
+        try:
+            assert len(captured_error.records) == 1
+            assert captured_info.records[0].getMessage() == f'"{project_path}" Directory Already Exists.'
+
+            assert len(captured_info.records) == 2
+            assert captured_info.records[0].getMessage() == f'"{project_path}" Directory Already Exists.'
+            assert captured_info.records[1].getMessage() == 'Use "panther -h" for more help'
+        except AssertionError as e:
+            raise e
+        finally:
+            os.removedirs(project_path)
 
     def test_create_project(self):
         project_path = 'test-project-directory'
