@@ -119,7 +119,8 @@ class API:
         auth_class = config['authentication']
         if self.auth:
             if not auth_class:
-                raise TypeError('"AUTHENTICATION" has not been set in core/configs')
+                logger.critical('"AUTHENTICATION" has not been set in configs')
+                raise APIException
             user = auth_class.authentication(self.request)
             self.request.set_user(user=user)
 

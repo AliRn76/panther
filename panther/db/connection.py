@@ -45,8 +45,11 @@ class DBSession(Singleton):
         return self._db_name
 
     def _create_mongodb_session(self, db_url: str) -> None:
-        from pymongo import MongoClient
-
+        try:
+            from pymongo import MongoClient
+        except ModuleNotFoundError:
+            msg = "No module named 'pymongo'. Hint: `pip install pymongo`"
+            raise ValueError(msg)
         self._client: MongoClient = MongoClient(db_url)
         self._session: Database = self._client.get_database()
 

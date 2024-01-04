@@ -113,7 +113,7 @@ class Panther:
         if config['has_ws']:
             config['websocket_connections'] = WebsocketConnections()
             # Websocket Redis Connection
-            for middleware in config['middlewares']:
+            for middleware in config['http_middlewares']:
                 if middleware.__class__.__name__ == 'RedisMiddleware':
                     self.ws_redis_connection = middleware.redis_connection_for_ws()
                     break
