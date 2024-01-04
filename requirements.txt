@@ -2,4 +2,4 @@
 faker
 coverage
 pytest
-cryptography
+cryptography~=41.0

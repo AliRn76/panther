@@ -67,6 +67,8 @@ class TestCLI(TestCase):
 │   Websocket: False                                       │
 │   Base directory: {base_dir}│
 │ * Run "panther monitor" in another session for Monitoring│
+│ * You may want to install `uvloop` for better performance│
+│   `pip install uvloop`                                   │
 ╰──────────────────────────────────────────────────────────╯"""
         with patch('sys.stdout', new=StringIO()) as fake_out2:
             rprint(expected_value)
