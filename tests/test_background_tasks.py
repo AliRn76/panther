@@ -21,7 +21,7 @@ class TestBackgroundTasks(TestCase):
 
     def test_initialization(self):
         assert hasattr(self.obj, 'initialize') is True
-        assert self.self.obj._initialized is False
+        assert self.obj._initialized is False
 
         self.obj.initialize()
         assert self.obj._initialized is True
