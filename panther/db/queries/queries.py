@@ -7,9 +7,7 @@ from panther.configs import QueryObservable
 from panther.db.utils import log_query, check_connection
 from panther.exceptions import APIException, DBException
 
-
 __all__ = ('Query',)
-
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -25,7 +23,12 @@ class Query:
 
     @classmethod
     def reload_bases(cls, parent):
-        cls.__bases__ = (*cls.__bases__[:cls.__bases__.index(Query) + 1], parent)
+        if cls.__bases__.count(Query):
+            cls.__bases__ = (*cls.__bases__[: cls.__bases__.index(Query) + 1], parent)
+        else:
+            for kls in cls.__bases__:
+                if kls.__bases__.count(Query):
+                    kls.__bases__ = (*kls.__bases__[:kls.__bases__.index(Query) + 1], parent)
 
     @classmethod
     def validate_data(cls, *, data: dict, is_updating: bool = False):
