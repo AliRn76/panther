@@ -1,11 +1,13 @@
 import typing
+from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
-from typing import TypedDict, Callable
+from typing import Callable
 
 from pydantic._internal._model_construction import ModelMetaclass
 
 from panther.throttling import Throttling
+from panther.utils import Singleton
 
 
 class JWTConfig:
@@ -29,7 +31,21 @@ class JWTConfig:
             self.refresh_life_time = self.life_time * 2
 
 
-class Config(TypedDict):
+class QueryObservable:
+    observers = []
+
+    @classmethod
+    def observe(cls, observer):
+        cls.observers.append(observer)
+
+    @classmethod
+    def update(cls):
+        for observer in cls.observers:
+            observer.reload_bases(parent=config.query_engine)
+
+
+@dataclass
+class Config(Singleton):
     base_dir: Path
     monitoring: bool
     log_queries: bool
@@ -46,39 +62,50 @@ class Config(TypedDict):
     models: list[dict]
     flat_urls: dict
     urls: dict
-    db_engine: str
-    websocket_connections: typing.Any  # type: WebsocketConnections
+    query_engine: typing.Callable | None
+    websocket_connections: typing.Callable | None
     background_tasks: bool
     has_ws: bool
-    startup: Callable
-    shutdown: Callable
+    startup: Callable | None
+    shutdown: Callable | None
     auto_reformat: bool
     pantherdb_encryption: bool
 
+    def __setattr__(self, key, value):
+        super().__setattr__(key, value)
+        if key == 'query_engine':
+            QueryObservable.update()
 
-config: Config = {
-    'base_dir': Path(),
-    'monitoring': False,
-    'log_queries': False,
-    'default_cache_exp': None,
-    'throttling': None,
-    'secret_key': None,
-    'http_middlewares': [],
-    'ws_middlewares': [],
-    'reversed_http_middlewares': [],
-    'reversed_ws_middlewares': [],
-    'user_model': None,
-    'authentication': None,
-    'jwt_config': None,
-    'models': [],
-    'flat_urls': {},
-    'urls': {},
-    'db_engine': '',
-    'websocket_connections': None,
-    'background_tasks': False,
-    'has_ws': False,
-    'startup': None,
-    'shutdown': None,
-    'auto_reformat': False,
-    'pantherdb_encryption': False,
-}
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
+config = Config(
+    base_dir=Path(),
+    monitoring=False,
+    log_queries=False,
+    default_cache_exp=None,
+    throttling=None,
+    secret_key=None,
+    http_middlewares=[],
+    ws_middlewares=[],
+    reversed_http_middlewares=[],
+    reversed_ws_middlewares=[],
+    user_model=None,
+    authentication=None,
+    jwt_config=None,
+    models=[],
+    flat_urls={},
+    urls={},
+    query_engine=None,
+    websocket_connections=None,
+    background_tasks=False,
+    has_ws=False,
+    startup=None,
+    shutdown=None,
+    auto_reformat=False,
+    pantherdb_encryption=False,
+)

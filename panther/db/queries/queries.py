@@ -3,13 +3,10 @@ import sys
 from pydantic import ValidationError
 
 from panther import status
-from panther.configs import config
-from panther.db.queries.mongodb_queries import BaseMongoDBQuery
-from panther.db.queries.pantherdb_queries import BasePantherDBQuery
+from panther.configs import QueryObservable
 from panther.db.utils import log_query, check_connection
 from panther.exceptions import APIException, DBException
 
-BaseQuery = BasePantherDBQuery if config['db_engine'] == 'pantherdb' else BaseMongoDBQuery
 
 __all__ = ('Query',)
 
@@ -22,7 +19,14 @@ else:
     Self = TypeVar('Self', bound='Query')
 
 
-class Query(BaseQuery):
+class Query:
+    def __init_subclass__(cls, **kwargs):
+        QueryObservable.observe(cls)
+
+    @classmethod
+    def reload_bases(cls, parent):
+        cls.__bases__ = (*cls.__bases__[:cls.__bases__.index(Query) + 1], parent)
+
     @classmethod
     def validate_data(cls, *, data: dict, is_updating: bool = False):
         """

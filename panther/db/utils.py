@@ -26,7 +26,7 @@ def log_query(func):
 
 def check_connection(func):
     def wrapper(*args, **kwargs):
-        if config['db_engine'] == '':
+        if config['query_engine'] is None:
             msg = "You don't have active database connection, Check your middlewares"
             raise NotImplementedError(msg)
         return func(*args, **kwargs)

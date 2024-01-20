@@ -10,6 +10,8 @@ from pydantic._internal._model_construction import ModelMetaclass
 
 from panther._utils import import_class
 from panther.configs import JWTConfig, config
+from panther.db.queries.mongodb_queries import BaseMongoDBQuery
+from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.exceptions import PantherException
 from panther.middlewares.base import WebsocketMiddleware, HTTPMiddleware
 from panther.routings import finalize_urls, flatten_urls
@@ -102,7 +104,11 @@ def load_middlewares(configs: dict, /) -> dict:
             path, data = middleware
 
         if path.find('panther.middlewares.db.DatabaseMiddleware') != -1:
-            config['db_engine'] = data['url'].split(':')[0]
+            # Keep it simple for now, we are going to make it dynamic in the next patch
+            if data['url'].split(':')[0] == 'pantherdb':
+                config['query_engine'] = BasePantherDBQuery
+            else:
+                config['query_engine'] = BaseMongoDBQuery
         try:
             Middleware = import_class(path)  # noqa: N806
         except (AttributeError, ModuleNotFoundError):
