@@ -5,6 +5,7 @@ from unittest import TestCase
 
 import tests.sample_project.app.models
 from panther import Panther
+from panther.configs import Config
 
 
 class TestRun(TestCase):
@@ -28,7 +29,7 @@ class TestRun(TestCase):
         secret_key = 'fHrIYx3yK0J_UG0K0zD6miLPNy1esoYXzVsvif6e7rY='
         Panther(__name__)
 
-        assert isinstance(config, dict)
+        assert isinstance(config, Config)
         assert config['base_dir'] == base_dir
         assert config['monitoring'] is True
         assert config['log_queries'] is True
@@ -75,4 +76,4 @@ class TestRun(TestCase):
             },
         }
         assert config['urls'] == urls
-        assert config['db_engine'] == 'pantherdb'
+        assert config['query_engine'].__name__ == 'BasePantherDBQuery'

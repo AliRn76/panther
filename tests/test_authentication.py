@@ -166,6 +166,6 @@ class TestAuthentication(TestCase):
 
         assert res.status_code == 200
         assert [*res.data.keys()] == ['id', 'username', 'password']
-        assert res.data['id'] == 1
+        assert res.data['id'] == '1'
         assert res.data['username'] == 'Username'
         assert res.data['password'] == 'Password'

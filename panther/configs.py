@@ -41,7 +41,7 @@ class QueryObservable:
     @classmethod
     def update(cls):
         for observer in cls.observers:
-            observer.reload_bases(parent=config.query_engine)
+            observer._reload_bases(parent=config.query_engine)
 
 
 @dataclass

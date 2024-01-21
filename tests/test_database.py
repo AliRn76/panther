@@ -3,57 +3,19 @@ import random
 from pathlib import Path
 from unittest import TestCase
 
-import bson
 import faker
 import pytest
-from pydantic import BaseModel as PydanticBaseModel
-from pydantic import Field, field_validator
 
 from panther import Panther
 from panther.configs import config
+from panther.db import Model
 from panther.db.connection import db
-from panther.db.queries import Query
-from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.exceptions import DBException
 
 f = faker.Faker()
 
 
-class PantherDBModel(PydanticBaseModel):
-    id: int | None = Field(None, validation_alias='_id')
-
-    @field_validator('id', mode='before')
-    def validate_id(cls, value):
-        return value
-
-    @property
-    def _id(self):
-        return self.id
-
-
-class MongoDBModel(PydanticBaseModel):
-    id: str | None = Field(None, validation_alias='_id')
-
-    @field_validator('id', mode='before')
-    def validate_id(cls, value):
-        if isinstance(value, str):
-            try:
-                bson.ObjectId(value)
-            except bson.objectid.InvalidId as e:
-                msg = 'Invalid ObjectId'
-                raise ValueError(msg) from e
-        elif not isinstance(value, bson.ObjectId):
-            msg = 'ObjectId required'
-            raise ValueError(msg) from None
-        value = str(value)
-        return value
-
-    @property
-    def _id(self):
-        return bson.ObjectId(self.id) if self.id else None
-
-
-class BaseBook:
+class Book(Model):
     name: str
     author: str
     pages_count: int
@@ -170,7 +132,7 @@ class _BaseDatabaseTestCase:
         book = Book.last(name=name, author=author, pages_count=pages_count)
 
         assert isinstance(book, Book)
-        assert book.id == Book.count()
+        assert book._id == Book.count()
         assert book.name == name
         assert book.pages_count == pages_count
 
@@ -300,11 +262,9 @@ class _BaseDatabaseTestCase:
         # Insert With Specific Name
         name = f.name()
         insert_count = self._insert_many_with_specific_params(name=name)
-
         # Delete One
         book = Book.find_one(name=name)
         book.delete()
-
         # Count Them After Deletion
         assert Book.count(name=name) == insert_count - 1
 
@@ -500,11 +460,10 @@ class TestPantherDB(_BaseDatabaseTestCase, TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        global MIDDLEWARES, Book
+        global MIDDLEWARES
         MIDDLEWARES = [
             ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{cls.DB_PATH}'}),
         ]
-        Book = type('Book', (BaseBook, PantherDBModel, BasePantherDBQuery, Query), {})
         Panther(__name__, configs=__name__, urls={})
 
     def setUp(self) -> None:
@@ -523,11 +482,10 @@ class TestMongoDB(_BaseDatabaseTestCase, TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        global MIDDLEWARES, Book
+        global MIDDLEWARES
         MIDDLEWARES = [
             ('panther.middlewares.db.DatabaseMiddleware', {'url': f'mongodb://127.0.0.1:27017/{cls.DB_NAME}'}),
         ]
-        Book = type('Book', (BaseBook, MongoDBModel, Query), {})
         Panther(__name__, configs=__name__, urls={})
 
     def setUp(self) -> None:

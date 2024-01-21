@@ -5,7 +5,7 @@ from typing import Literal
 
 from panther.cli.utils import import_error
 from panther.configs import config
-from panther.db.models import BaseUser, IDType, Model
+from panther.db.models import BaseUser, Model
 from panther.exceptions import AuthenticationException
 from panther.request import Request
 
@@ -87,7 +87,7 @@ class JWTAuthentication(BaseAuthentication):
         raise cls.exception(msg) from None
 
     @classmethod
-    def encode_jwt(cls, user_id: IDType, token_type: Literal['access', 'refresh'] = 'access') -> str:
+    def encode_jwt(cls, user_id: str, token_type: Literal['access', 'refresh'] = 'access') -> str:
         """Encode JWT from user_id."""
         issued_at = time.time()
         if token_type == 'access':
@@ -108,7 +108,7 @@ class JWTAuthentication(BaseAuthentication):
         )
 
     @classmethod
-    def encode_refresh_token(cls, user_id: IDType) -> str:
+    def encode_refresh_token(cls, user_id: str) -> str:
         """Encode JWT from user_id."""
         return cls.encode_jwt(user_id=user_id, token_type='refresh')
 
@@ -125,7 +125,7 @@ class JWTAuthentication(BaseAuthentication):
             raise cls.exception(e) from None
 
     @classmethod
-    def login(cls, user_id: IDType) -> str:
+    def login(cls, user_id: str) -> str:
         """Alias of encode_jwt()"""
         return cls.encode_jwt(user_id=user_id)
 
