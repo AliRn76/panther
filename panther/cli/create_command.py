@@ -61,19 +61,19 @@ class CreateProject:
             },
             {
                 'field': 'database',
-                'message': '    0: PantherDB\n    1: MongoDB\n    2: No Database\nChoose Your Database (default is 0)',
+                'message': '    0: PantherDB\n    1: MongoDB (Required `pymongo`)\n    2: No Database\nChoose Your Database (default is 0)',
                 'validation_func': lambda x: x in ['0', '1', '2'],
                 'error_message': "Invalid Choice, '{}' not in ['0', '1', '2']",
             },
             {
                 'field': 'database_encryption',
-                'message': 'Do You Want Encryption For Your Database',
+                'message': 'Do You Want Encryption For Your Database (Required `cryptography`)',
                 'is_boolean': True,
                 'condition': "self.database == '0'"
             },
             {
                 'field': 'authentication',
-                'message': 'Do You Want To Use JWT Authentication',
+                'message': 'Do You Want To Use JWT Authentication (Required `python-jose`)',
                 'is_boolean': True,
             },
             {
@@ -88,7 +88,7 @@ class CreateProject:
             },
             {
                 'field': 'auto_reformat',
-                'message': 'Do You Want To Use Auto Reformat',
+                'message': 'Do You Want To Use Auto Reformat (Required `ruff`)',
                 'is_boolean': True,
             },
         ]
