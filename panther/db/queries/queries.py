@@ -3,16 +3,11 @@ import sys
 from pydantic import ValidationError
 
 from panther import status
-from panther.configs import config
-from panther.db.queries.mongodb_queries import BaseMongoDBQuery
-from panther.db.queries.pantherdb_queries import BasePantherDBQuery
+from panther.configs import QueryObservable
 from panther.db.utils import log_query, check_connection
 from panther.exceptions import APIException, DBException
 
-BaseQuery = BasePantherDBQuery if config['db_engine'] == 'pantherdb' else BaseMongoDBQuery
-
 __all__ = ('Query',)
-
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -22,9 +17,21 @@ else:
     Self = TypeVar('Self', bound='Query')
 
 
-class Query(BaseQuery):
+class Query:
+    def __init_subclass__(cls, **kwargs):
+        QueryObservable.observe(cls)
+
     @classmethod
-    def validate_data(cls, *, data: dict, is_updating: bool = False):
+    def _reload_bases(cls, parent):
+        if cls.__bases__.count(Query):
+            cls.__bases__ = (*cls.__bases__[: cls.__bases__.index(Query) + 1], parent)
+        else:
+            for kls in cls.__bases__:
+                if kls.__bases__.count(Query):
+                    kls.__bases__ = (*kls.__bases__[:kls.__bases__.index(Query) + 1], parent)
+
+    @classmethod
+    def _validate_data(cls, *, data: dict, is_updating: bool = False):
         """
         *. Validate the input of user with its class
         *. If is_updating is True & exception happens but the message was empty
@@ -41,7 +48,7 @@ class Query(BaseQuery):
                 raise APIException(detail=error, status_code=status.HTTP_400_BAD_REQUEST)
 
     @classmethod
-    def create_model_instance(cls, document: dict):
+    def _create_model_instance(cls, document: dict):
         try:
             return cls(**document)
         except ValidationError as validation_error:
@@ -127,7 +134,7 @@ class Query(BaseQuery):
             >>> from example.app.models import User
             >>> User.insert_one(name='Ali', age=24, ...)
         """
-        cls.validate_data(data=kwargs)
+        cls._validate_data(data=kwargs)
         return super().insert_one(_data, **kwargs)
 
     @classmethod
@@ -185,7 +192,7 @@ class Query(BaseQuery):
             >>> user = User.find_one(name='Ali')
             >>> user.update(name='Saba')
         """
-        self.validate_data(data=kwargs, is_updating=True)
+        self._validate_data(data=kwargs, is_updating=True)
         return super().update(**kwargs)
 
     @classmethod
