@@ -52,14 +52,6 @@ class Panther:
         # Print Info
         print_info(config)
 
-        # Start Websocket Listener (Redis Required)
-        if config['has_ws']:
-            Thread(
-                target=config['websocket_connections'],
-                daemon=True,
-                args=(self.ws_redis_connection,),
-            ).start()
-
     def load_configs(self) -> None:
 
         # Check & Read The Configs File
@@ -138,6 +130,7 @@ class Panther:
         if scope['type'] == 'lifespan':
             message = await receive()
             if message["type"] == "lifespan.startup":
+                await self.handle_ws_listener()
                 await self.handle_startup()
             return
 
@@ -262,6 +255,15 @@ class Panther:
             body=response.body,
         )
 
+    async def handle_ws_listener(self):
+        # Start Websocket Listener (Redis/ Queue)
+        if config['has_ws']:
+            Thread(
+                target=config['websocket_connections'],
+                daemon=True,
+                args=(self.ws_redis_connection,),
+            ).start()
+
     async def handle_startup(self):
         if startup := config['startup'] or self._startup:
             if is_function_async(startup):
@@ -272,7 +274,13 @@ class Panther:
     def handle_shutdown(self):
         if shutdown := config['shutdown'] or self._shutdown:
             if is_function_async(shutdown):
-                asyncio.run(shutdown())
+                try:
+                    asyncio.run(shutdown())
+                except ModuleNotFoundError:
+                    # Error: import of asyncio halted; None in sys.modules
+                    #   And as I figured it out, it only happens when we running with
+                    #   gunicorn and Uvicorn workers (-k uvicorn.workers.UvicornWorker)
+                    pass
             else:
                 shutdown()
 

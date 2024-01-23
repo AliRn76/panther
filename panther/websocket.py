@@ -5,8 +5,7 @@ from typing import Literal
 import orjson as json
 
 from panther import status
-from panther.base_websocket import Websocket, WebsocketConnections
-from panther.configs import config
+from panther.base_websocket import Websocket, PUBSUB
 from panther.db.connection import redis
 
 
@@ -34,22 +33,18 @@ async def send_message_to_websocket(connection_id: str, data: any):
     if redis.is_connected:
         _publish_to_ws_channel(connection_id=connection_id, action='send', data=data)
     else:
-        websocket_connections: WebsocketConnections = config['websocket_connections']
-        if connection := websocket_connections.connections.get(connection_id):
-            await connection.send(data=data)
+        _publish_to_ws_queue(connection_id=connection_id, action='send', data=data)
 
 
 async def close_websocket_connection(connection_id: str, code: int = status.WS_1000_NORMAL_CLOSURE, reason: str = ''):
+    data = {
+        'code': code,
+        'reason': reason,
+    }
     if redis.is_connected:
-        data = {
-            'code': code,
-            'reason': reason,
-        }
         _publish_to_ws_channel(connection_id=connection_id, action='close', data=data)
     else:
-        websocket_connections: WebsocketConnections = config['websocket_connections']
-        if connection := websocket_connections.connections.get(connection_id):
-            await connection.close(code=code, reason=reason)
+        _publish_to_ws_queue(connection_id=connection_id, action='close', data=data)
 
 
 def _publish_to_ws_channel(connection_id: str, action: Literal['send', 'close'], data: any):
@@ -59,3 +54,8 @@ def _publish_to_ws_channel(connection_id: str, action: Literal['send', 'close'],
 
     p_data = json.dumps({'connection_id': connection_id, 'action': action, 'data': data})
     redis.publish('websocket_connections', p_data)
+
+
+def _publish_to_ws_queue(connection_id: str, action: Literal['send', 'close'], data: any):
+    p_data = {'connection_id': connection_id, 'action': action, 'data': data}
+    PUBSUB.publish(p_data)

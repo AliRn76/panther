@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+from multiprocessing import Manager
 from typing import TYPE_CHECKING
 
 import orjson as json
@@ -16,8 +17,25 @@ from panther.utils import Singleton
 if TYPE_CHECKING:
     from redis import Redis
 
-
 logger = logging.getLogger('panther')
+
+
+class PubSub:
+    def __init__(self):
+        self._subscribers = MANAGER.list()
+
+    def subscribe(self):
+        queue = MANAGER.Queue()
+        self._subscribers.append(queue)
+        return queue
+
+    def publish(self, msg):
+        for queue in self._subscribers:
+            queue.put(msg)
+
+
+MANAGER = Manager()
+PUBSUB = PubSub()
 
 
 class WebsocketConnections(Singleton):
@@ -44,7 +62,7 @@ class WebsocketConnections(Singleton):
                                 and (data := loaded_data.get('data'))
                                 and (action := loaded_data.get('action'))
                                 and (connection := self.connections.get(connection_id))
-                       ):
+                        ):
                             # Check Action of WS
                             match action:
                                 case 'send':
@@ -64,6 +82,37 @@ class WebsocketConnections(Singleton):
                                     logger.debug(f'Unknown Message Action: {action}')
                     case _:
                         logger.debug(f'Unknown Channel Type: {channel_data["type"]}')
+        else:
+            queue = PUBSUB.subscribe()
+            logger.info("Subscribed to 'websocket_connections' queue")
+            while True:
+                msg = queue.get()
+                if msg is None:
+                    break
+                if (
+                        (connection_id := msg.get('connection_id'))
+                        and (data := msg.get('data'))
+                        and (action := msg.get('action'))
+                        and (connection := self.connections.get(connection_id))
+                ):
+
+                    # Check Action of WS
+                    match action:
+                        case 'send':
+                            logger.debug(f'Sending Message to {connection_id}')
+                            asyncio.run(connection.send(data=data))
+                        case 'close':
+                            with contextlib.suppress(RuntimeError):
+                                asyncio.run(connection.close(code=data['code'], reason=data['reason']))
+                                # We are trying to disconnect the connection between a thread and a user
+                                # from another thread, it's working, but we have to find another solution it
+                                #
+                                # Error:
+                                # Task <Task pending coro=<Websocket.close()>> got Future
+                                # <Task pending coro=<WebSocketCommonProtocol.transfer_data()>>
+                                # attached to a different loop
+                        case _:
+                            logger.debug(f'Unknown Message Action: {action}')
 
     async def new_connection(self, connection: Websocket) -> None:
         await connection.connect(**connection.path_variables)
