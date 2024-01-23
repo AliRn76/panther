@@ -1,4 +1,3 @@
-import asyncio
 from pathlib import Path
 from unittest import TestCase
 
@@ -6,7 +5,6 @@ from pydantic import Field
 
 from panther import Panther
 from panther.app import API
-from panther.configs import config
 from panther.db import Model
 from panther.request import Request
 from panther.serializer import ModelSerializer
@@ -122,7 +120,7 @@ class TestModelSerializer(TestCase):
                 pass
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == "'fields' required while using 'ModelSerializer' metaclass. -> Serializer1"
+            assert e.args[0] == "'fields' required while using 'ModelSerializer' metaclass. -> tests.test_model_serializer.Serializer1"
         else:
             assert False
 
@@ -132,7 +130,7 @@ class TestModelSerializer(TestCase):
                 fields = ['ok', 'no']
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == "'ok' is not in 'Book' -> Serializer2"
+            assert e.args[0] == "'ok' is not in 'Book' -> tests.test_model_serializer.Serializer2"
         else:
             assert False
 
@@ -143,7 +141,7 @@ class TestModelSerializer(TestCase):
                 required_fields = ['pages_count']
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == "'pages_count' is in 'required_fields' but not in 'fields' -> Serializer3"
+            assert e.args[0] == "'pages_count' is in 'required_fields' but not in 'fields' -> tests.test_model_serializer.Serializer3"
         else:
             assert False
 
@@ -154,7 +152,7 @@ class TestModelSerializer(TestCase):
                 required_fields = ['pages_count']
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == "'model' required while using 'ModelSerializer' metaclass -> Serializer4"
+            assert e.args[0] == "'model' required while using 'ModelSerializer' metaclass -> tests.test_model_serializer.Serializer4"
         else:
             assert False
 
@@ -167,7 +165,6 @@ class TestModelSerializer(TestCase):
             Serializer5(name='alice', author='bob')
         except Exception as e:
             assert isinstance(e, TypeError)
-            assert e.args[0] == ("you should not inherit the 'ModelSerializer', "
-                                 "you should use it as 'metaclass' -> Serializer5")
+            assert e.args[0] == "you should not inherit the 'ModelSerializer', you should use it as 'metaclass' -> tests.test_model_serializer.Serializer5"
         else:
             assert False
