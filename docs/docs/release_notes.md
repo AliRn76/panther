@@ -1,3 +1,6 @@
+### 3.7.0
+- Add `ModelSerializer`
+
 ### 3.6.0
 - Use `observable` pattern for loading database middleware and inheritance of the `Query` class
 - Remove `IDType` from the `Model`
