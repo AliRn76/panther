@@ -90,8 +90,7 @@ class Panther:
         self._create_ws_connections_instance()
 
     def _create_ws_connections_instance(self):
-        from panther.base_websocket import Websocket
-        from panther.websocket import WebsocketConnections
+        from panther.base_websocket import Websocket, WebsocketConnections
 
         # Check do we have ws endpoint
         for endpoint in config['flat_urls'].values():
