@@ -1,3 +1,6 @@
+### 3.8.1
+- Fix an issue in `_create_pantherdb_session()`
+
 ### 3.8.0
 - Handle WebSocket connections when we have multiple workers with `multiprocessing.Manager`
 

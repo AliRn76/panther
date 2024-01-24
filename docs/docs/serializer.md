@@ -56,12 +56,12 @@ Use panther `ModelSerializer` to write your serializer which will use your `mode
        return Response(data=request.validated_data, status_code=status.HTTP_202_ACCEPTED)
    ```
 
-### Notes: 
+## Notes
 1. In the example above `UserModelSerializer` only accepts the values of `fields` attribute
 
 2. In default the `UserModelSerializer.fields` are same as `User.fields` but you can change their default and make them required with `required_fields` attribute  
-
-3. If you want uses `required_fields` you have to put them in `fields` too.
+    
+3. If you want to use `required_fields` you have to put them in `fields` too.
 
 4. `fields` attribute is `required` when you are using `ModelSerializer` as `metaclass`
 

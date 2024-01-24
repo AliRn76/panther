@@ -33,7 +33,7 @@ async def info_api(request: Request):
 models_py = """from panther.db import Model
 """
 
-serializers_py = """from pydantic import BaseModel
+serializers_py = """from panther.serializer import ModelSerializer
 """
 
 throttling_py = """from datetime import timedelta
@@ -70,8 +70,7 @@ SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}
 URLs = 'core.urls.url_routing'
 """ % datetime.now().date().isoformat()
 
-env = """
-SECRET_KEY = '%s'
+env = """SECRET_KEY='%s'
 """ % generate_secret_key()
 
 main_py = """from panther import Panther
