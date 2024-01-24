@@ -1,3 +1,6 @@
+### 3.8.2
+- Add `content-type = application/json` header in raise response of `__call__` 
+
 ### 3.8.1
 - Fix an issue in `_create_pantherdb_session()`
 

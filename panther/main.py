@@ -300,6 +300,7 @@ class Panther:
     async def _raise(self, send, *, status_code: int):
         await http_response(
             send,
+            headers={'content-type': 'application/json'},
             status_code=status_code,
             monitoring=self.monitoring,
             exception=True,
