@@ -5,6 +5,7 @@ import sys
 import types
 from collections.abc import Callable
 from logging.config import dictConfig
+from multiprocessing import Manager
 from pathlib import Path
 from threading import Thread
 
@@ -102,7 +103,7 @@ class Panther:
 
         # Create websocket connections instance
         if config['has_ws']:
-            config['websocket_connections'] = WebsocketConnections()
+            config['websocket_connections'] = WebsocketConnections(manager=Manager())
             # Websocket Redis Connection
             for middleware in config['http_middlewares']:
                 if middleware.__class__.__name__ == 'RedisMiddleware':

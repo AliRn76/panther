@@ -1,12 +1,8 @@
 from __future__ import annotations
 
-from typing import Literal
-
-import orjson as json
-
 from panther import status
-from panther.base_websocket import Websocket, PUBSUB
-from panther.db.connection import redis
+from panther.base_websocket import Websocket
+from panther.configs import config
 
 
 class GenericWebsocket(Websocket):
@@ -30,18 +26,9 @@ class GenericWebsocket(Websocket):
 
 
 async def send_message_to_websocket(connection_id: str, data: any):
-    _publish_to_websocket(connection_id=connection_id, action='send', data=data)
+    config.websocket_connections.publish(connection_id=connection_id, action='send', data=data)
 
 
 async def close_websocket_connection(connection_id: str, code: int = status.WS_1000_NORMAL_CLOSURE, reason: str = ''):
     data = {'code': code, 'reason': reason}
-    _publish_to_websocket(connection_id=connection_id, action='close', data=data)
-
-
-def _publish_to_websocket(connection_id: str, action: Literal['send', 'close'], data: any):
-    publish_data = {'connection_id': connection_id, 'action': action, 'data': data}
-
-    if redis.is_connected:
-        redis.publish('websocket_connections', json.dumps(publish_data))
-    else:
-        PUBSUB.publish(publish_data)
+    config.websocket_connections.publish(connection_id=connection_id, action='close', data=data)

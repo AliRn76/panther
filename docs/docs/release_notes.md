@@ -1,3 +1,6 @@
+### 3.8.0
+- Handle WebSocket connections when we have multiple workers with `multiprocessing.Manager`
+
 ### 3.7.0
 - Add `ModelSerializer`
 

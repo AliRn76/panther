@@ -4,7 +4,7 @@ import asyncio
 import contextlib
 import logging
 from multiprocessing import Manager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import orjson as json
 
@@ -12,6 +12,7 @@ from panther import status
 from panther._utils import generate_ws_connection_id
 from panther.base_request import BaseRequest
 from panther.configs import config
+from panther.db.connection import redis
 from panther.utils import Singleton
 
 if TYPE_CHECKING:
@@ -21,11 +22,12 @@ logger = logging.getLogger('panther')
 
 
 class PubSub:
-    def __init__(self):
-        self._subscribers = MANAGER.list()
+    def __init__(self, manager):
+        self._manager = manager
+        self._subscribers = self._manager.list()
 
     def subscribe(self):
-        queue = MANAGER.Queue()
+        queue = self._manager.Queue()
         self._subscribers.append(queue)
         return queue
 
@@ -34,14 +36,11 @@ class PubSub:
             queue.put(msg)
 
 
-MANAGER = Manager()
-PUBSUB = PubSub()
-
-
 class WebsocketConnections(Singleton):
-    def __init__(self):
+    def __init__(self, manager: Manager):
         self.connections = {}
         self.connections_count = 0
+        self.manager = manager
 
     def __call__(self, r: Redis | None):
         if r:
@@ -62,7 +61,8 @@ class WebsocketConnections(Singleton):
                     case unknown_type:
                         logger.debug(f'Unknown Channel Type: {unknown_type}')
         else:
-            queue = PUBSUB.subscribe()
+            self.pubsub = PubSub(manager=self.manager)
+            queue = self.pubsub.subscribe()
             logger.info("Subscribed to 'websocket_connections' queue")
             while True:
                 received_message = queue.get()
@@ -95,6 +95,14 @@ class WebsocketConnections(Singleton):
                         # attached to a different loop
                 case unknown_action:
                     logger.debug(f'Unknown Message Action: {unknown_action}')
+
+    def publish(self, connection_id: str, action: Literal['send', 'close'], data: any):
+        publish_data = {'connection_id': connection_id, 'action': action, 'data': data}
+
+        if redis.is_connected:
+            redis.publish('websocket_connections', json.dumps(publish_data))
+        else:
+            self.pubsub.publish(publish_data)
 
     async def new_connection(self, connection: Websocket) -> None:
         await connection.connect(**connection.path_variables)
