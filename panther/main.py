@@ -103,7 +103,6 @@ class Panther:
 
         # Create websocket connections instance
         if config['has_ws']:
-            config['websocket_connections'] = WebsocketConnections(manager=Manager())
             # Websocket Redis Connection
             for middleware in config['http_middlewares']:
                 if middleware.__class__.__name__ == 'RedisMiddleware':
@@ -111,6 +110,10 @@ class Panther:
                     break
             else:
                 self.ws_redis_connection = None
+
+            # Don't create Manager() if we are going to use Redis for PubSub
+            manager = None if self.ws_redis_connection else Manager()
+            config['websocket_connections'] = WebsocketConnections(manager=manager)
 
     async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
         """

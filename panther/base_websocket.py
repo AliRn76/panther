@@ -37,7 +37,7 @@ class PubSub:
 
 
 class WebsocketConnections(Singleton):
-    def __init__(self, manager: Manager):
+    def __init__(self, manager: Manager = None):
         self.connections = {}
         self.connections_count = 0
         self.manager = manager
