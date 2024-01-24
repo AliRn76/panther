@@ -87,7 +87,7 @@ class WebsocketConnections(Singleton):
                             reason=received_message['data']['reason']
                         ))
                         # We are trying to disconnect the connection between a thread and a user
-                        # from another thread, it's working, but we have to find another solution it
+                        # from another thread, it's working, but we have to find another solution for it
                         #
                         # Error:
                         # Task <Task pending coro=<Websocket.close()>> got Future
