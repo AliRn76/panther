@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from panther import status, Panther
+from panther import Panther, status
 from panther.app import API
 from panther.db import Model
 from panther.request import Request
