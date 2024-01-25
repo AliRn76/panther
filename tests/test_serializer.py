@@ -17,17 +17,23 @@ class Book(Model):
     pages_count: int = Field(0)
 
 
-class NotRequiredFieldsSerializer(metaclass=ModelSerializer, model=Book):
-    fields = ['author', 'pages_count']
+class NotRequiredFieldsSerializer(ModelSerializer):
+    class Meta:
+        model = Book
+        fields = ['author', 'pages_count']
 
 
-class RequiredFieldsSerializer(metaclass=ModelSerializer, model=Book):
-    fields = ['name', 'author', 'pages_count']
+class RequiredFieldsSerializer(ModelSerializer):
+    class Meta:
+        model = Book
+        fields = ['name', 'author', 'pages_count']
 
 
-class OnlyRequiredFieldsSerializer(metaclass=ModelSerializer, model=Book):
-    fields = ['name', 'author', 'pages_count']
-    required_fields = ['author', 'pages_count']
+class OnlyRequiredFieldsSerializer(ModelSerializer):
+    class Meta:
+        model = Book
+        fields = ['name', 'author', 'pages_count']
+        required_fields = ['author', 'pages_count']
 
 
 @API(input_model=NotRequiredFieldsSerializer)
@@ -114,57 +120,71 @@ class TestModelSerializer(TestCase):
         assert res.status_code == 200
         assert res.data == {'name': 'how to code', 'author': 'ali', 'pages_count': 12}
 
-    def test_define_class_without_fields(self):
+    def test_define_class_without_meta(self):
         try:
-            class Serializer1(metaclass=ModelSerializer, model=Book):
+            class Serializer0(ModelSerializer):
                 pass
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == "'fields' required while using 'ModelSerializer' metaclass. -> tests.test_model_serializer.Serializer1"
-        else:
-            assert False
-
-    def test_define_class_with_invalid_fields(self):
-        try:
-            class Serializer2(metaclass=ModelSerializer, model=Book):
-                fields = ['ok', 'no']
-        except Exception as e:
-            assert isinstance(e, AttributeError)
-            assert e.args[0] == "'ok' is not in 'Book' -> tests.test_model_serializer.Serializer2"
-        else:
-            assert False
-
-    def test_define_class_with_invalid_required_fields(self):
-        try:
-            class Serializer3(metaclass=ModelSerializer, model=Book):
-                fields = ['name', 'author']
-                required_fields = ['pages_count']
-        except Exception as e:
-            assert isinstance(e, AttributeError)
-            assert e.args[0] == "'pages_count' is in 'required_fields' but not in 'fields' -> tests.test_model_serializer.Serializer3"
+            assert e.args[0] == '`class Meta` is required in tests.test_serializer.Serializer0.'
         else:
             assert False
 
     def test_define_class_without_model(self):
         try:
-            class Serializer4(metaclass=ModelSerializer):
-                fields = ['name', 'author']
-                required_fields = ['pages_count']
+            class Serializer1(ModelSerializer):
+                class Meta:
+                    pass
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == "'model' required while using 'ModelSerializer' metaclass -> tests.test_model_serializer.Serializer4"
+            assert e.args[0] == '`Serializer1.Meta.model` is required.'
         else:
             assert False
 
-    def test_define_class_without_metaclass(self):
-        class Serializer5(ModelSerializer):
-            fields = ['name', 'author']
-            required_fields = ['pages_count']
-
+    def test_define_class_without_fields(self):
         try:
-            Serializer5(name='alice', author='bob')
+            class Serializer2(ModelSerializer):
+                class Meta:
+                    model = Book
         except Exception as e:
-            assert isinstance(e, TypeError)
-            assert e.args[0] == "you should not inherit the 'ModelSerializer', you should use it as 'metaclass' -> tests.test_model_serializer.Serializer5"
+            assert isinstance(e, AttributeError)
+            assert e.args[0] == '`Serializer2.Meta.fields` is required.'
+        else:
+            assert False
+
+    def test_define_class_with_invalid_fields(self):
+        try:
+            class Serializer3(ModelSerializer):
+                class Meta:
+                    model = Book
+                    fields = ['ok', 'no']
+        except Exception as e:
+            assert isinstance(e, AttributeError)
+            assert e.args[0] == '`Serializer3.Meta.fields.ok` is not valid.'
+        else:
+            assert False
+
+    def test_define_class_with_invalid_required_fields(self):
+        try:
+            class Serializer4(ModelSerializer):
+                class Meta:
+                    model = Book
+                    fields = ['name', 'author']
+                    required_fields = ['pages_count']
+        except Exception as e:
+            assert isinstance(e, AttributeError)
+            assert e.args[0] == '`Serializer4.Meta.required_fields.pages_count` should be in `Meta.fields` too.'
+        else:
+            assert False
+
+    def test_define_class_with_invalid_model(self):
+        try:
+            class Serializer5(ModelSerializer):
+                class Meta:
+                    model = ModelSerializer
+                    fields = ['name', 'author', 'pages_count']
+        except Exception as e:
+            assert isinstance(e, AttributeError)
+            assert e.args[0] == '`Serializer5.Meta.model` is not subclass of `panther.db.Model`.'
         else:
             assert False

@@ -15,9 +15,11 @@ class User(Model):
     last_name: str = Field(default='', min_length=4)
 
 
-class UserSerializer(metaclass=ModelSerializer, model=User):
-    fields = ['username', 'first_name', 'last_name']
-    # required_fields = ['first_name']
+class UserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name']
+        required_fields = ['first_name']
 
 
 @API(input_model=UserSerializer)
@@ -30,3 +32,6 @@ url_routing = {
 }
 
 app = Panther(__name__, configs=__name__, urls=url_routing)
+
+
+# print(UserSerializer(username='alirn', first_name='Ali', last_name='RnRn'))
