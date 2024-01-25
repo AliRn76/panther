@@ -1,6 +1,7 @@
 import typing
 
 from pydantic import create_model
+from pydantic.fields import FieldInfo
 from pydantic_core._pydantic_core import PydanticUndefined
 
 from panther.db import Model
@@ -59,8 +60,26 @@ class MetaModelSerializer:
                 raise AttributeError(msg) from None
             field_definitions[required][1].default = PydanticUndefined
 
+        # Collect and Override `Class Fields`
+        for key, value in namespace.get('__annotations__', {}).items():
+            field_info = namespace.pop(key, FieldInfo(required=True))
+            field_info.annotation = value
+            field_definitions[key] = (value, field_info)
+
+        # Collect `Validators`
+        validators = {}
+        for key, value in namespace.items():
+            if key in ['__module__', '__qualname__', '__annotations__', 'Meta']:
+                continue
+
+            validators[key] = value
+
         # Create model
-        return create_model(__model_name=cls_name, **field_definitions)
+        return create_model(
+            __model_name=cls_name,
+            __validators__=validators,
+            **field_definitions
+        )
 
 
 class ModelSerializer(metaclass=MetaModelSerializer):

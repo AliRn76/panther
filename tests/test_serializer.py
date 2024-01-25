@@ -2,6 +2,7 @@ from pathlib import Path
 from unittest import TestCase
 
 from pydantic import Field
+from pydantic import field_validator
 
 from panther import Panther
 from panther.app import API
@@ -36,6 +37,26 @@ class OnlyRequiredFieldsSerializer(ModelSerializer):
         required_fields = ['author', 'pages_count']
 
 
+class WithValidatorsSerializer(ModelSerializer):
+    class Meta:
+        model = Book
+        fields = ['name', 'author', 'pages_count']
+        required_fields = ['author', 'pages_count']
+
+    @field_validator('name', 'author', 'pages_count')
+    def validate(cls, field):
+        return 'validated'
+
+
+class WithClassFieldsSerializer(ModelSerializer):
+    age: int = Field(10)
+
+    class Meta:
+        model = Book
+        fields = ['name', 'author', 'pages_count']
+        required_fields = ['author', 'pages_count']
+
+
 @API(input_model=NotRequiredFieldsSerializer)
 async def not_required(request: Request):
     return request.validated_data
@@ -51,10 +72,22 @@ async def only_required(request: Request):
     return request.validated_data
 
 
+@API(input_model=WithValidatorsSerializer)
+async def with_validators(request: Request):
+    return request.validated_data
+
+
+@API(input_model=WithClassFieldsSerializer)
+async def with_class_fields(request: Request):
+    return request.validated_data
+
+
 urls = {
     'not-required': not_required,
     'required': required,
     'only-required': only_required,
+    'with-validators': with_validators,
+    'class-fields': with_class_fields,
 }
 
 
@@ -72,6 +105,8 @@ class TestModelSerializer(TestCase):
 
     def tearDown(self) -> None:
         Path(self.DB_PATH).unlink(missing_ok=True)
+
+    # # # Class Usage
 
     def test_not_required_fields_empty_response(self):
         payload = {}
@@ -119,6 +154,40 @@ class TestModelSerializer(TestCase):
         res = self.client.post('only-required', payload=payload)
         assert res.status_code == 200
         assert res.data == {'name': 'how to code', 'author': 'ali', 'pages_count': 12}
+
+    def test_with_validators(self):
+        payload = {
+            'name': 'how to code',
+            'author': 'ali',
+            'pages_count': '12'
+        }
+        res = self.client.post('with-validators', payload=payload)
+        assert res.status_code == 200
+        assert res.data == {'name': 'validated', 'author': 'validated', 'pages_count': 'validated'}
+
+    def test_with_class_fields_success(self):
+        # Test Default Value
+        payload1 = {
+            'name': 'how to code',
+            'author': 'ali',
+            'pages_count': '12'
+        }
+        res = self.client.post('class-fields', payload=payload1)
+        assert res.status_code == 200
+        assert res.data == {'name': 'how to code', 'author': 'ali', 'pages_count': 12, 'age': 10}
+
+        # Test Validation
+        payload2 = {
+            'name': 'how to code',
+            'author': 'ali',
+            'pages_count': '12',
+            'age': 30
+        }
+        res = self.client.post('class-fields', payload=payload2)
+        assert res.status_code == 200
+        assert res.data == {'name': 'how to code', 'author': 'ali', 'pages_count': 12, 'age': 30}
+
+    # # # Class Definition
 
     def test_define_class_without_meta(self):
         try:

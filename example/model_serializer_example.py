@@ -1,10 +1,7 @@
 from pydantic import Field
+from pydantic import field_validator
 
-from panther import Panther, status
-from panther.app import API
 from panther.db import Model
-from panther.request import Request
-from panther.response import Response
 from panther.serializer import ModelSerializer
 
 
@@ -16,22 +13,22 @@ class User(Model):
 
 
 class UserSerializer(ModelSerializer):
+    age: int = Field(default=20)
+    is_male: bool
+
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name']
         required_fields = ['first_name']
 
+    @field_validator('username', mode='before')
+    def validate_username(cls, username):
+        print(f'{username=}')
+        return username
 
-@API(input_model=UserSerializer)
-async def model_serializer_example(request: Request):
-    return Response(data=request.validated_data, status_code=status.HTTP_202_ACCEPTED)
-
-
-url_routing = {
-    '': model_serializer_example,
-}
-
-app = Panther(__name__, configs=__name__, urls=url_routing)
+    def ok(self):
+        print('ok')
 
 
-# print(UserSerializer(username='alirn', first_name='Ali', last_name='RnRn'))
+print(UserSerializer(username='alirn', first_name='Ali', last_name='RnRn', is_male=1))
+# print(UserSerializer.validate_username)
