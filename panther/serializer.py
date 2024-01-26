@@ -16,6 +16,7 @@ class MetaModelSerializer:
             **kwargs
     ):
         if cls_name == 'ModelSerializer':
+            cls.model_serializer = type(cls_name, (), namespace)
             return super().__new__(cls)
 
         known_config_attrs = ['model', 'fields', 'required_fields']
@@ -80,14 +81,17 @@ class MetaModelSerializer:
         # Collect `Validators`
         validators = {key: value for key, value in namespace.items() if not key.startswith('__')}
 
-        # Create model
-        return create_model(
+        # Create serializer
+        serializer = create_model(
             __model_name=cls_name,
             __validators__=validators,
             __config__=model_config,
             __doc__=doc,
             **field_definitions
         )
+        cls.model_serializer.model = model
+        serializer.__bases__ = (*serializer.__bases__, cls.model_serializer)
+        return serializer
 
 
 class ModelSerializer(metaclass=MetaModelSerializer):

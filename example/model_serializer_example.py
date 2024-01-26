@@ -32,6 +32,5 @@ class UserSerializer(ModelSerializer):
         return username
 
 
-print(UserSerializer(username='alirn', first_name='Ali', last_name='RnRn', is_male=1))
-print(UserSerializer(username='alirn', first_name='Ali', last_name='RnRn', is_male=1).__doc__)
-# print(UserSerializer.validate_username)
+serialized = UserSerializer(username='alirn', first_name='Ali', last_name='RnRn', is_male=1)
+# print(serialized.create())
