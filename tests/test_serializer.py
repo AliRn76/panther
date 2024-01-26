@@ -1,7 +1,7 @@
 from pathlib import Path
 from unittest import TestCase
 
-from pydantic import Field
+from pydantic import Field, ConfigDict
 from pydantic import field_validator
 
 from panther import Panther
@@ -19,26 +19,26 @@ class Book(Model):
 
 
 class NotRequiredFieldsSerializer(ModelSerializer):
-    class Meta:
+    class Config:
         model = Book
         fields = ['author', 'pages_count']
 
 
 class RequiredFieldsSerializer(ModelSerializer):
-    class Meta:
+    class Config:
         model = Book
         fields = ['name', 'author', 'pages_count']
 
 
 class OnlyRequiredFieldsSerializer(ModelSerializer):
-    class Meta:
+    class Config:
         model = Book
         fields = ['name', 'author', 'pages_count']
         required_fields = ['author', 'pages_count']
 
 
 class WithValidatorsSerializer(ModelSerializer):
-    class Meta:
+    class Config:
         model = Book
         fields = ['name', 'author', 'pages_count']
         required_fields = ['author', 'pages_count']
@@ -51,7 +51,7 @@ class WithValidatorsSerializer(ModelSerializer):
 class WithClassFieldsSerializer(ModelSerializer):
     age: int = Field(10)
 
-    class Meta:
+    class Config:
         model = Book
         fields = ['name', 'author', 'pages_count']
         required_fields = ['author', 'pages_count']
@@ -195,65 +195,123 @@ class TestModelSerializer(TestCase):
                 pass
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == '`class Meta` is required in tests.test_serializer.Serializer0.'
+            assert e.args[0] == '`class Config` is required in tests.test_serializer.Serializer0.'
         else:
             assert False
 
     def test_define_class_without_model(self):
         try:
             class Serializer1(ModelSerializer):
-                class Meta:
+                class Config:
                     pass
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == '`Serializer1.Meta.model` is required.'
+            assert e.args[0] == '`Serializer1.Config.model` is required.'
         else:
             assert False
 
     def test_define_class_without_fields(self):
         try:
             class Serializer2(ModelSerializer):
-                class Meta:
+                class Config:
                     model = Book
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == '`Serializer2.Meta.fields` is required.'
+            assert e.args[0] == '`Serializer2.Config.fields` is required.'
         else:
             assert False
 
     def test_define_class_with_invalid_fields(self):
         try:
             class Serializer3(ModelSerializer):
-                class Meta:
+                class Config:
                     model = Book
                     fields = ['ok', 'no']
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == '`Serializer3.Meta.fields.ok` is not valid.'
+            assert e.args[0] == '`Serializer3.Config.fields.ok` is not valid.'
         else:
             assert False
 
     def test_define_class_with_invalid_required_fields(self):
         try:
             class Serializer4(ModelSerializer):
-                class Meta:
+                class Config:
                     model = Book
                     fields = ['name', 'author']
                     required_fields = ['pages_count']
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == '`Serializer4.Meta.required_fields.pages_count` should be in `Meta.fields` too.'
+            assert e.args[0] == '`Serializer4.Config.required_fields.pages_count` should be in `Config.fields` too.'
         else:
             assert False
 
     def test_define_class_with_invalid_model(self):
         try:
             class Serializer5(ModelSerializer):
-                class Meta:
+                class Config:
                     model = ModelSerializer
                     fields = ['name', 'author', 'pages_count']
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == '`Serializer5.Meta.model` is not subclass of `panther.db.Model`.'
+            assert e.args[0] == '`Serializer5.Config.model` is not subclass of `panther.db.Model`.'
         else:
             assert False
+
+    # # # Serializer Usage
+    def test_with_simple_model_config(self):
+        class Serializer(ModelSerializer):
+            model_config = ConfigDict(str_to_upper=True)
+
+            class Config:
+                model = Book
+                fields = ['name', 'author', 'pages_count']
+
+        serialized = Serializer(name='book', author='AliRn', pages_count='12')
+        assert serialized.name == 'BOOK'
+        assert serialized.author == 'ALIRN'
+        assert serialized.pages_count == 12
+
+    def test_with_inner_model_config(self):
+        class Serializer(ModelSerializer):
+            class Config:
+                str_to_upper = True
+                model = Book
+                fields = ['name', 'author', 'pages_count']
+
+        serialized = Serializer(name='book', author='AliRn', pages_count='12')
+        assert serialized.name == 'BOOK'
+        assert serialized.author == 'ALIRN'
+        assert serialized.pages_count == 12
+
+    def test_with_dual_model_config(self):
+        class Serializer(ModelSerializer):
+            model_config = ConfigDict(str_to_upper=False)
+
+            class Config:
+                str_to_upper = True
+                model = Book
+                fields = ['name', 'author', 'pages_count']
+
+        serialized = Serializer(name='book', author='AliRn', pages_count='12')
+        assert serialized.name == 'book'
+        assert serialized.author == 'AliRn'
+        assert serialized.pages_count == 12
+
+    def test_serializer_doc(self):
+        class Serializer1(ModelSerializer):
+            """Hello I'm Doc"""
+            class Config:
+                model = Book
+                fields = ['name', 'author', 'pages_count']
+
+        serialized = Serializer1(name='book', author='AliRn', pages_count='12')
+        assert serialized.__doc__ == 'Hello I\'m Doc'
+
+        class Serializer2(ModelSerializer):
+            class Config:
+                model = Book
+                fields = ['name', 'author', 'pages_count']
+
+        serialized = Serializer2(name='book', author='AliRn', pages_count='12')
+        assert serialized.__doc__ is None
