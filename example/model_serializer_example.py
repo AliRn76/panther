@@ -31,6 +31,12 @@ class UserSerializer(ModelSerializer):
         print(f'{username=}')
         return username
 
+    def perform_create(self, validated_data):
+        validated_data['password'] = 'fake-pass'
+        return validated_data
+
 
 serialized = UserSerializer(username='alirn', first_name='Ali', last_name='RnRn', is_male=1)
-# print(serialized.create())
+print(serialized)
+# serialized.create()
+# breakpoint()

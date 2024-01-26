@@ -1,13 +1,15 @@
 import typing
 
 from pydantic import create_model
-from pydantic_core._pydantic_core import PydanticUndefined
 from pydantic.fields import FieldInfo
+from pydantic_core._pydantic_core import PydanticUndefined
 
 from panther.db import Model
 
 
 class MetaModelSerializer:
+    KNOWN_CONFIGS = ['model', 'fields', 'required_fields']
+
     def __new__(
             cls,
             cls_name: str,
@@ -19,11 +21,42 @@ class MetaModelSerializer:
             cls.model_serializer = type(cls_name, (), namespace)
             return super().__new__(cls)
 
-        known_config_attrs = ['model', 'fields', 'required_fields']
+        # 1. Initial Check
+        cls.check_config(cls_name=cls_name, namespace=namespace)
 
-        address = f'{namespace["__module__"]}.{cls_name}'
+        # 2. Config
+        config = namespace.pop('Config')
+
+        # 3. Collect `Fields`
+        field_definitions = cls.collect_fields(config=config, namespace=namespace)
+
+        # 4. Collect `pydantic.model_config`
+        model_config = cls.collect_model_config(config=config, namespace=namespace)
+
+        # 5. Collect `Validators`
+        validators = cls.collect_validators(namespace=namespace)
+
+        # 6. Create a serializer
+        serializer = create_model(
+            __model_name=cls_name,
+            __module__=namespace['__module__'],
+            __validators__=validators,
+            __config__=model_config,
+            __doc__=namespace.get('__doc__'),
+            **field_definitions
+        )
+        # 7. Fix serializer __bases__ & ...
+        cls.finalization(config=config, serializer=serializer)
+
+        return serializer
+
+    @classmethod
+    def check_config(cls, cls_name: str, namespace: dict) -> None:
+        module = namespace['__module__']
+        address = f'{module}.{cls_name}'
+
         # Check `Config`
-        if (config := namespace.pop('Config', None)) is None:
+        if (config := namespace.get('Config')) is None:
             msg = f'`class Config` is required in {address}.'
             raise AttributeError(msg) from None
 
@@ -46,31 +79,34 @@ class MetaModelSerializer:
             msg = f'`{cls_name}.Config.fields` is required.'
             raise AttributeError(msg) from None
 
-        model_fields = model.model_fields
+        for field_name in fields:
+            if field_name not in model.model_fields:
+                msg = f'`{cls_name}.Config.fields.{field_name}` is not valid.'
+                raise AttributeError(msg) from None
+
+        # Check `required_fields`
+        if not hasattr(config, 'required_fields'):
+            config.required_fields = []
+
+        for required in config.required_fields:
+            if required not in config.fields:
+                msg = f'`{cls_name}.Config.required_fields.{required}` should be in `Config.fields` too.'
+                raise AttributeError(msg) from None
+
+    @classmethod
+    def collect_fields(cls, config: typing.Callable, namespace: dict) -> dict:
         field_definitions = {}
 
         # Define `fields`
-        for field_name in fields:
-            if field_name not in model_fields:
-                msg = f'`{cls_name}.Config.fields.{field_name}` is not valid.'
-                raise AttributeError(msg) from None
-            field_definitions[field_name] = (model_fields[field_name].annotation, model_fields[field_name])
+        for field_name in config.fields:
+            field_definitions[field_name] = (
+                config.model.model_fields[field_name].annotation,
+                config.model.model_fields[field_name]
+            )
 
-        # Change `required_fields
-        for required in getattr(config, 'required_fields', []):
-            if required not in field_definitions:
-                msg = f'`{cls_name}.Config.required_fields.{required}` should be in `Config.fields` too.'
-                raise AttributeError(msg) from None
+        # Apply `required_fields`
+        for required in config.required_fields:
             field_definitions[required][1].default = PydanticUndefined
-
-        # Collect Doc
-        doc = namespace.pop('__doc__', '')
-
-        # Collect `pydantic.model_config` (Should be before `Collect Validators`)
-        model_config = {
-            attr: getattr(config, attr) for attr in dir(config)
-            if not attr.startswith('__') and attr not in known_config_attrs
-        } | namespace.pop('model_config', {})
 
         # Collect and Override `Class Fields`
         for key, value in namespace.pop('__annotations__', {}).items():
@@ -78,21 +114,34 @@ class MetaModelSerializer:
             field_info.annotation = value
             field_definitions[key] = (value, field_info)
 
-        # Collect `Validators`
-        validators = {key: value for key, value in namespace.items() if not key.startswith('__')}
+        return field_definitions
 
-        # Create serializer
-        serializer = create_model(
-            __model_name=cls_name,
-            __validators__=validators,
-            __config__=model_config,
-            __doc__=doc,
-            **field_definitions
-        )
-        cls.model_serializer.model = model
-        serializer.__bases__ = (*serializer.__bases__, cls.model_serializer)
-        return serializer
+    @classmethod
+    def collect_model_config(cls, config: typing.Callable, namespace: dict) -> dict:
+        return {
+            attr: getattr(config, attr) for attr in dir(config)
+            if not attr.startswith('__') and attr not in cls.KNOWN_CONFIGS
+        } | namespace.pop('model_config', {})
+
+    @classmethod
+    def collect_validators(cls, namespace: dict) -> dict:
+        return {
+            key: value for key, value in namespace.items()
+            if not key.startswith('__') and key != 'model_config'
+        }
+
+    @classmethod
+    def finalization(cls, config: typing.Callable, serializer: typing.Callable):
+        cls.model_serializer.model = config.model
+        serializer.__bases__ = (cls.model_serializer, *serializer.__bases__)
 
 
 class ModelSerializer(metaclass=MetaModelSerializer):
-    pass
+
+    def create(self):
+        validated_data = self.model_dump()
+
+        if hasattr(self, 'perform_create'):
+            validated_data = self.perform_create(validated_data)
+
+        return self.model.insert_one(**validated_data)
