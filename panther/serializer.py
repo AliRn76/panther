@@ -138,10 +138,9 @@ class MetaModelSerializer:
 
 class ModelSerializer(metaclass=MetaModelSerializer):
 
+    def perform_create(self, model: type[Model], validated_data: dict) -> type[Model]:
+        return model.insert_one(**validated_data)
+
     def create(self):
         validated_data = self.model_dump()
-
-        if hasattr(self, 'perform_create'):
-            validated_data = self.perform_create(validated_data)
-
-        return self.model.insert_one(**validated_data)
+        return self.perform_create(model=self.model, validated_data=validated_data)

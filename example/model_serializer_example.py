@@ -1,7 +1,7 @@
 from pydantic import Field, field_validator, ConfigDict
 
 from panther.db import Model
-from panther.serializer import ModelSerializer
+from serializer import ModelSerializer
 
 
 class User(Model):
@@ -31,12 +31,12 @@ class UserSerializer(ModelSerializer):
         print(f'{username=}')
         return username
 
-    def perform_create(self, validated_data):
+    def perform_create(self, model: type[Model], validated_data: dict) -> type[Model]:
         validated_data['password'] = 'fake-pass'
-        return validated_data
+        return model.insert_one(**validated_data)
 
 
 serialized = UserSerializer(username='alirn', first_name='Ali', last_name='RnRn', is_male=1)
 print(serialized)
-# serialized.create()
+serialized.create()
 # breakpoint()
