@@ -1,3 +1,6 @@
+### 3.9.0
+- Change the style of `ModelSerializer` usage 
+
 ### 3.8.2
 - Add `content-type = application/json` header in raise response of `__call__` 
 
