@@ -31,12 +31,11 @@ class UserSerializer(ModelSerializer):
         print(f'{username=}')
         return username
 
-    def perform_create(self, model: type[Model], validated_data: dict) -> type[Model]:
-        validated_data['password'] = 'fake-pass'
-        return model.insert_one(**validated_data)
+    def create(self) -> type[Model]:
+        print('UserSerializer.create()')
+        return super().create()
 
 
 serialized = UserSerializer(username='alirn', first_name='Ali', last_name='RnRn', is_male=1)
 print(serialized)
 # serialized.create()
-# breakpoint()

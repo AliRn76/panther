@@ -1,6 +1,6 @@
 import typing
 
-from pydantic import create_model
+from pydantic import create_model, BaseModel
 from pydantic.fields import FieldInfo
 from pydantic_core._pydantic_core import PydanticUndefined
 
@@ -23,32 +23,25 @@ class MetaModelSerializer:
 
         # 1. Initial Check
         cls.check_config(cls_name=cls_name, namespace=namespace)
-
-        # 2. Config
         config = namespace.pop('Config')
 
-        # 3. Collect `Fields`
+        # 2. Collect `Fields`
         field_definitions = cls.collect_fields(config=config, namespace=namespace)
 
-        # 4. Collect `pydantic.model_config`
+        # 3. Collect `pydantic.model_config`
         model_config = cls.collect_model_config(config=config, namespace=namespace)
+        namespace |= {'model_config': model_config}
 
-        # 5. Collect `Validators`
-        validators = cls.collect_validators(namespace=namespace)
-
-        # 6. Create a serializer
-        serializer = create_model(
+        # 4. Create a serializer
+        return create_model(
             __model_name=cls_name,
             __module__=namespace['__module__'],
-            __validators__=validators,
-            __config__=model_config,
+            __validators__=namespace,
+            __base__=(cls.model_serializer, BaseModel),
             __doc__=namespace.get('__doc__'),
+            model=(typing.ClassVar, config.model),
             **field_definitions
         )
-        # 7. Fix serializer __bases__ & ...
-        cls.finalization(config=config, serializer=serializer)
-
-        return serializer
 
     @classmethod
     def check_config(cls, cls_name: str, namespace: dict) -> None:
@@ -123,24 +116,7 @@ class MetaModelSerializer:
             if not attr.startswith('__') and attr not in cls.KNOWN_CONFIGS
         } | namespace.pop('model_config', {})
 
-    @classmethod
-    def collect_validators(cls, namespace: dict) -> dict:
-        return {
-            key: value for key, value in namespace.items()
-            if not key.startswith('__') and key != 'model_config'
-        }
-
-    @classmethod
-    def finalization(cls, config: typing.Callable, serializer: typing.Callable):
-        cls.model_serializer.model = config.model
-        serializer.__bases__ = (cls.model_serializer, *serializer.__bases__)
-
 
 class ModelSerializer(metaclass=MetaModelSerializer):
-
-    def perform_create(self, model: type[Model], validated_data: dict) -> type[Model]:
-        return model.insert_one(**validated_data)
-
-    def create(self):
-        validated_data = self.model_dump()
-        return self.perform_create(model=self.model, validated_data=validated_data)
+    def create(self) -> type[Model]:
+        return self.model.insert_one(self.model_dump())
