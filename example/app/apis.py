@@ -16,7 +16,7 @@ from panther import status
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
 from panther.background_tasks import BackgroundTask, background_tasks
-from panther.db.connection import redis
+from panther.db.connections import redis
 from panther.request import Request
 from panther.response import HTMLResponse, Response
 from panther.throttling import Throttling

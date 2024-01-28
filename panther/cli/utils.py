@@ -63,11 +63,11 @@ help_message = f"""{logo}
 """
 
 
-def import_error(message: str | Exception, package: str | None = None) -> None:
+def import_error(message: str | Exception, package: str | None = None) -> PantherException:
     msg = str(message)
     if package:
         msg += f' -> Hint: `pip install {package}`'
-    raise PantherException(msg)
+    return PantherException(msg)
 
 
 def cli_error(message: str | Exception) -> None:

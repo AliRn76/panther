@@ -13,7 +13,7 @@ import panther.logging
 from panther import status
 from panther._load_configs import *
 from panther._utils import clean_traceback_message, http_response, is_function_async, reformat_code, \
-    check_class_type_endpoint, check_function_type_endpoint
+    check_class_type_endpoint, check_function_type_endpoint, import_class
 from panther.background_tasks import background_tasks
 from panther.cli.utils import print_info
 from panther.configs import config
@@ -54,7 +54,6 @@ class Panther:
         print_info(config)
 
     def load_configs(self) -> None:
-
         # Check & Read The Configs File
         self._configs_module = load_configs_module(self._configs_module_name)
 
@@ -67,10 +66,7 @@ class Panther:
         config['default_cache_exp'] = load_default_cache_exp(self._configs_module)
         config['pantherdb_encryption'] = load_pantherdb_encryption(self._configs_module)
         middlewares = load_middlewares(self._configs_module)
-        config['http_middlewares'] = middlewares['http']
-        config['ws_middlewares'] = middlewares['ws']
-        config['reversed_http_middlewares'] = middlewares['http'][::-1]
-        config['reversed_ws_middlewares'] = middlewares['ws'][::-1]
+
         config['user_model'] = load_user_model(self._configs_module)
         config['authentication'] = load_authentication_class(self._configs_module)
         config['jwt_config'] = load_jwt_config(self._configs_module)
@@ -78,7 +74,17 @@ class Panther:
         config['shutdown'] = load_shutdown(self._configs_module)
         config['auto_reformat'] = load_auto_reformat(self._configs_module)
         config['models'] = collect_all_models()
+        load_database(self._configs_module)
+        if config['database']:
+            # TODO: Maybe put it inside load_middlewares()
+            database_middleware = import_class('panther.middlewares.db.DatabaseMiddleware')
+            middlewares['http'].insert(0, database_middleware())
+            middlewares['ws'].insert(0, database_middleware())
 
+        config['http_middlewares'] = middlewares['http']
+        config['ws_middlewares'] = middlewares['ws']
+        config['reversed_http_middlewares'] = middlewares['http'][::-1]
+        config['reversed_ws_middlewares'] = middlewares['ws'][::-1]
         # Initialize Background Tasks
         if config['background_tasks']:
             background_tasks.initialize()

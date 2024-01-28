@@ -1,9 +1,9 @@
-import asyncio
 import importlib
 import logging
 import re
 import subprocess
 import types
+import typing
 from collections.abc import Callable
 from traceback import TracebackException
 from uuid import uuid4
@@ -54,7 +54,7 @@ async def http_response(
     await _http_response_body(send, body=body)
 
 
-def import_class(dotted_path: str, /) -> type:
+def import_class(dotted_path: str, /) -> type[typing.Any]:
     """
     Example:
     -------

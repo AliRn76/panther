@@ -12,7 +12,7 @@ from panther import status
 from panther._utils import generate_ws_connection_id
 from panther.base_request import BaseRequest
 from panther.configs import config
-from panther.db.connection import redis
+from panther.db.connections import redis
 from panther.utils import Singleton
 
 if TYPE_CHECKING:

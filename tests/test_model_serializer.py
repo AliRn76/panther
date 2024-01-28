@@ -57,10 +57,13 @@ class TestModelSerializer(TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        global MIDDLEWARES
-        MIDDLEWARES = [
-            ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{cls.DB_PATH}'}),
-        ]
+        global DATABASE
+        DATABASE = {
+            'engine': {
+                'class': 'panther.db.connections.PantherDBConnection',
+                'path': cls.DB_PATH,
+            },
+        }
         app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
 

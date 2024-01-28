@@ -62,7 +62,6 @@ class Config(Singleton):
     models: list[dict]
     flat_urls: dict
     urls: dict
-    query_engine: typing.Callable | None
     websocket_connections: typing.Callable | None
     background_tasks: bool
     has_ws: bool
@@ -70,6 +69,8 @@ class Config(Singleton):
     shutdown: Callable | None
     auto_reformat: bool
     pantherdb_encryption: bool
+    query_engine: typing.Callable | None
+    database: typing.Callable | None
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)
@@ -100,7 +101,6 @@ config = Config(
     models=[],
     flat_urls={},
     urls={},
-    query_engine=None,
     websocket_connections=None,
     background_tasks=False,
     has_ws=False,
@@ -108,4 +108,6 @@ config = Config(
     shutdown=None,
     auto_reformat=False,
     pantherdb_encryption=False,
+    query_engine=None,
+    database=None,
 )

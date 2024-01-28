@@ -12,7 +12,7 @@ from panther.request import Request
 try:
     from jose import JWTError, jwt
 except ModuleNotFoundError as e:
-    import_error(e, package='python-jose')
+    raise import_error(e, package='python-jose')
 
 logger = logging.getLogger('panther')
 

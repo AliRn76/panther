@@ -1,4 +1,5 @@
 import ast
+import logging
 import platform
 import sys
 from datetime import timedelta
@@ -10,6 +11,7 @@ from pydantic._internal._model_construction import ModelMetaclass
 
 from panther._utils import import_class
 from panther.configs import JWTConfig, config
+from panther.db import Model
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.exceptions import PantherException
@@ -33,10 +35,13 @@ __all__ = (
     'load_startup',
     'load_shutdown',
     'load_auto_reformat',
+    'load_database',
     'collect_all_models',
     'load_urls',
     'load_panel_urls',
 )
+
+logger = logging.getLogger('panther')
 
 
 def load_configs_module(_configs, /) -> dict:
@@ -99,25 +104,18 @@ def load_middlewares(configs: dict, /) -> dict:
 
         elif len(middleware) > 2:
             raise _exception_handler(field='MIDDLEWARES', error=f'{middleware} too many arguments')
-
         else:
             path, data = middleware
 
-        if path.find('panther.middlewares.db.DatabaseMiddleware') != -1:
-            # Keep it simple for now, we are going to make it dynamic in the next patch
-            if data['url'].split(':')[0] == 'pantherdb':
-                config['query_engine'] = BasePantherDBQuery
-            else:
-                config['query_engine'] = BaseMongoDBQuery
         try:
-            Middleware = import_class(path)  # noqa: N806
+            middleware_class = import_class(path)
         except (AttributeError, ModuleNotFoundError):
             raise _exception_handler(field='MIDDLEWARES', error=f'{path} is not a valid middleware path')
 
-        if issubclass(Middleware, BaseMiddleware) is False:
+        if issubclass(middleware_class, BaseMiddleware) is False:
             raise _exception_handler(field='MIDDLEWARES', error='is not a sub class of BaseMiddleware')
 
-        middleware_instance = Middleware(**data)
+        middleware_instance = middleware_class(**data)
         if isinstance(middleware_instance, BaseMiddleware | HTTPMiddleware):
             middlewares['http'].append(middleware_instance)
         if isinstance(middleware_instance, BaseMiddleware | WebsocketMiddleware):
@@ -125,7 +123,7 @@ def load_middlewares(configs: dict, /) -> dict:
     return middlewares
 
 
-def load_user_model(configs: dict, /) -> ModelMetaclass:
+def load_user_model(configs: dict, /) -> type[Model]:
     return import_class(configs.get('USER_MODEL', 'panther.db.models.BaseUser'))
 
 
@@ -156,6 +154,26 @@ def load_shutdown(configs: dict, /) -> Callable:
 
 def load_auto_reformat(configs: dict, /) -> bool:
     return configs.get('AUTO_REFORMAT', config['auto_reformat'])
+
+
+def load_database(configs: dict, /):
+    database_config = configs.get('DATABASE', {})
+    if 'engine' in database_config:
+        engine_class_path = database_config['engine']['class']
+        engine_class = import_class(engine_class_path)
+        args = database_config['engine'].copy()
+        args.pop('class')
+        config['database'] = engine_class(**args)
+
+        if engine_class_path == 'panther.db.connections.PantherDBConnection':
+            config['query_engine'] = BasePantherDBQuery
+        elif engine_class_path == 'panther.db.connections.MongoDBConnection':
+            config['query_engine'] = BaseMongoDBQuery
+
+    if 'query' in database_config:
+        if config['query_engine']:
+            logger.warning('`DATABASE.query` has already been filled.')
+        config['query_engine'] = import_class(database_config['query'])
 
 
 def collect_all_models() -> list[dict]:
