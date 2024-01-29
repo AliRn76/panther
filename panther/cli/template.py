@@ -99,6 +99,7 @@ requirements = """panther==%s
 
 TEMPLATE = {
     'app': {
+        '__init__.py': '',
         'apis.py': apis_py,
         'models.py': models_py,
         'serializers.py': serializers_py,
@@ -106,6 +107,7 @@ TEMPLATE = {
         'urls.py': app_urls_py,
     },
     'core': {
+        '__init__.py': '',
         'configs.py': configs_py,
         'urls.py': urls_py,
     },

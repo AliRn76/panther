@@ -1,10 +1,6 @@
-from pydantic import Field
+from pydantic import Field, field_validator, ConfigDict
 
-from panther import Panther, status
-from panther.app import API
 from panther.db import Model
-from panther.request import Request
-from panther.response import Response
 from panther.serializer import ModelSerializer
 
 
@@ -15,18 +11,31 @@ class User(Model):
     last_name: str = Field(default='', min_length=4)
 
 
-class UserSerializer(metaclass=ModelSerializer, model=User):
-    fields = ['username', 'first_name', 'last_name']
-    # required_fields = ['first_name']
+class UserSerializer(ModelSerializer):
+    """
+    Hello this is doc
+    """
+    model_config = ConfigDict(str_to_upper=False)  # Has more priority
+    age: int = Field(default=20)
+    is_male: bool
+    username: str
+
+    class Config:
+        str_to_upper = True
+        model = User
+        fields = ['username', 'first_name', 'last_name']
+        required_fields = ['first_name']
+
+    @field_validator('username', mode='before')
+    def validate_username(cls, username):
+        print(f'{username=}')
+        return username
+
+    def create(self) -> type[Model]:
+        print('UserSerializer.create()')
+        return super().create()
 
 
-@API(input_model=UserSerializer)
-async def model_serializer_example(request: Request):
-    return Response(data=request.validated_data, status_code=status.HTTP_202_ACCEPTED)
-
-
-url_routing = {
-    '': model_serializer_example,
-}
-
-app = Panther(__name__, configs=__name__, urls=url_routing)
+serialized = UserSerializer(username='alirn', first_name='Ali', last_name='RnRn', is_male=1)
+print(serialized)
+# serialized.create()
