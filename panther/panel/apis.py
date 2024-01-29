@@ -9,15 +9,15 @@ from panther.response import Response
 @API(methods=['GET'])
 async def models_api():
     return [{
-        'name': m['name'],
-        'module': m['module'],
+        'name': model.__name__,
+        'module': model.__module__,
         'index': i
-    } for i, m in enumerate(config['models'])]
+    } for i, model in enumerate(config['models'])]
 
 
 @API(methods=['GET', 'POST'])
 async def documents_api(request: Request, index: int):
-    model = config['models'][index]['class']
+    model = config['models'][index]
 
     if request.method == 'POST':
         validated_data = API.validate_input(model=model, request=request)
@@ -37,7 +37,7 @@ async def documents_api(request: Request, index: int):
 
 @API(methods=['PUT', 'DELETE', 'GET'])
 async def single_document_api(request: Request, index: int, document_id: int | str):
-    model = config['models'][index]['class']
+    model = config['models'][index]
 
     if document := model.find_one(id=document_id):
         if request.method == 'PUT':

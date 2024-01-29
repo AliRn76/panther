@@ -58,62 +58,21 @@ class Panther:
         # Check & Read The Configs File
         self._configs_module = load_configs_module(self._configs_module_name)
 
-        # Put Variables In "config" (Careful about the ordering)
-        config['secret_key'] = load_secret_key(self._configs_module)
-        config['monitoring'] = load_monitoring(self._configs_module)
-        config['log_queries'] = load_log_queries(self._configs_module)
-        config['background_tasks'] = load_background_tasks(self._configs_module)
-        config['throttling'] = load_throttling(self._configs_module)
-        config['default_cache_exp'] = load_default_cache_exp(self._configs_module)
-        config['pantherdb_encryption'] = load_pantherdb_encryption(self._configs_module)
-        middlewares = load_middlewares(self._configs_module)
-        config['http_middlewares'] = middlewares['http']
-        config['ws_middlewares'] = middlewares['ws']
-        config['reversed_http_middlewares'] = middlewares['http'][::-1]
-        config['reversed_ws_middlewares'] = middlewares['ws'][::-1]
-        config['user_model'] = load_user_model(self._configs_module)
-        config['authentication'] = load_authentication_class(self._configs_module)
-        config['jwt_config'] = load_jwt_config(self._configs_module)
-        config['startup'] = load_startup(self._configs_module)
-        config['shutdown'] = load_shutdown(self._configs_module)
-        config['auto_reformat'] = load_auto_reformat(self._configs_module)
-        config['models'] = collect_all_models()
-
-        # Initialize Background Tasks
-        if config['background_tasks']:
-            background_tasks.initialize()
-
-        # Load URLs should be one of the last calls in load_configs,
-        #   because it will read all files and loads them.
-        config['flat_urls'], config['urls'] = load_urls(self._configs_module, urls=self._urls)
-        config['urls']['_panel'] = load_panel_urls()
-
-        self._create_ws_connections_instance()
-
-    def _create_ws_connections_instance(self):
-        from panther.base_websocket import Websocket, WebsocketConnections
-
-        # Check do we have ws endpoint
-        for endpoint in config['flat_urls'].values():
-            if not isinstance(endpoint, types.FunctionType) and issubclass(endpoint, Websocket):
-                config['has_ws'] = True
-                break
-        else:
-            config['has_ws'] = False
-
-        # Create websocket connections instance
-        if config['has_ws']:
-            # Websocket Redis Connection
-            for middleware in config['http_middlewares']:
-                if middleware.__class__.__name__ == 'RedisMiddleware':
-                    self.ws_redis_connection = middleware.redis_connection_for_ws()
-                    break
-            else:
-                self.ws_redis_connection = None
-
-            # Don't create Manager() if we are going to use Redis for PubSub
-            manager = None if self.ws_redis_connection else Manager()
-            config['websocket_connections'] = WebsocketConnections(manager=manager)
+        load_startup(self._configs_module)
+        load_shutdown(self._configs_module)
+        load_secret_key(self._configs_module)
+        load_monitoring(self._configs_module)
+        load_throttling(self._configs_module)
+        load_user_model(self._configs_module)
+        load_log_queries(self._configs_module)
+        load_middlewares(self._configs_module)
+        load_auto_reformat(self._configs_module)
+        load_background_tasks(self._configs_module)
+        load_default_cache_exp(self._configs_module)
+        load_pantherdb_encryption(self._configs_module)
+        load_authentication_class(self._configs_module)
+        load_urls(self._configs_module, urls=self._urls)
+        load_websocket_connections()
 
     async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
         """
@@ -261,11 +220,7 @@ class Panther:
     async def handle_ws_listener(self):
         # Start Websocket Listener (Redis/ Queue)
         if config['has_ws']:
-            Thread(
-                target=config['websocket_connections'],
-                daemon=True,
-                args=(self.ws_redis_connection,),
-            ).start()
+            Thread(target=config['websocket_connections'], daemon=True).start()
 
     async def handle_startup(self):
         if startup := config['startup'] or self._startup:
