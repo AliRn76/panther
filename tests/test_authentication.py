@@ -41,7 +41,7 @@ USER_MODEL = 'tests.test_authentication.User'
 
 
 class TestAuthentication(TestCase):
-    SHORT_TOKEN = {'Authorization': 'TOKEN'}
+    SHORT_TOKEN = {'Authorization': 'Token TOKEN'}
     NOT_ENOUGH_SEGMENT_TOKEN = {'Authorization': 'Bearer XXX'}
     JUST_BEARER_TOKEN = {'Authorization': 'Bearer'}
     BAD_UNICODE_TOKEN = {'Authorization': 'Bearer علی'}
@@ -88,6 +88,7 @@ class TestAuthentication(TestCase):
             res = self.client.get('auth-required')
 
         assert len(captured.records) == 1
+        print(captured.records[0].getMessage())
         assert captured.records[0].getMessage() == 'JWT Authentication Error: "Authorization is required"'
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
@@ -145,7 +146,7 @@ class TestAuthentication(TestCase):
             res = self.client.get('auth-required', headers=self.TOKEN_WITHOUT_USER_ID)
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'JWT Authentication Error: "Payload does not have user_id"'
+        assert captured.records[0].getMessage() == 'JWT Authentication Error: "Payload does not have `user_id`"'
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 

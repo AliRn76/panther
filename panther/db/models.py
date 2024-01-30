@@ -47,3 +47,11 @@ class BaseUser(Model):
 
     def update_last_login(self) -> None:
         self.update(last_login=datetime.now())
+
+    def login(self) -> dict:
+        """Return dict of access and refresh token"""
+        self.update_last_login()
+        return config.authentication.login(self)
+
+    def logout(self) -> dict:
+        return config.authentication.logout(self._auth_token)
