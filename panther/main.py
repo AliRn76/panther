@@ -168,7 +168,7 @@ class Panther:
         # Create The Connection
         del temp_connection
         connection = endpoint(scope=scope, receive=receive, send=send)
-        connection.set_path_variables(path_variables=path_variables)
+        connection.path_variables = path_variables
 
         # Call 'Before' Middlewares
         if await self._run_ws_middlewares_before_listen(connection=connection):
@@ -225,6 +225,7 @@ class Panther:
 
         # Collect Path Variables
         path_variables: dict = collect_path_variables(request_path=request.path, found_path=found_path)
+        request.path_variables = path_variables
 
         try:  # They Both(middleware.before() & _endpoint()) Have The Same Exception (APIException)
             # Call 'Before' Middlewares

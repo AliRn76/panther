@@ -180,13 +180,6 @@ class Websocket(BaseRequest):
             else:
                 await self.receive(data=response['bytes'])
 
-    def set_path_variables(self, path_variables: dict) -> None:
-        self._path_variables = path_variables
-
-    @property
-    def path_variables(self) -> dict:
-        return getattr(self, '_path_variables', {})
-
     def set_connection_id(self, connection_id: str) -> None:
         self._connection_id = connection_id
 

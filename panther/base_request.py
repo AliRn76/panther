@@ -1,6 +1,8 @@
 from collections import namedtuple
 from collections.abc import Callable
 
+from panther.db import Model
+
 
 class Headers:
     accept: str
@@ -31,14 +33,12 @@ class Headers:
     def __getattr__(self, item: str):
         if result := self.__pythonic_headers.get(item):
             return result
-        else:
-            return self.__headers.get(item)
+        return self.__headers.get(item)
 
     def __getitem__(self, item: str):
         if result := self.__headers.get(item):
             return result
-        else:
-            return self.__pythonic_headers.get(item)
+        return self.__pythonic_headers.get(item)
 
     def __str__(self):
         items = ', '.join(f'{k}={v}' for k, v in self.__headers.items())
@@ -51,7 +51,7 @@ class Headers:
         return self.__headers
 
 
-Address = namedtuple('Client', ['ip', 'port'])
+Address = namedtuple('Address', ['ip', 'port'])
 
 
 class BaseRequest:
@@ -61,9 +61,10 @@ class BaseRequest:
         self.asgi_receive = receive
         self._data = ...
         self._validated_data = None
-        self._user = None
         self._headers: Headers | None = None
         self._params: dict | None = None
+        self.user: Model | None = None
+        self.path_variables: dict | None = None
 
     @property
     def headers(self) -> Headers:
@@ -102,10 +103,3 @@ class BaseRequest:
     @property
     def scheme(self) -> str:
         return self.scope['scheme']
-
-    @property
-    def user(self):
-        return self._user
-
-    def set_user(self, user) -> None:
-        self._user = user

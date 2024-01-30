@@ -8,7 +8,7 @@ from panther.configs import config
 class GenericWebsocket(Websocket):
     async def connect(self, **kwargs):
         """
-        Check your conditions then `accept()` the connection
+        Check your conditions then `accept()` or `close()` the connection
         """
 
     async def receive(self, data: str | bytes):

@@ -122,7 +122,7 @@ class API:
                 logger.critical('"AUTHENTICATION" has not been set in configs')
                 raise APIException
             user = auth_class.authentication(self.request)
-            self.request.set_user(user=user)
+            self.request.user = user
 
     def handle_throttling(self) -> None:
         if throttling := self.throttling or config['throttling']:
