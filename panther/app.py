@@ -55,7 +55,7 @@ class API:
 
     def __call__(self, func):
         @functools.wraps(func)
-        async def wrapper(request: Request, **path_variables) -> Response:
+        async def wrapper(request: Request) -> Response:
             self.request: Request = request  # noqa: Non-self attribute could not be type hinted
 
             # 1. Check Method
@@ -80,26 +80,23 @@ class API:
                 if cached := get_cached_response_data(request=self.request,  cache_exp_time=self.cache_exp_time):
                     return Response(data=cached.data, status_code=cached.status_code)
 
-            # 7. Clean Path Variables
-            self.clean_path_variables(func, path_variables)
-
-            # 8. Put Request In kwargs (If User Wants It)
+            # 7. Put Request In kwargs (If User Wants It)
             kwargs = {}
             if req_arg := [k for k, v in func.__annotations__.items() if v == Request]:
                 kwargs[req_arg[0]] = self.request
 
-            # 9. Call Endpoint
+            # 8. Call Endpoint
             if is_function_async(func):
-                response = await func(**kwargs, **path_variables)
+                response = await func(**kwargs, **request.path_variables)
             else:
-                response = func(**kwargs, **path_variables)
+                response = func(**kwargs, **request.path_variables)
 
-            # 10. Clean Response
+            # 9. Clean Response
             if not isinstance(response, Response):
                 response = Response(data=response)
             response._clean_data_with_output_model(output_model=self.output_model)  # noqa: SLF001
 
-            # 11. Set New Response To Cache
+            # 10. Set New Response To Cache
             if self.cache and self.request.method == 'GET':
                 set_cache_response(
                     request=self.request,
@@ -107,7 +104,7 @@ class API:
                     cache_exp_time=self.cache_exp_time
                 )
 
-            # 12. Warning CacheExpTime
+            # 11. Warning CacheExpTime
             if self.cache_exp_time and self.cache is False:
                 logger.warning('"cache_exp_time" won\'t work while "cache" is False')
 
@@ -138,8 +135,8 @@ class API:
         for perm in self.permissions:
             if type(perm.authorization).__name__ != 'method':
                 logger.error(f'{perm.__name__}.authorization should be "classmethod"')
-                continue
-            if perm.authorization(request=self.request) is False:
+                raise AuthorizationException
+            if perm.authorization(self.request) is False:
                 raise AuthorizationException
 
     def handle_input_validation(self):
@@ -158,22 +155,6 @@ class API:
             raise APIException(detail=error, status_code=status.HTTP_400_BAD_REQUEST)
         except JSONDecodeError:
             raise JsonDecodeException
-
-    @staticmethod
-    def clean_path_variables(func: Callable, request_path_variables: dict):
-        for name, value in request_path_variables.items():
-            for variable_name, variable_type in func.__annotations__.items():
-                if name == variable_name:
-                    # Check the type and convert the value
-                    if variable_type is bool:
-                        request_path_variables[name] = value.lower() not in ['false', '0']
-
-                    elif variable_type is int:
-                        try:
-                            request_path_variables[name] = int(value)
-                        except ValueError:
-                            raise InvalidPathVariableException(value=value, variable_type=variable_type)
-                    break
 
 
 class GenericAPI:

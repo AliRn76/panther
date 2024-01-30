@@ -6,6 +6,9 @@ from panther.configs import config
 
 
 class GenericWebsocket(Websocket):
+    auth: bool = False
+    permissions: list = []
+
     async def connect(self, **kwargs):
         """
         Check your conditions then `accept()` or `close()` the connection

@@ -58,6 +58,7 @@ class Config(Singleton):
     reversed_ws_middlewares: list
     user_model: ModelMetaclass | None
     authentication: ModelMetaclass | None
+    ws_authentication: ModelMetaclass | None
     jwt_config: JWTConfig | None
     models: list[dict]
     flat_urls: dict
@@ -96,6 +97,7 @@ config = Config(
     reversed_ws_middlewares=[],
     user_model=None,
     authentication=None,
+    ws_authentication=None,
     jwt_config=None,
     models=[],
     flat_urls={},

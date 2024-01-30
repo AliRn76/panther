@@ -133,3 +133,12 @@ class JWTAuthentication(BaseAuthentication):
     def exception(message: str | JWTError | UnicodeEncodeError, /) -> type[AuthenticationException]:
         logger.error(f'JWT Authentication Error: "{message}"')
         return AuthenticationException
+
+
+class QueryParamJWTAuthentication(JWTAuthentication):
+    @classmethod
+    def get_authorization_header(cls, request: Request) -> bytes:
+        if auth := request.query_params.get('authorization'):
+            return auth.encode()
+        msg = 'Authorization is required'
+        raise cls.exception(msg) from None

@@ -29,6 +29,7 @@ __all__ = (
     'load_middlewares',
     'load_user_model',
     'load_authentication_class',
+    'load_ws_authentication_class',
     'load_jwt_config',
     'load_startup',
     'load_shutdown',
@@ -133,9 +134,16 @@ def load_authentication_class(configs: dict, /) -> ModelMetaclass | None:
     return configs.get('AUTHENTICATION') and import_class(configs['AUTHENTICATION'])
 
 
+def load_ws_authentication_class(configs: dict, /) -> ModelMetaclass | None:
+    return configs.get('WS_AUTHENTICATION') and import_class(configs['WS_AUTHENTICATION'])
+
+
 def load_jwt_config(configs: dict, /) -> JWTConfig | None:
     """Only Collect JWT Config If Authentication Is JWTAuthentication"""
-    if getattr(config['authentication'], '__name__', None) == 'JWTAuthentication':
+    if (
+            getattr(config['authentication'], '__name__', None) == 'JWTAuthentication' or
+            getattr(config['ws_authentication'], '__name__', None) == 'QueryParamJWTAuthentication'
+    ):
         user_config = configs.get('JWTConfig', {})
         if 'key' not in user_config:
             if config['secret_key'] is None:

@@ -38,6 +38,7 @@ ex : mongodb://my-name:my-pass@localhost:27017/?authSource=users
 """
 # # # More Info: Https://PantherPy.GitHub.io/authentications/
 AUTHENTICATION = 'panther.authentications.JWTAuthentication'
+WS_AUTHENTICATION = 'panther.authentications.QueryParamJWTAuthentication'
 
 # Only If Authentication Set To JWT
 JWTConfig = {

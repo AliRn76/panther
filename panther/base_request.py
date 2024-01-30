@@ -2,6 +2,7 @@ from collections import namedtuple
 from collections.abc import Callable
 
 from panther.db import Model
+from panther.exceptions import InvalidPathVariableException
 
 
 class Headers:
@@ -103,3 +104,20 @@ class BaseRequest:
     @property
     def scheme(self) -> str:
         return self.scope['scheme']
+
+    def set_path_variables(self, func: Callable, path_variables: dict):
+        self.path_variables = path_variables
+
+        for name, value in self.path_variables.items():
+            for variable_name, variable_type in func.__annotations__.items():
+                if name == variable_name:
+                    # Check the type and convert the value
+                    if variable_type is bool:
+                        self.path_variables[name] = value.lower() not in ['false', '0']
+
+                    elif variable_type is int:
+                        try:
+                            self.path_variables[name] = int(value)
+                        except ValueError:
+                            raise InvalidPathVariableException(value=value, variable_type=variable_type)
+                    break
