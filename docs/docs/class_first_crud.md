@@ -389,163 +389,56 @@ For `retrieve`, `update` and `delete` API, we are going to
     ```
 
 ### API - Update a Book
+Add another method named `put()` for `PUT` method and update the book you want:
 
-- We can update in several ways:
-    1. Update a document
+```python
+from panther import status
+from panther.app import GenericAPI
+from panther.request import Request
+from panther.response import Response
+    
+from app.models import Book
+from app.serializers import BookSerializer
+   
 
-        ```python
-        from panther import status
-        from panther.app import GenericAPI
-        from panther.request import Request
-        from panther.response import Response
+class SingleBookAPI(GenericAPI):
+    input_model = BookSerializer
+   
+    def get(self, book_id: int):
+        ...
         
-        from app.models import Book
-        from app.serializers import BookSerializer
-       
-       
-        class SingleBookAPI(GenericAPI):
-            input_model = BookSerializer
-       
-            def get(self, book_id: int):
-                ...
-            
-            def put(self, request: Request, book_id: int):
-                body: BookSerializer = request.validated_data
-       
-                book: Book = Book.find_one(id=book_id)
-                book.update(
-                    name=body.name, 
-                    author=body.author, 
-                    pages_count=body.pages_count
-                )
-                return Response(status_code=status.HTTP_202_ACCEPTED)
-        ```
+    def put(self, request: Request, book_id: int):
+        is_updated: bool = Book.update_one({'id': book_id}, request.validated_data.model_dump())
+        data = {'is_updated': is_updated}
+        return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
+```
 
-    2. Update with `update_one` query
-
-        ```python
-        from panther import status
-        from panther.app import GenericAPI
-        from panther.request import Request
-        from panther.response import Response
-        
-        from app.models import Book
-        from app.serializers import BookSerializer
-       
-
-        class SingleBookAPI(GenericAPI):
-            input_model = BookSerializer
-       
-            def get(self, book_id: int):
-                ...
-            
-            def put(self, request: Request, book_id: int):
-                is_updated: bool = Book.update_one({'id': book_id}, request.validated_data.model_dump())
-                data = {'is_updated': is_updated}
-                return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
-        ```
-
-    3. Update with `update_many` query
-
-        ```python
-        from panther import status
-        from panther.app import GenericAPI
-        from panther.request import Request
-        from panther.response import Response
-        
-        from app.models import Book
-        from app.serializers import BookSerializer
-       
-        
-        class SingleBookAPI(GenericAPI):
-            input_model = BookSerializer
-       
-            def get(self, book_id: int):
-                ...
-            
-            def put(self, request: Request, book_id: int):
-                updated_count: int = Book.update_many({'id': book_id}, request.validated_data.model_dump())
-                data = {'updated_count': updated_count}
-                return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
-        ```
-       
     > You can handle the PATCH the same way as PUT
 
 ### API - Delete a Book
+Add another method named `delete()` for `DELETE` method and delete the book you want:
 
-- We can delete in several ways too:
-    1. Delete a document
+```python
+from panther import status
+from panther.app import GenericAPI
+from panther.request import Request
+from panther.response import Response
+    
+from app.models import Book
+    
+class SingleBookAPI(GenericAPI):
+    input_model = BookSerializer
 
-        ```python
-            from panther import status
-            from panther.app import GenericAPI
-            from panther.request import Request
-            from panther.response import Response
-            
-            from app.models import Book
-            
-            class SingleBookAPI(GenericAPI):
-                input_model = BookSerializer
-       
-                def get(self, book_id: int):
-                    ...
-            
-                def put(self, request: Request, book_id: int):
-                    ...
-                  
-                def delete(self, book_id: int):
-                    is_deleted: bool = Book.delete_one(id=book_id)
-                    if is_deleted:
-                        return Response(status_code=status.HTTP_204_NO_CONTENT)
-                    else:
-                        return Response(status_code=status.HTTP_400_BAD_REQUEST)
-        ```
-    2. Delete with `delete_one` query
-
-        ```python
-            from panther import status
-            from panther.app import GenericAPI
-            from panther.request import Request
-            from panther.response import Response
-            
-            from app.models import Book
-            
-           
-            class SingleBookAPI(GenericAPI):
-                input_model = BookSerializer
-       
-                def get(self, book_id: int):
-                    ...
-            
-                def put(self, request: Request, book_id: int):
-                    ...
-                  
-                def delete(self, book_id: int):
-                    is_deleted: bool = Book.delete_one(id=book_id)
-                    return Response(status_code=status.HTTP_204_NO_CONTENT)
-        ```
-       
-    3. Delete with `delete_many` query
-
-        ```python
-            from panther import status
-            from panther.app import GenericAPI
-            from panther.request import Request
-            from panther.response import Response
-            
-            from app.models import Book
-            
-           
-            class SingleBookAPI(GenericAPI):
-                input_model = BookSerializer
-       
-                def get(self, book_id: int):
-                    ...
-            
-                def put(self, request: Request, book_id: int):
-                    ...
-                  
-                def delete(self, book_id: int):
-                    deleted_count: int = Book.delete_many(id=book_id)
-                    return Response(status_code=status.HTTP_204_NO_CONTENT)
-        ```
+    def get(self, book_id: int):
+        ...
+    
+    def put(self, request: Request, book_id: int):
+        ...
+          
+    def delete(self, book_id: int):
+        is_deleted: bool = Book.delete_one(id=book_id)
+        if is_deleted:
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(status_code=status.HTTP_400_BAD_REQUEST)
+```
