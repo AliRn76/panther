@@ -117,7 +117,7 @@ class TestAuthentication(TestCase):
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == (
-            'JWT Authentication Error: "\'latin-1\' codec can\'t encode characters in position 7-9: '
+            'JWT Authentication Error: "\'latin-1\' codec can\'t encode characters in position 0-2: '
             'ordinal not in range(256)"'
         )
         assert res.status_code == 401

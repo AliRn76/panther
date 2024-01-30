@@ -41,18 +41,10 @@ class JWTAuthentication(BaseAuthentication):
 
     @classmethod
     def get_authorization_header(cls, request: Request) -> str:
-        auth = request.headers.authorization
-
-        if auth is None:
-            msg = 'Authorization is required'
-            raise cls.exception(msg) from None
-
-        try:
-            auth.encode(JWTAuthentication.HTTP_HEADER_ENCODING)
-        except UnicodeEncodeError as e:
-            raise cls.exception(e) from None
-
-        return auth
+        if auth := request.headers.authorization:
+            return auth
+        msg = 'Authorization is required'
+        raise cls.exception(msg) from None
 
     @classmethod
     def authentication(cls, request: Request) -> Model:
@@ -63,6 +55,11 @@ class JWTAuthentication(BaseAuthentication):
             raise cls.exception(msg) from None
 
         bearer, token = auth_header
+
+        try:
+            token.encode(JWTAuthentication.HTTP_HEADER_ENCODING)
+        except UnicodeEncodeError as e:
+            raise cls.exception(e) from None
 
         if bearer.lower() != cls.keyword.lower():
             msg = 'Authorization keyword is not valid'
