@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any
 
-from bson.codec_options import TypeRegistry
 from pantherdb import PantherDB
 
 from panther.cli.utils import import_error
@@ -43,7 +42,7 @@ class MongoDBConnection(DatabaseConnection):
             document_class: dict[str, Any] | None = None,
             tz_aware: bool | None = None,
             connect: bool | None = None,
-            type_registry: TypeRegistry | None = None,
+            type_registry=None,  # type: bson.codec_options.TypeRegistry
             **kwargs: Any,
     ) -> None:
         try:
