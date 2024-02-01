@@ -88,7 +88,6 @@ class TestAuthentication(TestCase):
             res = self.client.get('auth-required')
 
         assert len(captured.records) == 1
-        print(captured.records[0].getMessage())
         assert captured.records[0].getMessage() == 'JWT Authentication Error: "Authorization is required"'
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
