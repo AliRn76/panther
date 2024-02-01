@@ -5,7 +5,6 @@ import sys
 import types
 from collections.abc import Callable
 from logging.config import dictConfig
-from multiprocessing import Manager
 from pathlib import Path
 from threading import Thread
 
@@ -14,10 +13,9 @@ from panther import status
 from panther._load_configs import *
 from panther._utils import clean_traceback_message, http_response, is_function_async, reformat_code, \
     check_class_type_endpoint, check_function_type_endpoint
-from panther.background_tasks import background_tasks
 from panther.cli.utils import print_info
 from panther.configs import config
-from panther.exceptions import APIException, PantherException
+from panther.exceptions import APIError, PantherError, InvalidPathVariableAPIError
 from panther.monitoring import Monitoring
 from panther.request import Request
 from panther.response import Response
@@ -48,7 +46,7 @@ class Panther:
             if config['auto_reformat']:
                 reformat_code(base_dir=config['base_dir'])
         except Exception as e:  # noqa: BLE001
-            if isinstance(e, PantherException):
+            if isinstance(e, PantherError):
                 logger.error(e.args[0])
             else:
                 logger.error(clean_traceback_message(e))
@@ -136,7 +134,7 @@ class Panther:
         connection = endpoint(scope=scope, receive=receive, send=send)
         try:
             connection.set_path_variables(func=connection.connect, path_variables=path_variables)
-        except APIException as e:
+        except InvalidPathVariableAPIError as e:
             return await connection.close(status.WS_1000_NORMAL_CLOSURE, reason=str(e))
 
         # Call 'Before' Middlewares
@@ -158,7 +156,7 @@ class Panther:
         for middleware in config['ws_middlewares']:
             try:
                 connection = await middleware.before(request=connection)
-            except APIException:
+            except APIError:
                 await connection.close()
                 return False
         return True
@@ -166,7 +164,7 @@ class Panther:
     @classmethod
     async def _run_ws_middlewares_after_listen(cls, *, connection):
         for middleware in config['reversed_ws_middlewares']:
-            with contextlib.suppress(APIException):
+            with contextlib.suppress(APIError):
                 await middleware.after(response=connection)
 
     async def handle_http(self, scope: dict, receive: Callable, send: Callable) -> None:
@@ -204,7 +202,7 @@ class Panther:
             # Call Endpoint
             response = await endpoint(request=request)
 
-        except APIException as e:
+        except APIError as e:
             response = self._handle_exceptions(e)
 
         except Exception as e:  # noqa: BLE001
@@ -217,7 +215,7 @@ class Panther:
         for middleware in config['reversed_http_middlewares']:
             try:
                 response = await middleware.after(response=response)
-            except APIException as e:  # noqa: PERF203
+            except APIError as e:  # noqa: PERF203
                 response = self._handle_exceptions(e)
 
         await http_response(
@@ -257,7 +255,7 @@ class Panther:
         self.handle_shutdown()
 
     @classmethod
-    def _handle_exceptions(cls, e: APIException, /) -> Response:
+    def _handle_exceptions(cls, e: APIError, /) -> Response:
         return Response(
             data=e.detail if isinstance(e.detail, dict) else {'detail': e.detail},
             status_code=e.status_code,

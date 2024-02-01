@@ -1,4 +1,3 @@
-import asyncio
 import importlib
 import logging
 import re
@@ -11,7 +10,7 @@ from uuid import uuid4
 import orjson as json
 
 from panther import status
-from panther.exceptions import PantherException
+from panther.exceptions import PantherError
 from panther.file_handler import File
 
 logger = logging.getLogger('panther')
@@ -135,7 +134,7 @@ def reformat_code(base_dir):
         subprocess.run(['ruff', 'format', base_dir])
         subprocess.run(['ruff', 'check', '--select', 'I', '--fix', base_dir])
     except FileNotFoundError:
-        raise PantherException("No module named 'ruff', Hint: `pip install ruff`")
+        raise PantherError("No module named 'ruff', Hint: `pip install ruff`")
 
 
 def check_function_type_endpoint(endpoint: types.FunctionType) -> Callable:

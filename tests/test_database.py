@@ -10,7 +10,7 @@ from panther import Panther
 from panther.configs import config
 from panther.db import Model
 from panther.db.connection import db
-from panther.exceptions import DBException
+from panther.exceptions import DatabaseError
 
 f = faker.Faker()
 
@@ -500,7 +500,7 @@ class TestMongoDB(_BaseDatabaseTestCase, TestCase):
     def test_last(self):
         try:
             super().test_last()
-        except DBException as exc:
+        except DatabaseError as exc:
             assert exc.args[0] == 'last() is not supported in MongoDB yet.'
         else:
             assert False
@@ -508,7 +508,7 @@ class TestMongoDB(_BaseDatabaseTestCase, TestCase):
     def test_last_not_found(self):
         try:
             super().test_last_not_found()
-        except DBException as exc:
+        except DatabaseError as exc:
             assert exc.args[0] == 'last() is not supported in MongoDB yet.'
         else:
             assert False

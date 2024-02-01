@@ -2,7 +2,7 @@ from sys import version_info
 
 from panther.db.connection import db
 from panther.db.utils import merge_dicts, prepare_id_for_query
-from panther.exceptions import DBException
+from panther.exceptions import DatabaseError
 
 if version_info >= (3, 11):
     from typing import Self
@@ -37,7 +37,7 @@ class BaseMongoDBQuery:
     @classmethod
     def last(cls, _data: dict | None = None, /, **kwargs):
         msg = 'last() is not supported in MongoDB yet.'
-        raise DBException(msg)
+        raise DatabaseError(msg)
 
     # # # # # Count # # # # #
     @classmethod
