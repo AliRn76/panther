@@ -38,14 +38,15 @@ class PubSub:
 
 
 class WebsocketConnections(Singleton):
-    def __init__(self, manager: Manager = None):
+    def __init__(self, redis_connection: Redis | None, manager: Manager = None):
         self.connections = {}
         self.connections_count = 0
         self.manager = manager
+        self.redis_connection = redis_connection
 
-    def __call__(self, r: Redis | None):
-        if r:
-            subscriber = r.pubsub()
+    def __call__(self):
+        if self.redis_connection:
+            subscriber = self.redis_connection.pubsub()
             subscriber.subscribe('websocket_connections')
             logger.info("Subscribed to 'websocket_connections' channel")
             for channel_data in subscriber.listen():

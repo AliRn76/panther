@@ -1,47 +1,40 @@
-import ast
-import platform
 import sys
-from datetime import timedelta
+import types
 from importlib import import_module
-from pathlib import Path
-from typing import Callable
-
-from pydantic._internal._model_construction import ModelMetaclass
+from multiprocessing import Manager
 
 from panther._utils import import_class
+from panther.base_websocket import Websocket, WebsocketConnections
 from panther.configs import JWTConfig, config
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.exceptions import PantherException
 from panther.middlewares.base import WebsocketMiddleware, HTTPMiddleware
+from panther.panel.urls import urls as panel_urls
 from panther.routings import finalize_urls, flatten_urls
-from panther.throttling import Throttling
 
 __all__ = (
     'load_configs_module',
-    'load_secret_key',
-    'load_monitoring',
-    'load_log_queries',
-    'load_background_tasks',
-    'load_throttling',
-    'load_default_cache_exp',
-    'load_pantherdb_encryption',
-    'load_middlewares',
-    'load_user_model',
-    'load_authentication_class',
-    'load_ws_authentication_class',
-    'load_jwt_config',
     'load_startup',
     'load_shutdown',
+    'load_secret_key',
+    'load_monitoring',
+    'load_throttling',
+    'load_user_model',
+    'load_log_queries',
+    'load_middlewares',
     'load_auto_reformat',
-    'collect_all_models',
+    'load_background_tasks',
+    'load_default_cache_exp',
+    'load_pantherdb_encryption',
+    'load_authentication_class',
     'load_urls',
-    'load_panel_urls',
+    'load_websocket_connections',
 )
 
 
 def load_configs_module(_configs, /) -> dict:
-    """Read the config file and put it as dict in self.configs"""
+    """Read the config file as dict"""
     if _configs:
         _module = sys.modules[_configs]
     else:
@@ -52,45 +45,52 @@ def load_configs_module(_configs, /) -> dict:
     return _module.__dict__
 
 
-def load_secret_key(configs: dict, /) -> bytes | None:
-    if secret_key := configs.get('SECRET_KEY'):
-        return secret_key.encode()
-    return secret_key
+def load_startup(_configs: dict, /) -> None:
+    if startup := _configs.get('STARTUP'):
+        startup = import_class(startup)
+    config['startup'] = startup
 
 
-def load_monitoring(configs: dict, /) -> bool:
-    return configs.get('MONITORING', config['monitoring'])
+def load_shutdown(_configs: dict, /) -> None:
+    if shutdown := _configs.get('SHUTDOWN'):
+        shutdown = import_class(shutdown)
+    config['shutdown'] = shutdown
 
 
-def load_log_queries(configs: dict, /) -> bool:
-    return configs.get('LOG_QUERIES', config['log_queries'])
+def load_secret_key(_configs: dict, /) -> None:
+    if secret_key := _configs.get('SECRET_KEY'):
+        secret_key = secret_key.encode()
+    config['secret_key'] = secret_key
 
 
-def load_background_tasks(configs: dict, /) -> bool:
-    return configs.get('BACKGROUND_TASKS', config['background_tasks'])
+def load_monitoring(_configs: dict, /) -> None:
+    if monitoring := _configs.get('MONITORING'):
+        config['monitoring'] = monitoring
 
 
-def load_throttling(configs: dict, /) -> Throttling | None:
-    return configs.get('THROTTLING', config['throttling'])
+def load_throttling(_configs: dict, /) -> None:
+    if throttling := _configs.get('THROTTLING'):
+        config['throttling'] = throttling
 
 
-def load_default_cache_exp(configs: dict, /) -> timedelta | None:
-    return configs.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
+def load_user_model(_configs: dict, /) -> None:
+    config['user_model'] = import_class(_configs.get('USER_MODEL', 'panther.db.models.BaseUser'))
+    config['models'].append(config['user_model'])
 
 
-def load_pantherdb_encryption(configs: dict, /) -> bool:
-    return configs.get('PANTHERDB_ENCRYPTION', config['pantherdb_encryption'])
+def load_log_queries(_configs: dict, /) -> None:
+    if log_queries := _configs.get('LOG_QUERIES'):
+        config['log_queries'] = log_queries
 
 
-def load_middlewares(configs: dict, /) -> dict:
+def load_middlewares(_configs: dict, /) -> None:
     """
     Collect The Middlewares & Set db_engine If One Of Middlewares Was For DB
     And Return a dict with two list, http and ws middlewares"""
     from panther.middlewares import BaseMiddleware
 
     middlewares = {'http': [], 'ws': []}
-
-    for middleware in configs.get('MIDDLEWARES') or []:
+    for middleware in _configs.get('MIDDLEWARES') or []:
         if not isinstance(middleware, list | tuple):
             raise _exception_handler(field='MIDDLEWARES', error=f'{middleware} should have 2 part: (path, kwargs)')
 
@@ -121,153 +121,124 @@ def load_middlewares(configs: dict, /) -> dict:
         middleware_instance = Middleware(**data)
         if isinstance(middleware_instance, BaseMiddleware | HTTPMiddleware):
             middlewares['http'].append(middleware_instance)
+
         if isinstance(middleware_instance, BaseMiddleware | WebsocketMiddleware):
             middlewares['ws'].append(middleware_instance)
-    return middlewares
+
+    config['http_middlewares'] = middlewares['http']
+    config['ws_middlewares'] = middlewares['ws']
+    config['reversed_http_middlewares'] = middlewares['http'][::-1]
+    config['reversed_ws_middlewares'] = middlewares['ws'][::-1]
 
 
-def load_user_model(configs: dict, /) -> ModelMetaclass:
-    return import_class(configs.get('USER_MODEL', 'panther.db.models.BaseUser'))
+def load_auto_reformat(_configs: dict, /) -> None:
+    if auto_reformat := _configs.get('AUTO_REFORMAT'):
+        config['auto_reformat'] = auto_reformat
 
 
-def load_authentication_class(configs: dict, /) -> ModelMetaclass | None:
-    return configs.get('AUTHENTICATION') and import_class(configs['AUTHENTICATION'])
+def load_background_tasks(_configs: dict, /) -> None:
+    if background_tasks := _configs.get('BACKGROUND_TASKS'):
+        config['background_tasks'] = background_tasks
+        config['background_tasks'].initialize()
 
 
-def load_ws_authentication_class(configs: dict, /) -> ModelMetaclass | None:
-    return configs.get('WS_AUTHENTICATION') and import_class(configs['WS_AUTHENTICATION'])
+def load_default_cache_exp(_configs: dict, /) -> None:
+    if default_cache_exp := _configs.get('DEFAULT_CACHE_EXP'):
+        config['default_cache_exp'] = default_cache_exp
 
 
-def load_jwt_config(configs: dict, /) -> JWTConfig | None:
+def load_pantherdb_encryption(_configs: dict, /) -> None:
+    if pantherdb_encryption := _configs.get('PANTHERDB_ENCRYPTION'):
+        config['pantherdb_encryption'] = pantherdb_encryption
+
+
+def load_authentication_class(_configs: dict, /) -> None:
+    """Should be after `load_secret_key()`"""
+    if authentication := _configs.get('AUTHENTICATION'):
+        authentication = import_class(authentication)
+    if ws_authentication := _configs.get('WS_AUTHENTICATION'):
+        ws_authentication = import_class(ws_authentication)
+    config['authentication'] = authentication
+    config['ws_authentication'] = ws_authentication
+    load_jwt_config(_configs)
+
+
+def load_jwt_config(_configs: dict, /) -> None:
     """Only Collect JWT Config If Authentication Is JWTAuthentication"""
-    if (
+    auth_is_jwt = (
             getattr(config['authentication'], '__name__', None) == 'JWTAuthentication' or
             getattr(config['ws_authentication'], '__name__', None) == 'QueryParamJWTAuthentication'
-    ):
-        user_config = configs.get('JWTConfig', {})
-        if 'key' not in user_config:
+    )
+    jwt = _configs.get('JWTConfig', {})
+    if auth_is_jwt or jwt:
+        if 'key' not in jwt:
             if config['secret_key'] is None:
-                raise PantherException('"SECRET_KEY" is required when using "JWTAuthentication"')
-            user_config['key'] = config['secret_key'].decode()
-
-        return JWTConfig(**user_config)
-    return None
+                raise _exception_handler(field='JWTConfig', error='`JWTConfig.key` or `SECRET_KEY` is required.')
+            jwt['key'] = config['secret_key'].decode()
+        config['jwt_config'] = JWTConfig(**jwt)
 
 
-def load_startup(configs: dict, /) -> Callable:
-    return configs.get('STARTUP') and import_class(configs['STARTUP'])
-
-
-def load_shutdown(configs: dict, /) -> Callable:
-    return configs.get('SHUTDOWN') and import_class(configs['SHUTDOWN'])
-
-
-def load_auto_reformat(configs: dict, /) -> bool:
-    return configs.get('AUTO_REFORMAT', config['auto_reformat'])
-
-
-def collect_all_models() -> list[dict]:
-    """Collecting all models for panel APIs"""
-    from panther.db.models import Model
-
-    # Just load all the python files from 'base_dir',
-    #   so Model.__subclasses__ can find all the subclasses
-    slash = '\\' if platform.system() == 'Windows' else '/'
-    _parts = '_tail' if sys.version_info >= (3, 12) else '_parts'
-    python_files = [
-        f for f in config['base_dir'].rglob('*.py')
-        if not f.name.startswith('_') and 'site-packages' not in getattr(f.parents, _parts)
-    ]
-    for file in python_files:
-        # Analyse the file
-        with Path(file).open() as f:
-            node = ast.parse(f.read())
-
-        model_imported = False
-        panther_imported = False
-        panther_called = False
-        for n in node.body:
-            match n:
-
-                # from panther.db import Model
-                case ast.ImportFrom(module='panther.db', names=[ast.alias(name='Model')]):
-                    model_imported = True
-
-                # from panther.db.models import ..., Model, ...
-                case ast.ImportFrom(module='panther.db.models', names=[*names]):
-                    try:
-                        next(v for v in names if v.name == 'Model')
-                        model_imported = True
-                    except StopIteration:
-                        pass
-
-                # from panther import Panther, ...
-                case ast.ImportFrom(module='panther', names=[ast.alias(name='Panther'), *_]):
-                    panther_imported = True
-
-                # from panther import ..., Panther
-                case ast.ImportFrom(module='panther', names=[*_, ast.alias(name='Panther')]):
-                    panther_imported = True
-
-                # ... = Panther(...)
-                case ast.Assign(value=ast.Call(func=ast.Name(id='Panther'))):
-                    panther_called = True
-
-        # Panther() should not be called in the file and Model() should be imported,
-        #   We check the import of the Panther to make sure he is calling the panther.Panther and not any Panther
-        if panther_imported and panther_called or not model_imported:
-            continue
-
-        # Load the module
-        dotted_f = str(file).removeprefix(f'{config["base_dir"]}{slash}').removesuffix('.py').replace(slash, '.')
-        import_module(dotted_f)
-
-    return [
-        {
-            'name': m.__name__,
-            'module': m.__module__,
-            'class': m
-        } for m in Model.__subclasses__() if m.__module__ != 'panther.db.models'
-    ]
-
-
-def load_urls(configs: dict, /, urls: dict | None) -> tuple[dict, dict]:
+def load_urls(_configs: dict, /, urls: dict | None) -> None:
     """
     Return tuple of all urls (as a flat dict) and (as a nested dict)
     """
     if isinstance(urls, dict):
-        collected_urls = flatten_urls(urls)
-        return collected_urls, finalize_urls(collected_urls)
+        pass
 
-    if (url_routing := configs.get('URLs')) is None:
+    elif (url_routing := _configs.get('URLs')) is None:
         raise _exception_handler(field='URLs', error='is required.')
 
-    if isinstance(url_routing, dict):
+    elif isinstance(url_routing, dict):
         error = (
             "can't be 'dict', you may want to pass it's value directly to Panther(). " 'Example: Panther(..., urls=...)'
         )
         raise _exception_handler(field='URLs', error=error)
 
-    if not isinstance(url_routing, str):
+    elif not isinstance(url_routing, str):
         error = 'should be dotted string.'
         raise _exception_handler(field='URLs', error=error)
 
-    try:
-        imported_urls = import_class(url_routing)
-    except ModuleNotFoundError as e:
-        raise _exception_handler(field='URLs', error=e)
+    else:
+        try:
+            urls = import_class(url_routing)
+        except ModuleNotFoundError as e:
+            raise _exception_handler(field='URLs', error=e)
 
-    if not isinstance(imported_urls, dict):
-        raise _exception_handler(field='URLs', error='should point to a dict.')
+        if not isinstance(urls, dict):
+            raise _exception_handler(field='URLs', error='should point to a dict.')
 
-    collected_urls = flatten_urls(imported_urls)
-    return collected_urls, finalize_urls(collected_urls)
+    config['flat_urls'] = flatten_urls(urls)
+    config['urls'] = finalize_urls(config['flat_urls'])
+    config['urls']['_panel'] = finalize_urls(flatten_urls(panel_urls))
 
 
-def load_panel_urls() -> dict:
-    from panther.panel.urls import urls
+def load_has_ws() -> None:
+    """Should be after `load_urls()`"""
+    for endpoint in config['flat_urls'].values():
+        if not isinstance(endpoint, types.FunctionType) and issubclass(endpoint, Websocket):
+            config['has_ws'] = True
+            break
+    else:
+        config['has_ws'] = False
 
-    return finalize_urls(flatten_urls(urls))
+
+def load_websocket_connections():
+    """Should be after `load_urls() & load_middlewares()`"""
+    load_has_ws()
+
+    # Create websocket connections instance
+    if config['has_ws']:
+        # Websocket Redis Connection
+        for middleware in config['http_middlewares']:
+            if middleware.__class__.__name__ == 'RedisMiddleware':
+                redis_connection = middleware.redis_connection_for_ws()
+                break
+        else:
+            redis_connection = None
+
+        # Don't create Manager() if we are going to use Redis for PubSub
+        manager = None if redis_connection else Manager()
+        config['websocket_connections'] = WebsocketConnections(manager=manager, redis_connection=redis_connection)
 
 
 def _exception_handler(field: str, error: str | Exception) -> PantherException:

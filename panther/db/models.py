@@ -9,6 +9,11 @@ from panther.db.queries import Query
 
 
 class Model(PydanticBaseModel, Query):
+    def __init_subclass__(cls, **kwargs):
+        if cls.__module__ == 'panther.db.models' and cls.__name__ == 'BaseUser':
+            return
+        config['models'].append(cls)
+
     id: str | None = Field(None, validation_alias='_id')
 
     @field_validator('id', mode='before')
@@ -47,3 +52,11 @@ class BaseUser(Model):
 
     def update_last_login(self) -> None:
         self.update(last_login=datetime.now())
+
+    def login(self) -> dict:
+        """Return dict of access and refresh token"""
+        self.update_last_login()
+        return config.authentication.login(self.id)
+
+    def logout(self) -> dict:
+        return config.authentication.logout(self._auth_token)

@@ -8,6 +8,7 @@ from panther.configs import config
 from panther.db import Model
 from panther.request import Request
 from panther.test import APIClient
+from tests._utils import check_two_dicts
 
 
 @API()
@@ -41,7 +42,7 @@ USER_MODEL = 'tests.test_authentication.User'
 
 
 class TestAuthentication(TestCase):
-    SHORT_TOKEN = {'Authorization': 'TOKEN'}
+    SHORT_TOKEN = {'Authorization': 'Token TOKEN'}
     NOT_ENOUGH_SEGMENT_TOKEN = {'Authorization': 'Bearer XXX'}
     JUST_BEARER_TOKEN = {'Authorization': 'Bearer'}
     BAD_UNICODE_TOKEN = {'Authorization': 'Bearer علی'}
@@ -116,7 +117,7 @@ class TestAuthentication(TestCase):
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == (
-            'JWT Authentication Error: "\'latin-1\' codec can\'t encode characters in position 7-9: '
+            'JWT Authentication Error: "\'latin-1\' codec can\'t encode characters in position 0-2: '
             'ordinal not in range(256)"'
         )
         assert res.status_code == 401
@@ -145,7 +146,7 @@ class TestAuthentication(TestCase):
             res = self.client.get('auth-required', headers=self.TOKEN_WITHOUT_USER_ID)
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'JWT Authentication Error: "Payload does not have user_id"'
+        assert captured.records[0].getMessage() == 'JWT Authentication Error: "Payload does not have `user_id`"'
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
@@ -164,8 +165,10 @@ class TestAuthentication(TestCase):
         with self.assertNoLogs(level='ERROR'):
             res = self.client.get('auth-required', headers=self.TOKEN)
 
+        expected_response = {
+            'id': '1',
+            'username': 'Username',
+            'password': 'Password'
+        }
         assert res.status_code == 200
-        assert [*res.data.keys()] == ['id', 'username', 'password']
-        assert res.data['id'] == '1'
-        assert res.data['username'] == 'Username'
-        assert res.data['password'] == 'Password'
+        assert check_two_dicts(res.data, expected_response)
