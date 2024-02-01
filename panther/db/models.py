@@ -9,6 +9,11 @@ from panther.db.queries import Query
 
 
 class Model(PydanticBaseModel, Query):
+    def __init_subclass__(cls, **kwargs):
+        if cls.__module__ == 'panther.db.models' and cls.__name__ == 'BaseUser':
+            return
+        config['models'].append(cls)
+
     id: str | None = Field(None, validation_alias='_id')
 
     @field_validator('id', mode='before')

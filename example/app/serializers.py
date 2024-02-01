@@ -14,9 +14,11 @@ class UserOutputSerializer(BaseModel):
     username: str
 
 
-class UserUpdateSerializer(metaclass=ModelSerializer, model=User):
-    fields = ['username']
-    required_fields = ['username']
+class UserUpdateSerializer(ModelSerializer):
+    class Config:
+        model = User
+        fields = ['username']
+        required_fields = ['username']
 
 
 class FileSerializer(BaseModel):

@@ -364,7 +364,7 @@ class TestLoadConfigs(TestCase):
                 AUTHENTICATION = None
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == '"SECRET_KEY" is required when using "JWTAuthentication"'
+        assert captured.records[0].getMessage() == "Invalid 'JWTConfig': `JWTConfig.key` or `SECRET_KEY` is required."
 
     def test_jwt_auth_with_secret_key(self):
         global AUTHENTICATION, SECRET_KEY
