@@ -12,7 +12,7 @@ from panther import status
 from panther._utils import generate_ws_connection_id
 from panther.base_request import BaseRequest
 from panther.configs import config
-from panther.db.connection import redis
+from panther.db.connections import redis
 from panther.exceptions import AuthenticationException
 from panther.utils import Singleton
 
@@ -194,8 +194,8 @@ class Websocket(BaseRequest):
         await self.asgi_send({'type': 'websocket.send', 'bytes': bytes_data})
 
     async def close(self, code: int = status.WS_1000_NORMAL_CLOSURE, reason: str = '') -> None:
-        if hasattr(self, '_connection_id'):
-            logger.debug(f'Closing WS Connection {self.connection_id}')
+        connection_id = getattr(self, '_connection_id', '')
+        logger.debug(f'Closing WS Connection {connection_id}')
         self.is_connected = False
         config['websocket_connections'].remove_connection(self)
         await self.asgi_send({'type': 'websocket.close', 'code': code, 'reason': reason})

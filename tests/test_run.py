@@ -40,19 +40,15 @@ class TestRun(TestCase):
 
         assert len(config['http_middlewares']) == 1
         assert config['http_middlewares'][0].__class__.__name__ == 'DatabaseMiddleware'
-        assert config['http_middlewares'][0].url == 'pantherdb://test.pdb'
 
         assert len(config['reversed_http_middlewares']) == 1
         assert config['reversed_http_middlewares'][0].__class__.__name__ == 'DatabaseMiddleware'
-        assert config['reversed_http_middlewares'][0].url == 'pantherdb://test.pdb'
 
         assert len(config['ws_middlewares']) == 1
         assert config['ws_middlewares'][0].__class__.__name__ == 'DatabaseMiddleware'
-        assert config['ws_middlewares'][0].url == 'pantherdb://test.pdb'
 
         assert len(config['reversed_ws_middlewares']) == 1
         assert config['reversed_ws_middlewares'][0].__class__.__name__ == 'DatabaseMiddleware'
-        assert config['reversed_ws_middlewares'][0].url == 'pantherdb://test.pdb'
 
         assert config['user_model'].__name__ == tests.sample_project.app.models.User.__name__
         assert config['user_model'].__module__.endswith('app.models')

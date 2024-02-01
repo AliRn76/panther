@@ -35,9 +35,12 @@ class User(Model):
 AUTHENTICATION = 'panther.authentications.JWTAuthentication'
 SECRET_KEY = 'hvdhRspoTPh1cJVBHcuingQeOKNc1uRhIP2k7suLe2g='
 DB_PATH = 'test.pdb'
-MIDDLEWARES = [
-    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{DB_PATH}'}),
-]
+DATABASE = {
+    'engine': {
+        'class': 'panther.db.connections.PantherDBConnection',
+        'path': DB_PATH,
+    },
+}
 USER_MODEL = 'tests.test_authentication.User'
 
 

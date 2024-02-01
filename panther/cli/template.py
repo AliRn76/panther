@@ -171,17 +171,21 @@ SINGLE_FILE_TEMPLATE = {
 
 DATABASE_PANTHERDB_PART = """
 # More Info: Https://PantherPy.GitHub.io/middlewares/
-
-MIDDLEWARES = [
-    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/database.pdb'}),
-]"""
+DATABASE = {
+    'engine': {
+        'class': 'panther.db.connections.PantherDBConnection',
+        'path': BASE_DIR
+    }
+}"""
 
 DATABASE_MONGODB_PART = """
 # More Info: Https://PantherPy.GitHub.io/middlewares/
-
-MIDDLEWARES = [
-    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'mongodb://127.0.0.1:27017/{PROJECT_NAME}'}),
-]"""
+DATABASE = {
+    'engine': {
+        'class': 'panther.db.connections.MongoDBConnection',
+        'host': f'mongodb://127.0.0.1:27017/{PROJECT_NAME}'
+    }
+}"""
 
 USER_MODEL_PART = """
 

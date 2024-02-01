@@ -13,7 +13,7 @@ import panther.logging
 from panther import status
 from panther._load_configs import *
 from panther._utils import clean_traceback_message, http_response, is_function_async, reformat_code, \
-    check_class_type_endpoint, check_function_type_endpoint
+    check_class_type_endpoint, check_function_type_endpoint, import_class
 from panther.background_tasks import background_tasks
 from panther.cli.utils import print_info
 from panther.configs import config
@@ -61,12 +61,12 @@ class Panther:
         print_info(config)
 
     def load_configs(self) -> None:
-
         # Check & Read The Configs File
         self._configs_module = load_configs_module(self._configs_module_name)
 
         load_startup(self._configs_module)
         load_shutdown(self._configs_module)
+        load_database(self._configs_module)
         load_secret_key(self._configs_module)
         load_monitoring(self._configs_module)
         load_throttling(self._configs_module)

@@ -5,7 +5,7 @@ from typing import Literal
 
 from panther.cli.utils import import_error
 from panther.configs import config
-from panther.db.connection import redis
+from panther.db.connections import redis
 from panther.db.models import BaseUser, Model
 from panther.exceptions import AuthenticationException
 from panther.request import Request
@@ -14,7 +14,7 @@ from panther.utils import generate_hash_value_from_string
 try:
     from jose import JWTError, jwt
 except ModuleNotFoundError as e:
-    import_error(e, package='python-jose')
+    raise import_error(e, package='python-jose')
 
 logger = logging.getLogger('panther')
 

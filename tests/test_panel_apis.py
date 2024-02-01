@@ -5,9 +5,12 @@ from panther import Panther
 from panther.test import APIClient
 
 DB_PATH = 'test.pdb'
-MIDDLEWARES = [
-    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{DB_PATH}'}),
-]
+DATABASE = {
+    'engine': {
+        'class': 'panther.db.connections.PantherDBConnection',
+        'path': DB_PATH,
+    },
+}
 
 
 class TestPanelAPIs(TestCase):
