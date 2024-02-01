@@ -56,7 +56,7 @@ class BaseUser(Model):
     def login(self) -> dict:
         """Return dict of access and refresh token"""
         self.update_last_login()
-        return config.authentication.login(self)
+        return config.authentication.login(self.id)
 
     def logout(self) -> dict:
         return config.authentication.logout(self._auth_token)

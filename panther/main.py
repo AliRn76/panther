@@ -28,7 +28,14 @@ logger = logging.getLogger('panther')
 
 
 class Panther:
-    def __init__(self, name: str, configs=None, urls: dict | None = None, startup: Callable = None, shutdown: Callable = None):
+    def __init__(
+            self,
+            name: str,
+            configs=None,
+            urls: dict | None = None,
+            startup: Callable = None,
+            shutdown: Callable = None
+    ):
         self._configs_module_name = configs
         self._urls = urls
         self._startup = startup
@@ -127,7 +134,10 @@ class Panther:
         # Create The Connection
         del temp_connection
         connection = endpoint(scope=scope, receive=receive, send=send)
-        connection.set_path_variables(path_variables=path_variables)
+        try:
+            connection.set_path_variables(func=connection.connect, path_variables=path_variables)
+        except APIException as e:
+            return await connection.close(status.WS_1000_NORMAL_CLOSURE, reason=str(e))
 
         # Call 'Before' Middlewares
         if await self._run_ws_middlewares_before_listen(connection=connection):
@@ -184,6 +194,7 @@ class Panther:
 
         # Collect Path Variables
         path_variables: dict = collect_path_variables(request_path=request.path, found_path=found_path)
+        request.set_path_variables(func=endpoint, path_variables=path_variables)
 
         try:  # They Both(middleware.before() & _endpoint()) Have The Same Exception (APIException)
             # Call 'Before' Middlewares
@@ -191,7 +202,7 @@ class Panther:
                 request = await middleware.before(request=request)
 
             # Call Endpoint
-            response = await endpoint(request=request, **path_variables)
+            response = await endpoint(request=request)
 
         except APIException as e:
             response = self._handle_exceptions(e)

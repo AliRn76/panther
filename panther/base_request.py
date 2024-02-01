@@ -1,6 +1,9 @@
 from collections import namedtuple
 from collections.abc import Callable
 
+from panther.db import Model
+from panther.exceptions import InvalidPathVariableException
+
 
 class Headers:
     accept: str
@@ -31,14 +34,12 @@ class Headers:
     def __getattr__(self, item: str):
         if result := self.__pythonic_headers.get(item):
             return result
-        else:
-            return self.__headers.get(item)
+        return self.__headers.get(item)
 
     def __getitem__(self, item: str):
         if result := self.__headers.get(item):
             return result
-        else:
-            return self.__pythonic_headers.get(item)
+        return self.__pythonic_headers.get(item)
 
     def __str__(self):
         items = ', '.join(f'{k}={v}' for k, v in self.__headers.items())
@@ -51,7 +52,7 @@ class Headers:
         return self.__headers
 
 
-Address = namedtuple('Client', ['ip', 'port'])
+Address = namedtuple('Address', ['ip', 'port'])
 
 
 class BaseRequest:
@@ -61,9 +62,10 @@ class BaseRequest:
         self.asgi_receive = receive
         self._data = ...
         self._validated_data = None
-        self._user = None
         self._headers: Headers | None = None
         self._params: dict | None = None
+        self.user: Model | None = None
+        self.path_variables: dict | None = None
 
     @property
     def headers(self) -> Headers:
@@ -103,9 +105,19 @@ class BaseRequest:
     def scheme(self) -> str:
         return self.scope['scheme']
 
-    @property
-    def user(self):
-        return self._user
+    def set_path_variables(self, func: Callable, path_variables: dict):
+        self.path_variables = path_variables
 
-    def set_user(self, user) -> None:
-        self._user = user
+        for name, value in self.path_variables.items():
+            for variable_name, variable_type in func.__annotations__.items():
+                if name == variable_name:
+                    # Check the type and convert the value
+                    if variable_type is bool:
+                        self.path_variables[name] = value.lower() not in ['false', '0']
+
+                    elif variable_type is int:
+                        try:
+                            self.path_variables[name] = int(value)
+                        except ValueError:
+                            raise InvalidPathVariableException(value=value, variable_type=variable_type)
+                    break

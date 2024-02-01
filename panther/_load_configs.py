@@ -156,13 +156,19 @@ def load_authentication_class(_configs: dict, /) -> None:
     """Should be after `load_secret_key()`"""
     if authentication := _configs.get('AUTHENTICATION'):
         authentication = import_class(authentication)
+    if ws_authentication := _configs.get('WS_AUTHENTICATION'):
+        ws_authentication = import_class(ws_authentication)
     config['authentication'] = authentication
+    config['ws_authentication'] = ws_authentication
     load_jwt_config(_configs)
 
 
 def load_jwt_config(_configs: dict, /) -> None:
     """Only Collect JWT Config If Authentication Is JWTAuthentication"""
-    auth_is_jwt = getattr(config['authentication'], '__name__', None) == 'JWTAuthentication'
+    auth_is_jwt = (
+            getattr(config['authentication'], '__name__', None) == 'JWTAuthentication' or
+            getattr(config['ws_authentication'], '__name__', None) == 'QueryParamJWTAuthentication'
+    )
     jwt = _configs.get('JWTConfig', {})
     if auth_is_jwt or jwt:
         if 'key' not in jwt:

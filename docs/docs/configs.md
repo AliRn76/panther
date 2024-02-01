@@ -31,9 +31,17 @@ List of middlewares you want to use
 ### [AUTHENTICATION](https://pantherpy.github.io/authentications)
 > <b>Type:</b> `str | None` (<b>Default:</b> `None`)
 
-Every request goes through `authentication()` method of this `class`
+Every request goes through `authentication()` method of this `class`, if `auth = True`
 
 _Example:_ `AUTHENTICATION = 'panther.authentications.JWTAuthentication'`
+
+---
+### [WS_AUTHENTICATION](https://pantherpy.github.io/authentications)
+> <b>Type:</b> `str | None` (<b>Default:</b> `None`)
+
+WebSocket requests goes through `authentication()` method of this `class`, before the `connect()` if `auth = True`
+
+_Example:_ `WS_AUTHENTICATION = 'panther.authentications.QueryParamJWTAuthentication'`
 
 ---
 ### [URLs](https://pantherpy.github.io/urls)
