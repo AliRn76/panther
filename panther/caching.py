@@ -63,7 +63,7 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
 
     cache_data: tuple[ResponseDataTypes, int] = (response.data, response.status_code)
 
-    if redis.is_connected:  # noqa: Unresolved References
+    if redis.is_connected:
         key = cache_key(request)
 
         cache_exp_time = cache_exp_time or config['default_cache_exp']

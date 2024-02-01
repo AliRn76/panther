@@ -9,12 +9,12 @@ from panther.configs import config
 from panther.utils import Singleton
 
 try:
-    from redis import Redis
+    from redis import Redis as _Redis
 except ModuleNotFoundError:
-    # This 'Redis' is not going to be used,
+    # This '_Redis' is not going to be used,
     #   If he really wants to use redis,
     #   we are going to force him to install it in 'panther.middlewares.redis'
-    Redis = type('Redis')
+    _Redis = type('_Redis')
 
 if TYPE_CHECKING:
     from pymongo.database import Database
@@ -118,7 +118,7 @@ class DatabaseSession(Singleton):
         return config.database.session
 
 
-class RedisConnection(Singleton, Redis):
+class Redis(Singleton, _Redis):
     """Redis connection here works for per request things (caching, ...)"""
 
     is_connected: bool = False
@@ -130,10 +130,10 @@ class RedisConnection(Singleton, Redis):
 
     def execute_command(self, *args, **options) -> any:
         if not hasattr(self, 'connection_pool'):
-            msg = "'RedisConnection' object has no attribute 'connection_pool'. Hint: Check your redis middleware"
+            msg = "'Redis' object has no attribute 'connection_pool'. Hint: Check your redis middleware"
             raise AttributeError(msg)
         return super().execute_command(*args, **options)
 
 
 db: DatabaseSession = DatabaseSession()
-redis: Redis = RedisConnection()
+redis: Redis = Redis()

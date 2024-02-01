@@ -26,27 +26,25 @@ async def _http_response_start(send: Callable, /, headers: dict, status_code: in
     })
 
 
-async def _http_response_body(send: Callable, /, body: bytes | None = None) -> None:
-    if body is None:
-        await send({'type': 'http.response.body'})
-    else:
+async def _http_response_body(send: Callable, /, body: bytes) -> None:
+    if body:
         await send({'type': 'http.response.body', 'body': body})
+    else:  # body = b''
+        await send({'type': 'http.response.body'})
 
 
 async def http_response(
         send: Callable,
         /,
         *,
+        monitoring,  # type: MonitoringMiddleware
         status_code: int,
-        monitoring=None,  # type: MonitoringMiddleware | None
-        headers: dict | None = None,
-        body: bytes | None = None,
+        headers: dict,
+        body: bytes,
         exception: bool = False,
 ) -> None:
     if exception:
         body = json.dumps({'detail': status.status_text[status_code]})
-    elif status_code == status.HTTP_204_NO_CONTENT or body == b'null':
-        body = None
 
     await monitoring.after(status_code)
 

@@ -1,14 +1,14 @@
 import logging
 
 from panther.cli.utils import import_error
-from panther.db.connections import RedisConnection
+from panther.db.connections import Redis
 from panther.middlewares.base import BaseMiddleware
 from panther.request import Request
 from panther.response import Response
 from panther.websocket import GenericWebsocket
 
 try:
-    from redis import Redis
+    from redis import Redis as _Redis
 except ModuleNotFoundError as e:
     raise import_error(e, package='redis')
 
@@ -34,14 +34,14 @@ class RedisMiddleware(BaseMiddleware):
             logger.critical('Redis "port" is not valid.')
 
     async def before(self, request: Request | GenericWebsocket) -> Request | GenericWebsocket:
-        self.redis = RedisConnection(**self.kwargs)
+        self.redis = Redis(**self.kwargs)
         return request
 
     async def after(self, response: Response | GenericWebsocket) -> Response | GenericWebsocket:
         self.redis.close()
         return response
 
-    def redis_connection_for_ws(self) -> Redis:
-        r = Redis(**self.kwargs)
+    def redis_connection_for_ws(self) -> _Redis:
+        r = _Redis(**self.kwargs)
         r.ping()
         return r
