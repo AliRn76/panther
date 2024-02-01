@@ -5,6 +5,7 @@ import sys
 import types
 from collections.abc import Callable
 from logging.config import dictConfig
+from multiprocessing import Manager
 from pathlib import Path
 from threading import Thread
 
@@ -52,14 +53,6 @@ class Panther:
         # Print Info
         print_info(config)
 
-        # Start Websocket Listener (Redis Required)
-        if config['has_ws']:
-            Thread(
-                target=config['websocket_connections'],
-                daemon=True,
-                args=(self.ws_redis_connection,),
-            ).start()
-
     def load_configs(self) -> None:
 
         # Check & Read The Configs File
@@ -98,8 +91,7 @@ class Panther:
         self._create_ws_connections_instance()
 
     def _create_ws_connections_instance(self):
-        from panther.base_websocket import Websocket
-        from panther.websocket import WebsocketConnections
+        from panther.base_websocket import Websocket, WebsocketConnections
 
         # Check do we have ws endpoint
         for endpoint in config['flat_urls'].values():
@@ -111,7 +103,6 @@ class Panther:
 
         # Create websocket connections instance
         if config['has_ws']:
-            config['websocket_connections'] = WebsocketConnections()
             # Websocket Redis Connection
             for middleware in config['http_middlewares']:
                 if middleware.__class__.__name__ == 'RedisMiddleware':
@@ -119,6 +110,10 @@ class Panther:
                     break
             else:
                 self.ws_redis_connection = None
+
+            # Don't create Manager() if we are going to use Redis for PubSub
+            manager = None if self.ws_redis_connection else Manager()
+            config['websocket_connections'] = WebsocketConnections(manager=manager)
 
     async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
         """
@@ -138,6 +133,7 @@ class Panther:
         if scope['type'] == 'lifespan':
             message = await receive()
             if message["type"] == "lifespan.startup":
+                await self.handle_ws_listener()
                 await self.handle_startup()
             return
 
@@ -262,6 +258,15 @@ class Panther:
             body=response.body,
         )
 
+    async def handle_ws_listener(self):
+        # Start Websocket Listener (Redis/ Queue)
+        if config['has_ws']:
+            Thread(
+                target=config['websocket_connections'],
+                daemon=True,
+                args=(self.ws_redis_connection,),
+            ).start()
+
     async def handle_startup(self):
         if startup := config['startup'] or self._startup:
             if is_function_async(startup):
@@ -272,7 +277,13 @@ class Panther:
     def handle_shutdown(self):
         if shutdown := config['shutdown'] or self._shutdown:
             if is_function_async(shutdown):
-                asyncio.run(shutdown())
+                try:
+                    asyncio.run(shutdown())
+                except ModuleNotFoundError:
+                    # Error: import of asyncio halted; None in sys.modules
+                    #   And as I figured it out, it only happens when we running with
+                    #   gunicorn and Uvicorn workers (-k uvicorn.workers.UvicornWorker)
+                    pass
             else:
                 shutdown()
 
@@ -289,6 +300,7 @@ class Panther:
     async def _raise(self, send, *, status_code: int):
         await http_response(
             send,
+            headers={'content-type': 'application/json'},
             status_code=status_code,
             monitoring=self.monitoring,
             exception=True,

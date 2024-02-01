@@ -32,6 +32,7 @@ nav:
   - Working With Database: 'working_with_db.md'
   - Panther ODM: 'panther_odm.md'
   - Configs: 'configs.md'
+  - Serializer: 'serializer.md'
   - WebSocket: 'websocket.md'
   - Monitoring: 'monitoring.md'
   - Log Queries: 'log_queries.md'

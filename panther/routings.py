@@ -102,6 +102,9 @@ def _is_recursive_merge(a, b):
     return both_mapping and not both_counter
 
 
+ENDPOINT_NOT_FOUND = (None, '')
+
+
 def find_endpoint(path: str) -> tuple[Callable | None, str]:
     urls = config['urls']
 
@@ -132,31 +135,31 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
 
         # `found` is None
         for key, value in urls.items():
-            if key.startswith('<'):
-                if last_path:
-                    if callable(value):
-                        found_path += f'{key}/'
-                        return value, found_path
+            if not key.startswith('<'):
+                continue
 
-                    elif isinstance(value, dict) and '' in value:
-                        found_path += f'{key}/'
-                        return value[''], found_path
-
-                    else:
-                        return None, ''
-
-                elif isinstance(value, dict):
-                    urls = value
+            elif last_path:
+                if callable(value):
                     found_path += f'{key}/'
-                    break
-
+                    return value, found_path
+                elif isinstance(value, dict) and '' in value:
+                    found_path += f'{key}/'
+                    return value[''], found_path
                 else:
-                    return None, ''
+                    return ENDPOINT_NOT_FOUND
+
+            elif isinstance(value, dict):
+                urls = value
+                found_path += f'{key}/'
+                break
+
+            else:
+                return ENDPOINT_NOT_FOUND
 
         else:
-            return None, ''
+            return ENDPOINT_NOT_FOUND
 
-    return None, ''
+    return ENDPOINT_NOT_FOUND
 
 
 def collect_path_variables(request_path: str, found_path: str) -> dict:

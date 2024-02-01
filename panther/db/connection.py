@@ -54,12 +54,15 @@ class DBSession(Singleton):
         self._session: Database = self._client.get_database()
 
     def _create_pantherdb_session(self, db_url: str) -> None:
+        params = {'db_name': db_url, 'return_dict': True}
         if config['pantherdb_encryption']:
             try:
                 import cryptography
             except ModuleNotFoundError as e:
                 import_error(e, package='cryptography')
-        self._session: PantherDB = PantherDB(db_url, return_dict=True, secret_key=config['secret_key'])
+            else:
+                params['secret_key'] = config['secret_key']
+        self._session: PantherDB = PantherDB(**params)
 
     def close(self) -> None:
         if self._db_name == 'mongodb':

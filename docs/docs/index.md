@@ -1,14 +1,9 @@
 
 ## Panther 
-<b>Is A Fast &  Friendly Web Framework For Building Async APIs With Python 3.11+</b> 
+<b>Is A Fast &  Friendly Web Framework For Building Async APIs With Python 3.10+</b> 
 
-<p align=center>
+<p align="center">
   <img src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/logo-vertical.png" alt="logo" style="width: 450px">
-</p>
-
-<p>
-  <img alt="logo" style="width: 50px" src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/jb_beam_50x50.png">
-   <b>Supported by </b><a href="https://drive.google.com/file/d/17xe1hicIiRF7SQ-clg9SETdc19SktCbV/view?usp=sharing">JetBrains</a>
 </p>
 
 <center>
@@ -30,6 +25,14 @@
 - Visual API Monitoring (In Terminal)
 ---
 
+### Supported by
+<center>
+    <a href="https://drive.google.com/file/d/17xe1hicIiRF7SQ-clg9SETdc19SktCbV/view?usp=sharing">
+      <img alt="jetbrains" src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/jb_beam_50x50.png">
+    </a>
+</center>
+
+---
 
 ### Benchmark
 
@@ -46,29 +49,31 @@
 | Flask      | 749                         |
 
 
-> **More Detail:** https://github.com/PantherPy/frameworks-benchmark
+> **More Detail:** [https://GitHub.com/PantherPy/frameworks-benchmark](https://GitHub.com/PantherPy/frameworks-benchmark)
+
+---
 
 ### Installation
-- <details open>
-    <summary>Create a Virtual Environment</summary>
+- <details>
+    <summary>1. Create a Virtual Environment</summary>
     <pre>$ python3 -m venv .venv</pre>
   
   </details>
   
-- <details open>
-    <summary>Active The Environment</summary>
+- <details>
+    <summary>2. Active The Environment</summary>
     * Linux & Mac
       <pre>$ source .venv/bin/activate</pre>
     * Windows
-      <pre>$ .\\.venv\Scripts\activate</pre>
+      <pre>$ .\.venv\Scripts\activate</pre>
   
   </details>
- 
+  
 - <details open>
-    <summary>Install Panther</summary>
-    * Normal
-      <pre>$ pip install panther</pre>
-    * Include MongoDB Requirements
+    <summary>3. <b>Install Panther</b></summary>
+    - ⬇ Normal Installation
+      <pre><b>$ pip install panther</b></pre>
+    -  ⬇ Include full requirements (MongoDB, JWTAuth, Ruff, Redis, bpython)
       <pre>$ pip install panther[full]</pre>
   </details>
   
@@ -79,16 +84,15 @@
 - #### Create Project
 
     ```console
-    $ panther create <project_name> <directory>
+    $ panther create
     ```
 
 - #### Run Project
-
-    Panther uses [Uvicorn](https://github.com/encode/uvicorn) as ASGI (Asynchronous Server Gateway Interface)
     
     ```console
-    $ panther run 
+    $ panther run --reload
     ```
+  _* Panther uses [Uvicorn](https://github.com/encode/uvicorn) as ASGI (Asynchronous Server Gateway Interface) but you can run the project with [Granian](https://pypi.org/project/granian/), [daphne](https://pypi.org/project/daphne/) or any ASGI server too_
 
 - #### Monitoring Requests
 
@@ -99,62 +103,26 @@
 - #### Python Shell
 
     ```console
-    $ panther shell 
+    $ panther shell
     ```
   
 ---
 
-### Example
+### Single-File Structure Example
+  - Create `main.py`
 
-- #### You can create project with
- 
-    ```console 
-    $ panther create myproject
-    ``` 
-  
-- #### or create it yourself:
-
-    **core/configs.py**:
-    
-    ```python
-    URLs = 'core.urls.url_routing'
-    ```
-    
-    **core/urls.py**:
-    
-    ```python
-    from app.urls import urls as app_urls
-    
-    url_routing = {
-        '/': app_urls,
-    }
-    ```
-    
-    **app/urls.py**:
-    
-    ```python
-    from app.apis import hello_world, info
-    
-    urls = {
-        '': hello_world,
-        'info/': info,
-    }
-    ```
-    
-    **app/apis.py**:
-    
     ```python
     from datetime import datetime, timedelta
-
+    
+    from panther import version, status, Panther
     from panther.app import API
-    from panther import version, status
     from panther.request import Request
     from panther.response import Response
     from panther.throttling import Throttling
     
-    
     InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
-  
+    
+    
     @API()
     async def hello_world():
         return {'detail': 'Hello World'}
@@ -168,25 +136,32 @@
             'user_agent': request.headers.user_agent
         }
         return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
+    
+    
+    url_routing = {
+        '': hello_world,
+        'info': info,
+    }
+    
+    app = Panther(__name__, configs=__name__, urls=url_routing)
     ```
 
-- Then **run** the project:
+  - Run the project:
+    - `$ panther run --reload` 
   
-  - `$ cd myproject`
-  - `$ panther run` or `$ panther run --reload` 
-  
-  now you can see these two urls:</b>
 
-  * [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
-
-  * [http://127.0.0.1:8000/info/](http://127.0.0.1:8000/info/)
+  - now you can see these two urls:</b>
+    - [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+    - [http://127.0.0.1:8000/info/](http://127.0.0.1:8000/info/)
 
 
 
-> **Writing Your First CRUD: [First CRUD](https://pantherpy.github.io/function_first_crud/)**
+> **Next Step: [First CRUD](https://pantherpy.github.io/function_first_crud)**
+
+> **Real Word Example: [Https://GitHub.com/PantherPy/panther-example](https://GitHub.com/PantherPy/panther-example)**
 
 ---
+
+### Roadmap
 
 ![roadmap](https://raw.githubusercontent.com/AliRn76/panther/master/docs/docs/images/roadmap.jpg)
-
----

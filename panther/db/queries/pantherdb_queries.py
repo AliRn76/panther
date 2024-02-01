@@ -21,24 +21,24 @@ class BasePantherDBQuery:
     @classmethod
     def find_one(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
         if document := db.session.collection(cls.__name__).find_one(**cls._merge(_data, kwargs)):
-            return cls.create_model_instance(document=document)
+            return cls._create_model_instance(document=document)
         return None
 
     @classmethod
     def find(cls, _data: dict | None = None, /, **kwargs) -> list[Self]:
         documents = db.session.collection(cls.__name__).find(**cls._merge(_data, kwargs))
-        return [cls.create_model_instance(document=document) for document in documents]
+        return [cls._create_model_instance(document=document) for document in documents]
 
     @classmethod
     def first(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
         if document := db.session.collection(cls.__name__).first(**cls._merge(_data, kwargs)):
-            return cls.create_model_instance(document=document)
+            return cls._create_model_instance(document=document)
         return None
 
     @classmethod
     def last(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
         if document := db.session.collection(cls.__name__).last(**cls._merge(_data, kwargs)):
-            return cls.create_model_instance(document=document)
+            return cls._create_model_instance(document=document)
         return None
 
     # # # # # Count # # # # #
@@ -50,11 +50,11 @@ class BasePantherDBQuery:
     @classmethod
     def insert_one(cls, _data: dict | None = None, **kwargs) -> Self:
         document = db.session.collection(cls.__name__).insert_one(**cls._merge(_data, kwargs))
-        return cls.create_model_instance(document=document)
+        return cls._create_model_instance(document=document)
 
     # # # # # Delete # # # # #
     def delete(self) -> None:
-        db.session.collection(self.__class__.__name__).delete_one(_id=self.id)
+        db.session.collection(self.__class__.__name__).delete_one(_id=self._id)
 
     @classmethod
     def delete_one(cls, _data: dict | None = None, /, **kwargs) -> bool:
@@ -68,7 +68,7 @@ class BasePantherDBQuery:
     def update(self, **kwargs) -> None:
         for field, value in kwargs.items():
             setattr(self, field, value)
-        db.session.collection(self.__class__.__name__).update_one({'_id': self.id}, **kwargs)
+        db.session.collection(self.__class__.__name__).update_one({'_id': self._id}, **kwargs)
 
     @classmethod
     def update_one(cls, _filter: dict, _data: dict | None = None, /, **kwargs) -> bool:

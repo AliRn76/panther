@@ -1,13 +1,11 @@
 import asyncio
-from pydantic import BaseModel as PydanticBaseModel, Field, field_validator
 from pathlib import Path
 from unittest import TestCase
 
 from panther import Panther
 from panther.app import API
 from panther.configs import config
-from panther.db.queries import Query
-from panther.db.queries.pantherdb_queries import BasePantherDBQuery
+from panther.db import Model
 from panther.request import Request
 from panther.test import APIClient
 from tests._utils import check_two_dicts
@@ -29,19 +27,7 @@ urls = {
 }
 
 
-class Model(PydanticBaseModel):
-    id: int | None = Field(None, validation_alias='_id')
-
-    @field_validator('id', mode='before')
-    def validate_id(cls, value):
-        return value
-
-    @property
-    def _id(self):
-        return self.id
-
-
-class User(Model, BasePantherDBQuery, Query):
+class User(Model):
     username: str
     password: str
 
@@ -180,10 +166,9 @@ class TestAuthentication(TestCase):
             res = self.client.get('auth-required', headers=self.TOKEN)
 
         expected_response = {
-            'id': 1,
+            'id': '1',
             'username': 'Username',
             'password': 'Password'
         }
         assert res.status_code == 200
         assert check_two_dicts(res.data, expected_response)
-

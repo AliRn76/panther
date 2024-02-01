@@ -35,9 +35,10 @@ class Response:
 
     @property
     def headers(self) -> dict:
+        content_length = 0 if self.body == b'null' else len(self.body)
         return {
             'content-type': self.content_type,
-            'content-length': len(self.body),
+            'content-length': content_length,
             'access-control-allow-origin': '*',
         } | (self._headers or {})
 
