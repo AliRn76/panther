@@ -199,3 +199,14 @@ class ImageAPI(GenericAPI):
         with open(body.image.file_name, 'wb') as file:
             file.write(body.image.file)
         return body.image.size
+
+
+@API()
+def login_api():
+    _, user = User.find_or_insert(username='fake-username', password='secret-password')
+    return user.login()
+
+
+@API(auth=True)
+def logout_api(request: Request):
+    return request.user.logout()
