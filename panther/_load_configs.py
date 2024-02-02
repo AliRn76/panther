@@ -58,21 +58,22 @@ def load_redis(_configs: dict, /) -> None:
             from redis import Redis as _Redis
         except ModuleNotFoundError as e:
             raise import_error(e, package='redis')
-
-        redis_class = import_class(redis_config.pop('class', 'panther.db.connections.Redis'))
-        config['redis'] = redis_class(**redis_config, init=True)
+        redis_class_path = redis_config.get('class', 'panther.db.connections.Redis')
+        redis_class = import_class(redis_class_path)
+        # We have to create another dict then pop the 'class' else we can't pass the tests
+        args = redis_config.copy()
+        args.pop('class', None)
+        config['redis'] = redis_class(**args, init=True)
 
 
 def load_startup(_configs: dict, /) -> None:
     if startup := _configs.get('STARTUP'):
-        startup = import_class(startup)
-    config['startup'] = startup
+        config['startup'] = import_class(startup)
 
 
 def load_shutdown(_configs: dict, /) -> None:
     if shutdown := _configs.get('SHUTDOWN'):
-        shutdown = import_class(shutdown)
-    config['shutdown'] = shutdown
+        config['shutdown'] = import_class(shutdown)
 
 
 def load_database(_configs: dict, /) -> None:
@@ -80,6 +81,7 @@ def load_database(_configs: dict, /) -> None:
     if 'engine' in database_config:
         engine_class_path = database_config['engine']['class']
         engine_class = import_class(engine_class_path)
+        # We have to create another dict then pop the 'class' else we can't pass the tests
         args = database_config['engine'].copy()
         args.pop('class')
         config['database'] = engine_class(**args)
@@ -97,8 +99,7 @@ def load_database(_configs: dict, /) -> None:
 
 def load_secret_key(_configs: dict, /) -> None:
     if secret_key := _configs.get('SECRET_KEY'):
-        secret_key = secret_key.encode()
-    config['secret_key'] = secret_key
+        config['secret_key'] = secret_key.encode()
 
 
 def load_monitoring(_configs: dict, /) -> None:
@@ -197,11 +198,11 @@ def load_pantherdb_encryption(_configs: dict, /) -> None:
 def load_authentication_class(_configs: dict, /) -> None:
     """Should be after `load_secret_key()`"""
     if authentication := _configs.get('AUTHENTICATION'):
-        authentication = import_class(authentication)
+        config['authentication'] = import_class(authentication)
+
     if ws_authentication := _configs.get('WS_AUTHENTICATION'):
-        ws_authentication = import_class(ws_authentication)
-    config['authentication'] = authentication
-    config['ws_authentication'] = ws_authentication
+        config['ws_authentication'] = import_class(ws_authentication)
+
     load_jwt_config(_configs)
 
 

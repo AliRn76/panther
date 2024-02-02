@@ -3,6 +3,7 @@ from unittest import TestCase
 import orjson as json
 
 from panther import Panther, status
+from panther.configs import config
 from panther.test import WebsocketClient
 from panther.websocket import GenericWebsocket
 
@@ -130,6 +131,7 @@ urls = {
 class TestWebsocket(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        config['has_ws'] = True
         cls.app = Panther(__name__, configs=__name__, urls=urls)
 
     def test_without_accept(self):

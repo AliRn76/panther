@@ -76,7 +76,7 @@ class Config(Singleton):
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)
-        if key == 'query_engine':
+        if key == 'query_engine' and value:
             QueryObservable.update()
 
     def __setitem__(self, key, value):
@@ -85,33 +85,40 @@ class Config(Singleton):
     def __getitem__(self, item):
         return getattr(self, item)
 
+    def refresh(self):
+        # In some tests we need to `refresh` the `config` values
+        for key, value in default_configs.items():
+            setattr(self, key, value)
 
-config = Config(
-    base_dir=Path(),
-    monitoring=False,
-    log_queries=False,
-    default_cache_exp=None,
-    throttling=None,
-    secret_key=None,
-    http_middlewares=[],
-    ws_middlewares=[],
-    reversed_http_middlewares=[],
-    reversed_ws_middlewares=[],
-    user_model=None,
-    authentication=None,
-    ws_authentication=None,
-    jwt_config=None,
-    models=[],
-    flat_urls={},
-    urls={},
-    websocket_connections=None,
-    background_tasks=False,
-    has_ws=False,
-    startup=None,
-    shutdown=None,
-    auto_reformat=False,
-    pantherdb_encryption=False,
-    query_engine=None,
-    database=None,
-    redis=None,
-)
+
+default_configs = {
+    'base_dir': Path(),
+    'monitoring': False,
+    'log_queries': False,
+    'default_cache_exp': None,
+    'throttling': None,
+    'secret_key': None,
+    'http_middlewares': [],
+    'ws_middlewares': [],
+    'reversed_http_middlewares': [],
+    'reversed_ws_middlewares': [],
+    'user_model': None,
+    'authentication': None,
+    'ws_authentication': None,
+    'jwt_config': None,
+    'models': [],
+    'flat_urls': {},
+    'urls': {},
+    'websocket_connections': None,
+    'background_tasks': False,
+    'has_ws': False,
+    'startup': None,
+    'shutdown': None,
+    'auto_reformat': False,
+    'pantherdb_encryption': False,
+    'query_engine': None,
+    'database': None,
+    'redis': None,
+}
+
+config = Config(**default_configs)
