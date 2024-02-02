@@ -11,6 +11,7 @@ from rich import print as rprint
 from panther import Panther
 from panther.cli.create_command import CreateProject
 from panther.cli.template import TEMPLATE, SINGLE_FILE_TEMPLATE
+from panther.configs import config
 
 interactive_cli_1_index = 0
 interactive_cli_2_index = 0
@@ -42,6 +43,7 @@ class TestCLI(TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
+        config.refresh()
         sys.path.append('tests/sample_project')
 
     @classmethod

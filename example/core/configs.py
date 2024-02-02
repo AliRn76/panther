@@ -21,7 +21,7 @@ DB_PASSWORD = env['DB_PASSWORD']
 
 # # # More Info: https://pantherpy.github.io/middlewares/
 MIDDLEWARES = [
-    # ('panther.middlewares.redis.RedisMiddleware', {'host': '127.0.0.1', 'port': 6379}),
+
 ]
 """
 mongodb://[Username:Password(optional)]@HostName:Port/?aruguments
@@ -40,11 +40,19 @@ JWTConfig = {
     'key': SECRET_KEY,
 }
 
+REDIS = {
+    'class': 'panther.db.connections.RedisConnection',
+    'host': '127.0.0.1',
+    'port': 6379,
+    'db': 0,
+    'websocket_db': 1,
+}
+
 DATABASE = {
     'engine': {
-        'class': 'panther.db.connections.MongoDBConnection',
+        # 'class': 'panther.db.connections.MongoDBConnection',
         'class': 'panther.db.connections.PantherDBConnection',
-        'host': f'mongodb://{DB_HOST}:27017/{DB_NAME}'
+        # 'host': f'mongodb://{DB_HOST}:27017/{DB_NAME}'
     },
     # 'query': ...,
 }
@@ -69,6 +77,4 @@ async def shutdown():
 STARTUP = 'core.configs.startup'
 SHUTDOWN = 'core.configs.shutdown'
 
-AUTO_REFORMAT = True
-
-PANTHERDB_ENCRYPTION = True
+AUTO_REFORMAT = False

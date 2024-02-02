@@ -1,12 +1,13 @@
-import sys
 import logging
-import types
+import sys
 from importlib import import_module
 from multiprocessing import Manager
 
 from panther._utils import import_class
-from panther.base_websocket import Websocket, WebsocketConnections
+from panther.base_websocket import WebsocketConnections
+from panther.cli.utils import import_error
 from panther.configs import JWTConfig, config
+from panther.db.connections import redis
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.exceptions import PantherException
@@ -16,6 +17,7 @@ from panther.routings import finalize_urls, flatten_urls
 
 __all__ = (
     'load_configs_module',
+    'load_redis',
     'load_startup',
     'load_shutdown',
     'load_database',
@@ -49,16 +51,29 @@ def load_configs_module(_configs, /) -> dict:
     return _module.__dict__
 
 
+def load_redis(_configs: dict, /) -> None:
+    if redis_config := _configs.get('REDIS'):
+        # Check redis module installation
+        try:
+            from redis import Redis as _Redis
+        except ModuleNotFoundError as e:
+            raise import_error(e, package='redis')
+        redis_class_path = redis_config.get('class', 'panther.db.connections.Redis')
+        redis_class = import_class(redis_class_path)
+        # We have to create another dict then pop the 'class' else we can't pass the tests
+        args = redis_config.copy()
+        args.pop('class', None)
+        config['redis'] = redis_class(**args, init=True)
+
+
 def load_startup(_configs: dict, /) -> None:
     if startup := _configs.get('STARTUP'):
-        startup = import_class(startup)
-    config['startup'] = startup
+        config['startup'] = import_class(startup)
 
 
 def load_shutdown(_configs: dict, /) -> None:
     if shutdown := _configs.get('SHUTDOWN'):
-        shutdown = import_class(shutdown)
-    config['shutdown'] = shutdown
+        config['shutdown'] = import_class(shutdown)
 
 
 def load_database(_configs: dict, /) -> None:
@@ -66,6 +81,7 @@ def load_database(_configs: dict, /) -> None:
     if 'engine' in database_config:
         engine_class_path = database_config['engine']['class']
         engine_class = import_class(engine_class_path)
+        # We have to create another dict then pop the 'class' else we can't pass the tests
         args = database_config['engine'].copy()
         args.pop('class')
         config['database'] = engine_class(**args)
@@ -83,8 +99,7 @@ def load_database(_configs: dict, /) -> None:
 
 def load_secret_key(_configs: dict, /) -> None:
     if secret_key := _configs.get('SECRET_KEY'):
-        secret_key = secret_key.encode()
-    config['secret_key'] = secret_key
+        config['secret_key'] = secret_key.encode()
 
 
 def load_monitoring(_configs: dict, /) -> None:
@@ -183,11 +198,11 @@ def load_pantherdb_encryption(_configs: dict, /) -> None:
 def load_authentication_class(_configs: dict, /) -> None:
     """Should be after `load_secret_key()`"""
     if authentication := _configs.get('AUTHENTICATION'):
-        authentication = import_class(authentication)
+        config['authentication'] = import_class(authentication)
+
     if ws_authentication := _configs.get('WS_AUTHENTICATION'):
-        ws_authentication = import_class(ws_authentication)
-    config['authentication'] = authentication
-    config['ws_authentication'] = ws_authentication
+        config['ws_authentication'] = import_class(ws_authentication)
+
     load_jwt_config(_configs)
 
 
@@ -240,33 +255,13 @@ def load_urls(_configs: dict, /, urls: dict | None) -> None:
     config['urls']['_panel'] = finalize_urls(flatten_urls(panel_urls))
 
 
-def load_has_ws() -> None:
-    """Should be after `load_urls()`"""
-    for endpoint in config['flat_urls'].values():
-        if not isinstance(endpoint, types.FunctionType) and issubclass(endpoint, Websocket):
-            config['has_ws'] = True
-            break
-    else:
-        config['has_ws'] = False
-
-
 def load_websocket_connections():
-    """Should be after `load_urls() & load_middlewares()`"""
-    load_has_ws()
-
-    # Create websocket connections instance
+    """Should be after `load_redis()`"""
     if config['has_ws']:
-        # Websocket Redis Connection
-        for middleware in config['http_middlewares']:
-            if middleware.__class__.__name__ == 'RedisMiddleware':
-                redis_connection = middleware.redis_connection_for_ws()
-                break
-        else:
-            redis_connection = None
+        # Use the redis pubsub if `redis.is_connected`, else use the `multiprocessing.Manager`
+        pubsub_connection = redis.create_connection_for_websocket() if redis.is_connected else Manager()
 
-        # Don't create Manager() if we are going to use Redis for PubSub
-        manager = None if redis_connection else Manager()
-        config['websocket_connections'] = WebsocketConnections(manager=manager, redis_connection=redis_connection)
+        config['websocket_connections'] = WebsocketConnections(pubsub_connection=pubsub_connection)
 
 
 def _exception_handler(field: str, error: str | Exception) -> PantherException:

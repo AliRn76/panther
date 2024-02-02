@@ -5,6 +5,7 @@ from unittest import TestCase
 
 import panther.utils
 from panther import Panther
+from panther.configs import config
 from panther.middlewares import BaseMiddleware
 from panther.utils import generate_hash_value_from_string, load_env, round_datetime, encrypt_password
 
@@ -185,6 +186,9 @@ class TestUtilFunctions(TestCase):
 
 
 class TestLoadConfigs(TestCase):
+    def setUp(self):
+        config.refresh()
+
     def test_urls_not_found(self):
         global URLs
         URLs = None
