@@ -43,6 +43,7 @@ class MongoDBConnection(DatabaseConnection):
             tz_aware: bool | None = None,
             connect: bool | None = None,
             type_registry=None,  # type: bson.codec_options.TypeRegistry
+            database: str | None = None,
             **kwargs: Any,
     ) -> None:
         try:
@@ -56,6 +57,7 @@ class MongoDBConnection(DatabaseConnection):
         self.tz_aware = tz_aware
         self.connect = connect
         self.type_registry = type_registry
+        self.database = database
         self.kwargs = kwargs
 
     def create_session(self):
@@ -70,7 +72,7 @@ class MongoDBConnection(DatabaseConnection):
             type_registry=self.type_registry,
             **self.kwargs,
         )
-        self._database: Database = self._client.get_database()
+        self._database: Database = self._client.get_database(name=self.database)
 
     @property
     def session(self):
