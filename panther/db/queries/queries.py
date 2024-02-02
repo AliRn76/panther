@@ -2,10 +2,9 @@ import sys
 
 from pydantic import ValidationError
 
-from panther import status
 from panther.configs import QueryObservable
 from panther.db.utils import log_query, check_connection
-from panther.exceptions import APIException, DBException
+from panther.exceptions import DatabaseError, NotFoundAPIError, BadRequestAPIError
 
 __all__ = ('Query',)
 
@@ -45,7 +44,7 @@ class Query:
                 if not is_updating or e['type'] != 'missing'
             }
             if error:
-                raise APIException(detail=error, status_code=status.HTTP_400_BAD_REQUEST)
+                raise BadRequestAPIError(detail=error)
 
     @classmethod
     def _create_model_instance(cls, document: dict):
@@ -58,7 +57,7 @@ class Query:
             )
             if error:
                 message = f'{cls.__name__}({error})'
-                raise DBException(message)
+                raise DatabaseError(message)
 
     # # # # # Find # # # # #
     @classmethod
@@ -142,7 +141,7 @@ class Query:
     @log_query
     def insert_many(cls, _data: dict | None = None, /, **kwargs):
         msg = 'insert_many() is not supported yet.'
-        raise DBException(msg)
+        raise DatabaseError(msg)
 
     # # # # # Delete # # # # #
     @check_connection
@@ -256,10 +255,7 @@ class Query:
         if obj := cls.find_one(**kwargs):
             return obj
 
-        raise APIException(
-            detail=f'{cls.__name__} Does Not Exists',
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
+        raise NotFoundAPIError(detail=f'{cls.__name__} Does Not Exists')
 
     @check_connection
     @log_query
@@ -273,4 +269,4 @@ class Query:
             >>> user.save()
         """
         msg = 'save() is not supported yet.'
-        raise DBException(msg) from None
+        raise DatabaseError(msg) from None

@@ -3,7 +3,7 @@ import platform
 
 from rich import print as rprint
 
-from panther.exceptions import PantherException
+from panther.exceptions import PantherError
 
 logger = logging.getLogger('panther')
 
@@ -63,11 +63,11 @@ help_message = f"""{logo}
 """
 
 
-def import_error(message: str | Exception, package: str | None = None) -> PantherException:
+def import_error(message: str | Exception, package: str | None = None) -> PantherError:
     msg = str(message)
     if package:
         msg += f' -> Hint: `pip install {package}`'
-    return PantherException(msg)
+    return PantherError(msg)
 
 
 def cli_error(message: str | Exception) -> None:

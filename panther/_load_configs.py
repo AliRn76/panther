@@ -10,7 +10,7 @@ from panther.configs import JWTConfig, config
 from panther.db.connections import redis
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
-from panther.exceptions import PantherException
+from panther.exceptions import PantherError
 from panther.middlewares.base import WebsocketMiddleware, HTTPMiddleware
 from panther.panel.urls import urls as panel_urls
 from panther.routings import finalize_urls, flatten_urls
@@ -264,5 +264,5 @@ def load_websocket_connections():
         config['websocket_connections'] = WebsocketConnections(pubsub_connection=pubsub_connection)
 
 
-def _exception_handler(field: str, error: str | Exception) -> PantherException:
-    return PantherException(f"Invalid '{field}': {error}")
+def _exception_handler(field: str, error: str | Exception) -> PantherError:
+    return PantherError(f"Invalid '{field}': {error}")

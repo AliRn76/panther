@@ -7,7 +7,7 @@ from panther.cli.utils import import_error
 from panther.configs import config
 from panther.db.connections import redis
 from panther.db.models import BaseUser, Model
-from panther.exceptions import AuthenticationException
+from panther.exceptions import AuthenticationAPIError
 from panther.request import Request
 from panther.utils import generate_hash_value_from_string
 
@@ -28,9 +28,9 @@ class BaseAuthentication:
         raise cls.exception(msg) from None
 
     @staticmethod
-    def exception(message: str, /) -> type[AuthenticationException]:
+    def exception(message: str, /) -> type[AuthenticationAPIError]:
         logger.error(f'Authentication Error: "{message}"')
-        return AuthenticationException
+        return AuthenticationAPIError
 
 
 class JWTAuthentication(BaseAuthentication):
@@ -150,9 +150,9 @@ class JWTAuthentication(BaseAuthentication):
         return bool(redis.exists(key))
 
     @staticmethod
-    def exception(message: str | JWTError | UnicodeEncodeError, /) -> type[AuthenticationException]:
+    def exception(message: str | JWTError | UnicodeEncodeError, /) -> type[AuthenticationAPIError]:
         logger.error(f'JWT Authentication Error: "{message}"')
-        return AuthenticationException
+        return AuthenticationAPIError
 
 
 class QueryParamJWTAuthentication(JWTAuthentication):

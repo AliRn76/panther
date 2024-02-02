@@ -2,7 +2,7 @@ from collections import namedtuple
 from collections.abc import Callable
 
 from panther.db import Model
-from panther.exceptions import InvalidPathVariableException
+from panther.exceptions import InvalidPathVariableAPIError
 
 
 class Headers:
@@ -119,5 +119,5 @@ class BaseRequest:
                         try:
                             self.path_variables[name] = int(value)
                         except ValueError:
-                            raise InvalidPathVariableException(value=value, variable_type=variable_type)
+                            raise InvalidPathVariableAPIError(value=value, variable_type=variable_type)
                     break

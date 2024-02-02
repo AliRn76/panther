@@ -1,5 +1,4 @@
 import functools
-from collections.abc import Callable
 from datetime import datetime, timedelta
 import logging
 from typing import Literal
@@ -7,17 +6,15 @@ from typing import Literal
 from orjson import JSONDecodeError
 from pydantic import ValidationError
 
-from panther import status
 from panther._utils import is_function_async
 from panther.caching import cache_key, get_cached_response_data, set_cache_response
 from panther.configs import config
 from panther.exceptions import (
-    APIException,
-    AuthorizationException,
-    InvalidPathVariableException,
-    JsonDecodeException,
-    MethodNotAllowed,
-    ThrottlingException,
+    APIError,
+    AuthorizationAPIError,
+    JSONDecodeAPIError,
+    MethodNotAllowedAPIError,
+    ThrottlingAPIError, BadRequestAPIError,
 )
 from panther.request import Request
 from panther.response import Response
@@ -60,7 +57,7 @@ class API:
 
             # 1. Check Method
             if self.methods and self.request.method not in self.methods:
-                raise MethodNotAllowed
+                raise MethodNotAllowedAPIError
 
             # 2. Authentication
             self.handle_authentications()
@@ -117,7 +114,7 @@ class API:
         if self.auth:
             if not auth_class:
                 logger.critical('"AUTHENTICATION" has not been set in configs')
-                raise APIException
+                raise APIError
             user = auth_class.authentication(self.request)
             self.request.user = user
 
@@ -127,7 +124,7 @@ class API:
             time = round_datetime(datetime.now(), throttling.duration)
             throttling_key = f'{time}-{key}'
             if throttling_storage[throttling_key] > throttling.rate:
-                raise ThrottlingException
+                raise ThrottlingAPIError
 
             throttling_storage[throttling_key] += 1
 
@@ -135,9 +132,9 @@ class API:
         for perm in self.permissions:
             if type(perm.authorization).__name__ != 'method':
                 logger.error(f'{perm.__name__}.authorization should be "classmethod"')
-                raise AuthorizationException
+                raise AuthorizationAPIError
             if perm.authorization(self.request) is False:
-                raise AuthorizationException
+                raise AuthorizationAPIError
 
     def handle_input_validation(self):
         if self.input_model:
@@ -148,13 +145,13 @@ class API:
     def validate_input(cls, model, request: Request):
         try:
             if isinstance(request.data, bytes):
-                raise APIException(detail='Content-Type is not valid', status_code=status.HTTP_400_BAD_REQUEST)
+                raise BadRequestAPIError(detail='Content-Type is not valid')
             return model(**request.data)
         except ValidationError as validation_error:
             error = {'.'.join(loc for loc in e['loc']): e['msg'] for e in validation_error.errors()}
-            raise APIException(detail=error, status_code=status.HTTP_400_BAD_REQUEST)
+            raise BadRequestAPIError(detail=error)
         except JSONDecodeError:
-            raise JsonDecodeException
+            raise JSONDecodeAPIError
 
 
 class GenericAPI:
@@ -167,19 +164,19 @@ class GenericAPI:
     cache_exp_time: timedelta | int | None = None
 
     async def get(self, *args, **kwargs):
-        raise MethodNotAllowed
+        raise MethodNotAllowedAPIError
 
     async def post(self, *args, **kwargs):
-        raise MethodNotAllowed
+        raise MethodNotAllowedAPIError
 
     async def put(self, *args, **kwargs):
-        raise MethodNotAllowed
+        raise MethodNotAllowedAPIError
 
     async def patch(self, *args, **kwargs):
-        raise MethodNotAllowed
+        raise MethodNotAllowedAPIError
 
     async def delete(self, *args, **kwargs):
-        raise MethodNotAllowed
+        raise MethodNotAllowedAPIError
 
     @classmethod
     async def call_method(cls, *args, **kwargs):

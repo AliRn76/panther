@@ -14,7 +14,7 @@ from panther._utils import generate_ws_connection_id
 from panther.base_request import BaseRequest
 from panther.configs import config
 from panther.db.connections import redis
-from panther.exceptions import AuthenticationException
+from panther.exceptions import AuthenticationAPIError
 from panther.utils import Singleton
 
 if TYPE_CHECKING:
@@ -140,7 +140,7 @@ class WebsocketConnections(Singleton):
                 return True
             try:
                 connection.user = config.ws_authentication.authentication(connection)
-            except AuthenticationException as e:
+            except AuthenticationAPIError as e:
                 await connection.close(reason=e.detail)
         return False
 
