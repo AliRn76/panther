@@ -40,7 +40,7 @@ async def http_response(
         monitoring,  # type: MonitoringMiddleware
         status_code: int,
         headers: dict,
-        body: bytes,
+        body: bytes = b'',
         exception: bool = False,
 ) -> None:
     if exception:

@@ -11,9 +11,9 @@ try:
     from redis import Redis as _Redis
 except ModuleNotFoundError:
     # This '_Redis' is not going to be used,
-    #   If he really wants to use redis,
-    #   we are going to force him to install it in 'panther.middlewares.redis'
-    _Redis = type('_Redis')
+    #   If user really wants to use redis,
+    #   we are going to force him to install it in `panther._load_configs.load_redis`
+    _Redis = type('_Redis', (), {'__new__': lambda x: x, 'ping': lambda self: True})
 
 if TYPE_CHECKING:
     from pymongo.database import Database
@@ -90,7 +90,6 @@ class PantherDBConnection(DatabaseConnection):
                 import cryptography
             except ModuleNotFoundError as e:
                 raise import_error(e, package='cryptography')
-            # TODO: PANTHERDB_ENCRYPTION ro az tooye cli create bebaram tooyey config khode pantherdb
             self.params['secret_key'] = config['secret_key']
 
     def create_session(self):
@@ -117,22 +116,39 @@ class DatabaseSession(Singleton):
         return config.database.session
 
 
-class Redis(Singleton, _Redis):
-    """Redis connection here works for per request things (caching, ...)"""
-
+class RedisConnection(Singleton, _Redis):
     is_connected: bool = False
 
-    def __init__(self, host: str | None = None, port: int | None = None, **kwargs):
-        if host and port:
-            super().__init__(host=host, port=port, **kwargs)
-            self.is_connected = True
+    def __init__(
+            self,
+            init: bool = False,
+            host: str = 'localhost',
+            port: int = 6379,
+            db: int = 0,
+            websocket_db: int = 0,
+            **kwargs
+    ):
+        if init:
+            self.host = host
+            self.port = port
+            self.db = db
+            self.websocket_db = websocket_db
+            self.kwargs = kwargs
 
-    def execute_command(self, *args, **options) -> any:
-        if not hasattr(self, 'connection_pool'):
-            msg = "'Redis' object has no attribute 'connection_pool'. Hint: Check your redis middleware"
-            raise AttributeError(msg)
-        return super().execute_command(*args, **options)
+            super().__init__(host=host, port=port, db=db, **kwargs)
+            self.is_connected = True
+            self.ping()
+
+    def create_connection_for_websocket(self) -> _Redis:
+        if not hasattr(self, 'websocket_connection'):
+            self.websocket_connection = _Redis(
+                host=self.host,
+                port=self.port,
+                db=self.websocket_db,
+                **self.kwargs
+            )
+        return self.websocket_connection
 
 
 db: DatabaseSession = DatabaseSession()
-redis: Redis = Redis()
+redis: RedisConnection = RedisConnection()

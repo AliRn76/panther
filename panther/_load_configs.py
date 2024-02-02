@@ -1,12 +1,13 @@
-import sys
 import logging
-import types
+import sys
 from importlib import import_module
 from multiprocessing import Manager
 
 from panther._utils import import_class
-from panther.base_websocket import Websocket, WebsocketConnections
+from panther.base_websocket import WebsocketConnections
+from panther.cli.utils import import_error
 from panther.configs import JWTConfig, config
+from panther.db.connections import redis
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.exceptions import PantherException
@@ -16,6 +17,7 @@ from panther.routings import finalize_urls, flatten_urls
 
 __all__ = (
     'load_configs_module',
+    'load_redis',
     'load_startup',
     'load_shutdown',
     'load_database',
@@ -47,6 +49,18 @@ def load_configs_module(_configs, /) -> dict:
         except ModuleNotFoundError:
             raise _exception_handler(field='core/configs.py', error='Not Found')
     return _module.__dict__
+
+
+def load_redis(_configs: dict, /) -> None:
+    if redis_config := _configs.get('REDIS'):
+        # Check redis module installation
+        try:
+            from redis import Redis as _Redis
+        except ModuleNotFoundError as e:
+            raise import_error(e, package='redis')
+
+        redis_class = import_class(redis_config.pop('class', 'panther.db.connections.Redis'))
+        config['redis'] = redis_class(**redis_config, init=True)
 
 
 def load_startup(_configs: dict, /) -> None:
@@ -240,33 +254,13 @@ def load_urls(_configs: dict, /, urls: dict | None) -> None:
     config['urls']['_panel'] = finalize_urls(flatten_urls(panel_urls))
 
 
-def load_has_ws() -> None:
-    """Should be after `load_urls()`"""
-    for endpoint in config['flat_urls'].values():
-        if not isinstance(endpoint, types.FunctionType) and issubclass(endpoint, Websocket):
-            config['has_ws'] = True
-            break
-    else:
-        config['has_ws'] = False
-
-
 def load_websocket_connections():
-    """Should be after `load_urls() & load_middlewares()`"""
-    load_has_ws()
-
-    # Create websocket connections instance
+    """Should be after `load_redis()`"""
     if config['has_ws']:
-        # Websocket Redis Connection
-        for middleware in config['http_middlewares']:
-            if middleware.__class__.__name__ == 'RedisMiddleware':
-                redis_connection = middleware.redis_connection_for_ws()
-                break
-        else:
-            redis_connection = None
+        # Use the redis pubsub if `redis.is_connected`, else use the `multiprocessing.Manager`
+        pubsub_connection = redis.create_connection_for_websocket() if redis.is_connected else Manager()
 
-        # Don't create Manager() if we are going to use Redis for PubSub
-        manager = None if redis_connection else Manager()
-        config['websocket_connections'] = WebsocketConnections(manager=manager, redis_connection=redis_connection)
+        config['websocket_connections'] = WebsocketConnections(pubsub_connection=pubsub_connection)
 
 
 def _exception_handler(field: str, error: str | Exception) -> PantherException:

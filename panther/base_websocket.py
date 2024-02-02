@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import logging
 from multiprocessing import Manager
+from multiprocessing.managers import SyncManager
 from typing import TYPE_CHECKING, Literal
 
 import orjson as json
@@ -38,15 +39,23 @@ class PubSub:
 
 
 class WebsocketConnections(Singleton):
-    def __init__(self, redis_connection: Redis | None, manager: Manager = None):
+    def __init__(self, pubsub_connection: Redis | Manager):
         self.connections = {}
         self.connections_count = 0
-        self.manager = manager
-        self.redis_connection = redis_connection
+        self.pubsub_connection = pubsub_connection
 
     def __call__(self):
-        if self.redis_connection:
-            subscriber = self.redis_connection.pubsub()
+        # We don't have redis connection, so use the `multiprocessing.PubSub`
+        if isinstance(self.pubsub_connection, SyncManager):
+            self.pubsub = PubSub(manager=self.pubsub_connection)
+            queue = self.pubsub.subscribe()
+            logger.info("Subscribed to 'websocket_connections' queue")
+            while True:
+                received_message = queue.get()
+                self._handle_received_message(received_message=received_message)
+        else:
+            # We have a redis connection, so use it for pubsub
+            subscriber = self.pubsub_connection.pubsub()
             subscriber.subscribe('websocket_connections')
             logger.info("Subscribed to 'websocket_connections' channel")
             for channel_data in subscriber.listen():
@@ -62,13 +71,6 @@ class WebsocketConnections(Singleton):
 
                     case unknown_type:
                         logger.debug(f'Unknown Channel Type: {unknown_type}')
-        else:
-            self.pubsub = PubSub(manager=self.manager)
-            queue = self.pubsub.subscribe()
-            logger.info("Subscribed to 'websocket_connections' queue")
-            while True:
-                received_message = queue.get()
-                self._handle_received_message(received_message=received_message)
 
     def _handle_received_message(self, received_message):
         if (
@@ -160,6 +162,10 @@ class Websocket(BaseRequest):
     is_connected: bool = False
     auth: bool = False
     permissions: list = []
+
+    def __init_subclass__(cls, **kwargs):
+        if cls.__module__ != 'panther.websocket':
+            config['has_ws'] = True
 
     async def connect(self, **kwargs) -> None:
         """Check your conditions then self.accept() the connection"""
