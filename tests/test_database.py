@@ -9,7 +9,7 @@ import pytest
 from panther import Panther
 from panther.configs import config
 from panther.db import Model
-from panther.db.connection import db
+from panther.db.connections import db
 from panther.exceptions import DatabaseError
 
 f = faker.Faker()
@@ -460,10 +460,13 @@ class TestPantherDB(_BaseDatabaseTestCase, TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        global MIDDLEWARES
-        MIDDLEWARES = [
-            ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{cls.DB_PATH}'}),
-        ]
+        global DATABASE
+        DATABASE = {
+            'engine': {
+                'class': 'panther.db.connections.PantherDBConnection',
+                'path': cls.DB_PATH
+            },
+        }
         Panther(__name__, configs=__name__, urls={})
 
     def setUp(self) -> None:
@@ -482,10 +485,13 @@ class TestMongoDB(_BaseDatabaseTestCase, TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        global MIDDLEWARES
-        MIDDLEWARES = [
-            ('panther.middlewares.db.DatabaseMiddleware', {'url': f'mongodb://127.0.0.1:27017/{cls.DB_NAME}'}),
-        ]
+        global DATABASE
+        DATABASE = {
+            'engine': {
+                'class': 'panther.db.connections.MongoDBConnection',
+                'host': f'mongodb://127.0.0.1:27017/{cls.DB_NAME}',
+            },
+        }
         Panther(__name__, configs=__name__, urls={})
 
     def setUp(self) -> None:

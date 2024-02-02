@@ -21,8 +21,9 @@ And you can write your own custom middlewares too
 
 ## Database Middleware
 This middleware will create a `db` connection which is used in `ODM` and you can use it manually too, it gives you a database connection:
+
 ```python
-from panther.db.connection import db
+from panther.db.connections import db
 ```
 
 We only support 2 database for now: `PantherDB` & `MongoDB`

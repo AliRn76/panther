@@ -1,4 +1,5 @@
 import sys
+import logging
 import types
 from importlib import import_module
 from multiprocessing import Manager
@@ -17,6 +18,7 @@ __all__ = (
     'load_configs_module',
     'load_startup',
     'load_shutdown',
+    'load_database',
     'load_secret_key',
     'load_monitoring',
     'load_throttling',
@@ -31,6 +33,8 @@ __all__ = (
     'load_urls',
     'load_websocket_connections',
 )
+
+logger = logging.getLogger('panther')
 
 
 def load_configs_module(_configs, /) -> dict:
@@ -55,6 +59,26 @@ def load_shutdown(_configs: dict, /) -> None:
     if shutdown := _configs.get('SHUTDOWN'):
         shutdown = import_class(shutdown)
     config['shutdown'] = shutdown
+
+
+def load_database(_configs: dict, /) -> None:
+    database_config = _configs.get('DATABASE', {})
+    if 'engine' in database_config:
+        engine_class_path = database_config['engine']['class']
+        engine_class = import_class(engine_class_path)
+        args = database_config['engine'].copy()
+        args.pop('class')
+        config['database'] = engine_class(**args)
+
+        if engine_class_path == 'panther.db.connections.PantherDBConnection':
+            config['query_engine'] = BasePantherDBQuery
+        elif engine_class_path == 'panther.db.connections.MongoDBConnection':
+            config['query_engine'] = BaseMongoDBQuery
+
+    if 'query' in database_config:
+        if config['query_engine']:
+            logger.warning('`DATABASE.query` has already been filled.')
+        config['query_engine'] = import_class(database_config['query'])
 
 
 def load_secret_key(_configs: dict, /) -> None:
@@ -85,11 +109,21 @@ def load_log_queries(_configs: dict, /) -> None:
 
 def load_middlewares(_configs: dict, /) -> None:
     """
-    Collect The Middlewares & Set db_engine If One Of Middlewares Was For DB
-    And Return a dict with two list, http and ws middlewares"""
+    Should be after `load_database()`
+
+    Collect The Middlewares & Set `DatabaseMiddleware` If it is needed.
+    """
     from panther.middlewares import BaseMiddleware
 
     middlewares = {'http': [], 'ws': []}
+
+    # Add Database Middleware
+    if config['database']:
+        database_middleware = import_class('panther.middlewares.db.DatabaseMiddleware')
+        middlewares['http'].append(database_middleware())
+        middlewares['ws'].append(database_middleware())
+
+    # Collect Middlewares
     for middleware in _configs.get('MIDDLEWARES') or []:
         if not isinstance(middleware, list | tuple):
             raise _exception_handler(field='MIDDLEWARES', error=f'{middleware} should have 2 part: (path, kwargs)')
@@ -104,21 +138,15 @@ def load_middlewares(_configs: dict, /) -> None:
         else:
             path, data = middleware
 
-        if path.find('panther.middlewares.db.DatabaseMiddleware') != -1:
-            # Keep it simple for now, we are going to make it dynamic in the next patch
-            if data['url'].split(':')[0] == 'pantherdb':
-                config['query_engine'] = BasePantherDBQuery
-            else:
-                config['query_engine'] = BaseMongoDBQuery
         try:
-            Middleware = import_class(path)  # noqa: N806
+            middleware_class = import_class(path)
         except (AttributeError, ModuleNotFoundError):
             raise _exception_handler(field='MIDDLEWARES', error=f'{path} is not a valid middleware path')
 
-        if issubclass(Middleware, BaseMiddleware) is False:
+        if issubclass(middleware_class, BaseMiddleware) is False:
             raise _exception_handler(field='MIDDLEWARES', error='is not a sub class of BaseMiddleware')
 
-        middleware_instance = Middleware(**data)
+        middleware_instance = middleware_class(**data)
         if isinstance(middleware_instance, BaseMiddleware | HTTPMiddleware):
             middlewares['http'].append(middleware_instance)
 

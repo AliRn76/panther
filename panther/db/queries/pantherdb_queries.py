@@ -1,6 +1,6 @@
 from sys import version_info
 
-from panther.db.connection import db
+from panther.db.connections import db
 from panther.db.utils import merge_dicts, prepare_id_for_query
 
 if version_info >= (3, 11):

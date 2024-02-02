@@ -279,18 +279,19 @@ class TestWebsocket(TestCase):
         assert responses[0]['reason'] == 'Authentication Error'
 
     def test_with_auth_success(self):
-        global WS_AUTHENTICATION, SECRET_KEY, MIDDLEWARES
-
-        MIDDLEWARES = [
-            ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://database.pdb'}),
-        ]
+        global WS_AUTHENTICATION, SECRET_KEY, DATABASE
+        DATABASE = {
+            'engine': {
+                'class': 'panther.db.connections.PantherDBConnection',
+            },
+        }
         WS_AUTHENTICATION = 'panther.authentications.QueryParamJWTAuthentication'
         SECRET_KEY = 'hvdhRspoTPh1cJVBHcuingQeOKNc1uRhIP2k7suLe2g='
         token = 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxfQ.AF3nsj8IQ6t0ncqIx4quoyPfYaZ-pqUOW4z_euUztPM'
         app = Panther(__name__, configs=__name__, urls=urls)
         WS_AUTHENTICATION = None
         SECRET_KEY = None
-        MIDDLEWARES = None
+        DATABASE = None
 
         ws = WebsocketClient(app=app)
         with self.assertLogs(level='ERROR') as captured:
