@@ -16,6 +16,8 @@ interactive_cli_1_index = 0
 interactive_cli_2_index = 0
 
 
+# 0.ProjectName, 1.BaseDir, 2.IsSingleFile, 3.Database,
+# 4.Encryption, 5.Authentication, 6.Monitoring, 7.LogQueries, 8.AutoReformat
 def interactive_cli_1_mock_responses(index=None):
     global interactive_cli_1_index
     if index is None:

@@ -64,7 +64,7 @@ from panther.utils import load_env
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}{PANTHERDB_ENCRYPTION}
+SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}
 
 # More Info: https://PantherPy.GitHub.io/urls/
 URLs = 'core.urls.url_routing'
@@ -133,7 +133,7 @@ from panther.utils import load_env
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}{PANTHERDB_ENCRYPTION}
+SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}
 
 InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
 
@@ -160,7 +160,7 @@ url_routing = {
 }
 
 app = Panther(__name__, configs=__name__, urls=url_routing)
-"""
+""" % datetime.now().date().isoformat()
 
 SINGLE_FILE_TEMPLATE = {
     'main.py': single_main_py,
@@ -174,7 +174,8 @@ DATABASE_PANTHERDB_PART = """
 DATABASE = {
     'engine': {
         'class': 'panther.db.connections.PantherDBConnection',
-        'path': BASE_DIR
+        'path': BASE_DIR,
+        'encryption': {PANTHERDB_ENCRYPTION}
     }
 }"""
 
@@ -183,7 +184,9 @@ DATABASE_MONGODB_PART = """
 DATABASE = {
     'engine': {
         'class': 'panther.db.connections.MongoDBConnection',
-        'host': f'mongodb://127.0.0.1:27017/{PROJECT_NAME}'
+        'host': '127.0.0.1',
+        'port': 27017,
+        'database': '{PROJECT_NAME}'
     }
 }"""
 
@@ -211,7 +214,3 @@ AUTO_REFORMAT_PART = """
 
 # More Info: https://pantherpy.github.io/configs/#auto_reformat/
 AUTO_REFORMAT = True"""
-
-PANTHERDB_ENCRYPTION = """
-
-PANTHERDB_ENCRYPTION = True"""
