@@ -38,7 +38,6 @@ class MetaModelSerializer:
             __module__=namespace['__module__'],
             __validators__=namespace,
             __base__=(cls.model_serializer, BaseModel),
-            __doc__=namespace.get('__doc__'),
             model=(typing.ClassVar, config.model),
             **field_definitions
         )
@@ -103,8 +102,7 @@ class MetaModelSerializer:
 
         # Collect and Override `Class Fields`
         for key, value in namespace.pop('__annotations__', {}).items():
-            field_info = namespace.pop(key, FieldInfo(required=True))
-            field_info.annotation = value
+            field_info = namespace.pop(key, FieldInfo(annotation=value))
             field_definitions[key] = (value, field_info)
 
         return field_definitions

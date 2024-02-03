@@ -30,34 +30,34 @@ class Query:
                     kls.__bases__ = (*kls.__bases__[:kls.__bases__.index(Query) + 1], parent)
 
     @classmethod
+    def _clean_error_message(cls, validation_error: ValidationError, is_updating: bool = False) -> str:
+        error = ', '.join(
+            '{field}="{error}"'.format(
+                field='.'.join(loc for loc in e['loc']),
+                error=e['msg']
+            )
+            for e in validation_error.errors()
+            if not is_updating or e['type'] != 'missing'
+        )
+        return f'{cls.__name__}({error})' if error else ''
+
+    @classmethod
     def _validate_data(cls, *, data: dict, is_updating: bool = False):
-        """
-        *. Validate the input of user with its class
-        *. If is_updating is True & exception happens but the message was empty
-        """
+        """Validate data before inserting to db"""
         try:
             cls(**data)
         except ValidationError as validation_error:
-            error = {
-                '.'.join(loc for loc in e['loc']): e['msg']
-                for e in validation_error.errors()
-                if not is_updating or e['type'] != 'missing'
-            }
-            if error:
-                raise BadRequestAPIError(detail=error)
+            if error := cls._clean_error_message(validation_error=validation_error, is_updating=is_updating):
+                raise DatabaseError(error)
 
     @classmethod
     def _create_model_instance(cls, document: dict):
+        """Prevent getting errors from inserted documents"""
         try:
             return cls(**document)
         except ValidationError as validation_error:
-            error = ', '.join(
-                '{field}="{error}"'.format(field='.'.join(loc for loc in e['loc']), error=e['msg'])
-                for e in validation_error.errors()
-            )
-            if error:
-                message = f'{cls.__name__}({error})'
-                raise DatabaseError(message)
+            if error := cls._clean_error_message(validation_error=validation_error):
+                raise DatabaseError(error)
 
     # # # # # Find # # # # #
     @classmethod
@@ -133,7 +133,7 @@ class Query:
             >>> from example.app.models import User
             >>> User.insert_one(name='Ali', age=24, ...)
         """
-        cls._validate_data(data=kwargs)
+        cls._validate_data(data=_data | kwargs)
         return super().insert_one(_data, **kwargs)
 
     @classmethod

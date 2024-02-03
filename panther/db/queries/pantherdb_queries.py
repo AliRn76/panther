@@ -48,7 +48,7 @@ class BasePantherDBQuery:
 
     # # # # # Insert # # # # #
     @classmethod
-    def insert_one(cls, _data: dict | None = None, **kwargs) -> Self:
+    def insert_one(cls, _data: dict | None = None, /, **kwargs) -> Self:
         document = db.session.collection(cls.__name__).insert_one(**cls._merge(_data, kwargs))
         return cls._create_model_instance(document=document)
 

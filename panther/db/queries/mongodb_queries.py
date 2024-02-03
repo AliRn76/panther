@@ -46,7 +46,7 @@ class BaseMongoDBQuery:
 
     # # # # # Insert # # # # #
     @classmethod
-    def insert_one(cls, _data: dict | None = None, **kwargs) -> Self:
+    def insert_one(cls, _data: dict | None = None, /, **kwargs) -> Self:
         document = cls._merge(_data, kwargs)
         document['id'] = db.session[cls.__name__].insert_one(document).inserted_id
         return cls._create_model_instance(document=document)
