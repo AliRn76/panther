@@ -1,12 +1,14 @@
+import base64
+import hashlib
 import logging
 import os
-import hashlib
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import ClassVar
 
-
 logger = logging.getLogger('panther')
+
+URANDOM_SIZE = 16
 
 
 class Singleton(object):
@@ -14,7 +16,7 @@ class Singleton(object):
 
     def __new__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super().__new__(cls, *args, **kwargs)
+            cls._instances[cls] = super().__new__(cls)
         return cls._instances[cls]
 
 
@@ -40,9 +42,7 @@ def load_env(env_file: str | Path, /) -> dict[str, str]:
 
 
 def generate_secret_key() -> str:
-    from cryptography.fernet import Fernet
-
-    return Fernet.generate_key().decode()
+    return base64.urlsafe_b64encode(os.urandom(32)).decode()
 
 
 def round_datetime(dt: datetime, delta: timedelta):
@@ -55,5 +55,47 @@ def generate_hash_value_from_string(string_value: str, /) -> str:
     return hashlib.sha256(string_value.encode('utf-8')).hexdigest()
 
 
+def scrypt(password: str, salt: bytes, digest: bool = False) -> str | bytes:
+    """
+    n: CPU/memory cost parameter – Must be a power of 2 (e.g. 1024)
+    r: Block size parameter, which fine-tunes sequential memory read size and performance. (8 is commonly used)
+    p: Parallelization parameter. (1 .. 232-1 * hLen/MFlen)
+    dk_len: Desired key length in bytes (
+        Intended output length in octets of the derived key; a positive integer satisfying dkLen ≤ (232− 1) * hLen.)
+    h_len: The length in octets of the hash function (32 for SHA256).
+    mf_len: The length in octets of the output of the mixing function (SMix below). Defined as r * 128 in RFC7914.
+    """
+    n = 2 ** 14  # 16384
+    r = 8
+    p = 10
+    dk_len = 64
+
+    derived_key = hashlib.scrypt(
+        password=password.encode(),
+        salt=salt,
+        n=n,
+        r=r,
+        p=p,
+        dklen=dk_len
+    )
+    if digest:
+
+        return hashlib.md5(derived_key).hexdigest()
+    else:
+        return derived_key
+
+
 def encrypt_password(password: str) -> str:
-    return generate_hash_value_from_string(password)
+    salt = os.urandom(URANDOM_SIZE)
+    derived_key = scrypt(password=password, salt=salt, digest=True)
+
+    return f'{salt.hex()}{derived_key}'
+
+
+def check_password(stored_password: str, new_password: str) -> bool:
+    size = URANDOM_SIZE * 2
+    salt = stored_password[:size]
+    stored_hash = stored_password[size:]
+    derived_key = scrypt(password=new_password, salt=bytes.fromhex(salt), digest=True)
+
+    return derived_key == stored_hash

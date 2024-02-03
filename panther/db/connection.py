@@ -1,10 +1,18 @@
 from typing import TYPE_CHECKING
 
 from pantherdb import PantherDB
-from redis import Redis
 
+from panther.cli.utils import import_error
 from panther.configs import config
 from panther.utils import Singleton
+
+try:
+    from redis import Redis
+except ModuleNotFoundError:
+    # This 'Redis' is not going to be used,
+    #   If he really wants to use redis,
+    #   we are going to force him to install it in 'panther.middlewares.redis'
+    Redis = type('Redis')
 
 if TYPE_CHECKING:
     from pymongo.database import Database
@@ -37,13 +45,24 @@ class DBSession(Singleton):
         return self._db_name
 
     def _create_mongodb_session(self, db_url: str) -> None:
-        from pymongo import MongoClient
-
+        try:
+            from pymongo import MongoClient
+        except ModuleNotFoundError:
+            msg = "No module named 'pymongo'. Hint: `pip install pymongo`"
+            raise ValueError(msg)
         self._client: MongoClient = MongoClient(db_url)
         self._session: Database = self._client.get_database()
 
     def _create_pantherdb_session(self, db_url: str) -> None:
-        self._session: PantherDB = PantherDB(db_url, return_dict=True, secret_key=config['secret_key'])
+        params = {'db_name': db_url, 'return_dict': True}
+        if config['pantherdb_encryption']:
+            try:
+                import cryptography
+            except ModuleNotFoundError as e:
+                import_error(e, package='cryptography')
+            else:
+                params['secret_key'] = config['secret_key']
+        self._session: PantherDB = PantherDB(**params)
 
     def close(self) -> None:
         if self._db_name == 'mongodb':

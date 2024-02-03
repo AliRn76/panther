@@ -135,9 +135,8 @@ class TestBackgroundTasks(TestCase):
         self.obj.add_task(task1)
         self.obj.add_task(task2)
         self.assertEqual(self.obj.tasks, [task1, task2])
-        time.sleep(1)
         self.assertEqual(len(numbers), 0)
-        time.sleep(1)
+        time.sleep(2)
         self.assertEqual(len(numbers), 2)
 
     def test_add_task_with_custom_every_seconds(self):
@@ -155,5 +154,3 @@ class TestBackgroundTasks(TestCase):
         time.sleep(3)
         self.assertEqual(len(numbers), 2)
 
-
-# TODO: Run tests for every_minutes(), every_hours(), every_days(), every_weeks(), at()

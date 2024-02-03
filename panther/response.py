@@ -35,9 +35,10 @@ class Response:
 
     @property
     def headers(self) -> dict:
+        content_length = 0 if self.body == b'null' else len(self.body)
         return {
             'content-type': self.content_type,
-            'content-length': len(self.body),
+            'content-length': content_length,
             'access-control-allow-origin': '*',
         } | (self._headers or {})
 
@@ -83,6 +84,13 @@ class Response:
         # Str | Bool | Bytes
         msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'
         raise TypeError(msg)
+
+    def __str__(self):
+        if len(data := str(self.data)) > 30:
+            data = f'{data:.27}...'
+        return f'Response(status_code={self.status_code}, data={data})'
+
+    __repr__ = __str__
 
 
 class HTMLResponse(Response):

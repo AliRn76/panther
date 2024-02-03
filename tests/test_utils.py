@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest import TestCase
 
+import panther.utils
 from panther import Panther
 from panther.middlewares import BaseMiddleware
 from panther.utils import generate_hash_value_from_string, load_env, round_datetime, encrypt_password
@@ -185,9 +186,8 @@ class TestUtilFunctions(TestCase):
 
 class TestLoadConfigs(TestCase):
     def test_urls_not_found(self):
-        global URLs, MIDDLEWARES
+        global URLs
         URLs = None
-        MIDDLEWARES = []
 
         with self.assertLogs(level='ERROR') as captured:
             try:
@@ -201,9 +201,8 @@ class TestLoadConfigs(TestCase):
         assert captured.records[0].getMessage() == "Invalid 'URLs': is required."
 
     def test_urls_cant_be_dict(self):
-        global URLs, MIDDLEWARES
+        global URLs
         URLs = {}
-        MIDDLEWARES = None
 
         with self.assertLogs(level='ERROR') as captured:
             try:
@@ -221,9 +220,8 @@ class TestLoadConfigs(TestCase):
         assert captured.records[0].getMessage() == msg
 
     def test_urls_not_string(self):
-        global URLs, MIDDLEWARES
+        global URLs
         URLs = True
-        MIDDLEWARES = None
 
         with self.assertLogs(level='ERROR') as captured:
             try:
@@ -237,9 +235,8 @@ class TestLoadConfigs(TestCase):
         assert captured.records[0].getMessage() == "Invalid 'URLs': should be dotted string."
 
     def test_urls_invalid_target(self):
-        global URLs, MIDDLEWARES
+        global URLs
         URLs = 'tests.test_utils.TestLoadConfigs'
-        MIDDLEWARES = None
 
         with self.assertLogs(level='ERROR') as captured:
             try:
@@ -253,9 +250,8 @@ class TestLoadConfigs(TestCase):
         assert captured.records[0].getMessage() == "Invalid 'URLs': should point to a dict."
 
     def test_urls_invalid_module_path(self):
-        global URLs, MIDDLEWARES
+        global URLs
         URLs = 'fake.module'
-        MIDDLEWARES = None
 
         with self.assertLogs(level='ERROR') as captured:
             try:
@@ -273,6 +269,7 @@ class TestLoadConfigs(TestCase):
         MIDDLEWARES = [
             ('fake.module', {})
         ]
+
         with self.assertLogs(level='ERROR') as captured:
             try:
                 Panther(name=__name__, configs=__name__, urls={})
@@ -280,6 +277,8 @@ class TestLoadConfigs(TestCase):
                 assert True
             else:
                 assert False
+            finally:
+                MIDDLEWARES = []
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': fake.module is not a valid middleware path"
@@ -287,6 +286,7 @@ class TestLoadConfigs(TestCase):
     def test_middlewares_invalid_structure(self):
         global MIDDLEWARES
         MIDDLEWARES = ['fake.module']
+
         with self.assertLogs(level='ERROR') as captured:
             try:
                 Panther(name=__name__, configs=__name__, urls={})
@@ -294,6 +294,8 @@ class TestLoadConfigs(TestCase):
                 assert True
             else:
                 assert False
+            finally:
+                MIDDLEWARES = []
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': fake.module should have 2 part: (path, kwargs)"
@@ -303,6 +305,7 @@ class TestLoadConfigs(TestCase):
         MIDDLEWARES = [
             ('fake.module', 1, 2)
         ]
+
         with self.assertLogs(level='ERROR') as captured:
             try:
                 Panther(name=__name__, configs=__name__, urls={})
@@ -310,6 +313,8 @@ class TestLoadConfigs(TestCase):
                 assert True
             else:
                 assert False
+            finally:
+                MIDDLEWARES = []
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': ('fake.module', 1, 2) too many arguments"
@@ -319,14 +324,18 @@ class TestLoadConfigs(TestCase):
         MIDDLEWARES = [
             ('tests.test_utils.CorrectTestMiddleware', )
         ]
+
         with self.assertNoLogs(level='ERROR'):
             Panther(name=__name__, configs=__name__, urls={})
+
+        MIDDLEWARES = []
 
     def test_middlewares_invalid_middleware_parent(self):
         global MIDDLEWARES
         MIDDLEWARES = [
             ('tests.test_utils.TestMiddleware', )
         ]
+
         with self.assertLogs(level='ERROR') as captured:
             try:
                 Panther(name=__name__, configs=__name__, urls={})
@@ -334,9 +343,44 @@ class TestLoadConfigs(TestCase):
                 assert True
             else:
                 assert False
+            finally:
+                MIDDLEWARES = []
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': is not a sub class of BaseMiddleware"
+
+    def test_jwt_auth_without_secret_key(self):
+        global AUTHENTICATION
+        AUTHENTICATION = 'panther.authentications.JWTAuthentication'
+
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__, urls={})
+            except SystemExit:
+                assert True
+            else:
+                assert False
+            finally:
+                AUTHENTICATION = None
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == '"SECRET_KEY" is required when using "JWTAuthentication"'
+
+    def test_jwt_auth_with_secret_key(self):
+        global AUTHENTICATION, SECRET_KEY
+        AUTHENTICATION = 'panther.authentications.JWTAuthentication'
+        SECRET_KEY = panther.utils.generate_secret_key()
+
+        with self.assertNoLogs(level='ERROR'):
+            try:
+                Panther(name=__name__, configs=__name__, urls={})
+            except SystemExit:
+                assert False
+            else:
+                assert True
+            finally:
+                AUTHENTICATION = None
+                SECRET_KEY = None
 
 
 class CorrectTestMiddleware(BaseMiddleware):

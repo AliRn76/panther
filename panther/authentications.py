@@ -1,15 +1,18 @@
+import logging
 import time
 from abc import abstractmethod
-import logging
 from typing import Literal
 
-from jose import JWTError, jwt
-
+from panther.cli.utils import import_error
 from panther.configs import config
-from panther.db.models import BaseUser, IDType, Model
+from panther.db.models import BaseUser, Model
 from panther.exceptions import AuthenticationException
 from panther.request import Request
 
+try:
+    from jose import JWTError, jwt
+except ModuleNotFoundError as e:
+    import_error(e, package='python-jose')
 
 logger = logging.getLogger('panther')
 
@@ -43,7 +46,11 @@ class JWTAuthentication(BaseAuthentication):
             raise cls.exception(msg) from None
 
         if isinstance(auth, str):
-            auth = auth.encode(JWTAuthentication.HTTP_HEADER_ENCODING)
+            try:
+                auth = auth.encode(JWTAuthentication.HTTP_HEADER_ENCODING)
+            except UnicodeEncodeError as e:
+                raise cls.exception(e) from None
+
         return auth
 
     @classmethod
@@ -80,7 +87,7 @@ class JWTAuthentication(BaseAuthentication):
         raise cls.exception(msg) from None
 
     @classmethod
-    def encode_jwt(cls, user_id: IDType, token_type: Literal['access', 'refresh'] = 'access') -> str:
+    def encode_jwt(cls, user_id: str, token_type: Literal['access', 'refresh'] = 'access') -> str:
         """Encode JWT from user_id."""
         issued_at = time.time()
         if token_type == 'access':
@@ -101,7 +108,7 @@ class JWTAuthentication(BaseAuthentication):
         )
 
     @classmethod
-    def encode_refresh_token(cls, user_id: IDType) -> str:
+    def encode_refresh_token(cls, user_id: str) -> str:
         """Encode JWT from user_id."""
         return cls.encode_jwt(user_id=user_id, token_type='refresh')
 
@@ -118,11 +125,11 @@ class JWTAuthentication(BaseAuthentication):
             raise cls.exception(e) from None
 
     @classmethod
-    def login(cls, user_id: IDType) -> str:
+    def login(cls, user_id: str) -> str:
         """Alias of encode_jwt()"""
         return cls.encode_jwt(user_id=user_id)
 
     @staticmethod
-    def exception(message: str | JWTError, /) -> type[AuthenticationException]:
+    def exception(message: str | JWTError | UnicodeEncodeError, /) -> type[AuthenticationException]:
         logger.error(f'JWT Authentication Error: "{message}"')
         return AuthenticationException

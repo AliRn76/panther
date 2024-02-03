@@ -1,3 +1,26 @@
+### 3.9.0
+- Change the style of `ModelSerializer` usage 
+
+### 3.8.2
+- Add `content-type = application/json` header in raise response of `__call__` 
+
+### 3.8.1
+- Fix an issue in `_create_pantherdb_session()`
+
+### 3.8.0
+- Handle WebSocket connections when we have multiple workers with `multiprocessing.Manager`
+
+### 3.7.0
+- Add `ModelSerializer`
+
+### 3.6.0
+- Use `observable` pattern for loading database middleware and inheritance of the `Query` class
+- Remove `IDType` from the `Model`
+- Change `encrypt_password()` method, now uses `scrypt` + `md5` 
+
+### 3.5.1
+- Set default behavior of `GenericWebsocket.connect` to ignore the connection (`reject`)
+
 ### 3.5.0
 - Add `WebsocketTestClient`
 

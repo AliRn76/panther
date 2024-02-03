@@ -121,28 +121,6 @@ def is_function_async(func: Callable) -> bool:
     return bool(func.__code__.co_flags & (1 << 7))
 
 
-def run_sync_async_function(func: Callable):
-    # Async
-    if is_function_async(func):
-        # Get Event Loop
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
-
-        # Add Coroutine To Event Loop
-        if loop and loop.is_running():
-            loop.create_task(func())
-
-        # Start New Event Loop
-        else:
-            asyncio.run(func())
-
-    # Sync
-    else:
-        func()
-
-
 def clean_traceback_message(exception: Exception) -> str:
     """We are ignoring packages traceback message"""
     tb = TracebackException(type(exception), exception, exception.__traceback__)
@@ -159,7 +137,7 @@ def reformat_code(base_dir):
         subprocess.run(['ruff', 'format', base_dir])
         subprocess.run(['ruff', 'check', '--select', 'I', '--fix', base_dir])
     except FileNotFoundError:
-        raise PantherException("Module 'ruff' not found, Hint: `pip install ruff`")
+        raise PantherException("No module named 'ruff', Hint: `pip install ruff`")
 
 
 def check_function_type_endpoint(endpoint: types.FunctionType) -> Callable:

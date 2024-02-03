@@ -10,6 +10,8 @@ from pydantic._internal._model_construction import ModelMetaclass
 
 from panther._utils import import_class
 from panther.configs import JWTConfig, config
+from panther.db.queries.mongodb_queries import BaseMongoDBQuery
+from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.exceptions import PantherException
 from panther.middlewares.base import WebsocketMiddleware, HTTPMiddleware
 from panther.routings import finalize_urls, flatten_urls
@@ -23,6 +25,7 @@ __all__ = (
     'load_background_tasks',
     'load_throttling',
     'load_default_cache_exp',
+    'load_pantherdb_encryption',
     'load_middlewares',
     'load_user_model',
     'load_authentication_class',
@@ -74,6 +77,10 @@ def load_default_cache_exp(configs: dict, /) -> timedelta | None:
     return configs.get('DEFAULT_CACHE_EXP', config['default_cache_exp'])
 
 
+def load_pantherdb_encryption(configs: dict, /) -> bool:
+    return configs.get('PANTHERDB_ENCRYPTION', config['pantherdb_encryption'])
+
+
 def load_middlewares(configs: dict, /) -> dict:
     """
     Collect The Middlewares & Set db_engine If One Of Middlewares Was For DB
@@ -97,7 +104,11 @@ def load_middlewares(configs: dict, /) -> dict:
             path, data = middleware
 
         if path.find('panther.middlewares.db.DatabaseMiddleware') != -1:
-            config['db_engine'] = data['url'].split(':')[0]
+            # Keep it simple for now, we are going to make it dynamic in the next patch
+            if data['url'].split(':')[0] == 'pantherdb':
+                config['query_engine'] = BasePantherDBQuery
+            else:
+                config['query_engine'] = BaseMongoDBQuery
         try:
             Middleware = import_class(path)  # noqa: N806
         except (AttributeError, ModuleNotFoundError):
@@ -127,6 +138,8 @@ def load_jwt_config(configs: dict, /) -> JWTConfig | None:
     if getattr(config['authentication'], '__name__', None) == 'JWTAuthentication':
         user_config = configs.get('JWTConfig', {})
         if 'key' not in user_config:
+            if config['secret_key'] is None:
+                raise PantherException('"SECRET_KEY" is required when using "JWTAuthentication"')
             user_config['key'] = config['secret_key'].decode()
 
         return JWTConfig(**user_config)

@@ -22,13 +22,13 @@ class BaseMongoDBQuery:
     @classmethod
     def find_one(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
         if document := db.session[cls.__name__].find_one(cls._merge(_data, kwargs)):
-            return cls.create_model_instance(document=document)
+            return cls._create_model_instance(document=document)
         return None
 
     @classmethod
     def find(cls, _data: dict | None = None, /, **kwargs) -> list[Self]:
         documents = db.session[cls.__name__].find(cls._merge(_data, kwargs))
-        return [cls.create_model_instance(document=document) for document in documents]
+        return [cls._create_model_instance(document=document) for document in documents]
 
     @classmethod
     def first(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
@@ -49,7 +49,7 @@ class BaseMongoDBQuery:
     def insert_one(cls, _data: dict | None = None, **kwargs) -> Self:
         document = cls._merge(_data, kwargs)
         document['id'] = db.session[cls.__name__].insert_one(document).inserted_id
-        return cls.create_model_instance(document=document)
+        return cls._create_model_instance(document=document)
 
     # # # # # Delete # # # # #
     def delete(self) -> None:
@@ -86,4 +86,4 @@ class BaseMongoDBQuery:
         update_fields = {'$set': cls._merge(_data, kwargs)}
 
         result = db.session[cls.__name__].update_many(_filter, update_fields)
-        return result.updated_count
+        return result.modified_count

@@ -40,20 +40,26 @@ urls = {
 1. Client tries to connect to your `ws/book/` url with `websocket` protocol
 2. The `connect()` method of your `BookWebsocket` is going to call
 3. You should validate the connection with `self.headers`, `self.query_params` or etc
-4. Then `accept()` the connection with `self.accept()`
+4. Then `accept()` the connection with `self.accept()` otherwise it is going to be `rejected` by default.
 5. Now you can see the unique `connection_id` which is specified to this user with `self.connection_id`, you may want to store it somewhere (`db`, `cache`, or etc.)
-6. If client sent you any message you are going to receive it in `receive()` method, the client message can be `str` or `bytes`.
+6. If the client sends you any message, you will receive it in `receive()` method, the client message can be `str` or `bytes`.
 7. If you want to send anything to the client:
     - In websocket class scope: You can send it with `self.send()` which only takes `data`.
-    - Out of websocket class scope: You can send it with `send_message_to_websocket()` from `panther.websocket`, it's an `async` function which takes 2 args, `connection_id` and `data` which can have any type, like below:
+    - Out of websocket class scope: You can send it with `send_message_to_websocket()` from `panther.websocket`, it's an `async` function which takes 2 args, `connection_id` and `data`(which can have any type):
         ```python
         from panther.websocket import send_message_to_websocket
-        await send_message_to_websocket(connection_id='connection_id', data='New Message From WS') 
+        await send_message_to_websocket(connection_id='7e82d57c9ec0478787b01916910a9f45', data='New Message From WS') 
         ```
-8. If you want to use `webscoket` in `multi-tread` or `multi-instance` backend, you should add `RedisMiddleware` in your `configs` or it won't work well.
+8. If you want to use `webscoket` in a backend with `multiple workers`, we recommend you to add `RedisMiddleware` in your `configs` 
 [[Adding Redis Middleware]](https://pantherpy.github.io/middlewares/#redis-middleware)
-9. If you want to close a connection:
-    - In websocket class scope: You can close connection with `self.close()` method which takes 2 args, `code` and `reason`, like below:
+9. If you don't want to add `RedisMiddleware` and you still want to use `websocket` in `multi-thread`, 
+you have to use `--preload` option while running the project like below:
+   ```bash
+   gunicorn -w 10 -k uvicorn.workers.UvicornWorker main:app --preload
+   ```
+
+10. If you want to close a connection:
+    - In websocket class scope: You can close connection with `self.close()` method which takes 2 args, `code` and `reason`:
         ```python
         from panther import status
         await self.close(code=status.WS_1000_NORMAL_CLOSURE, reason='I just want to close it')
@@ -62,10 +68,10 @@ urls = {
         ```python
         from panther import status
         from panther.websocket import close_websocket_connection
-        await close_websocket_connection(connection_id='connection_id', code=status.WS_1008_POLICY_VIOLATION, reason='')
+        await close_websocket_connection(connection_id='7e82d57c9ec0478787b01916910a9f45', code=status.WS_1008_POLICY_VIOLATION, reason='')
         ``` 
 
-10. `Path Variables` are going to pass to `connect()` like below:
+11. `Path Variables` will be passed to `connect()`:
    ```python
     from panther.websocket import GenericWebsocket
 
@@ -77,6 +83,6 @@ urls = {
         '/ws/<user_id>/<room_id>/': UserWebsocket   
     }
    ``` 
-11. WebSocket Echo Example -> [Https://GitHub.com/PantherPy/echo_websocket](https://github.com/PantherPy/echo_websocket)
-12. Enjoy.
+12. WebSocket Echo Example -> [Https://GitHub.com/PantherPy/echo_websocket](https://github.com/PantherPy/echo_websocket)
+13. Enjoy.
 

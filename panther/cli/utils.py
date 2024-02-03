@@ -3,6 +3,7 @@ import platform
 
 from rich import print as rprint
 
+from panther.exceptions import PantherException
 
 logger = logging.getLogger('panther')
 
@@ -37,8 +38,12 @@ logo = rf"""{top}
 
 help_message = f"""{logo}
 {h}   usage:                                                 {h}
+{h}       - panther create                                   {h}
+{h}           Create project interactive                     {h}
+{h}                                                          {h}
 {h}       - panther create <project_name> <directory>        {h}
-{h}           Create project in <directory> default is `.`   {h}
+{h}           Default<directory> is `.`                      {h}
+{h}           * It will create the project non-interactive   {h}
 {h}                                                          {h}
 {h}       - panther run [--reload | --help]                  {h}
 {h}           Run your project with uvicorn                  {h}
@@ -58,9 +63,16 @@ help_message = f"""{logo}
 """
 
 
+def import_error(message: str | Exception, package: str | None = None) -> None:
+    msg = str(message)
+    if package:
+        msg += f' -> Hint: `pip install {package}`'
+    raise PantherException(msg)
+
+
 def cli_error(message: str | Exception) -> None:
     logger.error(message)
-    logger.error('Use "panther -h" for more help')
+    logger.info('Use "panther -h" for more help')
 
 
 def cli_warning(message: str | Exception, hint: str = None) -> None:

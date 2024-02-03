@@ -4,54 +4,24 @@ from pathlib import Path
 from unittest import TestCase
 
 import faker
-from pydantic import BaseModel as PydanticBaseModel
-from pydantic import Field, field_validator
+import pytest
 
 from panther import Panther
 from panther.configs import config
-from panther.db.queries import Query
-from panther.db.queries.pantherdb_queries import BasePantherDBQuery
+from panther.db import Model
+from panther.db.connection import db
+from panther.exceptions import DBException
 
 f = faker.Faker()
 
 
-class Model(PydanticBaseModel):
-    id: int | None = Field(None, validation_alias='_id')
-
-    @field_validator('id', mode='before')
-    def validate_id(cls, value):
-        return value
-
-    @property
-    def _id(self):
-        return self.id
-
-
-class Book(Model, BasePantherDBQuery, Query):
+class Book(Model):
     name: str
     author: str
     pages_count: int
 
 
-DB_PATH = 'test.pdb'
-MIDDLEWARES = [
-    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{DB_PATH}'}),
-]
-
-
-class TestPantherDB(TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        Panther(__name__, configs=__name__, urls={})
-
-    def setUp(self) -> None:
-        for middleware in config['middlewares']:
-            asyncio.run(middleware.before(request=None))
-
-    def tearDown(self) -> None:
-        for middleware in config['reversed_middlewares']:
-            asyncio.run(middleware.after(response=None))
-        Path(DB_PATH).unlink()
+class _BaseDatabaseTestCase:
 
     # # # Insert
     def test_insert_one(self):
@@ -61,7 +31,7 @@ class TestPantherDB(TestCase):
         book = Book.insert_one(name=name, author=author, pages_count=pages_count)
 
         assert isinstance(book, Book)
-        assert book.id == 1
+        assert book.id
         assert book.name == name
         assert book.pages_count == pages_count
 
@@ -81,7 +51,7 @@ class TestPantherDB(TestCase):
 
     def test_find_one_in_many_when_its_last(self):
         # Insert Many
-        insert_count = self._insert_many()
+        self._insert_many()
 
         # Insert One
         name = f.name()
@@ -93,8 +63,8 @@ class TestPantherDB(TestCase):
         book = Book.find_one(name=name, author=author, pages_count=pages_count)
 
         assert isinstance(book, Book)
-        assert book.id == insert_count + 1
-        assert book._id == book.id
+        assert book.id
+        assert str(book._id) == str(book.id)
         assert book.name == name
         assert book.pages_count == pages_count
         assert created_book == book
@@ -116,7 +86,7 @@ class TestPantherDB(TestCase):
         book = Book.find_one(name=name, author=author, pages_count=pages_count)
 
         assert isinstance(book, Book)
-        assert book.id == insert_count + 1
+        assert book.id
         assert book.name == name
         assert book.pages_count == pages_count
         assert created_book == book
@@ -135,7 +105,7 @@ class TestPantherDB(TestCase):
         book = Book.first(name=name, author=author, pages_count=pages_count)
 
         assert isinstance(book, Book)
-        assert book.id == insert_count + 1
+        assert book.id
         assert book.name == name
         assert book.pages_count == pages_count
 
@@ -162,7 +132,7 @@ class TestPantherDB(TestCase):
         book = Book.last(name=name, author=author, pages_count=pages_count)
 
         assert isinstance(book, Book)
-        assert book.id == Book.count()
+        assert book._id == Book.count()
         assert book.name == name
         assert book.pages_count == pages_count
 
@@ -285,6 +255,19 @@ class TestPantherDB(TestCase):
         # Count Them After Deletion
         assert Book.count(name=name) == insert_count - 1
 
+    def test_delete_self(self):
+        # Insert Many
+        self._insert_many()
+
+        # Insert With Specific Name
+        name = f.name()
+        insert_count = self._insert_many_with_specific_params(name=name)
+        # Delete One
+        book = Book.find_one(name=name)
+        book.delete()
+        # Count Them After Deletion
+        assert Book.count(name=name) == insert_count - 1
+
     def test_delete_one_not_found(self):
         # Insert Many
         insert_count = self._insert_many()
@@ -349,6 +332,33 @@ class TestPantherDB(TestCase):
 
         assert isinstance(is_updated, bool)
         assert is_updated is True
+
+        book = Book.find_one(name=new_name)
+        assert isinstance(book, Book)
+        assert book.author == author
+        assert book.pages_count == pages_count
+
+        # Count Them After Update
+        assert Book.count(name=name) == 0
+        assert Book.count() == insert_count + 1
+
+    def test_update_self(self):
+        # Insert Many
+        insert_count = self._insert_many()
+
+        # Insert With Specific Name
+        name = f.name()
+        author = f.name()
+        pages_count = random.randint(0, 10)
+        Book.insert_one(name=name, author=author, pages_count=pages_count)
+
+        # Update One
+        book = Book.find_one(name=name)
+        new_name = 'New Name'
+        book.update(name=new_name)
+
+        assert book.name == new_name
+        assert book.author == author
 
         book = Book.find_one(name=new_name)
         assert isinstance(book, Book)
@@ -443,3 +453,62 @@ class TestPantherDB(TestCase):
             Book.insert_one(name=name, author=author, pages_count=pages_count)
 
         return insert_count
+
+
+class TestPantherDB(_BaseDatabaseTestCase, TestCase):
+    DB_PATH = 'test.pdb'
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        global MIDDLEWARES
+        MIDDLEWARES = [
+            ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{cls.DB_PATH}'}),
+        ]
+        Panther(__name__, configs=__name__, urls={})
+
+    def setUp(self) -> None:
+        for middleware in config['http_middlewares']:
+            asyncio.run(middleware.before(request=None))
+
+    def tearDown(self) -> None:
+        Path(self.DB_PATH).unlink()
+        for middleware in config['reversed_http_middlewares']:
+            asyncio.run(middleware.after(response=None))
+
+
+@pytest.mark.mongodb
+class TestMongoDB(_BaseDatabaseTestCase, TestCase):
+    DB_NAME = 'test.pdb'
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        global MIDDLEWARES
+        MIDDLEWARES = [
+            ('panther.middlewares.db.DatabaseMiddleware', {'url': f'mongodb://127.0.0.1:27017/{cls.DB_NAME}'}),
+        ]
+        Panther(__name__, configs=__name__, urls={})
+
+    def setUp(self) -> None:
+        for middleware in config['http_middlewares']:
+            asyncio.run(middleware.before(request=None))
+
+    def tearDown(self) -> None:
+        db.session.drop_collection('Book')
+        for middleware in config['reversed_http_middlewares']:
+            asyncio.run(middleware.after(response=None))
+
+    def test_last(self):
+        try:
+            super().test_last()
+        except DBException as exc:
+            assert exc.args[0] == 'last() is not supported in MongoDB yet.'
+        else:
+            assert False
+
+    def test_last_not_found(self):
+        try:
+            super().test_last_not_found()
+        except DBException as exc:
+            assert exc.args[0] == 'last() is not supported in MongoDB yet.'
+        else:
+            assert False
