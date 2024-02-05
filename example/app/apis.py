@@ -130,8 +130,10 @@ class PatchUser(GenericAPI):
 
 @API()
 async def single_user(request: Request):
-    user = User.insert_one(username='Ali', password='1', age=12)
-    return Response(data=user, status_code=200)
+    # user = User.insert_one(username='Ali', password='1', age=12)
+    # users = User.find()
+    users = User.find_last()
+    return Response(data=users, status_code=200)
 
 
 # @API(input=UserInputSerializer, output_model=UserSerializer)

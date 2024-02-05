@@ -50,9 +50,9 @@ REDIS = {
 
 DATABASE = {
     'engine': {
-        # 'class': 'panther.db.connections.MongoDBConnection',
-        'class': 'panther.db.connections.PantherDBConnection',
-        # 'host': f'mongodb://{DB_HOST}:27017/{DB_NAME}'
+        'class': 'panther.db.connections.MongoDBConnection',
+        # 'class': 'panther.db.connections.PantherDBConnection',
+        'host': f'mongodb://{DB_HOST}:27017/{DB_NAME}'
     },
     # 'query': ...,
 }
