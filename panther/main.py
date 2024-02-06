@@ -21,7 +21,7 @@ from panther.exceptions import APIException, PantherException
 from panther.monitoring import Monitoring
 from panther.request import Request
 from panther.response import Response
-from panther.routings import collect_path_variables, find_endpoint
+from panther.routings import collect_path_variables, Router
 
 dictConfig(panther.logging.LOGGING)
 logger = logging.getLogger('panther')
@@ -151,7 +151,7 @@ class Panther:
         await monitoring.before(request=temp_connection)
 
         # Find Endpoint
-        endpoint, found_path = find_endpoint(path=temp_connection.path)
+        endpoint, found_path = Router.find_endpoint(path=temp_connection.path)
         if endpoint is None:
             await monitoring.after('Rejected')
             return await temp_connection.close(status.WS_1000_NORMAL_CLOSURE)
@@ -210,7 +210,7 @@ class Panther:
         await request.read_body()
 
         # Find Endpoint
-        _endpoint, found_path = find_endpoint(path=request.path)
+        _endpoint, found_path = Router.find_endpoint(path=request.path)
         if _endpoint is None:
             return await self._raise(send, status_code=status.HTTP_404_NOT_FOUND)
 

@@ -102,64 +102,69 @@ def _is_recursive_merge(a, b):
     return both_mapping and not both_counter
 
 
-ENDPOINT_NOT_FOUND = (None, '')
+class Router:
+    ENDPOINT_NOT_FOUND = (None, '')
+    found_path: str
+    last_path: bool
 
+    @classmethod
+    def _add_part(cls, part: str):
+        cls.found_path += f'{part}/'
 
-def find_endpoint(path: str) -> tuple[Callable | None, str]:
-    urls = config['urls']
+    @classmethod
+    def _check_callable(cls, endpoint: Callable, part: str) -> tuple[Callable | None, str]:
+        if cls.last_path:
+            cls._add_part(part=part)
+            return endpoint, cls.found_path
+        return cls.ENDPOINT_NOT_FOUND
 
-    if (location := path.find('?')) != -1:
-        path = path[:location]
-    path = path.removesuffix('/').removeprefix('/')  # 'user/list'
-    paths = path.split('/')  # ['user', 'list']
-    paths_len = len(paths)
+    @classmethod
+    def _check_dict(cls, sub_urls: dict) -> tuple[Callable | None, str]:
+        if callable(endpoint := sub_urls.get('')):
+            return endpoint, cls.found_path
+        return cls.ENDPOINT_NOT_FOUND
 
-    found_path = ''
-    for i, split_path in enumerate(paths):
-        last_path = bool((i + 1) == paths_len)
-        found = urls.get(split_path)
+    @classmethod
+    def find_endpoint(cls, path: str) -> tuple[Callable | None, str]:
+        urls = config['urls']
 
-        # `found` is callable
-        if last_path and callable(found):
-            found_path += f'{split_path}/'
-            return found, found_path
+        # 'user/list/?name=ali' --> 'user/list/' --> 'user/list' --> ['user', 'list']
+        parts = path.split('?')[0].strip('/').split('/')
 
-        # `found` is dict
-        if isinstance(found, dict):
-            found_path += f'{split_path}/'
-            if last_path and callable(endpoint := found.get('')):
-                return endpoint, found_path
+        cls.found_path = ''
+        for i, part in enumerate(parts):
+            cls.last_path = bool((i + 1) == len(parts))
 
-            urls = found
-            continue
+            match urls.get(part):
+                case endpoint if callable(endpoint):
+                    return cls._check_callable(endpoint=endpoint, part=part)
 
-        # `found` is None
-        for key, value in urls.items():
-            if not key.startswith('<'):
-                continue
+                case dict(sub_urls):
+                    cls._add_part(part=part)
+                    if cls.last_path:
+                        return cls._check_dict(sub_urls=sub_urls)
+                    urls = sub_urls
+                    continue
 
-            elif last_path:
-                if callable(value):
-                    found_path += f'{key}/'
-                    return value, found_path
-                elif isinstance(value, dict) and '' in value:
-                    found_path += f'{key}/'
-                    return value[''], found_path
-                else:
-                    return ENDPOINT_NOT_FOUND
+                case _:
+                    for key, value in urls.items():
+                        if key.startswith('<'):
+                            match value:
+                                case endpoint if callable(endpoint):
+                                    return cls._check_callable(endpoint=endpoint, part=key)
 
-            elif isinstance(value, dict):
-                urls = value
-                found_path += f'{key}/'
-                break
+                                case dict(sub_urls):
+                                    cls._add_part(part=key)
+                                    if cls.last_path:
+                                        return cls._check_dict(sub_urls=sub_urls)
+                                    urls = sub_urls
+                                    break
 
-            else:
-                return ENDPOINT_NOT_FOUND
-
-        else:
-            return ENDPOINT_NOT_FOUND
-
-    return ENDPOINT_NOT_FOUND
+                                case _:
+                                    return cls.ENDPOINT_NOT_FOUND
+                    else:
+                        return cls.ENDPOINT_NOT_FOUND
+        return cls.ENDPOINT_NOT_FOUND
 
 
 def collect_path_variables(request_path: str, found_path: str) -> dict:

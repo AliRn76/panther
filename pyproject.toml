@@ -1,9 +1,12 @@
 [build-system]
-requires = [
-	"setuptools>=42",
-	"wheel"
-]
-build-backend = "setuptools.build_meta"
+#requires = ["setuptools>=42", "wheel"]
+requires = ["maturin>=1.4,<2.0"]
+
+#build-backend = "setuptools.build_meta"
+build-backend = "maturin"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
 
 [tool.pytest.ini_options]
 markers = [

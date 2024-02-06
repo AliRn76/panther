@@ -4,7 +4,7 @@ from unittest import TestCase
 from panther.routings import (
     collect_path_variables,
     finalize_urls,
-    find_endpoint,
+    Router,
     flatten_urls,
 )
 
@@ -531,7 +531,7 @@ class TestRoutingFunctions(TestCase):
         config['urls'] = {
             '': temp_func,
         }
-        _func, _ = find_endpoint('')
+        _func, _ = Router.find_endpoint('')
 
         self.assertIsNotNone(_func)
         self.assertEqual(_func, temp_func)
@@ -584,13 +584,13 @@ class TestRoutingFunctions(TestCase):
                 },
             },
         }
-        user_id_profile_id_func, _ = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
-        user_profile_func, _ = find_endpoint('user/profile/')
-        payment_func, _ = find_endpoint('payments/')
-        admin_v1_profile_avatar_func, _ = find_endpoint('admin/v1/profile/avatar')
-        admin_v1_id_func, _ = find_endpoint(f'admin/v1/{random.randint(0, 100)}')
-        admin_v2_users_list_registered_func, _ = find_endpoint('admin/v1/users/list/registered/')
-        admin_v2_users_detail_not_registered_func, _ = find_endpoint('admin/v1/users/detail/not-registered')
+        user_id_profile_id_func, _ = Router.find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
+        user_profile_func, _ = Router.find_endpoint('user/profile/')
+        payment_func, _ = Router.find_endpoint('payments/')
+        admin_v1_profile_avatar_func, _ = Router.find_endpoint('admin/v1/profile/avatar')
+        admin_v1_id_func, _ = Router.find_endpoint(f'admin/v1/{random.randint(0, 100)}')
+        admin_v2_users_list_registered_func, _ = Router.find_endpoint('admin/v1/users/list/registered/')
+        admin_v2_users_detail_not_registered_func, _ = Router.find_endpoint('admin/v1/users/detail/not-registered')
 
         self.assertEqual(user_id_profile_id_func, user_id_profile_id)
         self.assertEqual(user_profile_func, user_profile)
@@ -651,13 +651,13 @@ class TestRoutingFunctions(TestCase):
                 },
             },
         }
-        _, user_id_profile_id_path = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
-        _, user_profile_path = find_endpoint('user/profile/')
-        _, payment_path = find_endpoint('payments/')
-        _, admin_v1_profile_avatar_path = find_endpoint('admin/v1/profile/avatar')
-        _, admin_v1_id_path = find_endpoint(f'admin/v1/{random.randint(0, 100)}')
-        _, admin_v2_users_list_registered_path = find_endpoint('admin/v1/users/list/registered/')
-        _, admin_v2_users_detail_not_registered_path = find_endpoint('admin/v1/users/detail/not-registered')
+        _, user_id_profile_id_path = Router.find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
+        _, user_profile_path = Router.find_endpoint('user/profile/')
+        _, payment_path = Router.find_endpoint('payments/')
+        _, admin_v1_profile_avatar_path = Router.find_endpoint('admin/v1/profile/avatar')
+        _, admin_v1_id_path = Router.find_endpoint(f'admin/v1/{random.randint(0, 100)}')
+        _, admin_v2_users_list_registered_path = Router.find_endpoint('admin/v1/users/list/registered/')
+        _, admin_v2_users_detail_not_registered_path = Router.find_endpoint('admin/v1/users/detail/not-registered')
 
         self.assertEqual(user_id_profile_id_path, 'user/<user_id>/profile/<id>/')
         self.assertEqual(user_profile_path, 'user/profile/')
@@ -680,13 +680,13 @@ class TestRoutingFunctions(TestCase):
                 'list': temp_func,
             },
         }
-        user_id_profile_id_func, _ = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
-        user_profile_func, _ = find_endpoint('user/profile/')
-        payment_func, _ = find_endpoint('payments/')
-        admin_v1_profile_avatar_func, _ = find_endpoint('admin/v1/profile/avatar')
-        admin_v1_id_func, _ = find_endpoint(f'admin/v1/{random.randint(0, 100)}')
-        admin_v2_users_list_registered_func, _ = find_endpoint('admin/v1/users/list/registered/')
-        admin_v2_users_detail_not_registered_func, _ = find_endpoint('admin/v1/users/detail/not-registered')
+        user_id_profile_id_func, _ = Router.find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
+        user_profile_func, _ = Router.find_endpoint('user/profile/')
+        payment_func, _ = Router.find_endpoint('payments/')
+        admin_v1_profile_avatar_func, _ = Router.find_endpoint('admin/v1/profile/avatar')
+        admin_v1_id_func, _ = Router.find_endpoint(f'admin/v1/{random.randint(0, 100)}')
+        admin_v2_users_list_registered_func, _ = Router.find_endpoint('admin/v1/users/list/registered/')
+        admin_v2_users_detail_not_registered_func, _ = Router.find_endpoint('admin/v1/users/detail/not-registered')
 
         self.assertIsNone(user_id_profile_id_func)
         self.assertIsNone(user_profile_func)
@@ -706,13 +706,13 @@ class TestRoutingFunctions(TestCase):
                 'list': temp_func,
             },
         }
-        _, user_id_profile_id_path = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
-        _, user_profile_path = find_endpoint('user/profile/')
-        _, payment_path = find_endpoint('payments/')
-        _, admin_v1_profile_avatar_path = find_endpoint('admin/v1/profile/avatar')
-        _, admin_v1_id_path = find_endpoint(f'admin/v1/{random.randint(0, 100)}')
-        _, admin_v2_users_list_registered_path = find_endpoint('admin/v1/users/list/registered/')
-        _, admin_v2_users_detail_not_registered_path = find_endpoint('admin/v1/users/detail/not-registered')
+        _, user_id_profile_id_path = Router.find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
+        _, user_profile_path = Router.find_endpoint('user/profile/')
+        _, payment_path = Router.find_endpoint('payments/')
+        _, admin_v1_profile_avatar_path = Router.find_endpoint('admin/v1/profile/avatar')
+        _, admin_v1_id_path = Router.find_endpoint(f'admin/v1/{random.randint(0, 100)}')
+        _, admin_v2_users_list_registered_path = Router.find_endpoint('admin/v1/users/list/registered/')
+        _, admin_v2_users_detail_not_registered_path = Router.find_endpoint('admin/v1/users/detail/not-registered')
 
         self.assertEqual(user_id_profile_id_path, '')
         self.assertEqual(user_profile_path, '')
@@ -732,13 +732,13 @@ class TestRoutingFunctions(TestCase):
                 '<name>': temp_func,
             },
         }
-        user_id_profile_id_func, _ = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
-        user_profile_func, _ = find_endpoint('user/ali/')
-        payment_func, _ = find_endpoint('payments/')
-        admin_v1_profile_avatar_func, _ = find_endpoint('admin/v1/profile/avatar')
-        admin_v1_id_func, _ = find_endpoint(f'admin/v1/{random.randint(0, 100)}')
-        admin_v2_users_list_registered_func, _ = find_endpoint('admin/v1/users/list/registered/')
-        admin_v2_users_detail_not_registered_func, _ = find_endpoint('admin/v1/users/detail/not-registered')
+        user_id_profile_id_func, _ = Router.find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
+        user_profile_func, _ = Router.find_endpoint('user/ali/')
+        payment_func, _ = Router.find_endpoint('payments/')
+        admin_v1_profile_avatar_func, _ = Router.find_endpoint('admin/v1/profile/avatar')
+        admin_v1_id_func, _ = Router.find_endpoint(f'admin/v1/{random.randint(0, 100)}')
+        admin_v2_users_list_registered_func, _ = Router.find_endpoint('admin/v1/users/list/registered/')
+        admin_v2_users_detail_not_registered_func, _ = Router.find_endpoint('admin/v1/users/detail/not-registered')
 
         self.assertIsNone(user_id_profile_id_func)
         self.assertIsNotNone(user_profile_func)
@@ -758,13 +758,13 @@ class TestRoutingFunctions(TestCase):
                 '<name>': temp_func,
             },
         }
-        _, user_id_profile_id_path = find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
-        _, user_profile_path = find_endpoint('user/ali/')
-        _, payment_path = find_endpoint('payments/')
-        _, admin_v1_profile_avatar_path = find_endpoint('admin/v1/profile/avatar')
-        _, admin_v1_id_path = find_endpoint(f'admin/v1/{random.randint(0, 100)}')
-        _, admin_v2_users_list_registered_path = find_endpoint('admin/v1/users/list/registered/')
-        _, admin_v2_users_detail_not_registered_path = find_endpoint('admin/v1/users/detail/not-registered')
+        _, user_id_profile_id_path = Router.find_endpoint(f'user/{random.randint(0, 100)}/profile/{random.randint(2, 100)}')
+        _, user_profile_path = Router.find_endpoint('user/ali/')
+        _, payment_path = Router.find_endpoint('payments/')
+        _, admin_v1_profile_avatar_path = Router.find_endpoint('admin/v1/profile/avatar')
+        _, admin_v1_id_path = Router.find_endpoint(f'admin/v1/{random.randint(0, 100)}')
+        _, admin_v2_users_list_registered_path = Router.find_endpoint('admin/v1/users/list/registered/')
+        _, admin_v2_users_detail_not_registered_path = Router.find_endpoint('admin/v1/users/detail/not-registered')
 
         self.assertEqual(user_id_profile_id_path, '')
         self.assertNotEqual(user_profile_path, '')
@@ -790,9 +790,9 @@ class TestRoutingFunctions(TestCase):
                 '<id>': temp_3,
             },
         }
-        temp_1_func, _ = find_endpoint('')
-        temp_2_func, _ = find_endpoint(f'{random.randint(2, 100)}')
-        temp_3_func, _ = find_endpoint(f'{random.randint(2, 100)}/{random.randint(2, 100)}')
+        temp_1_func, _ = Router.find_endpoint('')
+        temp_2_func, _ = Router.find_endpoint(f'{random.randint(2, 100)}')
+        temp_3_func, _ = Router.find_endpoint(f'{random.randint(2, 100)}/{random.randint(2, 100)}')
 
         self.assertEqual(temp_1_func, temp_1)
         self.assertEqual(temp_2_func, temp_2)
@@ -814,9 +814,9 @@ class TestRoutingFunctions(TestCase):
                 '<id>': temp_3,
             },
         }
-        _, temp_1_path = find_endpoint('')
-        _, temp_2_path = find_endpoint(f'{random.randint(2, 100)}')
-        _, temp_3_path = find_endpoint(f'{random.randint(2, 100)}/{random.randint(2, 100)}')
+        _, temp_1_path = Router.find_endpoint('')
+        _, temp_2_path = Router.find_endpoint(f'{random.randint(2, 100)}')
+        _, temp_3_path = Router.find_endpoint(f'{random.randint(2, 100)}/{random.randint(2, 100)}')
 
         self.assertEqual(temp_1_path, '/')
         self.assertEqual(temp_2_path, '<index>/')
@@ -838,10 +838,10 @@ class TestRoutingFunctions(TestCase):
                 '<id>': temp_3,
             },
         }
-        temp_1_func, _ = find_endpoint('')
+        temp_1_func, _ = Router.find_endpoint('')
 
-        temp_2_func, _ = find_endpoint('hello')
-        temp_3_func, _ = find_endpoint(f'hello/{random.randint(2, 100)}')
+        temp_2_func, _ = Router.find_endpoint('hello')
+        temp_3_func, _ = Router.find_endpoint(f'hello/{random.randint(2, 100)}')
 
         self.assertEqual(temp_1_func, temp_1)
         self.assertEqual(temp_2_func, temp_2)
@@ -863,10 +863,10 @@ class TestRoutingFunctions(TestCase):
                 '<id>': temp_3,
             },
         }
-        _, temp_1_path = find_endpoint('')
+        _, temp_1_path = Router.find_endpoint('')
 
-        _, temp_2_path = find_endpoint('hello')
-        _, temp_3_path = find_endpoint(f'hello/{random.randint(2, 100)}')
+        _, temp_2_path = Router.find_endpoint('hello')
+        _, temp_3_path = Router.find_endpoint(f'hello/{random.randint(2, 100)}')
 
         self.assertEqual(temp_1_path, '/')
         self.assertEqual(temp_2_path, 'hello/')
@@ -883,7 +883,7 @@ class TestRoutingFunctions(TestCase):
                 },
             },
         }
-        user_id_profile_id_func, _ = find_endpoint(f'user/{random.randint(0, 100)}/profile?name=ali')
+        user_id_profile_id_func, _ = Router.find_endpoint(f'user/{random.randint(0, 100)}/profile?name=ali')
 
         self.assertEqual(user_id_profile_id_func, user_id_profile_id)
 
@@ -907,7 +907,7 @@ class TestRoutingFunctions(TestCase):
         _id = random.randint(0, 100)
         request_path = f'user/{_user_id}/profile/{_id}'
 
-        _, found_path = find_endpoint(request_path)
+        _, found_path = Router.find_endpoint(request_path)
         path_variables = collect_path_variables(request_path=request_path, found_path=found_path)
 
         self.assertIsInstance(path_variables, dict)
