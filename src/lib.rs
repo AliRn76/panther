@@ -44,7 +44,7 @@ fn clean_path(raw_path: String) -> String {
         if char == '?' { break; }
         path.push(char);
     }
-    // Remove '/' suffix & prefix
+    // Strip '/'
     path.trim_end_matches('/').trim_start_matches('/').to_string()
 }
 
@@ -62,8 +62,7 @@ fn push_path(mut path: String, part: String) -> String {
     path
 }
 
-
-fn finding(mut urls: Tree<String, i32>, path: String) -> (i32, String) {
+fn finding_endpoint(mut urls: Tree<String, i32>, path: String) -> (i32, String) {
     let endpoint_not_found: (i32, String) = (-1, "".to_string());
 
     let path: String = clean_path(path);
@@ -77,60 +76,70 @@ fn finding(mut urls: Tree<String, i32>, path: String) -> (i32, String) {
         let borrowed_url = urls.clone();
         match urls.get(*part) {
             Some(found) => {
-                if last_path && is_callable(found.value) {
-                    found_path = push_path(found_path, part.to_string());
-                    return (found.value, found_path.to_string());
+                if is_callable(found.value) {
+                    return if last_path {
+                        found_path = push_path(found_path, part.to_string());
+                        (found.value, found_path.to_string())
+                    } else {
+                        endpoint_not_found
+                    };
                 }
                 if is_subtree(found.value) {
-                    found_path = push_path(found_path, part.to_string());
-
-                    match found.get("") {
-                        Some(inner_found) => {
-                            if last_path && is_callable(inner_found.value) {
-                                return (inner_found.value, part.to_string());
+                    if last_path {
+                        return match found.get("") {
+                            Some(inner_found) => {
+                                if is_callable(inner_found.value) {
+                                    found_path = push_path(found_path, part.to_string());
+                                    (inner_found.value, found_path.to_string())
+                                } else {
+                                    endpoint_not_found
+                                }
                             }
-                        }
-                        None => {}
+                            None => { endpoint_not_found }
+                        };
+                    } else {
+                        found_path = push_path(found_path, part.to_string());
+                        urls = found.clone();
+                        continue;
                     }
-                    urls = found.clone();
-                    continue;
                 }
             }
             None => {
-                for (key, _value) in borrowed_url
-                    .iter()
-                    .filter_map(|(p, q)| {
-                        if !p.is_empty() && p.get(0).unwrap().starts_with('<') {
-                            Some((p.get(0).unwrap().clone(), q))
-                        } else { None }
-                    })
-                {
-                    let found = urls.get(key).unwrap();
 
-                    if last_path {
-                        if is_callable(found.value) {
-                            found_path = push_path(found_path, key.to_string());
-                            return (found.value, found_path.to_string());
-                        }
-                        if is_subtree(found.value) {
-                            found_path = push_path(found_path, key.to_string());
+                for (_key, _v) in borrowed_url.iter() {
+                    if _key.len() == 0{
+                        continue;
+                    }
+                    let key = _key.get(0).unwrap();
 
-                            match found.get("") {
-                                Some(inner_found) => {
-                                    if last_path && is_callable(inner_found.value) {
-                                        return (inner_found.value, key.to_string());
+                    if key.starts_with('<') {
+                        let value = urls.get(*key).unwrap();
+
+                        println!("value: {:?}", value);
+                        if last_path{
+                            if is_callable(value.value) {
+                                found_path = push_path(found_path, key.to_string());
+                                return (value.value, found_path.to_string());
+
+                            } else if is_subtree(value.value) {
+                                match value.get("") {
+                                    Some(inner_found) => {
+                                        if is_callable(inner_found.value) {
+                                            found_path = push_path(found_path, key.to_string());
+                                            return (inner_found.value, found_path.to_string());
+                                        }
                                     }
-                                }
-                                None => {}
+                                    None => {}
+                                };
                             }
-                            urls = found.clone();
-                            break;
+                        } else if is_callable(value.value) {
+                            return endpoint_not_found
+
+                        } else if is_subtree(value.value) {
+                            found_path = push_path(found_path, key.to_string());
+                            urls = value.clone();
+                            break
                         }
-                        return endpoint_not_found;
-                    } else if is_subtree(found.value) {
-                        urls = found.clone();
-                        found_path = push_path(found_path, key.to_string());
-                        break;
                     } else {
                         return endpoint_not_found;
                     }
@@ -144,7 +153,7 @@ fn finding(mut urls: Tree<String, i32>, path: String) -> (i32, String) {
 
 #[pyfunction]
 fn find_endpoint(path: &PyString) -> i32 {
-    let (endpoint, _found_path) = finding(unsafe { URLS.clone() }.unwrap(), path.to_string());
+    let (endpoint, _found_path) = finding_endpoint(unsafe { URLS.clone() }.unwrap(), path.to_string());
     endpoint
 }
 
