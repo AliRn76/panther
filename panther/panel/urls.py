@@ -4,5 +4,5 @@ urls = {
     '': models_api,
     '<index>/': documents_api,
     '<index>/<document_id>/': single_document_api,
-    'healthcheck': healthcheck_api,
+    'health': healthcheck_api,
 }
