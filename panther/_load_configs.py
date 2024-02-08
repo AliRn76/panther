@@ -79,6 +79,9 @@ def load_shutdown(_configs: dict, /) -> None:
 def load_database(_configs: dict, /) -> None:
     database_config = _configs.get('DATABASE', {})
     if 'engine' in database_config:
+        if 'class' not in database_config['engine']:
+            raise _exception_handler(field='DATABASE', error=f'`engine["class"]` not found.')
+
         engine_class_path = database_config['engine']['class']
         engine_class = import_class(engine_class_path)
         # We have to create another dict then pop the 'class' else we can't pass the tests
