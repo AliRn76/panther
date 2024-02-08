@@ -5,11 +5,13 @@ use crate::tree::Tree;
 
 mod tree;
 
-static mut URLS: Option<Tree<String, i32>> = None;
+static mut URLS: Option<Tree<String, PyObject>> = None;
 
 
-fn parse_urls_dict(py_urls: &PyDict) -> Tree<String, i32> {
-    let mut urls: Tree<String, i32> = Tree::new(0);
+fn parse_urls_dict(py_urls: &PyDict) -> Tree<String, PyObject> {
+    let gil = unsafe { Python::assume_gil_acquired() };
+
+    let mut urls: Tree<String, PyObject> = Tree::new(gil.Ellipsis());
 
     for (key, value) in py_urls.iter() {
         if value.is_exact_instance_of::<PyDict>() {
@@ -20,9 +22,9 @@ fn parse_urls_dict(py_urls: &PyDict) -> Tree<String, i32> {
                 Err(_) => {}
             }
         } else {
-            match value.extract::<i32>() {
-                Ok(integer_value) => {
-                    urls.entry(key.to_string()).or_insert(Tree::new(integer_value));
+            match value.extract::<PyObject>() {
+                Ok(object) => {
+                    urls.entry(key.to_string()).or_insert(Tree::new(object));
                 }
                 Err(_) => {}
             }
@@ -30,6 +32,7 @@ fn parse_urls_dict(py_urls: &PyDict) -> Tree<String, i32> {
     }
     return urls.clone();
 }
+
 
 #[pyfunction]
 fn initialize_routing(py_urls: &PyDict) {
@@ -48,12 +51,14 @@ fn clean_path(raw_path: String) -> String {
     path.trim_end_matches('/').trim_start_matches('/').to_string()
 }
 
-fn is_callable(value: i32) -> bool {
-    value != 0
-}
+// fn is_callable(value: PyObject) -> bool {
+//     value.is_callable()
+// }
 
-fn is_subtree(value: i32) -> bool {
-    value == 0
+fn is_dict(value: &Py<PyAny>) -> bool {
+    Python::with_gil(|py| {
+        value.is_instance::<PyDict>(py)
+    })
 }
 
 fn push_path(mut path: String, part: String) -> String {
@@ -62,9 +67,7 @@ fn push_path(mut path: String, part: String) -> String {
     path
 }
 
-fn finding_endpoint(mut urls: Tree<String, i32>, path: String) -> (i32, String) {
-    let endpoint_not_found: (i32, String) = (-1, "".to_string());
-
+fn finding_endpoint(mut urls: Tree<String, PyObject>, path: String) -> Option<(PyObject, String)> {
     let path: String = clean_path(path);
     let parts: Vec<&str> = path.split('/').collect();
     let parts_len: usize = parts.len();
@@ -76,26 +79,26 @@ fn finding_endpoint(mut urls: Tree<String, i32>, path: String) -> (i32, String) 
         let borrowed_url = urls.clone();
         match urls.get(*part) {
             Some(found) => {
-                if is_callable(found.value) {
+                if is_dict(&found.value) == false {
                     return if last_path {
                         found_path = push_path(found_path, part.to_string());
-                        (found.value, found_path.to_string())
+                        Some((found.clone().value, found_path.to_string()))
                     } else {
-                        endpoint_not_found
+                        None
                     };
                 }
-                if is_subtree(found.value) {
+                if is_dict(&found.value) {
                     if last_path {
                         return match found.get("") {
                             Some(inner_found) => {
-                                if is_callable(inner_found.value) {
+                                if is_dict(&inner_found.value) == false {
                                     found_path = push_path(found_path, part.to_string());
-                                    (inner_found.value, found_path.to_string())
+                                    Some((inner_found.clone().value, found_path.to_string()))
                                 } else {
-                                    endpoint_not_found
+                                    None
                                 }
                             }
-                            None => { endpoint_not_found }
+                            None => { None }
                         };
                     } else {
                         found_path = push_path(found_path, part.to_string());
@@ -105,9 +108,8 @@ fn finding_endpoint(mut urls: Tree<String, i32>, path: String) -> (i32, String) 
                 }
             }
             None => {
-
                 for (_key, _v) in borrowed_url.iter() {
-                    if _key.len() == 0{
+                    if _key.len() == 0 {
                         continue;
                     }
                     let key = _key.get(0).unwrap();
@@ -116,45 +118,46 @@ fn finding_endpoint(mut urls: Tree<String, i32>, path: String) -> (i32, String) 
                         let value = urls.get(*key).unwrap();
 
                         println!("value: {:?}", value);
-                        if last_path{
-                            if is_callable(value.value) {
+                        if last_path {
+                            if is_dict(&value.value) == false {
                                 found_path = push_path(found_path, key.to_string());
-                                return (value.value, found_path.to_string());
-
-                            } else if is_subtree(value.value) {
+                                return Some((value.clone().value, found_path.to_string()));
+                            } else if is_dict(&value.value) {
                                 match value.get("") {
                                     Some(inner_found) => {
-                                        if is_callable(inner_found.value) {
+                                        if is_dict(&inner_found.value) == false {
                                             found_path = push_path(found_path, key.to_string());
-                                            return (inner_found.value, found_path.to_string());
+                                            return Some((inner_found.clone().value, found_path.to_string()));
                                         }
                                     }
                                     None => {}
                                 };
                             }
-                        } else if is_callable(value.value) {
-                            return endpoint_not_found
-
-                        } else if is_subtree(value.value) {
+                        } else if is_dict(&value.value) == false {
+                            return None;
+                        } else if is_dict(&value.value) {
                             found_path = push_path(found_path, key.to_string());
                             urls = value.clone();
-                            break
+                            break;
                         }
                     } else {
-                        return endpoint_not_found;
+                        return None;
                     }
                 }
             }
         }
     }
 
-    return endpoint_not_found;
+    return None;
 }
 
 #[pyfunction]
-fn find_endpoint(path: &PyString) -> i32 {
-    let (endpoint, _found_path) = finding_endpoint(unsafe { URLS.clone() }.unwrap(), path.to_string());
-    endpoint
+fn find_endpoint(path: &PyString) -> Option<(PyObject, String)> {
+    let urls = unsafe { URLS.clone() }.unwrap();
+    match finding_endpoint(urls, path.to_string()) {
+        None => { None }
+        Some(result) => { Some(result) }
+    }
 }
 
 #[pymodule]
