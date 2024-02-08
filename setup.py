@@ -49,7 +49,6 @@ setup(
         'panther': ['cli/*'],
     },
     install_requires=[
-        'bson~=0.5',
         'httptools~=0.6',
         'pantherdb==1.3.6',
         'pydantic~=2.1',

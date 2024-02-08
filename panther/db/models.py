@@ -1,11 +1,17 @@
 from datetime import datetime
 
-import bson
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, field_validator
 
 from panther.configs import config
 from panther.db.queries import Query
+
+
+try:
+    # Only required if user wants to use mongodb
+    import bson
+except ImportError:
+    pass
 
 
 class Model(PydanticBaseModel, Query):
@@ -17,7 +23,7 @@ class Model(PydanticBaseModel, Query):
     id: str | None = Field(None, validation_alias='_id')
 
     @field_validator('id', mode='before')
-    def validate_id(cls, value: str | int | bson.ObjectId) -> str:
+    def validate_id(cls, value) -> str:
         if isinstance(value, int):
             pass
 
@@ -35,7 +41,12 @@ class Model(PydanticBaseModel, Query):
         return str(value)
 
     @property
-    def _id(self) -> int | bson.ObjectId | None:
+    def _id(self):
+        """
+        return
+            `int` for PantherDB
+            `ObjectId` for MongoDB
+        """
         if config['query_engine'].__name__ == 'BasePantherDBQuery':
             return int(self.id)
         else:
