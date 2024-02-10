@@ -5,7 +5,7 @@ from unittest import TestCase
 from panther import Panther
 from panther.app import API
 from panther.configs import config
-from panther.db import Model
+from panther.db.models import BaseUser
 from panther.request import Request
 from panther.test import APIClient
 from tests._utils import check_two_dicts
@@ -27,7 +27,7 @@ urls = {
 }
 
 
-class User(Model):
+class User(BaseUser):
     username: str
     password: str
 
@@ -163,15 +163,16 @@ class TestAuthentication(TestCase):
         assert res.data['detail'] == 'Authentication Error'
 
     def test_user_auth_required_with_token(self):
-        User.insert_one(username='Username', password='Password')
+        user = User.insert_one(username='Username', password='Password')
+        tokens = user.login()
 
         with self.assertNoLogs(level='ERROR'):
-            res = self.client.get('auth-required', headers=self.TOKEN)
+            res = self.client.get('auth-required', headers={'Authorization': f'Bearer {tokens["access_token"]}'})
 
         expected_response = {
-            'id': '1',
             'username': 'Username',
             'password': 'Password'
         }
         assert res.status_code == 200
+        res.data.pop('id')
         assert check_two_dicts(res.data, expected_response)

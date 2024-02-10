@@ -24,19 +24,17 @@ class Model(PydanticBaseModel, Query):
 
     @field_validator('id', mode='before')
     def validate_id(cls, value) -> str:
-        if isinstance(value, int):
-            pass
+        if config['database'].__class__.__name__ == 'MongoDBConnection':
+            if isinstance(value, str):
+                try:
+                    bson.ObjectId(value)
+                except bson.objectid.InvalidId as e:
+                    msg = 'Invalid ObjectId'
+                    raise ValueError(msg) from e
 
-        elif isinstance(value, str):
-            try:
-                bson.ObjectId(value)
-            except bson.objectid.InvalidId as e:
-                msg = 'Invalid ObjectId'
-                raise ValueError(msg) from e
-
-        elif not isinstance(value, bson.ObjectId):
-            msg = 'ObjectId required'
-            raise ValueError(msg) from None
+            elif not isinstance(value, bson.ObjectId):
+                msg = 'ObjectId required'
+                raise ValueError(msg) from None
 
         return str(value)
 
@@ -44,13 +42,12 @@ class Model(PydanticBaseModel, Query):
     def _id(self):
         """
         return
-            `int` for PantherDB
+            `str` for PantherDB
             `ObjectId` for MongoDB
         """
-        if config['query_engine'].__name__ == 'BasePantherDBQuery':
-            return int(self.id)
-        else:
+        if config['database'].__class__.__name__ == 'MongoDBConnection':
             return bson.ObjectId(self.id) if self.id else None
+        return self.id
 
     def dict(self, *args, **kwargs) -> dict:
         return self.model_dump(*args, **kwargs)

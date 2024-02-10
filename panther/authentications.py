@@ -1,6 +1,7 @@
 import logging
 import time
 from abc import abstractmethod
+from datetime import timezone, datetime
 from typing import Literal
 
 from panther.cli.utils import import_error
@@ -37,7 +38,7 @@ class JWTAuthentication(BaseAuthentication):
     model = BaseUser
     keyword = 'Bearer'
     algorithm = 'HS256'
-    HTTP_HEADER_ENCODING = 'iso-8859-1'  # Header encoding (see RFC5987)
+    HTTP_HEADER_ENCODING = 'iso-8859-1'  # RFC5987
 
     @classmethod
     def get_authorization_header(cls, request: Request) -> str:
@@ -103,7 +104,7 @@ class JWTAuthentication(BaseAuthentication):
     @classmethod
     def encode_jwt(cls, user_id: str, token_type: Literal['access', 'refresh'] = 'access') -> str:
         """Encode JWT from user_id."""
-        issued_at = time.time()
+        issued_at = datetime.now(timezone.utc).timestamp()
         if token_type == 'access':
             expire = issued_at + config['jwt_config'].life_time
         else:

@@ -44,8 +44,12 @@ class WithValidatorsSerializer(ModelSerializer):
         required_fields = ['author', 'pages_count']
 
     @field_validator('name', 'author', 'pages_count')
-    def validate(cls, field):
+    def validate_other(cls, field):
         return 'validated'
+
+    @field_validator('pages_count')
+    def validate_pages_count(cls, field):
+        return 100
 
 
 class WithClassFieldsSerializer(ModelSerializer):
@@ -163,7 +167,7 @@ class TestModelSerializer(TestCase):
         }
         res = self.client.post('with-validators', payload=payload)
         assert res.status_code == 200
-        assert res.data == {'name': 'validated', 'author': 'validated', 'pages_count': 'validated'}
+        assert res.data == {'name': 'validated', 'author': 'validated', 'pages_count': 100}
 
     def test_with_class_fields_success(self):
         # Test Default Value

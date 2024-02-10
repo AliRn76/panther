@@ -45,7 +45,7 @@ def prepare_id_for_query(*args, is_mongo: bool = False):
             d['_id'] = d.pop('id')
 
         if '_id' in d:
-            _converter = _convert_to_object_id if is_mongo else int
+            _converter = _convert_to_object_id if is_mongo else str
             d['_id'] = _converter(d['_id'])
 
 
