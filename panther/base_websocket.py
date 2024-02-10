@@ -5,6 +5,7 @@ import contextlib
 import logging
 from multiprocessing import Manager
 from multiprocessing.managers import SyncManager
+from threading import Thread
 from typing import TYPE_CHECKING, Literal
 
 import orjson as json
@@ -38,16 +39,27 @@ class PubSub:
             queue.put(msg)
 
 
+class WebsocketListener(Thread):
+    def __init__(self):
+        super().__init__(target=config['websocket_connections'], daemon=True)
+
+    def run(self):
+        with contextlib.suppress(Exception):
+            super().run()
+
+
 class WebsocketConnections(Singleton):
     def __init__(self, pubsub_connection: Redis | Manager):
         self.connections = {}
         self.connections_count = 0
         self.pubsub_connection = pubsub_connection
 
-    def __call__(self):
-        # We don't have redis connection, so use the `multiprocessing.PubSub`
         if isinstance(self.pubsub_connection, SyncManager):
             self.pubsub = PubSub(manager=self.pubsub_connection)
+
+    def __call__(self):
+        if isinstance(self.pubsub_connection, SyncManager):
+            # We don't have redis connection, so use the `multiprocessing.PubSub`
             queue = self.pubsub.subscribe()
             logger.info("Subscribed to 'websocket_connections' queue")
             while True:
@@ -55,10 +67,10 @@ class WebsocketConnections(Singleton):
                 self._handle_received_message(received_message=received_message)
         else:
             # We have a redis connection, so use it for pubsub
-            subscriber = self.pubsub_connection.pubsub()
-            subscriber.subscribe('websocket_connections')
+            self.pubsub = self.pubsub_connection.pubsub()
+            self.pubsub.subscribe('websocket_connections')
             logger.info("Subscribed to 'websocket_connections' channel")
-            for channel_data in subscriber.listen():
+            for channel_data in self.pubsub.listen():
                 match channel_data['type']:
                     # Subscribed
                     case 'subscribe':

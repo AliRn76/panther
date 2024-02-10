@@ -13,6 +13,7 @@ from panther import status
 from panther._load_configs import *
 from panther._utils import clean_traceback_message, http_response, is_function_async, reformat_code, \
     check_class_type_endpoint, check_function_type_endpoint
+from panther.base_websocket import WebsocketListener
 from panther.cli.utils import print_info
 from panther.configs import config
 from panther.exceptions import APIError, PantherError, InvalidPathVariableAPIError
@@ -228,9 +229,16 @@ class Panther:
         )
 
     async def handle_ws_listener(self):
+        """
+        Cause of --preload in gunicorn we have to keep this function here,
+        and we can't move it to __init__ of Panther
+
+            * Each process should start this listener for itself,
+              but they have same Manager()
+        """
         # Start Websocket Listener (Redis/ Queue)
         if config['has_ws']:
-            Thread(target=config['websocket_connections'], daemon=True).start()
+            WebsocketListener().start()
 
     async def handle_startup(self):
         if startup := config['startup'] or self._startup:
