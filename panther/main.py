@@ -254,7 +254,7 @@ class Panther:
                     asyncio.run(shutdown())
                 except ModuleNotFoundError:
                     # Error: import of asyncio halted; None in sys.modules
-                    #   And as I figured it out, it only happens when we running with
+                    #   And as I figured it out, it only happens when we are running with
                     #   gunicorn and Uvicorn workers (-k uvicorn.workers.UvicornWorker)
                     pass
             else:

@@ -65,10 +65,11 @@ class TestCLI(TestCase):
 │      \ \_\ \__/.\_\ \_\ \_\ \__\\ \_\ \_\ \____\\ \_\    │
 │       \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/    │
 │                                                          │
+│   Redis: False                                           │
+│   Websocket: False                                       │
 │   Monitoring: True                                       │
 │   Log Queries: True                                      │
 │   Background Tasks: False                                │
-│   Websocket: False                                       │
 │   Base directory: {base_dir}│
 │ * Run "panther monitor" in another session for Monitoring│
 │ * You may want to install `uvloop` for better performance│
