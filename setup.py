@@ -20,7 +20,7 @@ EXTRAS_REQUIRE = {
         'ruff~=0.1.9',
         'python-jose~=3.3',
         'websockets~=12.0',
-        'cryptography~=41.0',
+        'cryptography~=42.0',
     ],
 }
 
