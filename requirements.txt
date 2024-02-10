@@ -3,4 +3,5 @@ python-jose
 faker
 coverage
 pytest
-cryptography~=41.0
+cryptography~=42.0
+websockets
