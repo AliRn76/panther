@@ -139,7 +139,7 @@ class WebsocketConnections(Singleton):
                 await connection.close(reason='Authentication Error')
                 return True
             try:
-                connection.user = config.ws_authentication.authentication(connection)
+                connection.user = await config.ws_authentication.authentication(connection)
             except AuthenticationAPIError as e:
                 await connection.close(reason=e.detail)
         return False

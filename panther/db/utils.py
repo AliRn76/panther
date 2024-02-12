@@ -12,11 +12,11 @@ logger = logging.getLogger('query')
 
 
 def log_query(func):
-    def log(*args, **kwargs):
+    async def log(*args, **kwargs):
         if config['log_queries'] is False:
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
         start = perf_counter()
-        response = func(*args, **kwargs)
+        response = await func(*args, **kwargs)
         end = perf_counter()
         class_name = args[0].__name__ if hasattr(args[0], '__name__') else args[0].__class__.__name__
         logger.info(f'\033[1mQuery -->\033[0m  {class_name}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
@@ -25,11 +25,11 @@ def log_query(func):
 
 
 def check_connection(func):
-    def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs):
         if config['query_engine'] is None:
             msg = "You don't have active database connection, Check your middlewares"
             raise NotImplementedError(msg)
-        return func(*args, **kwargs)
+        return await func(*args, **kwargs)
     return wrapper
 
 

@@ -72,7 +72,6 @@ class Config(Singleton):
     pantherdb_encryption: bool
     query_engine: typing.Callable | None
     database: typing.Callable | None
-    redis: typing.Callable | None
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)
@@ -118,7 +117,6 @@ default_configs = {
     'pantherdb_encryption': False,
     'query_engine': None,
     'database': None,
-    'redis': None,
 }
 
 config = Config(**default_configs)

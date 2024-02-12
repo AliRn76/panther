@@ -60,7 +60,7 @@ class API:
                 raise MethodNotAllowedAPIError
 
             # 2. Authentication
-            self.handle_authentications()
+            await self.handle_authentications()
 
             # 3. Throttling
             self.handle_throttling()
@@ -109,13 +109,13 @@ class API:
 
         return wrapper
 
-    def handle_authentications(self) -> None:
+    async def handle_authentications(self) -> None:
         auth_class = config['authentication']
         if self.auth:
             if not auth_class:
                 logger.critical('"AUTHENTICATION" has not been set in configs')
                 raise APIError
-            user = auth_class.authentication(self.request)
+            user = await auth_class.authentication(self.request)
             self.request.user = user
 
     def handle_throttling(self) -> None:

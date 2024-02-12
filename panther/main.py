@@ -97,7 +97,7 @@ class Panther:
         """
         if scope['type'] == 'lifespan':
             message = await receive()
-            if message["type"] == "lifespan.startup":
+            if message["type"] == 'lifespan.startup':
                 await self.handle_ws_listener()
                 await self.handle_startup()
             return

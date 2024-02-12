@@ -52,7 +52,7 @@ class Query:
 
     @classmethod
     def _create_model_instance(cls, document: dict):
-        """Prevent getting errors from inserted documents"""
+        """Prevent getting errors from document insertion"""
         try:
             return cls(**document)
         except ValidationError as validation_error:
@@ -63,210 +63,210 @@ class Query:
     @classmethod
     @check_connection
     @log_query
-    def find_one(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
+    async def find_one(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> User.find_one(id=1)
+            >>> await User.find_one(id=1)
         """
-        return super().find_one(_data, **kwargs)
+        return await super().find_one(_data, **kwargs)
 
     @classmethod
     @check_connection
     @log_query
-    def find(cls, _data: dict | None = None, /, **kwargs) -> list[Self]:
+    async def find(cls, _data: dict | None = None, /, **kwargs) -> list[Self]:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> User.find(name='Ali')
+            >>> await User.find(name='Ali')
         """
-        return super().find(_data, **kwargs)
+        return await super().find(_data, **kwargs)
 
     @classmethod
     @check_connection
     @log_query
-    def first(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
+    async def first(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> user = User.first(name='Ali')
+            >>> user = await User.first(name='Ali')
         * Alias of find_one()
         """
-        return super().first(_data, **kwargs)
+        return await super().first(_data, **kwargs)
 
     @classmethod
     @check_connection
     @log_query
-    def last(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
+    async def last(cls, _data: dict | None = None, /, **kwargs) -> Self | None:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> user = User.last(name='Ali')
+            >>> user = await User.last(name='Ali')
         """
-        return super().last(_data, **kwargs)
+        return await super().last(_data, **kwargs)
 
     # # # # # Count # # # # #
     @classmethod
     @check_connection
     @log_query
-    def count(cls, _data: dict | None = None, /, **kwargs) -> int:
+    async def count(cls, _data: dict | None = None, /, **kwargs) -> int:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> User.count(name='Ali')
+            >>> await User.count(name='Ali')
         """
-        return super().count(_data, **kwargs)
+        return await super().count(_data, **kwargs)
 
     # # # # # Insert # # # # #
     @classmethod
     @check_connection
     @log_query
-    def insert_one(cls, _data: dict | None = None, /, **kwargs) -> Self:
+    async def insert_one(cls, _data: dict | None = None, /, **kwargs) -> Self:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> User.insert_one(name='Ali', age=24, ...)
+            >>> await User.insert_one(name='Ali', age=24, ...)
         """
-        cls._validate_data(data=_data | kwargs)
-        return super().insert_one(_data, **kwargs)
+        cls._validate_data(data=(_data or {}) | kwargs)
+        return await super().insert_one(_data, **kwargs)
 
     @classmethod
     @check_connection
     @log_query
-    def insert_many(cls, _data: dict | None = None, /, **kwargs):
+    async def insert_many(cls, _data: dict | None = None, /, **kwargs):
         msg = 'insert_many() is not supported yet.'
         raise DatabaseError(msg)
 
     # # # # # Delete # # # # #
     @check_connection
     @log_query
-    def delete(self) -> None:
+    async def delete(self) -> None:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> user = User.find_one(name='Ali')
-            >>> user.delete()
+            >>> user = await User.find_one(name='Ali')
+            >>> await user.delete()
         """
-        return super().delete()
+        await super().delete()
 
     @classmethod
     @check_connection
     @log_query
-    def delete_one(cls, _data: dict | None = None, /, **kwargs) -> bool:
+    async def delete_one(cls, _data: dict | None = None, /, **kwargs) -> bool:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> User.delete_one(id=1)
+            >>> await User.delete_one(id=1)
         """
-        return super().delete_one(_data, **kwargs)
+        return await super().delete_one(_data, **kwargs)
 
     @classmethod
     @check_connection
     @log_query
-    def delete_many(cls, _data: dict | None = None, /, **kwargs) -> int:
+    async def delete_many(cls, _data: dict | None = None, /, **kwargs) -> int:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> User.delete_many(last_name='Rn')
+            >>> await User.delete_many(last_name='Rn')
         """
-        return super().delete_many(_data, **kwargs)
+        return await super().delete_many(_data, **kwargs)
 
     # # # # # Update # # # # #
     @check_connection
     @log_query
-    def update(self, **kwargs) -> None:
+    async def update(self, **kwargs) -> None:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> user = User.find_one(name='Ali')
-            >>> user.update(name='Saba')
+            >>> user = await User.find_one(name='Ali')
+            >>> await user.update(name='Saba')
         """
         self._validate_data(data=kwargs, is_updating=True)
-        return super().update(**kwargs)
+        await super().update(**kwargs)
 
     @classmethod
     @check_connection
     @log_query
-    def update_one(cls, _filter: dict, _data: dict | None = None, /, **kwargs) -> bool:
+    async def update_one(cls, _filter: dict, _data: dict | None = None, /, **kwargs) -> bool:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> User.update_one({'id': 1}, name='Ali')
-            >>> User.update_one({'id': 2}, {'name': 'Ali', 'age': 25})
+            >>> await User.update_one({'id': 1}, name='Ali')
+            >>> await User.update_one({'id': 2}, {'name': 'Ali', 'age': 25})
         """
-        return super().update_one(_filter, _data, **kwargs)
+        return await super().update_one(_filter, _data, **kwargs)
 
     @classmethod
     @check_connection
     @log_query
-    def update_many(cls, _filter: dict, _data: dict | None = None, /, **kwargs) -> int:
+    async def update_many(cls, _filter: dict, _data: dict | None = None, /, **kwargs) -> int:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> User.update_many({'name': 'Mohsen'}, name='Ali')
-            >>> User.update_many({'name': 'Mohsen'}, {'name': 'Ali'})
+            >>> await User.update_many({'name': 'Mohsen'}, name='Ali')
+            >>> await User.update_many({'name': 'Mohsen'}, {'name': 'Ali'})
         """
-        return super().update_many(_filter, _data, **kwargs)
+        return await super().update_many(_filter, _data, **kwargs)
 
     # # # # # Other # # # # #
     @classmethod
-    def all(cls) -> list[Self]:
+    async def all(cls) -> list[Self]:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> User.all()
+            >>> await User.all()
         * Alias of find() without args
         """
-        return cls.find()
+        return await cls.find()
 
     @classmethod
-    def find_or_insert(cls, **kwargs) -> tuple[bool, any]:
+    async def find_or_insert(cls, **kwargs) -> tuple[bool, any]:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> user = User.find_or_insert(name='Ali')
+            >>> user = await User.find_or_insert(name='Ali')
         """
-        if obj := cls.find_one(**kwargs):
+        if obj := await cls.find_one(**kwargs):
             return False, obj
-        return True, cls.insert_one(**kwargs)
+        return True, await cls.insert_one(**kwargs)
 
     @classmethod
-    def find_one_or_raise(cls, **kwargs) -> Self:
+    async def find_one_or_raise(cls, **kwargs) -> Self:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> user = User.find_one_or_raise(name='Ali')
+            >>> user = await User.find_one_or_raise(name='Ali')
         """
-        if obj := cls.find_one(**kwargs):
+        if obj := await cls.find_one(**kwargs):
             return obj
 
         raise NotFoundAPIError(detail=f'{cls.__name__} Does Not Exists')
 
     @check_connection
     @log_query
-    def save(self) -> None:
+    async def save(self) -> None:
         """
         Example:
         -------
             >>> from example.app.models import User
-            >>> user = User.find_one(name='Ali')
+            >>> user = await User.find_one(name='Ali')
             >>> user.name = 'Saba'
-            >>> user.save()
+            >>> await user.save()
         """
         msg = 'save() is not supported yet.'
         raise DatabaseError(msg) from None

@@ -15,7 +15,7 @@ with open('README.md', encoding='utf-8') as file:
 EXTRAS_REQUIRE = {
     'full': [
         'redis==5.0.1',
-        'pymongo~=4.4',
+        'motor~=3.3',
         'bpython~=0.24',
         'ruff~=0.1.9',
         'python-jose~=3.3',
