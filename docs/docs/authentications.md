@@ -53,7 +53,7 @@ JWTConfig = {
 - Create a class and inherits it from `panther.authentications.BaseAuthentication`
 
 
-- Implement `authentication(cls, request: Request)` method
+- Implement `async authentication(cls, request: Request)` method
     - Process the `request.headers.authorization` or ...
     - Return Instance of `USER_MODEL`
     - Or raise `panther.exceptions.AuthenticationException` 

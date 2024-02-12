@@ -66,7 +66,7 @@ class API:
             self.handle_throttling()
 
             # 4. Permissions
-            self.handle_permissions()
+            await self.handle_permissions()
 
             # 5. Validate Input
             if self.request.method in ['POST', 'PUT', 'PATCH']:
@@ -128,12 +128,12 @@ class API:
 
             throttling_storage[throttling_key] += 1
 
-    def handle_permissions(self) -> None:
+    async def handle_permissions(self) -> None:
         for perm in self.permissions:
             if type(perm.authorization).__name__ != 'method':
                 logger.error(f'{perm.__name__}.authorization should be "classmethod"')
                 raise AuthorizationAPIError
-            if perm.authorization(self.request) is False:
+            if await perm.authorization(self.request) is False:
                 raise AuthorizationAPIError
 
     def handle_input_validation(self):

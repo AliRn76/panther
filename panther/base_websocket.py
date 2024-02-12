@@ -152,7 +152,7 @@ class WebsocketConnections(Singleton):
                 logger.error(f'{perm.__name__}.authorization should be "classmethod"')
                 await connection.close(reason='Permission Denied')
                 return True
-            if perm.authorization(connection) is False:
+            if await perm.authorization(connection) is False:
                 await connection.close(reason='Permission Denied')
                 return True
         return False
