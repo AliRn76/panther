@@ -65,7 +65,7 @@ class APIClient:
     def __init__(self, app: Callable):
         self._app = app
 
-    def _send_request(
+    async def _send_request(
             self,
             path: str,
             method: Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -74,23 +74,21 @@ class APIClient:
             query_params: dict,
     ) -> Response:
         request_client = RequestClient(app=self._app)
-        return asyncio.run(
-            request_client.request(
+        return await request_client.request(
                 path=path,
                 method=method,
                 payload=payload,
                 headers=headers,
                 query_params=query_params or {},
             )
-        )
 
-    def get(
+    async def get(
             self,
             path: str,
             headers: dict | None = None,
             query_params: dict | None = None,
     ) -> Response:
-        return self._send_request(
+        return await self._send_request(
             path=path,
             method='GET',
             payload=None,
@@ -98,7 +96,7 @@ class APIClient:
             query_params=query_params or {},
         )
 
-    def post(
+    async def post(
             self,
             path: str,
             payload: bytes | dict | None = None,
@@ -107,7 +105,7 @@ class APIClient:
             content_type: str = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
-        return self._send_request(
+        return await self._send_request(
             path=path,
             method='POST',
             payload=payload,
@@ -115,7 +113,7 @@ class APIClient:
             query_params=query_params or {},
         )
 
-    def put(
+    async def put(
             self,
             path: str,
             payload: bytes | dict | None = None,
@@ -124,7 +122,7 @@ class APIClient:
             content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
-        return self._send_request(
+        return await self._send_request(
             path=path,
             method='PUT',
             payload=payload,
@@ -132,7 +130,7 @@ class APIClient:
             query_params=query_params or {},
         )
 
-    def patch(
+    async def patch(
             self,
             path: str,
             payload: bytes | dict | None = None,
@@ -141,7 +139,7 @@ class APIClient:
             content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
-        return self._send_request(
+        return await self._send_request(
             path=path,
             method='PATCH',
             payload=payload,
@@ -149,13 +147,13 @@ class APIClient:
             query_params=query_params or {},
         )
 
-    def delete(
+    async def delete(
             self,
             path: str,
             headers: dict | None = None,
             query_params: dict | None = None,
     ) -> Response:
-        return self._send_request(
+        return await self._send_request(
             path=path,
             method='DELETE',
             payload=None,

@@ -40,7 +40,7 @@ class TestBackgroundTasks(TestCase):
         def func(): pass
 
         self.obj.initialize()
-        self.assertEqual(self.obj.tasks, [])
+        assert self.obj.tasks == []
 
         with self.assertLogs() as captured:
             self.obj.add_task(func)

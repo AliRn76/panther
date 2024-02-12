@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
 from panther.app import API
@@ -62,7 +62,7 @@ urls = {
 }
 
 
-class TestMultipart(TestCase):
+class TestMultipart(IsolatedAsyncioTestCase):
     CONTENT_TYPE = 'multipart/form-data; boundary=--------------------------201301649688174364392792'
     FLAT_PAYLOAD = (
             b'----------------------------201301649688174364392792\r\n'
@@ -114,8 +114,8 @@ class TestMultipart(TestCase):
         app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
 
-    def test_flat_multipart(self):
-        res = self.client.post(
+    async def test_flat_multipart(self):
+        res = await self.client.post(
             'flat_multipart',
             content_type=self.CONTENT_TYPE,
             payload=self.FLAT_PAYLOAD,
@@ -123,8 +123,8 @@ class TestMultipart(TestCase):
         assert res.status_code == 200
         assert res.data == {'name': 'Ali Rn', 'age': '25'}
 
-    def test_single_file_multipart(self):
-        res = self.client.post(
+    async def test_single_file_multipart(self):
+        res = await self.client.post(
             'single_file_multipart',
             content_type=self.CONTENT_TYPE,
             payload=self.SINGLE_FILE_PAYLOAD,
@@ -137,8 +137,8 @@ class TestMultipart(TestCase):
             'file': 'Hello World\n',
         }
 
-    def test_several_file_multipart(self):
-        res = self.client.post(
+    async def test_several_file_multipart(self):
+        res = await self.client.post(
             'several_file_multipart',
             content_type=self.CONTENT_TYPE,
             payload=self.SEVERAL_FILE_PAYLOAD,
@@ -158,8 +158,8 @@ class TestMultipart(TestCase):
             }
         }
 
-    def test_complex_multipart(self):
-        res = self.client.post(
+    async def test_complex_multipart(self):
+        res = await self.client.post(
             'complex_multipart',
             content_type=self.CONTENT_TYPE,
             payload=self.COMPLEX_PAYLOAD,

@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 
 import orjson as json
 
@@ -166,54 +166,54 @@ urls = {
 }
 
 
-class TestRequest(TestCase):
+class TestRequest(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
 
-    def test_path(self):
-        res = self.client.get('path/')
+    async def test_path(self):
+        res = await self.client.get('path/')
         assert res.status_code == 200
         assert res.data == '/path/'
 
-    def test_client(self):
-        res = self.client.get('client/')
+    async def test_client(self):
+        res = await self.client.get('client/')
         assert res.status_code == 200
         assert res.data == ['127.0.0.1', 8585]
 
-    def test_query_params(self):
-        res = self.client.get(
+    async def test_query_params(self):
+        res = await self.client.get(
             'query-params/',
             query_params={'my': 'name', 'is': 'ali', 'how': 'are'},
         )
         assert res.status_code == 200
         assert res.data == {'my': 'name', 'is': 'ali', 'how': 'are'}
 
-    def test_data(self):
+    async def test_data(self):
         payload = {'detail': 'ok'}
-        res = self.client.post('data/', payload=json.dumps(payload))
+        res = await self.client.post('data/', payload=json.dumps(payload))
         assert res.status_code == 200
         assert res.data == payload
 
-    def test_path_variables(self):
-        res = self.client.post('path/Ali/variable/27/true/')
+    async def test_path_variables(self):
+        res = await self.client.post('path/Ali/variable/27/true/')
         expected_response = {'name': 'Ali', 'age': 27, 'is_alive': True}
         assert res.status_code == 200
         assert res.data == expected_response
 
     # # # Headers
-    def test_headers_none(self):
-        res = self.client.get('header')
+    async def test_headers_none(self):
+        res = await self.client.get('header')
         expected_headers = {}
         assert res.data == expected_headers
 
-    def test_headers_content_type(self):
-        res = self.client.post('header')
+    async def test_headers_content_type(self):
+        res = await self.client.post('header')
         expected_headers = {'content-type': 'application/json'}
         assert res.data == expected_headers
 
-    def test_headers_full_items(self):
+    async def test_headers_full_items(self):
         headers = {
             'User-Agent': 'PostmanRuntime/7.36.0',
             'Accept': '*/*',
@@ -223,7 +223,7 @@ class TestRequest(TestCase):
             'Connection': 'keep-alive',
             'Content-Length': 546,
         }
-        res = self.client.post('header', headers=headers)
+        res = await self.client.post('header', headers=headers)
         expected_headers = {
             'content-type': 'application/json',
             'User-Agent': 'PostmanRuntime/7.36.0',
@@ -236,12 +236,12 @@ class TestRequest(TestCase):
         }
         assert res.data == expected_headers
 
-    def test_headers_unknown_items(self):
+    async def test_headers_unknown_items(self):
         headers = {
             'Header1': 'PostmanRuntime/7.36.0',
             'Header2': '*/*',
         }
-        res = self.client.post('header', headers=headers)
+        res = await self.client.post('header', headers=headers)
         expected_headers = {
             'content-type': 'application/json',
             'Header1': 'PostmanRuntime/7.36.0',
@@ -249,199 +249,199 @@ class TestRequest(TestCase):
         }
         assert res.data == expected_headers
 
-    def test_headers_authorization_by_getattr(self):
+    async def test_headers_authorization_by_getattr(self):
         headers = {
             'Authorization': 'Token xxx',
         }
-        res = self.client.post('header-attr', headers=headers)
+        res = await self.client.post('header-attr', headers=headers)
         assert res.data == 'Token xxx'
 
-    def test_headers_authorization_by_getitem(self):
+    async def test_headers_authorization_by_getitem(self):
         headers = {
             'Authorization': 'Token xxx',
         }
-        res = self.client.post('header-item', headers=headers)
+        res = await self.client.post('header-item', headers=headers)
         assert res.data == 'Token xxx'
 
     # # # Methods
-    def test_method_all(self):
-        res_func = self.client.get('all-func/')
-        res_class = self.client.get('all-class/')
+    async def test_method_all(self):
+        res_func = await self.client.get('all-func/')
+        res_class = await self.client.get('all-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 
-        res_func = self.client.post('all-func/')
-        res_class = self.client.post('all-class/')
+        res_func = await self.client.post('all-func/')
+        res_class = await self.client.post('all-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 
-        res_func = self.client.put('all-func/')
-        res_class = self.client.put('all-class/')
+        res_func = await self.client.put('all-func/')
+        res_class = await self.client.put('all-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 
-        res_func = self.client.patch('all-func/')
-        res_class = self.client.patch('all-class/')
+        res_func = await self.client.patch('all-func/')
+        res_class = await self.client.patch('all-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 
-        res_func = self.client.delete('all-func/')
-        res_class = self.client.delete('all-class/')
+        res_func = await self.client.delete('all-func/')
+        res_class = await self.client.delete('all-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 
-    def test_method_get(self):
-        res_func = self.client.get('get-func/')
-        res_class = self.client.get('get-class/')
+    async def test_method_get(self):
+        res_func = await self.client.get('get-func/')
+        res_class = await self.client.get('get-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 
-        res_func = self.client.post('get-func/')
-        res_class = self.client.post('get-class/')
+        res_func = await self.client.post('get-func/')
+        res_class = await self.client.post('get-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.put('get-func/')
-        res_class = self.client.put('get-class/')
+        res_func = await self.client.put('get-func/')
+        res_class = await self.client.put('get-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.patch('get-func/')
-        res_class = self.client.patch('get-class/')
+        res_func = await self.client.patch('get-func/')
+        res_class = await self.client.patch('get-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.delete('get-func/')
-        res_class = self.client.delete('get-class/')
+        res_func = await self.client.delete('get-func/')
+        res_class = await self.client.delete('get-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-    def test_method_post(self):
-        res_func = self.client.get('post-func/')
-        res_class = self.client.get('post-class/')
+    async def test_method_post(self):
+        res_func = await self.client.get('post-func/')
+        res_class = await self.client.get('post-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.post('post-func/')
-        res_class = self.client.post('post-class/')
+        res_func = await self.client.post('post-func/')
+        res_class = await self.client.post('post-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 
-        res_func = self.client.put('post-func/')
-        res_class = self.client.put('post-class/')
+        res_func = await self.client.put('post-func/')
+        res_class = await self.client.put('post-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.patch('post-func/')
-        res_class = self.client.patch('post-class/')
+        res_func = await self.client.patch('post-func/')
+        res_class = await self.client.patch('post-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.delete('post-func/')
-        res_class = self.client.delete('post-class/')
+        res_func = await self.client.delete('post-func/')
+        res_class = await self.client.delete('post-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-    def test_method_put(self):
-        res_func = self.client.get('put-func/')
-        res_class = self.client.get('put-class/')
+    async def test_method_put(self):
+        res_func = await self.client.get('put-func/')
+        res_class = await self.client.get('put-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.post('put-func/')
-        res_class = self.client.post('put-class/')
+        res_func = await self.client.post('put-func/')
+        res_class = await self.client.post('put-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.put('put-func/')
-        res_class = self.client.put('put-class/')
+        res_func = await self.client.put('put-func/')
+        res_class = await self.client.put('put-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 
-        res_func = self.client.patch('put-func/')
-        res_class = self.client.patch('put-class/')
+        res_func = await self.client.patch('put-func/')
+        res_class = await self.client.patch('put-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.delete('put-func/')
-        res_class = self.client.delete('put-class/')
+        res_func = await self.client.delete('put-func/')
+        res_class = await self.client.delete('put-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-    def test_method_patch(self):
-        res_func = self.client.get('patch-func/')
-        res_class = self.client.get('patch-class/')
+    async def test_method_patch(self):
+        res_func = await self.client.get('patch-func/')
+        res_class = await self.client.get('patch-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.post('patch-func/')
-        res_class = self.client.post('patch-class/')
+        res_func = await self.client.post('patch-func/')
+        res_class = await self.client.post('patch-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.put('patch-func/')
-        res_class = self.client.put('patch-class/')
+        res_func = await self.client.put('patch-func/')
+        res_class = await self.client.put('patch-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.patch('patch-func/')
-        res_class = self.client.patch('patch-class/')
+        res_func = await self.client.patch('patch-func/')
+        res_class = await self.client.patch('patch-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 
-        res_func = self.client.delete('patch-func/')
-        res_class = self.client.delete('patch-class/')
+        res_func = await self.client.delete('patch-func/')
+        res_class = await self.client.delete('patch-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-    def test_method_delete(self):
-        res_func = self.client.get('delete-func/')
-        res_class = self.client.get('delete-class/')
+    async def test_method_delete(self):
+        res_func = await self.client.get('delete-func/')
+        res_class = await self.client.get('delete-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.post('delete-func/')
-        res_class = self.client.post('delete-class/')
+        res_func = await self.client.post('delete-func/')
+        res_class = await self.client.post('delete-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.put('delete-func/')
-        res_class = self.client.put('delete-class/')
+        res_func = await self.client.put('delete-func/')
+        res_class = await self.client.put('delete-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.patch('delete-func/')
-        res_class = self.client.patch('delete-class/')
+        res_func = await self.client.patch('delete-func/')
+        res_class = await self.client.patch('delete-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.delete('delete-func/')
-        res_class = self.client.delete('delete-class/')
+        res_func = await self.client.delete('delete-func/')
+        res_class = await self.client.delete('delete-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 
-    def test_method_get_post_patch(self):
-        res_func = self.client.get('get-post-patch-func/')
-        res_class = self.client.get('get-post-patch-class/')
+    async def test_method_get_post_patch(self):
+        res_func = await self.client.get('get-post-patch-func/')
+        res_class = await self.client.get('get-post-patch-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 
-        res_func = self.client.post('get-post-patch-func/')
-        res_class = self.client.post('get-post-patch-class/')
+        res_func = await self.client.post('get-post-patch-func/')
+        res_class = await self.client.post('get-post-patch-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 
-        res_func = self.client.put('get-post-patch-func/')
-        res_class = self.client.put('get-post-patch-class/')
+        res_func = await self.client.put('get-post-patch-func/')
+        res_class = await self.client.put('get-post-patch-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
 
-        res_func = self.client.patch('get-post-patch-func/')
-        res_class = self.client.patch('get-post-patch-class/')
+        res_func = await self.client.patch('get-post-patch-func/')
+        res_class = await self.client.patch('get-post-patch-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 
-        res_func = self.client.delete('get-post-patch-func/')
-        res_class = self.client.delete('get-post-patch-class/')
+        res_func = await self.client.delete('get-post-patch-func/')
+        res_class = await self.client.delete('get-post-patch-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
