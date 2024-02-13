@@ -23,7 +23,7 @@ class TestRun(TestCase):
 
     def test_load_configs(self):
         from panther.configs import config
-        from panther.panel.apis import documents_api, models_api, single_document_api
+        from panther.panel.apis import documents_api, models_api, single_document_api, healthcheck_api
 
         base_dir = Path(__name__).resolve().parent
         secret_key = 'fHrIYx3yK0J_UG0K0zD6miLPNy1esoYXzVsvif6e7rY='
@@ -62,6 +62,7 @@ class TestRun(TestCase):
                     '': documents_api,
                     '<document_id>': single_document_api,
                 },
+                'health': healthcheck_api
             },
         }
         assert config['urls'] == urls

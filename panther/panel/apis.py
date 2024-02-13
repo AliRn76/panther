@@ -1,9 +1,17 @@
 from panther import status
 from panther.app import API
 from panther.configs import config
+from panther.db.connections import db
+from panther.db.connections import redis
 from panther.panel.utils import get_model_fields
 from panther.request import Request
 from panther.response import Response
+
+try:
+    import pymongo
+    from pymongo.errors import PyMongoError
+except ImportError:
+    pass
 
 
 @API(methods=['GET'])
@@ -54,3 +62,22 @@ async def single_document_api(request: Request, index: int, document_id: int | s
 
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@API()
+async def healthcheck_api():
+    checks = []
+
+    # Database
+    if config['query_engine'].__name__ == 'BaseMongoDBQuery':
+        with pymongo.timeout(3):
+            try:
+                ping = db.session.command('ping').get('ok') == 1.0
+                checks.append(ping)
+            except PyMongoError:
+                checks.append(False)
+    # Redis
+    if redis.is_connected:
+        checks.append(redis.ping())
+
+    return Response(all(checks))

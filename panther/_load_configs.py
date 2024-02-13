@@ -79,6 +79,9 @@ def load_shutdown(_configs: dict, /) -> None:
 def load_database(_configs: dict, /) -> None:
     database_config = _configs.get('DATABASE', {})
     if 'engine' in database_config:
+        if 'class' not in database_config['engine']:
+            raise _exception_handler(field='DATABASE', error=f'`engine["class"]` not found.')
+
         engine_class_path = database_config['engine']['class']
         engine_class = import_class(engine_class_path)
         # We have to create another dict then pop the 'class' else we can't pass the tests
@@ -247,9 +250,14 @@ def load_urls(_configs: dict, /, urls: dict | None) -> None:
 def load_websocket_connections():
     """Should be after `load_redis()`"""
     if config['has_ws']:
+        # Check `websockets`
+        try:
+            import websockets
+        except ImportError as e:
+            raise import_error(e, package='websockets')
+
         # Use the redis pubsub if `redis.is_connected`, else use the `multiprocessing.Manager`
         pubsub_connection = redis.create_connection_for_websocket() if redis.is_connected else Manager()
-
         config['websocket_connections'] = WebsocketConnections(pubsub_connection=pubsub_connection)
 
 

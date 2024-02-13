@@ -130,7 +130,7 @@ class _BaseDatabaseTestCase:
         book = await Book.last(name=name, author=author, pages_count=pages_count)
 
         assert isinstance(book, Book)
-        assert book._id == await Book.count()
+        assert book.id
         assert book.name == name
         assert book.pages_count == pages_count
 

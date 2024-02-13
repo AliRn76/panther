@@ -205,9 +205,9 @@ class ImageAPI(GenericAPI):
 
 
 @API()
-def login_api():
+async def login_api():
     _, user = User.find_or_insert(username='fake-username', password='secret-password')
-    return user.login()
+    return await user.login()
 
 
 @API(auth=True)

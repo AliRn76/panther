@@ -3,9 +3,13 @@ import operator
 from functools import reduce
 from time import perf_counter
 
-import bson
-
 from panther.configs import config
+
+try:
+    # Only required if user wants to use mongodb
+    import bson
+except ImportError:
+    pass
 
 
 logger = logging.getLogger('query')
@@ -41,11 +45,11 @@ def prepare_id_for_query(*args, is_mongo: bool = False):
             d['_id'] = d.pop('id')
 
         if '_id' in d:
-            _converter = _convert_to_object_id if is_mongo else int
+            _converter = _convert_to_object_id if is_mongo else str
             d['_id'] = _converter(d['_id'])
 
 
-def _convert_to_object_id(_id: bson.ObjectId | str) -> bson.ObjectId:
+def _convert_to_object_id(_id):
     if isinstance(_id, bson.ObjectId):
         return _id
     try:
