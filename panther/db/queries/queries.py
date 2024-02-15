@@ -3,8 +3,9 @@ import sys
 from pydantic import ValidationError
 
 from panther.configs import QueryObservable
+from panther.db.cursor import Cursor
 from panther.db.utils import log_query, check_connection
-from panther.exceptions import DatabaseError, NotFoundAPIError, BadRequestAPIError
+from panther.exceptions import DatabaseError, NotFoundAPIError
 
 __all__ = ('Query',)
 
@@ -75,7 +76,7 @@ class Query:
     @classmethod
     @check_connection
     @log_query
-    async def find(cls, _data: dict | None = None, /, **kwargs) -> list[Self]:
+    async def find(cls, _data: dict | None = None, /, **kwargs) -> list[Self] | Cursor:
         """
         Example:
         -------
@@ -222,7 +223,7 @@ class Query:
 
     # # # # # Other # # # # #
     @classmethod
-    async def all(cls) -> list[Self]:
+    async def all(cls) -> list[Self] | Cursor:
         """
         Example:
         -------

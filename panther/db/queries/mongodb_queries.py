@@ -1,7 +1,9 @@
+from __future__ import annotations
 from sys import version_info
 from bson.codec_options import CodecOptions
 
 from panther.db.connections import db
+from panther.db.cursor import Cursor
 from panther.db.utils import merge_dicts, prepare_id_for_query
 from panther.exceptions import DatabaseError
 
@@ -25,7 +27,7 @@ class BaseMongoDBQuery:
         return db.session.get_collection(
             name=cls.__name__,
             codec_options=CodecOptions(document_class=dict)
-            # codec_options=CodecOptions(document_class=cls)
+            # codec_options=CodecOptions(document_class=cls) TODO: https://jira.mongodb.org/browse/PYTHON-4192
         )
 
     # # # # # Find # # # # #
@@ -36,9 +38,8 @@ class BaseMongoDBQuery:
         return None
 
     @classmethod
-    async def find(cls, _data: dict | None = None, /, **kwargs) -> list[Self]:
-        documents = cls.collection().find(cls._merge(_data, kwargs)).to_list(length=None)
-        return [cls._create_model_instance(document=document) for document in await documents]
+    async def find(cls, _data: dict | None = None, /, **kwargs) -> Cursor:
+        return Cursor(cls=cls, collection=cls.collection().delegate, filter=cls._merge(_data, kwargs))
 
     @classmethod
     async def first(cls, _data: dict | None = None, /, **kwargs) -> Self | None:

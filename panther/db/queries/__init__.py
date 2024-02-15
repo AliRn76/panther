@@ -1,1 +1,1 @@
-from panther.db.queries.queries import *  # noqa: F403
+from panther.db.queries.queries import Query
