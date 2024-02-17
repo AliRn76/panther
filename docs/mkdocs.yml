@@ -45,7 +45,6 @@ nav:
 #  - UserModel: 'user_model.md'
   - Single-File: 'single_file.md'
   - Release Notes: 'release_notes.md'
-  - TODOs: 'todos.md'
 
 markdown_extensions:
   - pymdownx.superfences
