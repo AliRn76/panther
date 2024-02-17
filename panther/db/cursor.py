@@ -16,8 +16,9 @@ class Cursor(_Cursor):
     models = {}
 
     def __init__(self, collection, *args, cls=None, **kwargs):
+        # cls.__name__ and collection.name are equal.
         if cls:
-            self.models[cls.__name__] = cls
+            self.models[collection.name] = cls
             self.cls = cls
         else:
             self.cls = self.models[collection.name]

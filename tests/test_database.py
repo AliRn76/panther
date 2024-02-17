@@ -9,7 +9,6 @@ from panther import Panther
 from panther.db import Model
 from panther.db.connections import db
 from panther.db.cursor import Cursor
-from panther.exceptions import DatabaseError
 
 f = faker.Faker()
 
@@ -126,12 +125,13 @@ class _BaseDatabaseTestCase:
         author = f.name()
         pages_count = random.randint(0, 10)
         await self._insert_many_with_specific_params(name=name, author=author, pages_count=pages_count)
+        last_obj = await Book.insert_one(name=name, author=author, pages_count=pages_count)
 
         # Find One
         book = await Book.last(name=name, author=author, pages_count=pages_count)
 
         assert isinstance(book, Book)
-        assert book.id
+        assert book.id == last_obj.id
         assert book.name == name
         assert book.pages_count == pages_count
 
@@ -507,19 +507,3 @@ class TestMongoDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
 
     def tearDown(self) -> None:
         db.session.drop_collection('Book')
-
-    async def test_last(self):
-        try:
-            await super().test_last()
-        except DatabaseError as exc:
-            assert exc.args[0] == 'last() is not supported in MongoDB yet.'
-        else:
-            assert False
-
-    async def test_last_not_found(self):
-        try:
-            await super().test_last_not_found()
-        except DatabaseError as exc:
-            assert exc.args[0] == 'last() is not supported in MongoDB yet.'
-        else:
-            assert False

@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from pymongo.database import Database
 
 
-class DatabaseConnection:
+class BaseDatabaseConnection:
     def __init__(self, *args, **kwargs):
         """Initialized in application startup"""
         self.init(*args, **kwargs)
@@ -36,7 +36,7 @@ class DatabaseConnection:
         pass
 
 
-class MongoDBConnection(DatabaseConnection):
+class MongoDBConnection(BaseDatabaseConnection):
     def init(
             self,
             host: str = 'localhost',
@@ -73,7 +73,7 @@ class MongoDBConnection(DatabaseConnection):
         return self._database
 
 
-class PantherDBConnection(DatabaseConnection):
+class PantherDBConnection(BaseDatabaseConnection):
     def init(self, path: str | None = None, encryption: bool = False):
         params = {'db_name': path, 'return_dict': True}
         if encryption:
@@ -90,7 +90,7 @@ class PantherDBConnection(DatabaseConnection):
         return self._connection
 
 
-class DatabaseSession(Singleton):
+class DatabaseConnection(Singleton):
     @property
     def session(self):
         return config['database'].session
@@ -130,5 +130,5 @@ class RedisConnection(Singleton, _Redis):
         return self.websocket_connection
 
 
-db: DatabaseSession = DatabaseSession()
+db: DatabaseConnection = DatabaseConnection()
 redis: RedisConnection = RedisConnection()

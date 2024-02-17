@@ -56,7 +56,7 @@ class Model(PydanticBaseModel, Query):
 class BaseUser(Model):
     first_name: str = Field('', max_length=64)
     last_name: str = Field('', max_length=64)
-    last_login: datetime = None
+    last_login: datetime | None = None
 
     async def update_last_login(self) -> None:
         await self.update(last_login=datetime.now())

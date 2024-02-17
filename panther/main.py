@@ -6,7 +6,6 @@ import types
 from collections.abc import Callable
 from logging.config import dictConfig
 from pathlib import Path
-from threading import Thread
 
 import panther.logging
 from panther import status

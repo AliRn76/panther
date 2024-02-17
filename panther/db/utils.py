@@ -1,6 +1,4 @@
 import logging
-import operator
-from functools import reduce
 from time import perf_counter
 
 from panther.configs import config
@@ -10,7 +8,6 @@ try:
     import bson
 except ImportError:
     pass
-
 
 logger = logging.getLogger('query')
 
@@ -22,9 +19,10 @@ def log_query(func):
         start = perf_counter()
         response = await func(*args, **kwargs)
         end = perf_counter()
-        class_name = args[0].__name__ if hasattr(args[0], '__name__') else args[0].__class__.__name__
+        class_name = getattr(args[0], '__name__', args[0].__class__.__name__)
         logger.info(f'\033[1mQuery -->\033[0m  {class_name}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
         return response
+
     return log
 
 
@@ -34,6 +32,7 @@ def check_connection(func):
             msg = "You don't have active database connection, Check your middlewares"
             raise NotImplementedError(msg)
         return await func(*args, **kwargs)
+
     return wrapper
 
 
@@ -57,7 +56,3 @@ def _convert_to_object_id(_id):
     except bson.objectid.InvalidId:
         msg = f'id={_id} is invalid bson.ObjectId'
         raise bson.errors.InvalidId(msg)
-
-
-def merge_dicts(*args) -> dict:
-    return reduce(operator.ior, filter(None, args), {})
