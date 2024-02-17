@@ -77,7 +77,7 @@ async def healthcheck_api():
             except PyMongoError:
                 checks.append(False)
     # Redis
-    if config['redis']:
+    if redis.is_connected:
         checks.append(redis.ping())
 
     return Response(all(checks))

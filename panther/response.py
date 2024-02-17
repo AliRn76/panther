@@ -4,8 +4,10 @@ import orjson as json
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic._internal._model_construction import ModelMetaclass
 
+from panther.db.cursor import Cursor
+
 ResponseDataTypes = list | tuple | set | dict | int | float | str | bool | bytes | NoneType | ModelMetaclass
-IterableDataTypes = list | tuple | set
+IterableDataTypes = list | tuple | set | Cursor
 
 
 class Response:

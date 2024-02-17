@@ -1,11 +1,11 @@
 import logging
 import platform
+
 from rich import print as rprint
 
 from panther.exceptions import PantherError
 
 logger = logging.getLogger('panther')
-
 
 if platform.system() == 'Windows':
     h = '|'
@@ -109,11 +109,14 @@ def print_uvicorn_help_message():
 
 
 def print_info(config: dict):
+    from panther.db.connections import redis
+
+
     mo = config['monitoring']
     lq = config['log_queries']
     bt = config['background_tasks']
     ws = config['has_ws']
-    rd = getattr(config['redis'], 'is_connected', False)
+    rd = redis.is_connected
     bd = '{0:<39}'.format(str(config['base_dir']))
     if len(bd) > 39:
         bd = f'{bd[:36]}...'

@@ -56,14 +56,14 @@ class Model(PydanticBaseModel, Query):
 class BaseUser(Model):
     first_name: str = Field('', max_length=64)
     last_name: str = Field('', max_length=64)
-    last_login: datetime = None
+    last_login: datetime | None = None
 
-    def update_last_login(self) -> None:
-        self.update(last_login=datetime.now())
+    async def update_last_login(self) -> None:
+        await self.update(last_login=datetime.now())
 
-    def login(self) -> dict:
+    async def login(self) -> dict:
         """Return dict of access and refresh token"""
-        self.update_last_login()
+        await self.update_last_login()
         return config.authentication.login(self.id)
 
     def logout(self) -> dict:

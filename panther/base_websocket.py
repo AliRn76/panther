@@ -151,7 +151,7 @@ class WebsocketConnections(Singleton):
                 await connection.close(reason='Authentication Error')
                 return True
             try:
-                connection.user = config.ws_authentication.authentication(connection)
+                connection.user = await config.ws_authentication.authentication(connection)
             except AuthenticationAPIError as e:
                 await connection.close(reason=e.detail)
         return False
@@ -164,7 +164,7 @@ class WebsocketConnections(Singleton):
                 logger.error(f'{perm.__name__}.authorization should be "classmethod"')
                 await connection.close(reason='Permission Denied')
                 return True
-            if perm.authorization(connection) is False:
+            if await perm.authorization(connection) is False:
                 await connection.close(reason='Permission Denied')
                 return True
         return False

@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
 from panther.test import APIClient
@@ -13,7 +13,7 @@ DATABASE = {
 }
 
 
-class TestPanelAPIs(TestCase):
+class TestPanelAPIs(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         app = Panther(__name__, configs=__name__, urls={})
@@ -23,7 +23,7 @@ class TestPanelAPIs(TestCase):
     def tearDownClass(cls) -> None:
         Path(DB_PATH).unlink()
 
-    def test_list_of_models(self):
-        response = self.client.get('_panel')
+    async def test_list_of_models(self):
+        response = await self.client.get('_panel')
         expected_keys = ['name', 'module', 'index']
         assert expected_keys == [*response.data[0].keys()]

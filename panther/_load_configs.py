@@ -63,7 +63,7 @@ def load_redis(_configs: dict, /) -> None:
         # We have to create another dict then pop the 'class' else we can't pass the tests
         args = redis_config.copy()
         args.pop('class', None)
-        config['redis'] = redis_class(**args, init=True)
+        redis_class(**args, init=True)
 
 
 def load_startup(_configs: dict, /) -> None:
@@ -126,20 +126,9 @@ def load_log_queries(_configs: dict, /) -> None:
 
 
 def load_middlewares(_configs: dict, /) -> None:
-    """
-    Should be after `load_database()`
-
-    Collect The Middlewares & Set `DatabaseMiddleware` If it is needed.
-    """
     from panther.middlewares import BaseMiddleware
 
     middlewares = {'http': [], 'ws': []}
-
-    # Add Database Middleware
-    if config['database']:
-        database_middleware = import_class('panther.middlewares.db.DatabaseMiddleware')
-        middlewares['http'].append(database_middleware())
-        middlewares['ws'].append(database_middleware())
 
     # Collect Middlewares
     for middleware in _configs.get('MIDDLEWARES') or []:

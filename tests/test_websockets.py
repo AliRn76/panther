@@ -88,7 +88,7 @@ class WebsocketWithAuthentication(GenericWebsocket):
 
 class Permission:
     @classmethod
-    def authorization(cls, connection) -> bool:
+    async def authorization(cls, connection) -> bool:
         if connection.path == '/with-permission':
             return True
         else:

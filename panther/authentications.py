@@ -23,7 +23,7 @@ logger = logging.getLogger('panther')
 class BaseAuthentication:
     @classmethod
     @abstractmethod
-    def authentication(cls, request: Request):
+    async def authentication(cls, request: Request):
         """Return Instance of User"""
         msg = f'{cls.__name__}.authentication() is not implemented.'
         raise cls.exception(msg) from None
@@ -48,7 +48,7 @@ class JWTAuthentication(BaseAuthentication):
         raise cls.exception(msg) from None
 
     @classmethod
-    def authentication(cls, request: Request) -> Model:
+    async def authentication(cls, request: Request) -> Model:
         auth_header = cls.get_authorization_header(request).split()
 
         if len(auth_header) != 2:
@@ -71,7 +71,7 @@ class JWTAuthentication(BaseAuthentication):
             raise cls.exception(msg) from None
 
         payload = cls.decode_jwt(token)
-        user = cls.get_user(payload)
+        user = await cls.get_user(payload)
         user._auth_token = token
         return user
 
@@ -88,14 +88,14 @@ class JWTAuthentication(BaseAuthentication):
             raise cls.exception(e) from None
 
     @classmethod
-    def get_user(cls, payload: dict) -> Model:
+    async def get_user(cls, payload: dict) -> Model:
         """Get UserModel from config, else use default UserModel from cls.model"""
         if (user_id := payload.get('user_id')) is None:
             msg = 'Payload does not have `user_id`'
             raise cls.exception(msg)
 
         user_model = config['user_model'] or cls.model
-        if user := user_model.find_one(id=user_id):
+        if user := await user_model.find_one(id=user_id):
             return user
 
         msg = 'User not found'

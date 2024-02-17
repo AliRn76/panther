@@ -60,13 +60,13 @@ class API:
                 raise MethodNotAllowedAPIError
 
             # 2. Authentication
-            self.handle_authentications()
+            await self.handle_authentications()
 
             # 3. Throttling
             self.handle_throttling()
 
             # 4. Permissions
-            self.handle_permissions()
+            await self.handle_permissions()
 
             # 5. Validate Input
             if self.request.method in ['POST', 'PUT', 'PATCH']:
@@ -109,13 +109,13 @@ class API:
 
         return wrapper
 
-    def handle_authentications(self) -> None:
+    async def handle_authentications(self) -> None:
         auth_class = config['authentication']
         if self.auth:
             if not auth_class:
                 logger.critical('"AUTHENTICATION" has not been set in configs')
                 raise APIError
-            user = auth_class.authentication(self.request)
+            user = await auth_class.authentication(self.request)
             self.request.user = user
 
     def handle_throttling(self) -> None:
@@ -128,12 +128,12 @@ class API:
 
             throttling_storage[throttling_key] += 1
 
-    def handle_permissions(self) -> None:
+    async def handle_permissions(self) -> None:
         for perm in self.permissions:
             if type(perm.authorization).__name__ != 'method':
                 logger.error(f'{perm.__name__}.authorization should be "classmethod"')
                 raise AuthorizationAPIError
-            if perm.authorization(self.request) is False:
+            if await perm.authorization(self.request) is False:
                 raise AuthorizationAPIError
 
     def handle_input_validation(self):

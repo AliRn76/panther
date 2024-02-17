@@ -5,3 +5,4 @@ coverage
 pytest
 cryptography~=42.0
 websockets
+pymongo

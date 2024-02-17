@@ -6,7 +6,6 @@ import types
 from collections.abc import Callable
 from logging.config import dictConfig
 from pathlib import Path
-from threading import Thread
 
 import panther.logging
 from panther import status
@@ -98,7 +97,7 @@ class Panther:
         """
         if scope['type'] == 'lifespan':
             message = await receive()
-            if message["type"] == "lifespan.startup":
+            if message["type"] == 'lifespan.startup':
                 await self.handle_ws_listener()
                 await self.handle_startup()
             return
