@@ -1,6 +1,5 @@
 import logging
 import platform
-
 from rich import print as rprint
 
 from panther.exceptions import PantherError
@@ -114,6 +113,7 @@ def print_info(config: dict):
     lq = config['log_queries']
     bt = config['background_tasks']
     ws = config['has_ws']
+    rd = getattr(config['redis'], 'is_connected', False)
     bd = '{0:<39}'.format(str(config['base_dir']))
     if len(bd) > 39:
         bd = f'{bd[:36]}...'
@@ -125,28 +125,39 @@ def print_info(config: dict):
         monitor = None
 
     # Uvloop
+    uvloop_msg = None
     if platform.system() != 'Windows':
         try:
             import uvloop
-            uvloop = None
         except ImportError:
-            uvloop = (
+            uvloop_msg = (
                 f'{h} * You may want to install `uvloop` for better performance{h}\n'
                 f'{h}   `pip install uvloop`                                   {h}\n')
-    else:
-        uvloop = None
+
+    # Gunicorn if Websocket
+    gunicorn_msg = None
+    if config['has_ws']:
+        try:
+            import gunicorn
+            gunicorn_msg = f'{h} * You have WS so make sure to run gunicorn with --preload{h}\n'
+        except ImportError:
+            pass
 
     # Message
     info_message = f"""{logo}
+{h}   Redis: {rd}                                       \t   {h}
+{h}   Websocket: {ws}                                   \t   {h}
 {h}   Monitoring: {mo}                                  \t   {h}
 {h}   Log Queries: {lq}                                 \t   {h}
 {h}   Background Tasks: {bt}                            \t   {h}
-{h}   Websocket: {ws}                                   \t   {h}
 {h}   Base directory: {bd}{h}
 """
     if monitor:
         info_message += monitor
-    if uvloop:
-        info_message += uvloop
+    if uvloop_msg:
+        info_message += uvloop_msg
+    if gunicorn_msg:
+        info_message += gunicorn_msg
+
     info_message += bottom
     rprint(info_message)

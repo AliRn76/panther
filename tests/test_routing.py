@@ -616,6 +616,13 @@ class TestRoutingFunctions(TestCase):
                         'avatar': admin_v1_profile_avatar,
                     },
                     '<user_id>': admin_v1_id,
+                    '<user_id2>': {
+                        'list': {
+                            '<registered2>': {},
+                            '<registered1>': admin_v2_users_list_registered,
+                            'registered': admin_v2_users_list_registered,
+                        },
+                    },
                     'users': {
                         'list': {
                             'registered': admin_v2_users_list_registered,
@@ -634,16 +641,20 @@ class TestRoutingFunctions(TestCase):
         _, payment_path = find_endpoint('payments/')
         _, admin_v1_profile_avatar_path = find_endpoint('admin/v1/profile/avatar')
         _, admin_v1_id_path = find_endpoint(f'admin/v1/{random.randint(0, 100)}')
+        _, admin_v1_id_registered_path = find_endpoint(f'admin/v1/{random.randint(0, 100)}/list/registered')
+        _, admin_v1_id_registered1_path = find_endpoint(f'admin/v1/{random.randint(0, 100)}/list/1/')
         _, admin_v2_users_list_registered_path = find_endpoint('admin/v1/users/list/registered/')
         _, admin_v2_users_detail_not_registered_path = find_endpoint('admin/v1/users/detail/not-registered')
 
-        assert user_id_profile_id_path == 'user/<user_id>/profile/<id>/'
-        assert user_profile_path == 'user/profile/'
-        assert payment_path == 'payments/'
-        assert admin_v1_profile_avatar_path == 'admin/v1/profile/avatar/'
-        assert admin_v1_id_path == 'admin/v1/<user_id>/'
-        assert admin_v2_users_list_registered_path == 'admin/v1/users/list/registered/'
-        assert admin_v2_users_detail_not_registered_path == 'admin/v1/users/detail/not-registered/'
+        assert user_id_profile_id_path == 'user/<user_id>/profile/<id>'
+        assert user_profile_path == 'user/profile'
+        assert payment_path == 'payments'
+        assert admin_v1_profile_avatar_path == 'admin/v1/profile/avatar'
+        assert admin_v1_id_path == 'admin/v1/<user_id>'
+        assert admin_v1_id_registered_path == 'admin/v1/<user_id2>/list/registered'
+        assert admin_v1_id_registered1_path == 'admin/v1/<user_id2>/list/<registered1>'
+        assert admin_v2_users_list_registered_path == 'admin/v1/users/list/registered'
+        assert admin_v2_users_detail_not_registered_path == 'admin/v1/users/detail/not-registered'
 
     def test_find_endpoint_not_found(self):
         def temp_func(): pass
@@ -819,9 +830,9 @@ class TestRoutingFunctions(TestCase):
         _, temp_2_path = find_endpoint(f'{random.randint(2, 100)}')
         _, temp_3_path = find_endpoint(f'{random.randint(2, 100)}/{random.randint(2, 100)}')
 
-        assert temp_1_path == '/'
-        assert temp_2_path == '<index>/'
-        assert temp_3_path == '<index>/<id>/'
+        assert temp_1_path == ''
+        assert temp_2_path == '<index>'
+        assert temp_3_path == '<index>/<id>'
 
     def test_find_endpoint_same_pre_key(self):
         def temp_1(): pass
@@ -869,9 +880,9 @@ class TestRoutingFunctions(TestCase):
         _, temp_2_path = find_endpoint('hello')
         _, temp_3_path = find_endpoint(f'hello/{random.randint(2, 100)}')
 
-        assert temp_1_path == '/'
-        assert temp_2_path == 'hello/'
-        assert temp_3_path == 'hello/<id>/'
+        assert temp_1_path == ''
+        assert temp_2_path == 'hello'
+        assert temp_3_path == 'hello/<id>'
 
     def test_find_endpoint_with_params(self):
         def user_id_profile_id(): pass
