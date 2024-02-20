@@ -6,7 +6,6 @@ import types
 import typing
 from collections.abc import Callable
 from traceback import TracebackException
-from uuid import uuid4
 
 import orjson as json
 
@@ -105,10 +104,6 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
                 logger.error('Unrecognized Pattern')
 
     return data
-
-
-def generate_ws_connection_id() -> str:
-    return uuid4().hex
 
 
 def is_function_async(func: Callable) -> bool:

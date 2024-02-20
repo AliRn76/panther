@@ -2,7 +2,8 @@ import base64
 import hashlib
 import logging
 import os
-from datetime import datetime, timedelta
+import secrets
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import ClassVar
 
@@ -99,3 +100,24 @@ def check_password(stored_password: str, new_password: str) -> bool:
     derived_key = scrypt(password=new_password, salt=bytes.fromhex(salt), digest=True)
 
     return derived_key == stored_hash
+
+
+class ULID:
+    """https://github.com/ulid/spec"""
+
+    crockford_base32_characters = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
+
+    @classmethod
+    def new(cls):
+        current_timestamp = int(datetime.now(timezone.utc).timestamp() * 1000)
+        epoch_bits = '{0:050b}'.format(current_timestamp)
+        random_bits = '{0:080b}'.format(secrets.randbits(80))
+        bits = epoch_bits + random_bits
+        return cls._generate(bits)
+
+    @classmethod
+    def _generate(cls, bits: str) -> str:
+        return ''.join(
+            cls.crockford_base32_characters[int(bits[i: i + 5], base=2)]
+            for i in range(0, 130, 5)
+        )

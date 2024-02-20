@@ -11,12 +11,12 @@ from typing import TYPE_CHECKING, Literal
 import orjson as json
 
 from panther import status
-from panther._utils import generate_ws_connection_id
 from panther.base_request import BaseRequest
 from panther.configs import config
 from panther.db.connections import redis
 from panther.exceptions import AuthenticationAPIError
 from panther.utils import Singleton
+from panther.utils import Singleton, ULID
 
 if TYPE_CHECKING:
     from redis import Redis
@@ -188,9 +188,9 @@ class Websocket(BaseRequest):
         self.is_connected = True
 
         # Generate ConnectionID
-        self._connection_id = generate_ws_connection_id()
-        while self._connection_id in config['websocket_connections'].connections:
-            self._connection_id = generate_ws_connection_id()
+        self._connection_id = ULID.new()
+
+        logger.debug(f'Accepting WS Connection {self._connection_id}')
 
     async def receive(self, data: str | bytes) -> None:
         pass
@@ -213,7 +213,7 @@ class Websocket(BaseRequest):
 
     async def close(self, code: int = status.WS_1000_NORMAL_CLOSURE, reason: str = '') -> None:
         connection_id = getattr(self, '_connection_id', '')
-        logger.debug(f'Closing WS Connection {connection_id}')
+        logger.debug(f'Closing WS Connection {connection_id} Code: {code}')
         self.is_connected = False
         config['websocket_connections'].remove_connection(self)
         await self.asgi_send({'type': 'websocket.close', 'code': code, 'reason': reason})
