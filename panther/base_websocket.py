@@ -14,8 +14,7 @@ from panther import status
 from panther.base_request import BaseRequest
 from panther.configs import config
 from panther.db.connections import redis
-from panther.exceptions import AuthenticationAPIError
-from panther.utils import Singleton
+from panther.exceptions import AuthenticationAPIError, InvalidPathVariableAPIError
 from panther.utils import Singleton, ULID
 
 if TYPE_CHECKING:
@@ -121,16 +120,30 @@ class WebsocketConnections(Singleton):
             self.pubsub.publish(publish_data)
 
     async def new_connection(self, connection: Websocket) -> None:
+        # 1. Authentication
         connection_closed = await self.handle_authentication(connection=connection)
+
+        # 2. Permissions
         connection_closed = connection_closed or await self.handle_permissions(connection=connection)
 
-        if not connection_closed:
-            await connection.connect(**connection.path_variables)
+        if connection_closed:
+            # Don't run the following code...
+            return None
 
-            if not hasattr(connection, '_connection_id'):
-                # User didn't even call the `self.accept()` so close the connection
-                await connection.close()
+        # 3. Put PathVariables and Request(If User Wants It) In kwargs
+        try:
+            kwargs = connection.clean_parameters(connection.connect)
+        except InvalidPathVariableAPIError as e:
+            return await connection.close(status.WS_1000_NORMAL_CLOSURE, reason=str(e))
 
+        # 4. Connect To Endpoint
+        await connection.connect(**kwargs)
+
+        if not hasattr(connection, '_connection_id'):
+            # User didn't even call the `self.accept()` so close the connection
+            await connection.close()
+
+        # 5. Connection Accepted
         if connection.is_connected:
             self.connections_count += 1
 

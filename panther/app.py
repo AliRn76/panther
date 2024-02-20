@@ -1,6 +1,6 @@
 import functools
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
 from typing import Literal
 
 from orjson import JSONDecodeError
@@ -14,7 +14,8 @@ from panther.exceptions import (
     AuthorizationAPIError,
     JSONDecodeAPIError,
     MethodNotAllowedAPIError,
-    ThrottlingAPIError, BadRequestAPIError,
+    ThrottlingAPIError,
+    BadRequestAPIError
 )
 from panther.request import Request
 from panther.response import Response
@@ -22,7 +23,6 @@ from panther.throttling import Throttling, throttling_storage
 from panther.utils import round_datetime
 
 __all__ = ('API', 'GenericAPI')
-
 
 logger = logging.getLogger('panther')
 
@@ -74,19 +74,17 @@ class API:
 
             # 6. Get Cached Response
             if self.cache and self.request.method == 'GET':
-                if cached := get_cached_response_data(request=self.request,  cache_exp_time=self.cache_exp_time):
+                if cached := get_cached_response_data(request=self.request, cache_exp_time=self.cache_exp_time):
                     return Response(data=cached.data, status_code=cached.status_code)
 
-            # 7. Put Request In kwargs (If User Wants It)
-            kwargs = {}
-            if req_arg := [k for k, v in func.__annotations__.items() if v == Request]:
-                kwargs[req_arg[0]] = self.request
+            # 7. Put PathVariables and Request(If User Wants It) In kwargs
+            kwargs = self.request.clean_parameters(func)
 
             # 8. Call Endpoint
             if is_function_async(func):
-                response = await func(**kwargs, **request.path_variables)
+                response = await func(**kwargs)
             else:
-                response = func(**kwargs, **request.path_variables)
+                response = func(**kwargs)
 
             # 9. Clean Response
             if not isinstance(response, Response):

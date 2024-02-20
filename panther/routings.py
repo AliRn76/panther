@@ -167,14 +167,3 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
                         break
             else:
                 return ENDPOINT_NOT_FOUND
-
-
-def collect_path_variables(request_path: str, found_path: str) -> dict:
-    return {
-        variable.strip('< >'): value
-        for variable, value in zip(
-            found_path.strip('/').split('/'),
-            request_path.strip('/').split('/')
-        )
-        if variable.startswith('<')
-    }

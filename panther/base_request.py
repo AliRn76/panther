@@ -105,19 +105,36 @@ class BaseRequest:
     def scheme(self) -> str:
         return self.scope['scheme']
 
-    def set_path_variables(self, func: Callable, path_variables: dict):
-        self.path_variables = path_variables
+    def collect_path_variables(self, found_path: str):
+        self.path_variables = {
+            variable.strip('< >'): value
+            for variable, value in zip(
+                found_path.strip('/').split('/'),
+                self.path.strip('/').split('/')
+            )
+            if variable.startswith('<')
+        }
 
-        for name, value in self.path_variables.items():
-            for variable_name, variable_type in func.__annotations__.items():
+    def clean_parameters(self, func: Callable) -> dict:
+        kwargs = {}
+        for variable_name, variable_type in func.__annotations__.items():
+            # Put Request/ Websocket In kwargs (If User Wants It)
+            if issubclass(variable_type, BaseRequest):
+                kwargs[variable_name] = self
+                continue
+
+            for name, value in self.path_variables.items():
                 if name == variable_name:
                     # Check the type and convert the value
                     if variable_type is bool:
-                        self.path_variables[name] = value.lower() not in ['false', '0']
+                        kwargs[name] = value.lower() not in ['false', '0']
 
                     elif variable_type is int:
                         try:
-                            self.path_variables[name] = int(value)
+                            kwargs[name] = int(value)
                         except ValueError:
                             raise InvalidPathVariableAPIError(value=value, variable_type=variable_type)
-                    break
+                    else:
+                        kwargs[name] = value
+        return kwargs
+

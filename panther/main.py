@@ -15,11 +15,11 @@ from panther._utils import clean_traceback_message, http_response, is_function_a
 from panther.base_websocket import WebsocketListener
 from panther.cli.utils import print_info
 from panther.configs import config
-from panther.exceptions import APIError, PantherError, InvalidPathVariableAPIError
+from panther.exceptions import APIError, PantherError
 from panther.monitoring import Monitoring
 from panther.request import Request
 from panther.response import Response
-from panther.routings import collect_path_variables, find_endpoint
+from panther.routings import find_endpoint
 
 dictConfig(panther.logging.LOGGING)
 logger = logging.getLogger('panther')
@@ -127,16 +127,12 @@ class Panther:
             await monitoring.after('Rejected')
             return await temp_connection.close(status.WS_1014_BAD_GATEWAY)
 
-        # Collect Path Variables
-        path_variables: dict = collect_path_variables(request_path=temp_connection.path, found_path=found_path)
-
         # Create The Connection
         del temp_connection
         connection = endpoint(scope=scope, receive=receive, send=send)
-        try:
-            connection.set_path_variables(func=connection.connect, path_variables=path_variables)
-        except InvalidPathVariableAPIError as e:
-            return await connection.close(status.WS_1000_NORMAL_CLOSURE, reason=str(e))
+
+        # Collect Path Variables
+        connection.collect_path_variables(found_path=found_path)
 
         # Call 'Before' Middlewares
         if await self._run_ws_middlewares_before_listen(connection=connection):
@@ -192,8 +188,7 @@ class Panther:
             return await self._raise(send, status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
         # Collect Path Variables
-        path_variables: dict = collect_path_variables(request_path=request.path, found_path=found_path)
-        request.set_path_variables(func=endpoint, path_variables=path_variables)
+        request.collect_path_variables(found_path=found_path)
 
         try:  # They Both(middleware.before() & _endpoint()) Have The Same Exception (APIException)
             # Call 'Before' Middlewares
