@@ -14,14 +14,17 @@
 ---
 
 ### Why Use Panther ?
-- Document-oriented Databases ODM ([PantherDB](https://pypi.org/project/pantherdb/), MongoDB)
-- Built-in Websocket Support
-- Cache APIs (In Memory, In Redis)
-- Built-in Authentication Classes (Customizable)
-- Built-in Permission Classes (Customizable)
-- Handle Custom Middlewares
-- Handle Custom Throttling 
-- Visual API Monitoring (In Terminal)
+- Include Simple **File-Base** Database ([PantherDB](https://pypi.org/project/pantherdb/))
+- Built-in Document-oriented Databases **ODM** (**MongoDB**, PantherDB)
+- Built-in **Websocket** Support
+- Built-in API **Caching** System (In Memory, **Redis**)
+- Built-in **Authentication** Classes
+- Built-in **Permission** Classes
+- Support Custom **Background Tasks**
+- Support Custom **Middlewares**
+- Support Custom **Throttling**
+- Visual API **Monitoring** (In Terminal)
+- It's One Of The **Fastest Python Frameworks** 
 ---
 
 ### Supported by
@@ -53,111 +56,126 @@
 ---
 
 ### Installation
-- <details>
-    <summary>1. Create a Virtual Environment</summary>
-    <pre>$ python3 -m venv .venv</pre>
-  
-  </details>
-  
-- <details>
-    <summary>2. Active The Environment</summary>
-    * Linux & Mac
-      <pre>$ source .venv/bin/activate</pre>
-    * Windows
-      <pre>$ .\.venv\Scripts\activate</pre>
-  
-  </details>
-
-- <details open>
-    <summary>3. <b>Install Panther</b></summary>
-    - ⬇ Normal Installation
-      <pre><b>$ pip install panther</b></pre>
-    -  ⬇ Include full requirements (MongoDB, JWTAuth, Ruff, Redis, bpython)
-      <pre>$ pip install panther[full]</pre>
-  </details>
-  
----
+```shell
+$ pip install panther
+```
 
 ### Usage
 
 - #### Create Project
 
-    ```console
+    ```shell
     $ panther create
     ```
 
 - #### Run Project
     
-    ```console
+    ```shell
     $ panther run --reload
     ```
   _* Panther uses [Uvicorn](https://github.com/encode/uvicorn) as ASGI (Asynchronous Server Gateway Interface) but you can run the project with [Granian](https://pypi.org/project/granian/), [daphne](https://pypi.org/project/daphne/) or any ASGI server too_
 
 - #### Monitoring Requests
 
-    ```console
+    ```shell
     $ panther monitor 
     ```
 
 - #### Python Shell
 
-    ```console
+    ```shell
     $ panther shell
     ```
   
 ---
 
-### Single-File Structure Example
+### API Example
   - Create `main.py`
 
     ```python
     from datetime import datetime, timedelta
     
-    from panther import version, status, Panther
-    from panther.app import API
-    from panther.request import Request
+    from panther import status, Panther
+    from panther.app import GenericAPI
     from panther.response import Response
     from panther.throttling import Throttling
     
-    InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
+    
+    class FirstAPI(GenericAPI):
+        # Cache Response For 10 Seconds
+        cache = True
+        cache_exp_time = timedelta(seconds=10)
+        # Limit Requests After 5 Request/ 1 Minute (Per User)
+        throttling = Throttling(rate=5, duration=timedelta(minutes=1))
+        
+        def get(self):
+            date_time = datetime.now().isoformat()
+            data = {'detail': f'Hello World | {date_time}'}
+            return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
     
     
-    @API()
-    async def hello_world():
-        return {'detail': 'Hello World'}
-    
-    
-    @API(cache=True, throttling=InfoThrottling)
-    async def info(request: Request):
-        data = {
-            'panther_version': version(),
-            'datetime_now': datetime.now().isoformat(),
-            'user_agent': request.headers.user_agent
-        }
-        return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
-    
-    
-    url_routing = {
-        '': hello_world,
-        'info': info,
-    }
-    
+    url_routing = {'': FirstAPI}
     app = Panther(__name__, configs=__name__, urls=url_routing)
     ```
 
   - Run the project:
     - `$ panther run --reload` 
   
+  - Checkout the [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
-  - Now you can see these two urls:</b>
-    - [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
-    - [http://127.0.0.1:8000/info/](http://127.0.0.1:8000/info/)
+### WebSocket Echo Example 
+  - Create `main.py`
+
+    ```python
+    from panther import Panther
+    from panther.app import GenericAPI
+    from panther.response import HTMLResponse
+    from panther.websocket import GenericWebsocket
+    
+    
+    class FirstWebsocket(GenericWebsocket):
+        async def connect(self, **kwargs):
+            await self.accept()
+    
+        async def receive(self, data: str | bytes):
+            await self.send(data)
+    
+    
+    class MainPage(GenericAPI):
+        def get(self):
+            template = """
+            <input type="text" id="messageInput">
+            <button id="sendButton">Send Message</button>
+            <ul id="messages"></ul>
+            <script>
+                var socket = new WebSocket('ws://127.0.0.1:8000/ws');
+                socket.addEventListener('message', function (event) {
+                    var li = document.createElement('li');
+                    document.getElementById('messages').appendChild(li).textContent = 'Server: ' + event.data;
+                });
+                function sendMessage() {
+                    socket.send(document.getElementById('messageInput').value);
+                }
+                document.getElementById('sendButton').addEventListener('click', sendMessage);
+            </script>
+            """
+            return HTMLResponse(template)
+    
+    url_routing = {
+        '': MainPage,
+        'ws': FirstWebsocket,
+    }
+    app = Panther(__name__, configs=__name__, urls=url_routing)
+
+    ```
+
+  - Run the project:
+    - `$ panther run --reload` 
+  - Go to [http://127.0.0.1:8000/](http://127.0.0.1:8000/) and work with your `websocket`
 
 
 
 > **Next Step: [First CRUD](https://pantherpy.github.io/function_first_crud)**
-
-> **Real Word Example: [Https://GitHub.com/PantherPy/panther-example](https://GitHub.com/PantherPy/panther-example)**
 
 ---
 
