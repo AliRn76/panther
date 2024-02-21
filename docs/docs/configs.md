@@ -51,7 +51,7 @@ It can be optional if you pass your `urls` directly to `Panther(urls=url_routing
 
 It should be the address of your `urls` `dict`
 
-_Example:_ `URLS = 'core.configs.urls.url_routing'`
+_Example:_ `URLs = 'core.configs.urls.url_routing'`
 
 ---
 ### [DEFAULT_CACHE_EXP](https://pantherpy.github.io/caching)

@@ -1,4 +1,4 @@
-You can write your `serializer` in 2 style:
+You can write your `serializer` in ۳ style:
 
 
 ## Style 1 (Pydantic)
@@ -26,8 +26,6 @@ Write a normal `pydantic` class and use it as serializer:
    ```
 
 ## Style 2 (Model Serializer)
-### Simple Usage
-
 Use panther `ModelSerializer` to write your serializer which will use your `model` to create fields.
 
    ```python
@@ -67,7 +65,7 @@ Use panther `ModelSerializer` to write your serializer which will use your `mode
 
 
 
-### Complex Usage
+## Style 3 (Model Serializer + Pydantic)
 
 You can use `pydantic.BaseModel` features in `ModelSerializer` too.
 
@@ -111,8 +109,8 @@ You can use `pydantic.BaseModel` features in `ModelSerializer` too.
    ```
 
 ### Notes
-1. You can add custom `fields` in `pydantic style` 
-2. You can add `model_config` as `attribute` and also in the `Config`
+1. You can add custom `fields` 
+2. You can add `model_config` as `attribute` or as `Config`
 3. You can use `@field_validator` and other `validators` of `pydantic`.
  
 

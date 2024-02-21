@@ -4,20 +4,21 @@
 > 
 > <b>Required:</b> `True`
 
-- `URLs` should point to your root `urls` with dotted address (`path.module.url_dict`),
-and it should be `dict`.
-- `key` of url_routing dict is `path` & value is `endpoint` or another `dict`
+- `URLs` should point to your root `urls` with dotted address (`path.module.url_dict`)
+- The target of `URLs` should be `dict`.
+- The `key` in `url_routing` is the `path` & value is the `endpoint` or another `dict`
 
 - #### Path Variables are handled like below:
 
     - <`variable_name`>
     - Example: `user/<user_id>/blog/<title>/`
     - The `endpoint` should have parameters with those names too
-    - Example: `async def profile_api(user_id: int, title: str):`
+    - Example Function-Base: `async def profile_api(user_id: int, title: str):`
+    - Example Class-Base: `async def get(user_id: int, title: str):`
 
 ## Example
 
-- core/configs.py
+- `configs`
     ```python
     URLs = 'core.urls.url_routing
     ```
