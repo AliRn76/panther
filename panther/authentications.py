@@ -4,6 +4,7 @@ from abc import abstractmethod
 from datetime import timezone, datetime
 from typing import Literal
 
+from panther.base_websocket import Websocket
 from panther.cli.utils import import_error
 from panther.configs import config
 from panther.db.connections import redis
@@ -23,7 +24,7 @@ logger = logging.getLogger('panther')
 class BaseAuthentication:
     @classmethod
     @abstractmethod
-    async def authentication(cls, request: Request):
+    async def authentication(cls, request: Request | Websocket):
         """Return Instance of User"""
         msg = f'{cls.__name__}.authentication() is not implemented.'
         raise cls.exception(msg) from None
@@ -41,14 +42,14 @@ class JWTAuthentication(BaseAuthentication):
     HTTP_HEADER_ENCODING = 'iso-8859-1'  # RFC5987
 
     @classmethod
-    def get_authorization_header(cls, request: Request) -> str:
+    def get_authorization_header(cls, request: Request | Websocket) -> str:
         if auth := request.headers.authorization:
             return auth
         msg = 'Authorization is required'
         raise cls.exception(msg) from None
 
     @classmethod
-    async def authentication(cls, request: Request) -> Model:
+    async def authentication(cls, request: Request | Websocket) -> Model:
         auth_header = cls.get_authorization_header(request).split()
 
         if len(auth_header) != 2:
@@ -158,7 +159,7 @@ class JWTAuthentication(BaseAuthentication):
 
 class QueryParamJWTAuthentication(JWTAuthentication):
     @classmethod
-    def get_authorization_header(cls, request: Request) -> str:
+    def get_authorization_header(cls, request: Request | Websocket) -> str:
         if auth := request.query_params.get('authorization'):
             return auth
         msg = 'Authorization is required'

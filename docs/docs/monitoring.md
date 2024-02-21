@@ -4,11 +4,12 @@
 > 
 > <b>Default:</b> `False`
 
-Panther has a `Monitoring` middleware that process the `perf_time` of every request
 
-It will create a `monitoring.log` file and log the records
+Panther log `perf_time` of every request if this variable is `True`
 
 Then you can watch them live with: `panther monitor`
+
+Make sure it is `False` on production for better performance
 
 
 #### Log Example:

@@ -4,14 +4,6 @@
 > 
 > <b>Default:</b> `[]`
 
-Panther has several `built-in` middleware:
-
-- Database Middleware
-
-- Redis Middleware
-
-And you can write your own custom middlewares too
-
 
 ## Structure of middlewares
 `MIDDLEWARES` itself is a `list` of `tuples` which each `tuple` is like below:
@@ -19,54 +11,12 @@ And you can write your own custom middlewares too
 (`Dotted Address of The Middleware Class`, `kwargs as dict`)
 
 
-## Database Middleware
-This middleware will create a `db` connection which is used in `ODM` and you can use it manually too, it gives you a database connection:
-
-```python
-from panther.db.connections import db
-```
-
-We only support 2 database for now: `PantherDB` & `MongoDB`
-
-- Address of Middleware: `panther.middlewares.db.DatabaseMiddleware`
-- kwargs:
-    * `{'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}`
-
-    * `{'url': f'mongodb://{DB_HOST}:27017/{DB_NAME}'}`
-
-- Example of `PantherDB` (`Built-in Local Storage`):
-  ```python
-  MIDDLEWARES = [
-      ('panther.middlewares.db.DatabaseMiddleware', {'url': 'pantherdb://project_directory/database.pdb'}),
-  ]
-  ```
-- Example of `MongoDB`:
-  ```python
-  MIDDLEWARES = [
-      ('panther.middlewares.db.DatabaseMiddleware', {'url': 'mongodb://127.0.0.1:27017/example'}),
-  ]
-  ```
-  
-## Redis Middleware
-- Address of Middleware: `panther.middlewares.redis.RedisMiddleware`
-- kwargs: 
-    ```python
-    {'host': '127.0.0.1', 'port': 6379, ...}
-    ```
-
-- Example
-  ```python
-  MIDDLEWARES = [
-      ('panther.middlewares.redis.RedisMiddleware', {'host': '127.0.0.1', 'port': 6379}),
-  ]
-  ```
-  
 ## Custom Middleware
 ### Middleware Types
   We have 3 type of Middlewares, make sure that you are inheriting from the correct one:
   - `Base Middleware`: which is used for both `websocket` and `http` requests 
-    - `HTTP Middleware`: which is only used for `http` requests
-    - `Websocket Middleware`: which is only used for `websocket` requests
+  - `HTTP Middleware`: which is only used for `http` requests
+  - `Websocket Middleware`: which is only used for `websocket` requests
 
 ### Write Custom Middleware
   - Write a `class` and inherit from one of the classes below

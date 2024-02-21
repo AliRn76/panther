@@ -12,7 +12,7 @@ If you want to work with `Panther` in a `single-file` structure, follow the step
         return {'detail': 'Hello World'}
     ```
 
-2. Add your `APIs` to a `dict` (ex: `url_routing`)
+2. Add your `APIs` to a `dict` (example: `url_routing`)
 
     ```python
     from panther.app import API
@@ -46,12 +46,11 @@ If you want to work with `Panther` in a `single-file` structure, follow the step
     panther run 
     ```
 
-> `URLs` is a required config unless you pass the `urls` to the `Panther`  
-
-> When you pass the `configs` to the `Panther(configs=...)`, Panther is going to load the configs from this file,
-> else it is going to load `core/configs.py` file
-
-> You can pass the `startup` and `shutdown` functions to the `Panther()` too.
+### Notes
+- `URLs` is a required config unless you pass the `urls` directly to the `Panther`  
+- When you pass the `configs` to the `Panther(configs=...)`, Panther is going to load the configs from this file, 
+else it is going to load `core/configs.py` file
+- You can pass the `startup` and `shutdown` functions to the `Panther()` too.
 
    ```python
    from panther import Panther

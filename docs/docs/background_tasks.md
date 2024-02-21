@@ -1,8 +1,8 @@
 ## Intro
-Panther is going to run the background tasks as a thread in the background
+Panther is going to run the `background tasks` as a thread in the background on startup if you set the `BACKGROUND_TASKS` to `True`
 
 ## Usage
-- Add the `BACKGROUND_TASKS = True` in the `core/configs.py`  
+- Add the `BACKGROUND_TASKS = True` in the `configs`  
 
 - Import the `background_tasks` from `panther.background_tasks`:
     ```python
@@ -33,7 +33,7 @@ Panther is going to run the background tasks as a thread in the background
 
 ## Options
 - ### Interval
-    You can set custom `interval` for the `task`, let's say we want to run the `task` below for `3 times`.
+    You can set custom `interval` for the `tasks`, let's say we want to run the `task` below for `3 times`.
     
     ```python
     from panther.background_tasks import BackgroundTask, background_tasks
@@ -53,6 +53,8 @@ Panther is going to run the background tasks as a thread in the background
   - `every_hours()` 
   - `every_days()`
   - `every_weeks()`
+  - `at()`  # Set Custom Time
+  - `on()`  # Set Custom Day Of Week
   > You can pass your custom value to them too, 
   > 
   > **Example**: Run Every 4 days: `every_days(4)`.
@@ -72,7 +74,23 @@ Panther is going to run the background tasks as a thread in the background
   def do_something(name: str, age: int):
           pass
       
-  task = BackgroundTask(do_something, name='Ali', age=26).at(time(hour=8))
+  task = BackgroundTask(do_something, name='Ali', age=26).every_days().at(time(hour=8))
+  background_tasks.add_task(task)
+  ```
+
+- ### Day Of Week Specification
+  Now we want to run the `task` below every 2 week on `monday`, on `8:00` o'clock. 
+
+  ```python
+  from datetime import time
+  
+  from panther.background_tasks import BackgroundTask, background_tasks
+  
+  
+  def do_something(name: str, age: int):
+          pass
+      
+  task = BackgroundTask(do_something, name='Ali', age=26).every_weeks(2).on('monday').at(time(hour=8))
   background_tasks.add_task(task)
   ```
 
@@ -97,3 +115,5 @@ Panther is going to run the background tasks as a thread in the background
 - > The -1 interval means infinite, 
 
 - > The `.at()` only useful when you are using `.every_days()` or `.every_weeks()`
+
+- > The `.on()` only useful when you are using `.every_weeks()`

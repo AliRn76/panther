@@ -221,7 +221,7 @@ def load_urls(_configs: dict, /, urls: dict | None) -> None:
         pass
 
     elif (url_routing := _configs.get('URLs')) is None:
-        raise _exception_handler(field='URLs', error='is required.')
+        raise _exception_handler(field='URLs', error='required.')
 
     elif isinstance(url_routing, dict):
         error = (
