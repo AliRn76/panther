@@ -1,146 +1,253 @@
   
 ### find_one  
-- Find the first match document  
-- Example:  
+Get a single document from the database.
 
-	```python  
-	user: User = User.find_one(id=1, name='Ali')  
-	  
-	user: User = User.find_one({'id': 1, 'name': 'Ali'})  
-	  
-	user: User = User.find_one({'id': 1}, name='Ali')  
-	```  
-  
+```python
+from app.models import User
+
+user: User = await User.find_one(id=1, name='Ali')
+or
+user: User = await User.find_one({'id': 1, 'name': 'Ali'})
+or
+user: User = await User.find_one({'id': 1}, name='Ali')
+```
+
 ### find  
-- Find all the matches documents  
-- Example:  
-  
-	```python  
-	users: list[User] = User.find(id=1, name='Ali')  
-	  
-	users: list[User] = User.find({'id': 1, 'name': 'Ali'})  
-	  
-	users: list[User] = User.find({'id': 1}, name='Ali')  
-	```  
-  
+Get documents from the database.
+
+```python  
+users: list[User] = await User.find(age=18, name='Ali')
+or
+users: list[User] = await User.find({'age': 18, 'name': 'Ali'})
+or
+users: list[User] = await User.find({'age': 18}, name='Ali')
+```  
+
 ### all
-- List all the documents  
-- Example:  
+Get all documents from the database. (Alias of `.find()`)
   
-	```python  
-	users: list[User] = User.all()
-	```  
-  
-### insert_one  
-- Insert only one document into database  
-- Example:  
-  
-	```python  
-	User.insert_one(id=1, name='Ali')  
-	  
-	User.insert_one({'id': 1, 'name': 'Ali'})  
-	  
-	User.insert_one({'id': 1}, name='Ali')  
-	```
+```python  
+users: list[User] = User.all()
+```
 
-### delete  
-- Delete the selected document from database
-- Example:  
+### first
+Get the first document from the database.
   
-	```python  
-	user: User = User.find_one(name='Ali')
-	user.delete()
-	```
+```python  
+from app.models import User
 
-### delete_one  
-- Delete the first match document  from database
-- Example:  
-  
-	```python  
-	is_deleted: bool = User.delete_one(id=1, name='Ali')
-	```
+user: User = await User.first(age=18, name='Ali')
+or
+user: User = await User.first({'age': 18, 'name': 'Ali'})
+or
+user: User = await User.first({'age': 18}, name='Ali')
+```  
 
-### delete_many  
-- Delete all the matches document  from database
-- Example:  
+### last
+Get the last document from the database.
   
-	```python  
-	deleted_count: int = User.delete_many(id=1, name='Ali')
-	
-	deleted_count: int = User.delete_many({'id': 1}, name='Ali')
-	
-	deleted_count: int = User.delete_many({'id': 1, 'name': 'Ali'})
-	```
+```python  
+from app.models import User
 
-### update  
-- Update the selected document in database
-- Example:  
-  
-	```python  
-	user = User.find_one(name='Ali')
-	user.update(name='Saba')
-	```
+user: User = await User.last(age=18, name='Ali')
+or
+user: User = await User.last({'age': 18, 'name': 'Ali'})
+or
+user: User = await User.last({'age': 18}, name='Ali')
+```
 
-### update_one  
-- Update the first match document in database
-- You should filter with `dictionary` as `first parameter` 
-and pass the fields you want to update as `kwargs` or another `dictionary` as `second parameter`
-- Example:  
+### aggregate
+Perform an aggregation using the aggregation framework on this collection.
+> Only available in mongodb
   
-	```python  
-	is_updated: bool = User.update_one({'id': 1, 'name': 'Ali'}, name='Saba', age=26)
- 
-	is_updated: bool = User.update_one({'id': 1, 'name': 'Ali'}, {'name': 'Saba', 'age': 26})
- 
-	is_updated: bool = User.update_one({'id': 1, 'name': 'Ali'}, {'name': 'Saba'}, age=26)
-	```
+```python  
+from typing import Iterable
+from app.models import User
 
-### update_many  
-- Update all the matches document in database
-- You should filter with `dictionary` as `first parameter` 
-and pass the fields you want to update as `kwargs` or another `dictionary` as `second parameter`
-- Example:  
-  
-	```python  
-	updated_count: int = User.update_many({'name': 'Ali'}, name='Saba', age=26)
- 
-	updated_count: int = User.update_many({'name': 'Ali'}, {'name': 'Saba', 'age': 26})
- 
-	updated_count: int = User.update_many({'name': 'Ali'}, {'name': 'Saba'}, age=26)
-	```
-
-### last  
-- Find the last match document
-- Example:  
-  
-	```python  
-	user: User = User.last(name='Ali', age=26)  
-	  
-	user: User = User.last({'name': 'Ali', 'age': 26})  
-	  
-	user: User = User.last({'name': 'Ali'}, age=26)  
-	```
+pipeline = [
+    {'$match': {...}},
+    {'$unwind': ...},
+    {'$group': {...}},
+    {'$project': {...}},
+    {'$sort': {...}}
+    ...
+]
+users: Iterable[dict] = await User.aggregate(pipeline)
+```  
 
 ### count  
-- Count of the matches documents
-- Example:  
+Count the number of documents in this collection.
   
-	```python  
-	users_count: int = User.count(name='Ali')
-	```
+```python  
+from app.models import User
 
-### find_or_insert 
-- Find the match document or Create one if none exists
-- Example:  
+users_count: int = await User.count(age=18, name='Ali')
+or
+users_count: int = await User.count({'age': 18, 'name': 'Ali'})
+or
+users_count: int = await User.count({'age': 18}, name='Ali')
+```
+
+### insert_one  
+Insert a single document.
   
-	```python  
-	user: User = User.find_or_insert(name='Ali')
-	```
+```python  
+from app.models import User
+
+user: User = await User.insert_one(age=18, name='Ali')
+or
+user: User = await User.insert_one({'age': 18, 'name': 'Ali'})
+or
+user: User = await User.insert_one({'age': 18}, name='Ali')
+```
+
+### insert_many  
+Insert an iterable of documents.
+  
+```python  
+from app.models import User
+
+users = [
+    {'age': 18, 'name': 'Ali'},
+    {'age': 17, 'name': 'Saba'},
+    {'age': 16, 'name': 'Amin'}
+]
+
+users: list[User] = await User.insert_many(users)
+```
+
+### delete  
+Delete the document.
+  
+```python  
+from app.models import User
+
+user = await User.find_one(name='Ali')
+
+await user.delete()
+```
+
+### delete_one  
+Delete a single document matching the filter.
+  
+```python  
+from app.models import User
+
+is_deleted: bool = await User.delete_one(age=18, name='Ali')
+or
+is_deleted: bool = await User.delete_one({'age': 18, 'name': 'Ali'})
+or
+is_deleted: bool = await User.delete_one({'age': 18}, name='Ali')
+```
+
+### delete_many  
+Delete one or more documents matching the filter.
+  
+```python  
+from app.models import User
+
+deleted_count: int = await User.delete_many(age=18, name='Ali')
+or
+deleted_count: int = await User.delete_many({'age': 18, 'name': 'Ali'})
+or
+deleted_count: int = await User.delete_many({'age': 18}, name='Ali')
+```
+
+### update  
+Update the document.
+  
+```python  
+from app.models import User
+
+user = await User.find_one(age=18, name='Ali')
+
+await user.update(name='Saba', age=19)
+or
+await user.update({'name': 'Saba'}, age=19)
+or
+await user.update({'name': 'Saba', 'age': 19})
+```
+
+### update_one  
+Update a single document matching the filter.
+
+- You have to filter with a `dictionary` as `first parameter`
+- Then pass your new parameters
+  
+```python  
+from app.models import User
+
+query = {'id': 1}
+
+is_updated: bool = await User.update_one(query, age=18, name='Ali')
+or
+is_updated: bool = await User.update_one(query, {'age': 18, 'name': 'Ali'})
+or
+is_updated: bool = await User.update_one(query, {'age': 18}, name='Ali')
+```
+
+### update_many  
+Update one or more documents that match the filter.
+
+- You have to filter with a `dictionary` as `first parameter`
+- Then pass your new parameters
+
+```python
+from app.models import User
+
+query = {'name': 'Saba'}
+
+updated_count: int = await User.update_many(query, age=18, name='Ali')
+or
+updated_count: int = await User.update_many(query, {'age': 18, 'name': 'Ali'})
+or
+updated_count: int = await User.update_many(query, {'age': 18}, name='Ali')
+```
+
+### find_one_or_insert 
+- Get a single document from the database 
+  - **or** 
+- Insert a single document
+  
+```python  
+from app.models import User
+
+is_inserted, user = await User.find_one_or_insert(age=18, name='Ali')
+or
+is_inserted, user = await User.find_one_or_insert({'age': 18, 'name': 'Ali'})
+or
+is_inserted, user = await User.find_one_or_insert({'age': 18}, name='Ali')
+```
 
 ### find_one_or_raise
-- Find the match document or Raise an `APIException`
-- Example:  
+- Get a single document from the database]
+  - **or** 
+- Raise an `APIError(f'{Model} Does Not Exist')`
   
-	```python  
-	user: User = User.find_one_or_raise(name='Ali')
-	```
+```python  
+from app.models import User
+
+user: User = await User.find_one_or_raise(age=18, name='Ali')
+or
+user: User = await User.find_one_or_raise({'age': 18, 'name': 'Ali'})
+or
+user: User = await User.find_one_or_raise({'age': 18}, name='Ali')
+```
+
+### save
+Save the document.
+- If it has id --> `Update` It
+- else --> `Insert` It
+
+```python  
+from app.models import User
+
+# Update
+user = await User.find_one(name='Ali')
+user.name = 'Saba'
+await user.save()
+
+# Insert
+user = User(name='Ali')
+await user.save()
+```

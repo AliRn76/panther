@@ -98,15 +98,12 @@ $ pip install panther
     from panther import status, Panther
     from panther.app import GenericAPI
     from panther.response import Response
-    from panther.throttling import Throttling
     
     
     class FirstAPI(GenericAPI):
         # Cache Response For 10 Seconds
         cache = True
         cache_exp_time = timedelta(seconds=10)
-        # Limit Requests After 5 Request/ 1 Minute (Per User)
-        throttling = Throttling(rate=5, duration=timedelta(minutes=1))
         
         def get(self):
             date_time = datetime.now().isoformat()

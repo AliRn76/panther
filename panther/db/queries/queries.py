@@ -188,7 +188,7 @@ class Query(BaseQuery):
 
             >>> users = [
             >>>     {'age': 18, 'name': 'Ali'},
-            >>>     {'age': 17, 'name': 'Saba'}
+            >>>     {'age': 17, 'name': 'Saba'},
             >>>     {'age': 16, 'name': 'Amin'}
             >>> ]
             >>> await User.insert_many(users)
@@ -324,8 +324,12 @@ class Query(BaseQuery):
         return await cls.find()
 
     @classmethod
-    async def find_one_or_insert(cls, _filter: dict | None = None, /, **kwargs) -> tuple[bool, any]:
+    async def find_one_or_insert(cls, _filter: dict | None = None, /, **kwargs) -> tuple[bool, Self]:
         """
+        Get a single document from the database.
+        or
+        Insert a single document.
+
         Example:
         -------
             >>> from app.models import User
@@ -356,12 +360,15 @@ class Query(BaseQuery):
         if obj := await cls.find_one(_filter, **kwargs):
             return obj
 
-        raise NotFoundAPIError(detail=f'{cls.__name__} Does Not Exists')
+        raise NotFoundAPIError(detail=f'{cls.__name__} Does Not Exist')
 
     @check_connection
     @log_query
     async def save(self) -> None:
         """
+        Save the document
+            If it has `id` --> Update It
+            else --> Insert It
         Example:
         -------
             >>> from app.models import User
