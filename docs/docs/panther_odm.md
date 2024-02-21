@@ -75,6 +75,18 @@ pipeline = [
 users: Iterable[dict] = await User.aggregate(pipeline)
 ```  
 
+### find with skip, limit, sort
+Get limited documents from the database from offset and sorted by something
+> Only available in mongodb
+
+```python  
+users: list[User] = await User.find(age=18, name='Ali').limit(10).skip(10).sort('_id', -1)
+or
+users: list[User] = await User.find({'age': 18, 'name': 'Ali'}).limit(10).skip(10).sort('_id', -1)
+or
+users: list[User] = await User.find({'age': 18}, name='Ali').limit(10).skip(10).sort('_id', -1)
+```  
+
 ### count  
 Count the number of documents in this collection.
   

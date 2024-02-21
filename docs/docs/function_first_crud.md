@@ -56,17 +56,19 @@ urls = {
 }
 ```
 
-### Add Database Middleware
+### Add Database
 
-Add one database middleware in `core/configs.py` `MIDDLEWARES`, we are going to add `pantherdb`
-> [PantherDB](https://github.com/PantherPy/PantherDB/#readme) is a Simple, FileBase and Document Oriented database:
+Add `DATABASE` in `configs`, we are going to add `pantherdb`
+> [PantherDB](https://github.com/PantherPy/PantherDB/#readme) is a Simple, File-Base and Document Oriented database
 
 ```python
 ...
-
-MIDDLEWARES = [
-    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
-]
+DATABASE = {
+    'engine': {
+        'class': 'panther.db.connections.PantherDBConnection',
+    }
+}
+...
 ```
 
 ## APIs

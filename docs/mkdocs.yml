@@ -29,14 +29,12 @@ nav:
   - First Crud:
       - Function Base: 'function_first_crud.md'
       - Class Base: 'class_first_crud.md'
-  - Working With Database: 'database.md'
+  - Database: 'database.md'
   - Panther ODM: 'panther_odm.md'
   - Configs: 'configs.md'
-  - Working With Redis: 'redis.md'
+  - Redis: 'redis.md'
   - Serializer: 'serializer.md'
   - WebSocket: 'websocket.md'
-  - Monitoring: 'monitoring.md'
-  - Log Queries: 'log_queries.md'
   - Middlewares: 'middlewares.md'
   - Authentications: 'authentications.md'
   - URLs: 'urls.md'
@@ -45,6 +43,8 @@ nav:
 #  - Caching: 'caching.md'
 #  - UserModel: 'user_model.md'
   - Single-File: 'single_file.md'
+  - Monitoring: 'monitoring.md'
+  - Log Queries: 'log_queries.md'
   - Release Notes: 'release_notes.md'
 
 markdown_extensions:

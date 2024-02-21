@@ -200,7 +200,7 @@ class BackgroundTasks(Singleton):
 
     def add_task(self, task: BackgroundTask):
         if self._initialized is False:
-            logger.error('Task will be ignored, `BACKGROUND_TASKS` is not True in `core/configs.py`')
+            logger.error('Task will be ignored, `BACKGROUND_TASKS` is not True in `configs`')
             return
 
         if not self._is_instance_of_task(task):
