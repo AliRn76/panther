@@ -29,9 +29,10 @@ nav:
   - First Crud:
       - Function Base: 'function_first_crud.md'
       - Class Base: 'class_first_crud.md'
-  - Working With Database: 'working_with_db.md'
+  - Working With Database: 'database.md'
   - Panther ODM: 'panther_odm.md'
   - Configs: 'configs.md'
+  - Working With Redis: 'redis.md'
   - Serializer: 'serializer.md'
   - WebSocket: 'websocket.md'
   - Monitoring: 'monitoring.md'

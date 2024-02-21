@@ -122,3 +122,15 @@ You may want to write your custom `ruff.toml` in root of your project.
 Reference: [https://docs.astral.sh/ruff/formatter/](https://docs.astral.sh/ruff/formatter/)
 
 _Example:_ `AUTO_REFORMAT = True`
+
+---
+### [DATABASE](https://pantherpy.github.io/database)
+> <b>Type:</b> `dict` (<b>Default:</b> `{}`)
+
+We use it to create `database` connection
+
+---
+### [REDIS](https://pantherpy.github.io/redis)
+> <b>Type:</b> `dict` (<b>Default:</b> `{}`)
+
+We use it to create `redis` connection

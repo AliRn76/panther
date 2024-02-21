@@ -56,7 +56,7 @@ DATABASE = {
 - Panther creates a database connection depends on `DATABASE` block you defined in `configs`
 
 - You can access to this connection with your `models`,
-or direct access from `from panther.db.connection import db`
+or direct access from `from panther.db.connections import db`
 
 
 - Now we are going to create a new API which uses `PantherDB` and creating a `Book`
