@@ -1,3 +1,4 @@
+import contextlib
 from datetime import datetime
 
 from pydantic import BaseModel as PydanticBaseModel
@@ -7,11 +8,9 @@ from panther.configs import config
 from panther.db.queries import Query
 
 
-try:
+with contextlib.suppress(ImportError):
     # Only required if user wants to use mongodb
     import bson
-except ImportError:
-    pass
 
 
 class Model(PydanticBaseModel, Query):

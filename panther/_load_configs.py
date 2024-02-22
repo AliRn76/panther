@@ -4,6 +4,7 @@ from importlib import import_module
 from multiprocessing import Manager
 
 from panther._utils import import_class
+from panther.background_tasks import background_tasks
 from panther.base_websocket import WebsocketConnections
 from panther.cli.utils import import_error
 from panther.configs import JWTConfig, config
@@ -30,7 +31,6 @@ __all__ = (
     'load_auto_reformat',
     'load_background_tasks',
     'load_default_cache_exp',
-    'load_pantherdb_encryption',
     'load_authentication_class',
     'load_urls',
     'load_websocket_connections',
@@ -106,8 +106,8 @@ def load_secret_key(_configs: dict, /) -> None:
 
 
 def load_monitoring(_configs: dict, /) -> None:
-    if monitoring := _configs.get('MONITORING'):
-        config['monitoring'] = monitoring
+    if _configs.get('MONITORING'):
+        config['monitoring'] = True
 
 
 def load_throttling(_configs: dict, /) -> None:
@@ -121,8 +121,8 @@ def load_user_model(_configs: dict, /) -> None:
 
 
 def load_log_queries(_configs: dict, /) -> None:
-    if log_queries := _configs.get('LOG_QUERIES'):
-        config['log_queries'] = log_queries
+    if _configs.get('LOG_QUERIES'):
+        config['log_queries'] = True
 
 
 def load_middlewares(_configs: dict, /) -> None:
@@ -167,24 +167,19 @@ def load_middlewares(_configs: dict, /) -> None:
 
 
 def load_auto_reformat(_configs: dict, /) -> None:
-    if auto_reformat := _configs.get('AUTO_REFORMAT'):
-        config['auto_reformat'] = auto_reformat
+    if _configs.get('AUTO_REFORMAT'):
+        config['auto_reformat'] = True
 
 
 def load_background_tasks(_configs: dict, /) -> None:
-    if background_tasks := _configs.get('BACKGROUND_TASKS'):
-        config['background_tasks'] = background_tasks
-        config['background_tasks'].initialize()
+    if _configs.get('BACKGROUND_TASKS'):
+        config['background_tasks'] = True
+        background_tasks.initialize()
 
 
 def load_default_cache_exp(_configs: dict, /) -> None:
     if default_cache_exp := _configs.get('DEFAULT_CACHE_EXP'):
         config['default_cache_exp'] = default_cache_exp
-
-
-def load_pantherdb_encryption(_configs: dict, /) -> None:
-    if pantherdb_encryption := _configs.get('PANTHERDB_ENCRYPTION'):
-        config['pantherdb_encryption'] = pantherdb_encryption
 
 
 def load_authentication_class(_configs: dict, /) -> None:

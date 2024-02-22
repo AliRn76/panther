@@ -1,3 +1,5 @@
+import contextlib
+
 from panther import status
 from panther.app import API
 from panther.configs import config
@@ -7,11 +9,9 @@ from panther.panel.utils import get_model_fields
 from panther.request import Request
 from panther.response import Response
 
-try:
+with contextlib.suppress(ImportError):
     import pymongo
     from pymongo.errors import PyMongoError
-except ImportError:
-    pass
 
 
 @API(methods=['GET'])

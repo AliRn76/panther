@@ -69,7 +69,6 @@ class Config(Singleton):
     startup: Callable | None
     shutdown: Callable | None
     auto_reformat: bool
-    pantherdb_encryption: bool
     query_engine: typing.Callable | None
     database: typing.Callable | None
 
@@ -114,7 +113,6 @@ default_configs = {
     'startup': None,
     'shutdown': None,
     'auto_reformat': False,
-    'pantherdb_encryption': False,
     'query_engine': None,
     'database': None,
 }

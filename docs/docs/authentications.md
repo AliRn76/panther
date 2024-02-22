@@ -1,4 +1,4 @@
-> <b>Variable:</b> `AUTHENTICATION`  
+> <b>Variable:</b> `AUTHENTICATION` & `WS_AUTHENTICATION`  
 >  
 > <b>Type:</b> `str`
 >  
@@ -49,6 +49,22 @@ JWTConfig = {
 > **life_time**&emsp;&emsp;--> default is `timedelta(days=1)` 
 >
 > **refresh_life_time**&emsp;&emsp;--> default is `multiply 2 of life_time` 
+
+### QueryParamJWTAuthentication
+
+- This class is same as `JWTAuthentication` and the only difference is that, this class is looking for token in `query params` not in the `headers`
+
+- You should pass the token like this:
+  > https://example.com/path?authorization=Bearer%20access_token
+
+
+#### Websocket Authentication
+This class is very useful when you are trying to authenticate the user in websocket
+
+Add this into your `configs`:
+```python
+WS_AUTHENTICATION = 'panther.authentications.QueryParamJWTAuthentication'
+```
 
 
 ### Custom Authentication
