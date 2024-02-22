@@ -1,6 +1,12 @@
-from panther.db import Model
+from panther.db.models import BaseUser
 
 
-class User(Model):
+class CustomQuery:
+    @classmethod
+    def find_last(cls):
+        return cls.last()
+
+
+class User(BaseUser, CustomQuery):
     username: str
     password: str

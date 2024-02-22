@@ -3,7 +3,7 @@ from functools import cached_property
 from panther import status
 from pydantic import BaseModel, field_validator
 
-from panther.exceptions import APIException
+from panther.exceptions import APIError
 
 
 class File(BaseModel):
@@ -27,5 +27,5 @@ class Image(File):
     def validate_content_type(cls, content_type: str) -> str:
         if not content_type.startswith('image/'):
             msg = f"{content_type} is not a valid image 'content_type'"
-            raise APIException(detail=msg, status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+            raise APIError(detail=msg, status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
         return content_type

@@ -3,6 +3,7 @@ from unittest import TestCase
 import orjson as json
 
 from panther import Panther, status
+from panther.configs import config
 from panther.test import WebsocketClient
 from panther.websocket import GenericWebsocket
 
@@ -39,9 +40,11 @@ class QueryParamWebsocket(GenericWebsocket):
 
 
 class PathVariableWebsocket(GenericWebsocket):
-    async def connect(self, name: str, last_name: str):
+    async def connect(self, name: str, age: int, is_male: bool):
         await self.accept()
-        await self.send(f'{name} {last_name}')
+        await self.send(
+            f'{type(name).__name__}({name}), {type(age).__name__}({age}), {type(is_male).__name__}({is_male})'
+        )
         await self.close()
 
 
@@ -67,20 +70,68 @@ class SendAllTypesWebsocket(GenericWebsocket):
         await self.close()
 
 
+class WebsocketWithoutAuthentication(GenericWebsocket):
+    async def connect(self):
+        await self.accept()
+        await self.send(str(self.user))
+        await self.close()
+
+
+class WebsocketWithAuthentication(GenericWebsocket):
+    auth = True
+
+    async def connect(self):
+        await self.accept()
+        await self.send(self.user)
+        await self.close()
+
+
+class Permission:
+    @classmethod
+    async def authorization(cls, connection) -> bool:
+        if connection.path == '/with-permission':
+            return True
+        else:
+            return False
+
+
+class WebsocketWithPermission(GenericWebsocket):
+    permissions = [Permission]
+
+    async def connect(self):
+        await self.accept()
+        await self.send('ok')
+        await self.close()
+
+
+class WebsocketWithoutPermission(GenericWebsocket):
+    permissions = [Permission]
+
+    async def connect(self):
+        await self.accept()
+        await self.send('no')
+        await self.close()
+
+
 urls = {
     'without-accept': WithoutAcceptWebsocket,
     'close-on-connect': CloseOnConnectWebsocket,
     'custom-close': CustomCloseWebsocket,
     'message-after-connect': MessageOnConnectWebsocket,
     'query-params': QueryParamWebsocket,
-    'path-variable/<name>/<last_name>/': PathVariableWebsocket,
+    'path-variable/<name>/<age>/<is_male>/': PathVariableWebsocket,
     'all-types': SendAllTypesWebsocket,
+    'without-auth': WebsocketWithoutAuthentication,
+    'with-auth': WebsocketWithAuthentication,
+    'with-permission': WebsocketWithPermission,
+    'without-permission': WebsocketWithoutPermission,
 }
 
 
 class TestWebsocket(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        config['has_ws'] = True
         cls.app = Panther(__name__, configs=__name__, urls=urls)
 
     def test_without_accept(self):
@@ -112,20 +163,6 @@ class TestWebsocket(TestCase):
         assert responses[1]['code'] == 1013
         assert responses[1]['reason'] == 'Come Back Later'
 
-    def test_message_after_connect(self):
-        ws = WebsocketClient(app=self.app)
-        responses = ws.connect('message-after-connect')
-        assert responses[0]['type'] == 'websocket.accept'
-        assert responses[0]['subprotocol'] is None
-        assert responses[0]['headers'] == {}
-
-        assert responses[1]['type'] == 'websocket.send'
-        assert responses[1]['text'] == 'Hello'
-
-        assert responses[2]['type'] == 'websocket.close'
-        assert responses[2]['code'] == 1000
-        assert responses[2]['reason'] == ''
-
     def test_query_params(self):
         ws = WebsocketClient(app=self.app)
         responses = ws.connect('query-params', query_params={'name': 'ali', 'age': 27})
@@ -143,15 +180,29 @@ class TestWebsocket(TestCase):
         assert responses[2]['code'] == 1000
         assert responses[2]['reason'] == ''
 
-    def test_path_variables(self):
+    def test_message_after_connect(self):
         ws = WebsocketClient(app=self.app)
-        responses = ws.connect('path-variable/Ali/Rn/')
+        responses = ws.connect('message-after-connect')
         assert responses[0]['type'] == 'websocket.accept'
         assert responses[0]['subprotocol'] is None
         assert responses[0]['headers'] == {}
 
         assert responses[1]['type'] == 'websocket.send'
-        assert responses[1]['text'] == 'Ali Rn'
+        assert responses[1]['text'] == 'Hello'
+
+        assert responses[2]['type'] == 'websocket.close'
+        assert responses[2]['code'] == 1000
+        assert responses[2]['reason'] == ''
+
+    def test_path_variables(self):
+        ws = WebsocketClient(app=self.app)
+        responses = ws.connect('path-variable/Ali/25/true')
+        assert responses[0]['type'] == 'websocket.accept'
+        assert responses[0]['subprotocol'] is None
+        assert responses[0]['headers'] == {}
+
+        assert responses[1]['type'] == 'websocket.send'
+        assert responses[1]['text'] == 'str(Ali), int(25), bool(True)'
 
         assert responses[2]['type'] == 'websocket.close'
         assert responses[2]['code'] == 1000
@@ -194,3 +245,86 @@ class TestWebsocket(TestCase):
         assert responses[7]['type'] == 'websocket.close'
         assert responses[7]['code'] == 1000
         assert responses[7]['reason'] == ''
+
+    def test_without_auth(self):
+        ws = WebsocketClient(app=self.app)
+        responses = ws.connect('without-auth')
+        assert responses[0]['type'] == 'websocket.accept'
+        assert responses[0]['subprotocol'] is None
+        assert responses[0]['headers'] == {}
+
+        assert responses[1]['type'] == 'websocket.send'
+        assert responses[1]['text'] == 'None'
+
+        assert responses[2]['type'] == 'websocket.close'
+        assert responses[2]['code'] == 1000
+        assert responses[2]['reason'] == ''
+
+    def test_with_auth_failed(self):
+        ws = WebsocketClient(app=self.app)
+        responses = ws.connect('with-auth')
+
+        assert responses[0]['type'] == 'websocket.close'
+        assert responses[0]['code'] == 1000
+        assert responses[0]['reason'] == 'Authentication Error'
+
+    def test_with_auth_not_defined(self):
+        ws = WebsocketClient(app=self.app)
+        with self.assertLogs(level='CRITICAL') as captured:
+            responses = ws.connect('with-auth?authorization=Bearer token')
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == '"WS_AUTHENTICATION" has not been set in configs'
+
+        assert responses[0]['type'] == 'websocket.close'
+        assert responses[0]['code'] == 1000
+        assert responses[0]['reason'] == 'Authentication Error'
+
+    def test_with_auth_success(self):
+        global WS_AUTHENTICATION, SECRET_KEY, DATABASE
+        DATABASE = {
+            'engine': {
+                'class': 'panther.db.connections.PantherDBConnection',
+            },
+        }
+        WS_AUTHENTICATION = 'panther.authentications.QueryParamJWTAuthentication'
+        SECRET_KEY = 'hvdhRspoTPh1cJVBHcuingQeOKNc1uRhIP2k7suLe2g='
+        token = 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxfQ.AF3nsj8IQ6t0ncqIx4quoyPfYaZ-pqUOW4z_euUztPM'
+        app = Panther(__name__, configs=__name__, urls=urls)
+        WS_AUTHENTICATION = None
+        SECRET_KEY = None
+        DATABASE = None
+
+        ws = WebsocketClient(app=app)
+        with self.assertLogs(level='ERROR') as captured:
+            responses = ws.connect('with-auth', query_params={'authorization': f'Bearer {token}'})
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == 'JWT Authentication Error: "User not found"'
+
+        assert responses[0]['type'] == 'websocket.close'
+        assert responses[0]['code'] == 1000
+        assert responses[0]['reason'] == 'Authentication Error'
+
+    def test_with_permission(self):
+        ws = WebsocketClient(app=self.app)
+        responses = ws.connect('with-permission')
+
+        assert responses[0]['type'] == 'websocket.accept'
+        assert responses[0]['subprotocol'] is None
+        assert responses[0]['headers'] == {}
+
+        assert responses[1]['type'] == 'websocket.send'
+        assert responses[1]['text'] == 'ok'
+
+        assert responses[2]['type'] == 'websocket.close'
+        assert responses[2]['code'] == 1000
+        assert responses[2]['reason'] == ''
+
+    def test_without_permission(self):
+        ws = WebsocketClient(app=self.app)
+        responses = ws.connect('without-permission')
+
+        assert responses[0]['type'] == 'websocket.close'
+        assert responses[0]['code'] == 1000
+        assert responses[0]['reason'] == 'Permission Denied'

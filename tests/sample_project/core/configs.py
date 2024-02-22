@@ -13,9 +13,11 @@ SECRET_KEY = env['SECRET_KEY']
 
 MONITORING = True
 LOG_QUERIES = True
-MIDDLEWARES = [
-    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://test.pdb'}),
-]
+DATABASE = {
+    'engine': {
+        'class': 'panther.db.connections.PantherDBConnection'
+    },
+}
 AUTHENTICATION = 'panther.authentications.JWTAuthentication'
 JWTConfig = {
     'algorithm': 'HS256',

@@ -1,17 +1,16 @@
-import asyncio
 import importlib
 import logging
 import re
 import subprocess
 import types
+import typing
 from collections.abc import Callable
 from traceback import TracebackException
-from uuid import uuid4
 
 import orjson as json
 
 from panther import status
-from panther.exceptions import PantherException
+from panther.exceptions import PantherError
 from panther.file_handler import File
 
 logger = logging.getLogger('panther')
@@ -26,27 +25,25 @@ async def _http_response_start(send: Callable, /, headers: dict, status_code: in
     })
 
 
-async def _http_response_body(send: Callable, /, body: bytes | None = None) -> None:
-    if body is None:
-        await send({'type': 'http.response.body'})
-    else:
+async def _http_response_body(send: Callable, /, body: bytes) -> None:
+    if body:
         await send({'type': 'http.response.body', 'body': body})
+    else:  # body = b''
+        await send({'type': 'http.response.body'})
 
 
 async def http_response(
         send: Callable,
         /,
         *,
+        monitoring,  # type: MonitoringMiddleware
         status_code: int,
-        monitoring=None,  # type: MonitoringMiddleware | None
-        headers: dict | None = None,
-        body: bytes | None = None,
+        headers: dict,
+        body: bytes = b'',
         exception: bool = False,
 ) -> None:
     if exception:
         body = json.dumps({'detail': status.status_text[status_code]})
-    elif status_code == status.HTTP_204_NO_CONTENT or body == b'null':
-        body = None
 
     await monitoring.after(status_code)
 
@@ -54,7 +51,7 @@ async def http_response(
     await _http_response_body(send, body=body)
 
 
-def import_class(dotted_path: str, /) -> type:
+def import_class(dotted_path: str, /) -> type[typing.Any]:
     """
     Example:
     -------
@@ -109,10 +106,6 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
     return data
 
 
-def generate_ws_connection_id() -> str:
-    return uuid4().hex
-
-
 def is_function_async(func: Callable) -> bool:
     """
     Sync result is 0 --> False
@@ -137,7 +130,7 @@ def reformat_code(base_dir):
         subprocess.run(['ruff', 'format', base_dir])
         subprocess.run(['ruff', 'check', '--select', 'I', '--fix', base_dir])
     except FileNotFoundError:
-        raise PantherException("No module named 'ruff', Hint: `pip install ruff`")
+        raise PantherError("No module named 'ruff', Hint: `pip install ruff`")
 
 
 def check_function_type_endpoint(endpoint: types.FunctionType) -> Callable:

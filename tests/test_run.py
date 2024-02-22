@@ -19,11 +19,11 @@ class TestRun(TestCase):
 
     def test_init(self):
         app = Panther(__name__)
-        self.assertIsInstance(app, Panther)
+        assert isinstance(app, Panther)
 
     def test_load_configs(self):
         from panther.configs import config
-        from panther.panel.apis import documents_api, models_api, single_document_api
+        from panther.panel.apis import documents_api, models_api, single_document_api, healthcheck_api
 
         base_dir = Path(__name__).resolve().parent
         secret_key = 'fHrIYx3yK0J_UG0K0zD6miLPNy1esoYXzVsvif6e7rY='
@@ -38,21 +38,10 @@ class TestRun(TestCase):
         assert config['throttling'].duration == timedelta(seconds=10)
         assert config['secret_key'] == secret_key.encode()
 
-        assert len(config['http_middlewares']) == 1
-        assert config['http_middlewares'][0].__class__.__name__ == 'DatabaseMiddleware'
-        assert config['http_middlewares'][0].url == 'pantherdb://test.pdb'
-
-        assert len(config['reversed_http_middlewares']) == 1
-        assert config['reversed_http_middlewares'][0].__class__.__name__ == 'DatabaseMiddleware'
-        assert config['reversed_http_middlewares'][0].url == 'pantherdb://test.pdb'
-
-        assert len(config['ws_middlewares']) == 1
-        assert config['ws_middlewares'][0].__class__.__name__ == 'DatabaseMiddleware'
-        assert config['ws_middlewares'][0].url == 'pantherdb://test.pdb'
-
-        assert len(config['reversed_ws_middlewares']) == 1
-        assert config['reversed_ws_middlewares'][0].__class__.__name__ == 'DatabaseMiddleware'
-        assert config['reversed_ws_middlewares'][0].url == 'pantherdb://test.pdb'
+        assert len(config['http_middlewares']) == 0
+        assert len(config['reversed_http_middlewares']) == 0
+        assert len(config['ws_middlewares']) == 0
+        assert len(config['reversed_ws_middlewares']) == 0
 
         assert config['user_model'].__name__ == tests.sample_project.app.models.User.__name__
         assert config['user_model'].__module__.endswith('app.models')
@@ -73,6 +62,7 @@ class TestRun(TestCase):
                     '': documents_api,
                     '<document_id>': single_document_api,
                 },
+                'health': healthcheck_api
             },
         }
         assert config['urls'] == urls

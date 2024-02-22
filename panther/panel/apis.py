@@ -1,23 +1,31 @@
+import contextlib
+
 from panther import status
 from panther.app import API
 from panther.configs import config
+from panther.db.connections import db
+from panther.db.connections import redis
 from panther.panel.utils import get_model_fields
 from panther.request import Request
 from panther.response import Response
+
+with contextlib.suppress(ImportError):
+    import pymongo
+    from pymongo.errors import PyMongoError
 
 
 @API(methods=['GET'])
 async def models_api():
     return [{
-        'name': m['name'],
-        'module': m['module'],
+        'name': model.__name__,
+        'module': model.__module__,
         'index': i
-    } for i, m in enumerate(config['models'])]
+    } for i, model in enumerate(config['models'])]
 
 
 @API(methods=['GET', 'POST'])
 async def documents_api(request: Request, index: int):
-    model = config['models'][index]['class']
+    model = config['models'][index]
 
     if request.method == 'POST':
         validated_data = API.validate_input(model=model, request=request)
@@ -37,7 +45,7 @@ async def documents_api(request: Request, index: int):
 
 @API(methods=['PUT', 'DELETE', 'GET'])
 async def single_document_api(request: Request, index: int, document_id: int | str):
-    model = config['models'][index]['class']
+    model = config['models'][index]
 
     if document := model.find_one(id=document_id):
         if request.method == 'PUT':
@@ -54,3 +62,22 @@ async def single_document_api(request: Request, index: int, document_id: int | s
 
     else:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@API()
+async def healthcheck_api():
+    checks = []
+
+    # Database
+    if config['query_engine'].__name__ == 'BaseMongoDBQuery':
+        with pymongo.timeout(3):
+            try:
+                ping = db.session.command('ping').get('ok') == 1.0
+                checks.append(ping)
+            except PyMongoError:
+                checks.append(False)
+    # Redis
+    if redis.is_connected:
+        checks.append(redis.ping())
+
+    return Response(all(checks))

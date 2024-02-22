@@ -6,7 +6,6 @@ import orjson as json
 from panther._utils import read_multipart_form_data
 from panther.base_request import BaseRequest
 
-
 logger = logging.getLogger('panther')
 
 

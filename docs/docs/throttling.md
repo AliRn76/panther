@@ -2,21 +2,21 @@
 > 
 > <b>Type:</b> `str` 
  
-In Panther, you can use `Throttling` for all APIs at once in `core/configs.py` or per API in its `@API` decorator
+For `Throttling` you can set a default value in `configs` or set custom value per `API()`
 
-The `Throttling` class has 2 field `rate` & `duration`
+The default value is going to use for all the APIs unless it has custom value
+
+The `Throttling` class has 2 fields, `rate` & `duration`
 
 > rate: int
 > 
 > duration: datetime.timedelta
 
-It will return `Too Many Request` `status_code: 429` if user try to request in the `duration` more than `rate`
-And user will baned( get`Too Many Request` ) for `duration`
+It will return `Too Many Request (status_code: 429)`, if user trying to send requests more than `rate` in the `duration`,  
+and user will be banned( gets `Too Many Request` ) for `duration`.
 
-And keep that in mind if you have `Throttling` in `@API()`, the `Throttling` of `core/configs.py` will be ignored.
-
-### For All APIs Example:
-core/configs.py
+### Set Throttling For All APIs:
+in `configs`
 ```python
 from datetime import timedelta
 
@@ -27,13 +27,13 @@ from panther.throttling import Throttling
 THROTTLING = Throttling(rate=5, duration=timedelta(minutes=1))
 ```
 
-### For Single API Example:
-apis.py
+### Set Throttling For Single API:
+in `apis.py`
 ```python
 from datetime import timedelta
 
 from panther.throttling import Throttling
-from panther.app import API
+from panther.app import API, GenericAPI
 
 
 # User only can request 5 times in every minute
@@ -42,5 +42,9 @@ InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
 
 @API(throttling=InfoThrottling)
 async def info_api():
+    pass
+
+class InfoAPI(GenericAPI):
+    throttling = InfoThrottling
     pass
 ```

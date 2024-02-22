@@ -16,7 +16,7 @@ from panther import status
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
 from panther.background_tasks import BackgroundTask, background_tasks
-from panther.db.connection import redis
+from panther.db.connections import redis
 from panther.request import Request
 from panther.response import HTMLResponse, Response
 from panther.throttling import Throttling
@@ -114,7 +114,7 @@ async def rate_limit():
 
 @API(input_model=UserUpdateSerializer)
 async def patch_user(request: Request):
-    _, user = User.find_or_insert(username='Ali', password='1', age=12)
+    _, user = await User.find_or_insert(username='Ali', password='1', age=12)
     user.update(**request.validated_data.model_dump())
     return Response(data=user)
 
@@ -122,16 +122,19 @@ async def patch_user(request: Request):
 class PatchUser(GenericAPI):
     input_model = UserUpdateSerializer
 
-    def patch(self, request: Request, *args, **kwargs):
-        _, user = User.find_or_insert(username='Ali', password='1', age=12)
-        user.update(**request.validated_data.model_dump())
+    async def patch(self, request: Request, *args, **kwargs):
+        _, user = await User.find_or_insert(username='Ali', password='1', age=12)
+        await user.update(**request.validated_data.model_dump())
         return Response(data=user)
 
 
 @API()
 async def single_user(request: Request):
-    user = User.insert_one(username='Ali', password='1', age=12)
-    return Response(data=user, status_code=200)
+    # user = await User.insert_one(username='Ali', password='1', age=12)
+    # users = await User.find({'$where': 'function() { sleep(300); return true; }'})
+    users = await User.find()
+    # print(users.limit(2))
+    return Response(data=users[:3], status_code=200)
 
 
 # @API(input=UserInputSerializer, output_model=UserSerializer)
@@ -199,3 +202,14 @@ class ImageAPI(GenericAPI):
         with open(body.image.file_name, 'wb') as file:
             file.write(body.image.file)
         return body.image.size
+
+
+@API()
+async def login_api():
+    _, user = User.find_or_insert(username='fake-username', password='secret-password')
+    return await user.login()
+
+
+@API(auth=True)
+def logout_api(request: Request):
+    return request.user.logout()

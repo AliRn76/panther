@@ -5,6 +5,7 @@ from unittest import TestCase
 
 import panther.utils
 from panther import Panther
+from panther.configs import config
 from panther.middlewares import BaseMiddleware
 from panther.utils import generate_hash_value_from_string, load_env, round_datetime, encrypt_password
 
@@ -38,9 +39,9 @@ DB_PORT = "{self.db_port}"
         """)
 
         variables = load_env(self.file_path)
-        self.assertEqual(variables['IS_ACTIVE'] == 'True', self.is_active)
-        self.assertEqual(variables['DB_HOST'], self.db_host)
-        self.assertEqual(variables['DB_PORT'], str(self.db_port))
+        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['DB_HOST'] == self.db_host
+        assert variables['DB_PORT'] == str(self.db_port)
 
     def test_load_env_single_quote(self):
         self._create_env_file(f"""
@@ -50,9 +51,9 @@ DB_PORT = '{self.db_port}'
                 """)
 
         variables = load_env(self.file_path)
-        self.assertEqual(variables['IS_ACTIVE'] == 'True', self.is_active)
-        self.assertEqual(variables['DB_HOST'], self.db_host)
-        self.assertEqual(variables['DB_PORT'], str(self.db_port))
+        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['DB_HOST'] == self.db_host
+        assert variables['DB_PORT'] == str(self.db_port)
 
     def test_load_env_no_quote(self):
         self._create_env_file(f"""
@@ -63,9 +64,9 @@ DB_PORT = {self.db_port}
                     """)
 
         variables = load_env(self.file_path)
-        self.assertEqual(variables['IS_ACTIVE'] == 'True', self.is_active)
-        self.assertEqual(variables['DB_HOST'], self.db_host)
-        self.assertEqual(variables['DB_PORT'], str(self.db_port))
+        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['DB_HOST'] == self.db_host
+        assert variables['DB_PORT'] == str(self.db_port)
 
     def test_load_env_no_space(self):
         self._create_env_file(f"""
@@ -75,9 +76,9 @@ DB_PORT={self.db_port}
                     """)
 
         variables = load_env(self.file_path)
-        self.assertEqual(variables['IS_ACTIVE'] == 'True', self.is_active)
-        self.assertEqual(variables['DB_HOST'], self.db_host)
-        self.assertEqual(variables['DB_PORT'], str(self.db_port))
+        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['DB_HOST'] == self.db_host
+        assert variables['DB_PORT'] == str(self.db_port)
 
     def test_load_env_not_striped(self):
         self._create_env_file(f"""
@@ -87,9 +88,9 @@ DB_PORT={self.db_port}
                     """)
 
         variables = load_env(self.file_path)
-        self.assertEqual(variables['IS_ACTIVE'] == 'True', self.is_active)
-        self.assertEqual(variables['DB_HOST'], self.db_host)
-        self.assertEqual(variables['DB_PORT'], str(self.db_port))
+        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['DB_HOST'] == self.db_host
+        assert variables['DB_PORT'] == str(self.db_port)
 
     def test_load_env_and_read_from_system_env(self):
         self._create_env_file(f"""
@@ -99,9 +100,9 @@ DB_PORT = '{self.db_port}'
                 """)
 
         load_env(self.file_path)
-        self.assertEqual(os.environ['IS_ACTIVE'] == 'True', self.is_active)
-        self.assertEqual(os.environ['DB_HOST'], self.db_host)
-        self.assertEqual(os.environ['DB_PORT'], str(self.db_port))
+        assert (os.environ['IS_ACTIVE'] == 'True') == self.is_active
+        assert os.environ['DB_HOST'] == self.db_host
+        assert os.environ['DB_PORT'] == str(self.db_port)
 
 
 class TestUtilFunctions(TestCase):
@@ -112,7 +113,7 @@ class TestUtilFunctions(TestCase):
         rounded_datetime = round_datetime(_datetime, _delta)
 
         expected_datetime = datetime(year=1997, month=12, day=25, hour=12, minute=10, second=40)
-        self.assertEqual(rounded_datetime, expected_datetime)
+        assert rounded_datetime == expected_datetime
 
     def test_round_datetime_second_2(self):
         _datetime = datetime(year=1997, month=12, day=25, hour=12, minute=10, second=35)
@@ -120,7 +121,7 @@ class TestUtilFunctions(TestCase):
         rounded_datetime = round_datetime(_datetime, _delta)
 
         expected_datetime = datetime(year=1997, month=12, day=25, hour=12, minute=10, second=40)
-        self.assertEqual(rounded_datetime, expected_datetime)
+        assert rounded_datetime == expected_datetime
 
     def test_round_datetime_minute_1(self):
         _datetime = datetime(year=1997, month=12, day=25, hour=12, minute=15, second=30)
@@ -128,7 +129,7 @@ class TestUtilFunctions(TestCase):
         rounded_datetime = round_datetime(_datetime, _delta)
 
         expected_datetime = datetime(year=1997, month=12, day=25, hour=12, minute=20)
-        self.assertEqual(rounded_datetime, expected_datetime)
+        assert rounded_datetime == expected_datetime
 
     def test_round_datetime_minute_2(self):
         _datetime = datetime(year=1997, month=12, day=25, hour=12, minute=10, second=30)
@@ -136,7 +137,7 @@ class TestUtilFunctions(TestCase):
         rounded_datetime = round_datetime(_datetime, _delta)
 
         expected_datetime = datetime(year=1997, month=12, day=25, hour=12, minute=20)
-        self.assertEqual(rounded_datetime, expected_datetime)
+        assert rounded_datetime == expected_datetime
 
     def test_round_datetime_hour_1(self):
         _datetime = datetime(year=1997, month=12, day=25, hour=12, minute=10, second=30)
@@ -144,7 +145,7 @@ class TestUtilFunctions(TestCase):
         rounded_datetime = round_datetime(_datetime, _delta)
 
         expected_datetime = datetime(year=1997, month=12, day=25, hour=12)
-        self.assertEqual(rounded_datetime, expected_datetime)
+        assert rounded_datetime == expected_datetime
 
     def test_round_datetime_hour_2(self):
         _datetime = datetime(year=1997, month=12, day=25, hour=10, minute=10, second=30)
@@ -152,7 +153,7 @@ class TestUtilFunctions(TestCase):
         rounded_datetime = round_datetime(_datetime, _delta)
 
         expected_datetime = datetime(year=1997, month=12, day=25, hour=12)
-        self.assertEqual(rounded_datetime, expected_datetime)
+        assert rounded_datetime == expected_datetime
 
     def test_round_datetime_day_1(self):
         _datetime = datetime(year=1997, month=12, day=25, hour=10, minute=10, second=30)
@@ -160,7 +161,7 @@ class TestUtilFunctions(TestCase):
         rounded_datetime = round_datetime(_datetime, _delta)
 
         expected_datetime = datetime(year=1997, month=12, day=23)
-        self.assertEqual(rounded_datetime, expected_datetime)
+        assert rounded_datetime == expected_datetime
 
     def test_round_datetime_day_2(self):
         _datetime = datetime(year=1997, month=12, day=22, hour=10, minute=10, second=30)
@@ -168,15 +169,15 @@ class TestUtilFunctions(TestCase):
         rounded_datetime = round_datetime(_datetime, _delta)
 
         expected_datetime = datetime(year=1997, month=12, day=23)
-        self.assertEqual(rounded_datetime, expected_datetime)
+        assert rounded_datetime == expected_datetime
 
     def test_generate_hash_value_from_string(self):
         text = 'Hello World'
         hashed_1 = generate_hash_value_from_string(text)
         hashed_2 = generate_hash_value_from_string(text)
 
-        self.assertEqual(hashed_1, hashed_2)
-        self.assertNotEqual(text, hashed_1)
+        assert hashed_1 == hashed_2
+        assert text != hashed_1
 
     def test_encrypt_password(self):
         password = 'Password'
@@ -185,6 +186,9 @@ class TestUtilFunctions(TestCase):
 
 
 class TestLoadConfigs(TestCase):
+    def setUp(self):
+        config.refresh()
+
     def test_urls_not_found(self):
         global URLs
         URLs = None
@@ -364,7 +368,7 @@ class TestLoadConfigs(TestCase):
                 AUTHENTICATION = None
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == '"SECRET_KEY" is required when using "JWTAuthentication"'
+        assert captured.records[0].getMessage() == "Invalid 'JWTConfig': `JWTConfig.key` or `SECRET_KEY` is required."
 
     def test_jwt_auth_with_secret_key(self):
         global AUTHENTICATION, SECRET_KEY

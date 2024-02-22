@@ -15,12 +15,12 @@ with open('README.md', encoding='utf-8') as file:
 EXTRAS_REQUIRE = {
     'full': [
         'redis==5.0.1',
-        'pymongo~=4.4',
+        'motor~=3.3',
         'bpython~=0.24',
         'ruff~=0.1.9',
         'python-jose~=3.3',
         'websockets~=12.0',
-        'cryptography~=41.0',
+        'cryptography~=42.0',
     ],
 }
 
@@ -49,13 +49,12 @@ setup(
         'panther': ['cli/*'],
     },
     install_requires=[
-        'bson~=0.5',
         'httptools~=0.6',
-        'pantherdb==1.3.5',
-        'pydantic~=2.1',
-        'rich~=13.5',
-        'uvicorn~=0.23',
-        'watchfiles~=0.19',
+        'pantherdb==1.4.0',
+        'pydantic~=2.6',
+        'rich~=13.7',
+        'uvicorn~=0.27',
+        'watchfiles~=0.21.0',
     ],
     extras_require=EXTRAS_REQUIRE,
 )

@@ -17,15 +17,15 @@ class TestBackgroundTasks(TestCase):
 
     def test_background_tasks_singleton(self):
         new_obj = BackgroundTasks()
-        self.assertEqual(id(self.obj), id(new_obj))
+        assert id(self.obj) == id(new_obj)
 
     def test_initialization(self):
-        self.assertTrue(hasattr(self.obj, 'initialize'))
-        self.assertFalse(self.obj._initialized)
+        assert hasattr(self.obj, 'initialize') is True
+        assert self.obj._initialized is False
 
         self.obj.initialize()
-        self.assertTrue(self.obj._initialized)
-        self.assertEqual(self.obj.tasks, [])
+        assert self.obj._initialized is True
+        assert self.obj.tasks == []
 
     def test_add_single_task(self):
         def func():
@@ -34,23 +34,22 @@ class TestBackgroundTasks(TestCase):
         task = BackgroundTask(func)
         self.obj.initialize()
         self.obj.add_task(task)
-        self.assertEqual(self.obj.tasks, [task])
+        assert self.obj.tasks == [task]
 
     def test_add_wrong_task(self):
         def func(): pass
 
         self.obj.initialize()
-        self.assertEqual(self.obj.tasks, [])
+        assert self.obj.tasks == []
 
         with self.assertLogs() as captured:
             self.obj.add_task(func)
 
-        self.assertEqual(len(captured.records), 1)
-        self.assertEqual(
-            captured.records[0].getMessage(),
-            f'`{func.__name__}` should be instance of `background_tasks.BackgroundTask`'
-        )
-        self.assertEqual(self.obj.tasks, [])
+        assert len(captured.records) == 1
+        assert (
+                captured.records[0].getMessage() == f'`{func.__name__}` '
+                                                    f'should be instance of `background_tasks.BackgroundTask`')
+        assert self.obj.tasks == []
 
     def test_add_task_with_false_background_task(self):
         numbers = []
@@ -60,12 +59,9 @@ class TestBackgroundTasks(TestCase):
         task = BackgroundTask(func, numbers)
         with self.assertLogs() as captured:
             self.obj.add_task(task)
-        self.assertEqual(len(captured.records), 1)
-        self.assertEqual(
-            captured.records[0].getMessage(),
-            'Task will be ignored, `BACKGROUND_TASKS` is not True in `core/configs.py`'
-        )
-        self.assertEqual(self.obj.tasks, [])
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == 'Task will be ignored, `BACKGROUND_TASKS` is not True in `core/configs.py`'
+        assert self.obj.tasks == []
 
     def test_add_task_with_args(self):
         numbers = []
@@ -76,9 +72,9 @@ class TestBackgroundTasks(TestCase):
         task = BackgroundTask(func, numbers)
         self.obj.initialize()
         self.obj.add_task(task)
-        self.assertEqual(self.obj.tasks, [task])
+        assert self.obj.tasks == [task]
         time.sleep(2)
-        self.assertEqual(len(numbers), 1)
+        assert len(numbers) == 1
 
     def test_add_task_with_kwargs(self):
         numbers = []
@@ -89,9 +85,9 @@ class TestBackgroundTasks(TestCase):
         task = BackgroundTask(func, _numbers=numbers)
         self.obj.initialize()
         self.obj.add_task(task)
-        self.assertEqual(self.obj.tasks, [task])
+        assert self.obj.tasks == [task]
         time.sleep(2)
-        self.assertEqual(len(numbers), 1)
+        assert len(numbers) == 1
 
     def test_add_task_with_custom_interval(self):
         numbers = []
@@ -102,9 +98,9 @@ class TestBackgroundTasks(TestCase):
         task = BackgroundTask(func, numbers).every_seconds().interval(3)
         self.obj.initialize()
         self.obj.add_task(task)
-        self.assertEqual(self.obj.tasks, [task])
+        assert self.obj.tasks == [task]
         time.sleep(4)
-        self.assertEqual(len(numbers), 3)
+        assert len(numbers) == 3
 
     def test_add_task_with_custom_interval_default_timedelta(self):
         numbers = []
@@ -115,10 +111,10 @@ class TestBackgroundTasks(TestCase):
         task = BackgroundTask(func, numbers).interval(2)
         self.obj.initialize()
         self.obj.add_task(task)
-        self.assertEqual(self.obj.tasks, [task])
+        assert self.obj.tasks == [task]
         time.sleep(3)
         # default timedelta is 1 minute, so it can't complete the intervals in 2 seconds
-        self.assertEqual(len(numbers), 1)
+        assert len(numbers) == 1
 
     def test_add_multiple_tasks(self):
         numbers = []
@@ -134,10 +130,10 @@ class TestBackgroundTasks(TestCase):
         self.obj.initialize()
         self.obj.add_task(task1)
         self.obj.add_task(task2)
-        self.assertEqual(self.obj.tasks, [task1, task2])
-        self.assertEqual(len(numbers), 0)
+        assert self.obj.tasks == [task1, task2]
+        assert len(numbers) == 0
         time.sleep(2)
-        self.assertEqual(len(numbers), 2)
+        assert len(numbers) == 2
 
     def test_add_task_with_custom_every_seconds(self):
         numbers = []
@@ -148,9 +144,9 @@ class TestBackgroundTasks(TestCase):
         task = BackgroundTask(func, numbers).every_seconds(3).interval(2)
         self.obj.initialize()
         self.obj.add_task(task)
-        self.assertEqual(self.obj.tasks, [task])
+        assert self.obj.tasks == [task]
         time.sleep(3)
-        self.assertEqual(len(numbers), 1)
+        assert len(numbers) == 1
         time.sleep(3)
-        self.assertEqual(len(numbers), 2)
+        assert len(numbers) == 2
 

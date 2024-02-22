@@ -64,7 +64,7 @@ from panther.utils import load_env
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}{PANTHERDB_ENCRYPTION}
+SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}
 
 # More Info: https://PantherPy.GitHub.io/urls/
 URLs = 'core.urls.url_routing'
@@ -133,7 +133,7 @@ from panther.utils import load_env
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}{PANTHERDB_ENCRYPTION}
+SECRET_KEY = env['SECRET_KEY']{DATABASE}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}
 
 InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
 
@@ -160,7 +160,7 @@ url_routing = {
 }
 
 app = Panther(__name__, configs=__name__, urls=url_routing)
-"""
+""" % datetime.now().date().isoformat()
 
 SINGLE_FILE_TEMPLATE = {
     'main.py': single_main_py,
@@ -171,17 +171,24 @@ SINGLE_FILE_TEMPLATE = {
 
 DATABASE_PANTHERDB_PART = """
 # More Info: Https://PantherPy.GitHub.io/middlewares/
-
-MIDDLEWARES = [
-    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/database.pdb'}),
-]"""
+DATABASE = {
+    'engine': {
+        'class': 'panther.db.connections.PantherDBConnection',
+        'path': BASE_DIR,
+        'encryption': {PANTHERDB_ENCRYPTION}
+    }
+}"""
 
 DATABASE_MONGODB_PART = """
 # More Info: Https://PantherPy.GitHub.io/middlewares/
-
-MIDDLEWARES = [
-    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'mongodb://127.0.0.1:27017/{PROJECT_NAME}'}),
-]"""
+DATABASE = {
+    'engine': {
+        'class': 'panther.db.connections.MongoDBConnection',
+        'host': '127.0.0.1',
+        'port': 27017,
+        'database': '{PROJECT_NAME}'
+    }
+}"""
 
 USER_MODEL_PART = """
 
@@ -207,7 +214,3 @@ AUTO_REFORMAT_PART = """
 
 # More Info: https://pantherpy.github.io/configs/#auto_reformat/
 AUTO_REFORMAT = True"""
-
-PANTHERDB_ENCRYPTION = """
-
-PANTHERDB_ENCRYPTION = True"""

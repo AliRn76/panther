@@ -38,4 +38,5 @@ urls = {
     'bg-tasks/': run_background_tasks_api,
     'custom-response/': custom_response_class_api,
     'image/': ImageAPI,
+    'logout/': logout_api,
 }

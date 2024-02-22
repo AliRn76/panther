@@ -24,7 +24,7 @@ class BookWebsocket(GenericWebsocket):
 
 ### Update URLs
 
-Add the `BookWebsocket()` in `app/urls.py`:
+Add the `BookWebsocket` in `app/urls.py`:
 
 ```python
 from app.websockets import BookWebsocket
@@ -43,7 +43,7 @@ urls = {
 4. Then `accept()` the connection with `self.accept()` otherwise it is going to be `rejected` by default.
 5. Now you can see the unique `connection_id` which is specified to this user with `self.connection_id`, you may want to store it somewhere (`db`, `cache`, or etc.)
 6. If the client sends you any message, you will receive it in `receive()` method, the client message can be `str` or `bytes`.
-7. If you want to send anything to the client:
+7. If you want to **send** anything to the client:
     - In websocket class scope: You can send it with `self.send()` which only takes `data`.
     - Out of websocket class scope: You can send it with `send_message_to_websocket()` from `panther.websocket`, it's an `async` function which takes 2 args, `connection_id` and `data`(which can have any type):
         ```python
@@ -52,13 +52,13 @@ urls = {
         ```
 8. If you want to use `webscoket` in a backend with `multiple workers`, we recommend you to add `RedisMiddleware` in your `configs` 
 [[Adding Redis Middleware]](https://pantherpy.github.io/middlewares/#redis-middleware)
-9. If you don't want to add `RedisMiddleware` and you still want to use `websocket` in `multi-thread`, 
-you have to use `--preload` option while running the project like below:
-   ```bash
+9. If you **don't** want to add `RedisMiddleware` and you still want to run `websocket` with `multiple workers` with `gunicorn`, 
+you have to use `--preload`, like below:
+   ```shell
    gunicorn -w 10 -k uvicorn.workers.UvicornWorker main:app --preload
    ```
 
-10. If you want to close a connection:
+10. If you want to **close** a connection:
     - In websocket class scope: You can close connection with `self.close()` method which takes 2 args, `code` and `reason`:
         ```python
         from panther import status

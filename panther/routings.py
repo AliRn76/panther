@@ -108,65 +108,62 @@ ENDPOINT_NOT_FOUND = (None, '')
 def find_endpoint(path: str) -> tuple[Callable | None, str]:
     urls = config['urls']
 
-    if (location := path.find('?')) != -1:
-        path = path[:location]
-    path = path.removesuffix('/').removeprefix('/')  # 'user/list'
-    paths = path.split('/')  # ['user', 'list']
-    paths_len = len(paths)
+    # 'user/list/?name=ali' --> 'user/list/' --> 'user/list' --> ['user', 'list']
+    parts = path.split('?')[0].strip('/').split('/')
+    paths_len = len(parts)
 
-    found_path = ''
-    for i, split_path in enumerate(paths):
+    found_path = []
+    for i, part in enumerate(parts):
         last_path = bool((i + 1) == paths_len)
-        found = urls.get(split_path)
+        found = urls.get(part)
 
-        # `found` is callable
-        if last_path and callable(found):
-            found_path += f'{split_path}/'
-            return found, found_path
+        if last_path:
+            # `found` is callable
+            if callable(found):
+                found_path.append(part)
+                return found, '/'.join(found_path)
 
-        # `found` is dict
-        if isinstance(found, dict):
-            found_path += f'{split_path}/'
-            if last_path and callable(endpoint := found.get('')):
-                return endpoint, found_path
-
-            urls = found
-            continue
-
-        # `found` is None
-        for key, value in urls.items():
-            if not key.startswith('<'):
-                continue
-
-            elif last_path:
-                if callable(value):
-                    found_path += f'{key}/'
-                    return value, found_path
-                elif isinstance(value, dict) and '' in value:
-                    found_path += f'{key}/'
-                    return value[''], found_path
+            # `found` is dict
+            if isinstance(found, dict) and (endpoint := found.get('')):
+                if callable(endpoint):
+                    found_path.append(part)
+                    return endpoint, '/'.join(found_path)
                 else:
                     return ENDPOINT_NOT_FOUND
 
-            elif isinstance(value, dict):
-                urls = value
-                found_path += f'{key}/'
-                break
+            # `found` is None
+            for key, value in urls.items():
+                if key.startswith('<'):
+                    if callable(value):
+                        found_path.append(key)
+                        return value, '/'.join(found_path)
 
-            else:
-                return ENDPOINT_NOT_FOUND
+                    elif isinstance(value, dict) and (endpoint := value.get('')):
+                        if callable(endpoint):
+                            found_path.append(key)
+                            return endpoint, '/'.join(found_path)
+                        else:
+                            return ENDPOINT_NOT_FOUND
 
-        else:
             return ENDPOINT_NOT_FOUND
 
-    return ENDPOINT_NOT_FOUND
+        # `found` is dict
+        elif isinstance(found, dict):
+            found_path.append(part)
+            urls = found
+            continue
 
+        # `found` is callable
+        elif callable(found):
+            return ENDPOINT_NOT_FOUND
 
-def collect_path_variables(request_path: str, found_path: str) -> dict:
-    found_path = found_path.removesuffix('/').removeprefix('/')
-    request_path = request_path.removesuffix('/').removeprefix('/')
-    path_variables = {}
-    for f_path, r_path in zip(found_path.split('/'), request_path.split('/')):
-        if f_path.startswith('<'):
-            path_variables[f_path[1:-1]] = r_path
-    return path_variables
+        else:
+            # `found` is None
+            for key, value in urls.items():
+                if key.startswith('<'):
+                    if isinstance(value, dict):
+                        found_path.append(key)
+                        urls = value
+                        break
+            else:
+                return ENDPOINT_NOT_FOUND

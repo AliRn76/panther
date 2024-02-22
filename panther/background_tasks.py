@@ -40,6 +40,7 @@ class BackgroundTask:
         self._last_run: datetime.datetime | None = None
         self._timedelta: datetime.timedelta = datetime.timedelta(minutes=1)
         self._time: datetime.time | None = None
+        self._day_of_week: int | None = None
         self._unit: Literal['seconds', 'minutes', 'hours', 'days', 'weeks'] | None = None
 
     def interval(self, interval: int, /) -> Self:
@@ -89,18 +90,24 @@ class BackgroundTask:
         self._timedelta = datetime.timedelta(weeks=weeks)
         return self
 
-    # TODO: Coming Soon
-    # def on(
-    #         self,
-    #         day_of_week: Literal['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-    #         /
-    # ) -> Self:
-    #     """
-    #     Set day to schedule the task, useful on `.every_weeks()`
-    #     """
-    #     if self._unit != 'weeks':
-    #         logger.warning('`.on()` only useful when you are using `.every_weeks()`')
-    #     return self
+    def on(
+            self,
+            day_of_week: Literal['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+            /
+    ) -> Self:
+        """
+        Set day to schedule the task, useful on `.every_weeks()`
+        """
+        week_days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        if day_of_week not in week_days:
+            msg = f'Argument should be one of {week_days}'
+            raise TypeError(msg)
+
+        self._day_of_week = week_days.index(day_of_week)
+
+        if self._unit != 'weeks':
+            logger.warning('`.on()` only useful when you are using `.every_weeks()`')
+        return self
 
     def at(self, _time: datetime.time, /) -> Self:
         """
@@ -132,6 +139,11 @@ class BackgroundTask:
         # Wait
         if self._last_run and (self._last_run + self._timedelta) > now:
             return True
+
+        # Check day of week
+        if self._day_of_week is not None:
+            if self._day_of_week != now.weekday():
+                return True
 
         # We don't have time condition, so run
         if self._time is None:
@@ -188,7 +200,7 @@ class BackgroundTasks(Singleton):
 
     def add_task(self, task: BackgroundTask):
         if self._initialized is False:
-            logger.error('Task will be ignored, `BACKGROUND_TASKS` is not True in `core/configs.py`')
+            logger.error('Task will be ignored, `BACKGROUND_TASKS` is not True in `configs`')
             return
 
         if not self._is_instance_of_task(task):

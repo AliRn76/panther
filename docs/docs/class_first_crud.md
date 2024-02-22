@@ -55,17 +55,19 @@ urls = {
 }
 ```
 
-### Add Database Middleware
+### Add Database
 
-Add one database middleware in `core/configs.py` `MIDDLEWARES`, we are going to add `pantherdb`
-> [PantherDB](https://github.com/PantherPy/PantherDB/#readme) is a Simple, FileBase and Document Oriented database:
+Add `DATABASE` in `configs`, we are going to add `pantherdb`
+> [PantherDB](https://github.com/PantherPy/PantherDB/#readme) is a Simple, File-Base and Document Oriented database
 
 ```python
 ...
-
-MIDDLEWARES = [
-    ('panther.middlewares.db.DatabaseMiddleware', {'url': f'pantherdb://{BASE_DIR}/{DB_NAME}.pdb'}),
-]
+DATABASE = {
+    'engine': {
+        'class': 'panther.db.connections.PantherDBConnection',
+    }
+}
+...
 ```
 
 ## APIs
@@ -413,7 +415,7 @@ class SingleBookAPI(GenericAPI):
         return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 ```
 
-    > You can handle the PATCH the same way as PUT
+> You can handle the PATCH the same way as PUT
 
 ### API - Delete a Book
 Add another method named `delete()` for `DELETE` method and delete the book you want:

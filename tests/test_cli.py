@@ -11,11 +11,14 @@ from rich import print as rprint
 from panther import Panther
 from panther.cli.create_command import CreateProject
 from panther.cli.template import TEMPLATE, SINGLE_FILE_TEMPLATE
+from panther.configs import config
 
 interactive_cli_1_index = 0
 interactive_cli_2_index = 0
 
 
+# 0.ProjectName, 1.BaseDir, 2.IsSingleFile, 3.Database,
+# 4.Encryption, 5.Authentication, 6.Monitoring, 7.LogQueries, 8.AutoReformat
 def interactive_cli_1_mock_responses(index=None):
     global interactive_cli_1_index
     if index is None:
@@ -40,6 +43,7 @@ class TestCLI(TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
+        config.refresh()
         sys.path.append('tests/sample_project')
 
     @classmethod
@@ -61,10 +65,11 @@ class TestCLI(TestCase):
 │      \ \_\ \__/.\_\ \_\ \_\ \__\\ \_\ \_\ \____\\ \_\    │
 │       \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/    │
 │                                                          │
+│   Redis: False                                           │
+│   Websocket: False                                       │
 │   Monitoring: True                                       │
 │   Log Queries: True                                      │
 │   Background Tasks: False                                │
-│   Websocket: False                                       │
 │   Base directory: {base_dir}│
 │ * Run "panther monitor" in another session for Monitoring│
 │ * You may want to install `uvloop` for better performance│

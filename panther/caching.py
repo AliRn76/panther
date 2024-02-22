@@ -6,7 +6,7 @@ from types import NoneType
 import orjson as json
 
 from panther.configs import config
-from panther.db.connection import redis
+from panther.db.connections import redis
 from panther.request import Request
 from panther.response import Response, ResponseDataTypes
 from panther.utils import generate_hash_value_from_string, round_datetime
@@ -63,7 +63,7 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
 
     cache_data: tuple[ResponseDataTypes, int] = (response.data, response.status_code)
 
-    if redis.is_connected:  # noqa: Unresolved References
+    if redis.is_connected:
         key = cache_key(request)
 
         cache_exp_time = cache_exp_time or config['default_cache_exp']

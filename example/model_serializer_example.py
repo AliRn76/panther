@@ -1,4 +1,4 @@
-from pydantic import Field, field_validator, ConfigDict
+from pydantic import ConfigDict, Field, field_validator
 
 from panther.db import Model
 from panther.serializer import ModelSerializer
@@ -15,6 +15,7 @@ class UserSerializer(ModelSerializer):
     """
     Hello this is doc
     """
+
     model_config = ConfigDict(str_to_upper=False)  # Has more priority
     age: int = Field(default=20)
     is_male: bool
@@ -37,5 +38,5 @@ class UserSerializer(ModelSerializer):
 
 
 serialized = UserSerializer(username='alirn', first_name='Ali', last_name='RnRn', is_male=1)
-print(serialized)
+# print(serialized)
 # serialized.create()

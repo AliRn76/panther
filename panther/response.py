@@ -4,8 +4,10 @@ import orjson as json
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic._internal._model_construction import ModelMetaclass
 
+from panther.db.cursor import Cursor
+
 ResponseDataTypes = list | tuple | set | dict | int | float | str | bool | bytes | NoneType | ModelMetaclass
-IterableDataTypes = list | tuple | set
+IterableDataTypes = list | tuple | set | Cursor
 
 
 class Response:
@@ -30,15 +32,16 @@ class Response:
     def body(self) -> bytes:
         if isinstance(self.data, bytes):
             return self.data
-        else:
-            return json.dumps(self.data)
+
+        if self.data is None:
+            return b''
+        return json.dumps(self.data)
 
     @property
     def headers(self) -> dict:
-        content_length = 0 if self.body == b'null' else len(self.body)
         return {
             'content-type': self.content_type,
-            'content-length': content_length,
+            'content-length': len(self.body),
             'access-control-allow-origin': '*',
         } | (self._headers or {})
 
