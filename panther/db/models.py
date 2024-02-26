@@ -17,13 +17,13 @@ class Model(PydanticBaseModel, Query):
     def __init_subclass__(cls, **kwargs):
         if cls.__module__ == 'panther.db.models' and cls.__name__ == 'BaseUser':
             return
-        config['models'].append(cls)
+        config.MODELS.append(cls)
 
     id: str | None = Field(None, validation_alias='_id')
 
     @field_validator('id', mode='before')
     def validate_id(cls, value) -> str:
-        if config['database'].__class__.__name__ == 'MongoDBConnection':
+        if config.DATABASE.__class__.__name__ == 'MongoDBConnection':
             if isinstance(value, str):
                 try:
                     bson.ObjectId(value)
@@ -44,7 +44,7 @@ class Model(PydanticBaseModel, Query):
             `str` for PantherDB
             `ObjectId` for MongoDB
         """
-        if config['database'].__class__.__name__ == 'MongoDBConnection':
+        if config.DATABASE.__class__.__name__ == 'MongoDBConnection':
             return bson.ObjectId(self.id) if self.id else None
         return self.id
 
@@ -63,7 +63,7 @@ class BaseUser(Model):
     async def login(self) -> dict:
         """Return dict of access and refresh token"""
         await self.update_last_login()
-        return config.authentication.login(self.id)
+        return config.AUTHENTICATION.login(self.id)
 
     def logout(self) -> dict:
-        return config.authentication.logout(self._auth_token)
+        return config.AUTHENTICATION.logout(self._auth_token)

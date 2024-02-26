@@ -66,7 +66,7 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
     if redis.is_connected:
         key = cache_key(request)
 
-        cache_exp_time = cache_exp_time or config['default_cache_exp']
+        cache_exp_time = cache_exp_time or config.DEFAULT_CACHE_EXP
         cache_data: bytes = json.dumps(cache_data)
 
         if not isinstance(cache_exp_time, timedelta | int | NoneType):

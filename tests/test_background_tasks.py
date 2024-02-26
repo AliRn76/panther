@@ -9,11 +9,11 @@ from panther.utils import Singleton
 class TestBackgroundTasks(TestCase):
     def setUp(self):
         self.obj = BackgroundTasks()
-        config['background_tasks'] = True
+        config.BACKGROUND_TASKS = True
 
     def tearDown(self):
         del Singleton._instances[BackgroundTasks]
-        config['background_tasks'] = False
+        config.BACKGROUND_TASKS = False
 
     def test_background_tasks_singleton(self):
         new_obj = BackgroundTasks()

@@ -106,7 +106,7 @@ ENDPOINT_NOT_FOUND = (None, '')
 
 
 def find_endpoint(path: str) -> tuple[Callable | None, str]:
-    urls = config['urls']
+    urls = config.URLS
 
     # 'user/list/?name=ali' --> 'user/list/' --> 'user/list' --> ['user', 'list']
     parts = path.split('?')[0].strip('/').split('/')

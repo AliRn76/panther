@@ -108,16 +108,15 @@ class API:
         return wrapper
 
     async def handle_authentications(self) -> None:
-        auth_class = config['authentication']
         if self.auth:
-            if not auth_class:
+            if not config.AUTHENTICATION:
                 logger.critical('"AUTHENTICATION" has not been set in configs')
                 raise APIError
-            user = await auth_class.authentication(self.request)
+            user = await config.AUTHENTICATION.authentication(self.request)
             self.request.user = user
 
     def handle_throttling(self) -> None:
-        if throttling := self.throttling or config['throttling']:
+        if throttling := self.throttling or config.THROTTLING:
             key = cache_key(self.request)
             time = round_datetime(datetime.now(), throttling.duration)
             throttling_key = f'{time}-{key}'

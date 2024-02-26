@@ -82,8 +82,8 @@ class JWTAuthentication(BaseAuthentication):
         try:
             return jwt.decode(
                 token=token,
-                key=config['jwt_config'].key,
-                algorithms=[config['jwt_config'].algorithm],
+                key=config.JWT_CONFIG.key,
+                algorithms=[config.JWT_CONFIG.algorithm],
             )
         except JWTError as e:
             raise cls.exception(e) from None
@@ -95,7 +95,7 @@ class JWTAuthentication(BaseAuthentication):
             msg = 'Payload does not have `user_id`'
             raise cls.exception(msg)
 
-        user_model = config['user_model'] or cls.model
+        user_model = config.USER_MODEL or cls.model
         if user := await user_model.find_one(id=user_id):
             return user
 
@@ -107,9 +107,9 @@ class JWTAuthentication(BaseAuthentication):
         """Encode JWT from user_id."""
         issued_at = datetime.now(timezone.utc).timestamp()
         if token_type == 'access':
-            expire = issued_at + config['jwt_config'].life_time
+            expire = issued_at + config.JWT_CONFIG.life_time
         else:
-            expire = issued_at + config['jwt_config'].refresh_life_time
+            expire = issued_at + config.JWT_CONFIG.refresh_life_time
 
         claims = {
             'token_type': token_type,
@@ -119,8 +119,8 @@ class JWTAuthentication(BaseAuthentication):
         }
         return jwt.encode(
             claims,
-            key=config['jwt_config'].key,
-            algorithm=config['jwt_config'].algorithm,
+            key=config.JWT_CONFIG.key,
+            algorithm=config.JWT_CONFIG.algorithm,
         )
 
     @classmethod

@@ -20,12 +20,12 @@ async def models_api():
         'name': model.__name__,
         'module': model.__module__,
         'index': i
-    } for i, model in enumerate(config['models'])]
+    } for i, model in enumerate(config.MODELS)]
 
 
 @API(methods=['GET', 'POST'])
 async def documents_api(request: Request, index: int):
-    model = config['models'][index]
+    model = config.MODELS[index]
 
     if request.method == 'POST':
         validated_data = API.validate_input(model=model, request=request)
@@ -45,7 +45,7 @@ async def documents_api(request: Request, index: int):
 
 @API(methods=['PUT', 'DELETE', 'GET'])
 async def single_document_api(request: Request, index: int, document_id: int | str):
-    model = config['models'][index]
+    model = config.MODELS[index]
 
     if document := model.find_one(id=document_id):
         if request.method == 'PUT':
@@ -69,7 +69,7 @@ async def healthcheck_api():
     checks = []
 
     # Database
-    if config['query_engine'].__name__ == 'BaseMongoDBQuery':
+    if config.QUERY_ENGINE.__name__ == 'BaseMongoDBQuery':
         with pymongo.timeout(3):
             try:
                 ping = db.session.command('ping').get('ok') == 1.0

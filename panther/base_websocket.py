@@ -40,7 +40,7 @@ class PubSub:
 
 class WebsocketListener(Thread):
     def __init__(self):
-        super().__init__(target=config['websocket_connections'], daemon=True)
+        super().__init__(target=config.WEBSOCKET_CONNECTIONS, daemon=True)
 
     def run(self):
         with contextlib.suppress(Exception):
@@ -159,12 +159,12 @@ class WebsocketConnections(Singleton):
     async def handle_authentication(cls, connection: Websocket) -> bool:
         """Return True if connection is closed, False otherwise."""
         if connection.auth:
-            if not config.ws_authentication:
+            if not config.WS_AUTHENTICATION:
                 logger.critical('"WS_AUTHENTICATION" has not been set in configs')
                 await connection.close(reason='Authentication Error')
                 return True
             try:
-                connection.user = await config.ws_authentication.authentication(connection)
+                connection.user = await config.WS_AUTHENTICATION.authentication(connection)
             except AuthenticationAPIError as e:
                 await connection.close(reason=e.detail)
         return False
@@ -190,7 +190,7 @@ class Websocket(BaseRequest):
 
     def __init_subclass__(cls, **kwargs):
         if cls.__module__ != 'panther.websocket':
-            config['has_ws'] = True
+            config.HAS_WS = True
 
     async def connect(self, **kwargs) -> None:
         pass
@@ -227,7 +227,7 @@ class Websocket(BaseRequest):
         connection_id = getattr(self, '_connection_id', '')
         logger.debug(f'Closing WS Connection {connection_id} Code: {code}')
         self.is_connected = False
-        config['websocket_connections'].remove_connection(self)
+        config.WEBSOCKET_CONNECTIONS.remove_connection(self)
         await self.asgi_send({'type': 'websocket.close', 'code': code, 'reason': reason})
 
     async def listen(self) -> None:

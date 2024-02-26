@@ -17,7 +17,7 @@ from panther.configs import config
 
 
 def monitor() -> None:
-    monitoring_log_file = Path(config['base_dir'] / 'logs' / 'monitoring.log')
+    monitoring_log_file = Path(config.BASE_DIR / 'logs' / 'monitoring.log')
 
     def _generate_table(rows: deque) -> Panel:
         layout = Layout()

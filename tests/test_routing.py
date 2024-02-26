@@ -13,7 +13,7 @@ class TestRoutingFunctions(TestCase):
     def tearDown(self) -> None:
         from panther.configs import config
 
-        config['urls'] = {}
+        config.URLS = {}
 
     # Collecting
     def test_collect_ellipsis_urls(self):
@@ -510,7 +510,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             '': temp_func,
         }
         _func, _ = find_endpoint('')
@@ -534,7 +534,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             'user': {
                 '<user_id>': {
                     'profile': {
@@ -598,7 +598,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             'user': {
                 '<user_id>': {
                     'profile': {
@@ -661,7 +661,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             'user': {
                 'list': temp_func,
             },
@@ -687,7 +687,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             'user': {
                 'list': temp_func,
             },
@@ -713,7 +713,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             'user': {
                 '<name>': temp_func,
             },
@@ -739,7 +739,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             'user': {
                 '<name>': temp_func,
             },
@@ -765,7 +765,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             'user/name': temp_func,
         }
         func, path = find_endpoint('user/name/troublemaker')
@@ -778,7 +778,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             'user/name': temp_func,
         }
         func, path = find_endpoint('user/')
@@ -795,7 +795,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             '': temp_1,
             '<index>': {
                 '': temp_2,
@@ -819,7 +819,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             '': temp_1,
             '<index>': {
                 '': temp_2,
@@ -843,7 +843,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             '': temp_1,
             'hello': {
                 '': temp_2,
@@ -868,7 +868,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             '': temp_1,
             'hello': {
                 '': temp_2,
@@ -888,7 +888,7 @@ class TestRoutingFunctions(TestCase):
         def user_id_profile_id(): pass
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             'user': {
                 '<user_id>': {
                     'profile': user_id_profile_id,
@@ -905,7 +905,7 @@ class TestRoutingFunctions(TestCase):
 
         from panther.configs import config
 
-        config['urls'] = {
+        config.URLS = {
             'user': {
                 '<user_id>': {
                     'profile': {

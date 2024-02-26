@@ -14,7 +14,7 @@ logger = logging.getLogger('query')
 
 def log_query(func):
     async def log(*args, **kwargs):
-        if config['log_queries'] is False:
+        if config.LOG_QUERIES is False:
             return await func(*args, **kwargs)
         start = perf_counter()
         response = await func(*args, **kwargs)
@@ -28,7 +28,7 @@ def log_query(func):
 
 def check_connection(func):
     async def wrapper(*args, **kwargs):
-        if config['query_engine'] is None:
+        if config.QUERY_ENGINE is None:
             msg = "You don't have active database connection, Check your middlewares"
             raise NotImplementedError(msg)
         return await func(*args, **kwargs)

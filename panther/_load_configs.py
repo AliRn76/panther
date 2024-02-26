@@ -68,12 +68,12 @@ def load_redis(_configs: dict, /) -> None:
 
 def load_startup(_configs: dict, /) -> None:
     if startup := _configs.get('STARTUP'):
-        config['startup'] = import_class(startup)
+        config.STARTUP = import_class(startup)
 
 
 def load_shutdown(_configs: dict, /) -> None:
     if shutdown := _configs.get('SHUTDOWN'):
-        config['shutdown'] = import_class(shutdown)
+        config.SHUTDOWN = import_class(shutdown)
 
 
 def load_database(_configs: dict, /) -> None:
@@ -87,42 +87,42 @@ def load_database(_configs: dict, /) -> None:
         # We have to create another dict then pop the 'class' else we can't pass the tests
         args = database_config['engine'].copy()
         args.pop('class')
-        config['database'] = engine_class(**args)
+        config.DATABASE = engine_class(**args)
 
         if engine_class_path == 'panther.db.connections.PantherDBConnection':
-            config['query_engine'] = BasePantherDBQuery
+            config.QUERY_ENGINE = BasePantherDBQuery
         elif engine_class_path == 'panther.db.connections.MongoDBConnection':
-            config['query_engine'] = BaseMongoDBQuery
+            config.QUERY_ENGINE = BaseMongoDBQuery
 
     if 'query' in database_config:
-        if config['query_engine']:
+        if config.QUERY_ENGINE:
             logger.warning('`DATABASE.query` has already been filled.')
-        config['query_engine'] = import_class(database_config['query'])
+        config.QUERY_ENGINE = import_class(database_config['query'])
 
 
 def load_secret_key(_configs: dict, /) -> None:
     if secret_key := _configs.get('SECRET_KEY'):
-        config['secret_key'] = secret_key.encode()
+        config.SECRET_KEY = secret_key.encode()
 
 
 def load_monitoring(_configs: dict, /) -> None:
     if _configs.get('MONITORING'):
-        config['monitoring'] = True
+        config.MONITORING = True
 
 
 def load_throttling(_configs: dict, /) -> None:
     if throttling := _configs.get('THROTTLING'):
-        config['throttling'] = throttling
+        config.THROTTLING = throttling
 
 
 def load_user_model(_configs: dict, /) -> None:
-    config['user_model'] = import_class(_configs.get('USER_MODEL', 'panther.db.models.BaseUser'))
-    config['models'].append(config['user_model'])
+    config.USER_MODEL = import_class(_configs.get('USER_MODEL', 'panther.db.models.BaseUser'))
+    config.MODELS.append(config.USER_MODEL)
 
 
 def load_log_queries(_configs: dict, /) -> None:
     if _configs.get('LOG_QUERIES'):
-        config['log_queries'] = True
+        config.LOG_QUERIES = True
 
 
 def load_middlewares(_configs: dict, /) -> None:
@@ -160,35 +160,35 @@ def load_middlewares(_configs: dict, /) -> None:
         if isinstance(middleware_instance, BaseMiddleware | WebsocketMiddleware):
             middlewares['ws'].append(middleware_instance)
 
-    config['http_middlewares'] = middlewares['http']
-    config['ws_middlewares'] = middlewares['ws']
-    config['reversed_http_middlewares'] = middlewares['http'][::-1]
-    config['reversed_ws_middlewares'] = middlewares['ws'][::-1]
+    config.HTTP_MIDDLEWARES = middlewares['http']
+    config.WS_MIDDLEWARES = middlewares['ws']
+    config.REVERSED_HTTP_MIDDLEWARES = middlewares['http'][::-1]
+    config.REVERSED_WS_MIDDLEWARES = middlewares['ws'][::-1]
 
 
 def load_auto_reformat(_configs: dict, /) -> None:
     if _configs.get('AUTO_REFORMAT'):
-        config['auto_reformat'] = True
+        config.AUTO_REFORMAT = True
 
 
 def load_background_tasks(_configs: dict, /) -> None:
     if _configs.get('BACKGROUND_TASKS'):
-        config['background_tasks'] = True
+        config.BACKGROUND_TASKS = True
         background_tasks.initialize()
 
 
 def load_default_cache_exp(_configs: dict, /) -> None:
     if default_cache_exp := _configs.get('DEFAULT_CACHE_EXP'):
-        config['default_cache_exp'] = default_cache_exp
+        config.DEFAULT_CACHE_EXP = default_cache_exp
 
 
 def load_authentication_class(_configs: dict, /) -> None:
     """Should be after `load_secret_key()`"""
     if authentication := _configs.get('AUTHENTICATION'):
-        config['authentication'] = import_class(authentication)
+        config.AUTHENTICATION = import_class(authentication)
 
     if ws_authentication := _configs.get('WS_AUTHENTICATION'):
-        config['ws_authentication'] = import_class(ws_authentication)
+        config.WS_AUTHENTICATION = import_class(ws_authentication)
 
     load_jwt_config(_configs)
 
@@ -196,16 +196,16 @@ def load_authentication_class(_configs: dict, /) -> None:
 def load_jwt_config(_configs: dict, /) -> None:
     """Only Collect JWT Config If Authentication Is JWTAuthentication"""
     auth_is_jwt = (
-            getattr(config['authentication'], '__name__', None) == 'JWTAuthentication' or
-            getattr(config['ws_authentication'], '__name__', None) == 'QueryParamJWTAuthentication'
+            getattr(config.AUTHENTICATION, '__name__', None) == 'JWTAuthentication' or
+            getattr(config.WS_AUTHENTICATION, '__name__', None) == 'QueryParamJWTAuthentication'
     )
     jwt = _configs.get('JWTConfig', {})
     if auth_is_jwt or jwt:
         if 'key' not in jwt:
-            if config['secret_key'] is None:
+            if config.SECRET_KEY is None:
                 raise _exception_handler(field='JWTConfig', error='`JWTConfig.key` or `SECRET_KEY` is required.')
-            jwt['key'] = config['secret_key'].decode()
-        config['jwt_config'] = JWTConfig(**jwt)
+            jwt['key'] = config.SECRET_KEY.decode()
+        config.JWT_CONFIG = JWTConfig(**jwt)
 
 
 def load_urls(_configs: dict, /, urls: dict | None) -> None:
@@ -237,14 +237,14 @@ def load_urls(_configs: dict, /, urls: dict | None) -> None:
         if not isinstance(urls, dict):
             raise _exception_handler(field='URLs', error='should point to a dict.')
 
-    config['flat_urls'] = flatten_urls(urls)
-    config['urls'] = finalize_urls(config['flat_urls'])
-    config['urls']['_panel'] = finalize_urls(flatten_urls(panel_urls))
+    config.FLAT_URLS = flatten_urls(urls)
+    config.URLS = finalize_urls(config.FLAT_URLS)
+    config.URLS['_panel'] = finalize_urls(flatten_urls(panel_urls))
 
 
 def load_websocket_connections():
     """Should be after `load_redis()`"""
-    if config['has_ws']:
+    if config.HAS_WS:
         # Check `websockets`
         try:
             import websockets
@@ -253,7 +253,7 @@ def load_websocket_connections():
 
         # Use the redis pubsub if `redis.is_connected`, else use the `multiprocessing.Manager`
         pubsub_connection = redis.create_connection_for_websocket() if redis.is_connected else Manager()
-        config['websocket_connections'] = WebsocketConnections(pubsub_connection=pubsub_connection)
+        config.WEBSOCKET_CONNECTIONS = WebsocketConnections(pubsub_connection=pubsub_connection)
 
 
 def _exception_handler(field: str, error: str | Exception) -> PantherError:

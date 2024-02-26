@@ -81,7 +81,7 @@ class PantherDBConnection(BaseDatabaseConnection):
                 import cryptography
             except ImportError as e:
                 raise import_error(e, package='cryptography')
-            params['secret_key'] = config['secret_key']
+            params['secret_key'] = config.SECRET_KEY
 
         self._connection: PantherDB = PantherDB(**params)
 
@@ -93,7 +93,7 @@ class PantherDBConnection(BaseDatabaseConnection):
 class DatabaseConnection(Singleton):
     @property
     def session(self):
-        return config['database'].session
+        return config.DATABASE.session
 
 
 class RedisConnection(Singleton, _Redis):

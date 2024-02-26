@@ -39,12 +39,12 @@ class Panther:
         self._startup = startup
         self._shutdown = shutdown
 
-        config['base_dir'] = Path(name).resolve().parent
+        config.BASE_DIR = Path(name).resolve().parent
 
         try:
             self.load_configs()
-            if config['auto_reformat']:
-                reformat_code(base_dir=config['base_dir'])
+            if config.AUTO_REFORMAT:
+                reformat_code(base_dir=config.BASE_DIR)
         except Exception as e:  # noqa: BLE001
             logger.error(e.args[0] if isinstance(e, PantherError) else clean_traceback_message(e))
             sys.exit()
@@ -91,7 +91,7 @@ class Panther:
         from panther.websocket import GenericWebsocket, Websocket
 
         # Monitoring
-        monitoring = Monitoring(is_active=config['monitoring'], is_ws=True)
+        monitoring = Monitoring(is_ws=True)
 
         # Create Temp Connection
         temp_connection = Websocket(scope=scope, receive=receive, send=send)
@@ -119,7 +119,7 @@ class Panther:
         # Call 'Before' Middlewares
         if await self._run_ws_middlewares_before_listen(connection=connection):
             # Only Listen() If Middlewares Didn't Raise Anything
-            await config['websocket_connections'].new_connection(connection=connection)
+            await config.WEBSOCKET_CONNECTIONS.new_connection(connection=connection)
             await monitoring.after('Accepted')
             await connection.listen()
 
@@ -132,7 +132,7 @@ class Panther:
 
     @classmethod
     async def _run_ws_middlewares_before_listen(cls, *, connection) -> bool:
-        for middleware in config['ws_middlewares']:
+        for middleware in config.WS_MIDDLEWARES:
             try:
                 connection = await middleware.before(request=connection)
             except APIError:
@@ -142,13 +142,13 @@ class Panther:
 
     @classmethod
     async def _run_ws_middlewares_after_listen(cls, *, connection):
-        for middleware in config['reversed_ws_middlewares']:
+        for middleware in config.REVERSED_WS_MIDDLEWARES:
             with contextlib.suppress(APIError):
                 await middleware.after(response=connection)
 
     async def handle_http(self, scope: dict, receive: Callable, send: Callable) -> None:
         # Monitoring
-        monitoring = Monitoring(is_active=config['monitoring'])
+        monitoring = Monitoring()
 
         request = Request(scope=scope, receive=receive, send=send)
 
@@ -175,8 +175,8 @@ class Panther:
         request.collect_path_variables(found_path=found_path)
 
         try:  # They Both(middleware.before() & _endpoint()) Have The Same Exception (APIException)
-            # Call 'Before' Middlewares
-            for middleware in config['http_middlewares']:
+            # Call Middlewares .before()
+            for middleware in config.HTTP_MIDDLEWARES:
                 request = await middleware.before(request=request)
 
             # Call Endpoint
@@ -192,7 +192,7 @@ class Panther:
             return await self._raise(send, monitoring=monitoring, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # Call 'After' Middleware
-        for middleware in config['reversed_http_middlewares']:
+        for middleware in config.REVERSED_HTTP_MIDDLEWARES:
             try:
                 response = await middleware.after(response=response)
             except APIError as e:  # noqa: PERF203
@@ -215,18 +215,18 @@ class Panther:
               but they have same Manager()
         """
         # Start Websocket Listener (Redis/ Queue)
-        if config['has_ws']:
+        if config.HAS_WS:
             WebsocketListener().start()
 
     async def handle_startup(self):
-        if startup := config['startup'] or self._startup:
+        if startup := config.STARTUP or self._startup:
             if is_function_async(startup):
                 await startup()
             else:
                 startup()
 
     def handle_shutdown(self):
-        if shutdown := config['shutdown'] or self._shutdown:
+        if shutdown := config.SHUTDOWN or self._shutdown:
             if is_function_async(shutdown):
                 try:
                     asyncio.run(shutdown())

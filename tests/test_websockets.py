@@ -131,7 +131,7 @@ urls = {
 class TestWebsocket(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        config['has_ws'] = True
+        config.HAS_WS = True
         cls.app = Panther(__name__, configs=__name__, urls=urls)
 
     def test_without_accept(self):

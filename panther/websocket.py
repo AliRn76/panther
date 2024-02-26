@@ -29,9 +29,9 @@ class GenericWebsocket(Websocket):
 
 
 async def send_message_to_websocket(connection_id: str, data: any):
-    config.websocket_connections.publish(connection_id=connection_id, action='send', data=data)
+    config.WEBSOCKET_CONNECTIONS.publish(connection_id=connection_id, action='send', data=data)
 
 
 async def close_websocket_connection(connection_id: str, code: int = status.WS_1000_NORMAL_CLOSURE, reason: str = ''):
     data = {'code': code, 'reason': reason}
-    config.websocket_connections.publish(connection_id=connection_id, action='close', data=data)
+    config.WEBSOCKET_CONNECTIONS.publish(connection_id=connection_id, action='close', data=data)
