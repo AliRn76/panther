@@ -60,8 +60,6 @@ class BaseRequest:
         self.scope = scope
         self.asgi_send = send
         self.asgi_receive = receive
-        self._data = ...
-        self._validated_data = None
         self._headers: Headers | None = None
         self._params: dict | None = None
         self.user: Model | None = None

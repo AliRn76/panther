@@ -46,14 +46,8 @@ class Panther:
             if config['auto_reformat']:
                 reformat_code(base_dir=config['base_dir'])
         except Exception as e:  # noqa: BLE001
-            if isinstance(e, PantherError):
-                logger.error(e.args[0])
-            else:
-                logger.error(clean_traceback_message(e))
+            logger.error(e.args[0] if isinstance(e, PantherError) else clean_traceback_message(e))
             sys.exit()
-
-        # Monitoring
-        self.monitoring = Monitoring(is_active=config['monitoring'])
 
         # Print Info
         print_info(config)
@@ -80,25 +74,14 @@ class Panther:
         load_websocket_connections()
 
     async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
-        """
-        1.
-            await func(scope, receive, send)
-        2.
-            async with asyncio.TaskGroup() as tg:
-                tg.create_task(func(scope, receive, send))
-        3.
-            async with anyio.create_task_group() as task_group:
-                task_group.start_soon(func, scope, receive, send)
-                await anyio.to_thread.run_sync(func, scope, receive, send)
-        4.
-            with ProcessPoolExecutor() as e:
-                e.submit(func, scope, receive, send)
-        """
         if scope['type'] == 'lifespan':
             message = await receive()
             if message["type"] == 'lifespan.startup':
                 await self.handle_ws_listener()
                 await self.handle_startup()
+            elif message["type"] == 'lifespan.shutdown':
+                # It's not happening :\, so handle the shutdown in __del__ for now ...
+                pass
             return
 
         func = self.handle_http if scope['type'] == 'http' else self.handle_ws
@@ -164,10 +147,12 @@ class Panther:
                 await middleware.after(response=connection)
 
     async def handle_http(self, scope: dict, receive: Callable, send: Callable) -> None:
+        # Monitoring
+        monitoring = Monitoring(is_active=config['monitoring'])
+
         request = Request(scope=scope, receive=receive, send=send)
 
-        # Monitoring
-        await self.monitoring.before(request=request)
+        await monitoring.before(request=request)
 
         # Read Request Payload
         await request.read_body()
@@ -175,7 +160,7 @@ class Panther:
         # Find Endpoint
         _endpoint, found_path = find_endpoint(path=request.path)
         if _endpoint is None:
-            return await self._raise(send, status_code=status.HTTP_404_NOT_FOUND)
+            return await self._raise(send, monitoring=monitoring, status_code=status.HTTP_404_NOT_FOUND)
 
         # Check Endpoint Type
         try:
@@ -184,7 +169,7 @@ class Panther:
             else:
                 endpoint = check_class_type_endpoint(endpoint=_endpoint)
         except TypeError:
-            return await self._raise(send, status_code=status.HTTP_501_NOT_IMPLEMENTED)
+            return await self._raise(send, monitoring=monitoring, status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
         # Collect Path Variables
         request.collect_path_variables(found_path=found_path)
@@ -204,7 +189,7 @@ class Panther:
             # Every unhandled exception in Panther or code will catch here
             exception = clean_traceback_message(exception=e)
             logger.critical(exception)
-            return await self._raise(send, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return await self._raise(send, monitoring=monitoring, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # Call 'After' Middleware
         for middleware in config['reversed_http_middlewares']:
@@ -216,7 +201,7 @@ class Panther:
         await http_response(
             send,
             status_code=response.status_code,
-            monitoring=self.monitoring,
+            monitoring=monitoring,
             headers=response.headers,
             body=response.body,
         )
@@ -263,11 +248,12 @@ class Panther:
             status_code=e.status_code,
         )
 
-    async def _raise(self, send, *, status_code: int):
+    @classmethod
+    async def _raise(cls, send, *, monitoring, status_code: int):
         await http_response(
             send,
             headers={'content-type': 'application/json'},
             status_code=status_code,
-            monitoring=self.monitoring,
+            monitoring=monitoring,
             exception=True,
         )

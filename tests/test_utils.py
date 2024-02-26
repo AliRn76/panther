@@ -202,7 +202,7 @@ class TestLoadConfigs(TestCase):
                 assert False
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == "Invalid 'URLs': is required."
+        assert captured.records[0].getMessage() == "Invalid 'URLs': required."
 
     def test_urls_cant_be_dict(self):
         global URLs

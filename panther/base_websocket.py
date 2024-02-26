@@ -193,8 +193,10 @@ class Websocket(BaseRequest):
             config['has_ws'] = True
 
     async def connect(self, **kwargs) -> None:
-        """Check your conditions then self.accept() the connection"""
-        await self.accept()
+        pass
+
+    async def receive(self, data: str | bytes) -> None:
+        pass
 
     async def accept(self, subprotocol: str | None = None, headers: dict | None = None) -> None:
         await self.asgi_send({'type': 'websocket.accept', 'subprotocol': subprotocol, 'headers': headers or {}})
@@ -204,9 +206,6 @@ class Websocket(BaseRequest):
         self._connection_id = ULID.new()
 
         logger.debug(f'Accepting WS Connection {self._connection_id}')
-
-    async def receive(self, data: str | bytes) -> None:
-        pass
 
     async def send(self, data: any = None) -> None:
         logger.debug(f'Sending WS Message to {self.connection_id}')
@@ -245,12 +244,8 @@ class Websocket(BaseRequest):
             else:
                 await self.receive(data=response['bytes'])
 
-    def set_connection_id(self, connection_id: str) -> None:
-        self._connection_id = connection_id
-
     @property
     def connection_id(self) -> str:
-        connection_id = getattr(self, '_connection_id', None)
-        if connection_id is None:
+        if not hasattr(self, '_connection_id'):
             logger.error('You should first `self.accept()` the connection then use the `self.connection_id`')
-        return connection_id
+        return self._connection_id

@@ -136,8 +136,7 @@ class API:
 
     def handle_input_validation(self):
         if self.input_model:
-            validated_data = self.validate_input(model=self.input_model, request=self.request)
-            self.request.set_validated_data(validated_data)
+            self.request.validated_data = self.validate_input(model=self.input_model, request=self.request)
 
     @classmethod
     def validate_input(cls, model, request: Request):

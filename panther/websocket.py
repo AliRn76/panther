@@ -22,7 +22,7 @@ class GenericWebsocket(Websocket):
 
     async def send(self, data: any = None):
         """
-        We are using this method to send message to the client,
+        Send message to the client,
         You may want to override it with your custom scenario. (not recommended)
         """
         return await super().send(data=data)

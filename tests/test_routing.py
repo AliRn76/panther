@@ -1,8 +1,8 @@
 import random
 from unittest import TestCase
 
+from panther.base_request import BaseRequest
 from panther.routings import (
-    collect_path_variables,
     finalize_urls,
     find_endpoint,
     flatten_urls,
@@ -920,7 +920,9 @@ class TestRoutingFunctions(TestCase):
         request_path = f'user/{_user_id}/profile/{_id}'
 
         _, found_path = find_endpoint(request_path)
-        path_variables = collect_path_variables(request_path=request_path, found_path=found_path)
+        request = BaseRequest(scope={'path': request_path}, receive=lambda x: x, send=lambda x: x)
+        request.collect_path_variables(found_path=found_path)
+        path_variables = request.path_variables
 
         assert isinstance(path_variables, dict)
 
