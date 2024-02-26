@@ -4,9 +4,10 @@ import orjson as json
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic._internal._model_construction import ModelMetaclass
 
+from panther import status
 from panther.db.cursor import Cursor
 
-ResponseDataTypes = list | tuple | set | dict | int | float | str | bool | bytes | NoneType | ModelMetaclass
+ResponseDataTypes = list | tuple | set | Cursor | dict | int | float | str | bool | bytes | NoneType | ModelMetaclass
 IterableDataTypes = list | tuple | set | Cursor
 
 
@@ -17,16 +18,16 @@ class Response:
         self,
         data: ResponseDataTypes = None,
         headers: dict | None = None,
-        status_code: int = 200,
+        status_code: int = status.HTTP_200_OK,
     ):
         """
-        :param data: should be int | float | dict | list | tuple | set | str | bool | bytes | NoneType
-            or instance of Pydantic.BaseModel
+        :param data: should be an instance of ResponseDataTypes
+        :param headers: should be dict of headers
         :param status_code: should be int
         """
-        self.data = self._clean_data_type(data)
-        self._check_status_code(status_code)
-        self._headers = headers
+        self.data = self.prepare_data(data=data)
+        self.headers = self.prepare_headers(headers=headers)
+        self.status_code = self.check_status_code(status_code=status_code)
 
     @property
     def body(self) -> bytes:
@@ -37,52 +38,48 @@ class Response:
             return b''
         return json.dumps(self.data)
 
-    @property
-    def headers(self) -> dict:
+    def prepare_headers(self, headers: dict | None) -> dict:
         return {
-            'content-type': self.content_type,
-            'content-length': len(self.body),
-            'access-control-allow-origin': '*',
-        } | (self._headers or {})
+            'Content-Type': self.content_type,
+            'Content-Length': len(self.body),
+            'Access-Control-Allow-Origin': '*',
+        } | (headers or {})
 
-    def _clean_data_type(self, data: any):
+    def prepare_data(self, data: any):
         """Make sure the response data is only ResponseDataTypes or Iterable of ResponseDataTypes"""
-        if issubclass(type(data), PydanticBaseModel):
+        if isinstance(data, (int | float | str | bool | bytes | NoneType)):
+            return data
+
+        elif isinstance(data, dict):
+            return {key: self.prepare_data(value) for key, value in data.items()}
+
+        elif issubclass(type(data), PydanticBaseModel):
             return data.model_dump()
 
         elif isinstance(data, IterableDataTypes):
-            return [self._clean_data_type(d) for d in data]
-
-        elif isinstance(data, dict):
-            return {key: self._clean_data_type(value) for key, value in data.items()}
-
-        elif isinstance(data, (int | float | str | bool | bytes | NoneType)):
-            return data
+            return [self.prepare_data(d) for d in data]
 
         else:
             msg = f'Invalid Response Type: {type(data)}'
             raise TypeError(msg)
 
-    def _check_status_code(self, status_code: any):
+    @classmethod
+    def check_status_code(cls, status_code: any):
         if not isinstance(status_code, int):
             error = f'Response "status_code" Should Be "int". ("{status_code}" is {type(status_code)})'
             raise TypeError(error)
-
-        self.status_code = status_code
-
-    def _clean_data_with_output_model(self, output_model: ModelMetaclass | None):
-        if self.data and output_model:
-            self.data = self._serialize_with_output_model(self.data, output_model=output_model)
+        return status_code
 
     @classmethod
-    def _serialize_with_output_model(cls, data: any, /, output_model: ModelMetaclass):
+    def apply_output_model(cls, data: any, /, output_model: ModelMetaclass):
+        """This method is called in API.__call__"""
         # Dict
         if isinstance(data, dict):
             return output_model(**data).model_dump()
 
         # Iterable
         if isinstance(data, IterableDataTypes):
-            return [cls._serialize_with_output_model(d, output_model=output_model) for d in data]
+            return [cls.apply_output_model(d, output_model=output_model) for d in data]
 
         # Str | Bool | Bytes
         msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'

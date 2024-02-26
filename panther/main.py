@@ -116,14 +116,14 @@ class Panther:
         # Collect Path Variables
         connection.collect_path_variables(found_path=found_path)
 
-        # Call 'Before' Middlewares
+        # Call Middlewares .before()
         if await self._run_ws_middlewares_before_listen(connection=connection):
             # Only Listen() If Middlewares Didn't Raise Anything
             await config.WEBSOCKET_CONNECTIONS.new_connection(connection=connection)
             await monitoring.after('Accepted')
             await connection.listen()
 
-        # Call 'After' Middlewares
+        # Call Middlewares .after()
         await self._run_ws_middlewares_after_listen(connection=connection)
 
         # Done
@@ -134,7 +134,14 @@ class Panther:
     async def _run_ws_middlewares_before_listen(cls, *, connection) -> bool:
         for middleware in config.WS_MIDDLEWARES:
             try:
-                connection = await middleware.before(request=connection)
+                new_connection = await middleware.before(request=connection)
+                if new_connection is None:
+                    logger.critical(
+                        f'Make sure to return the `request` at the end of `{middleware.__class__.__name__}.before()`')
+                    await connection.close()
+                    return False
+                connection = new_connection
+
             except APIError:
                 await connection.close()
                 return False
@@ -144,7 +151,11 @@ class Panther:
     async def _run_ws_middlewares_after_listen(cls, *, connection):
         for middleware in config.REVERSED_WS_MIDDLEWARES:
             with contextlib.suppress(APIError):
-                await middleware.after(response=connection)
+                connection = await middleware.after(response=connection)
+                if connection is None:
+                    logger.critical(
+                        f'Make sure to return the `response` at the end of `{middleware.__class__.__name__}.after()`')
+                    break
 
     async def handle_http(self, scope: dict, receive: Callable, send: Callable) -> None:
         # Monitoring
@@ -174,10 +185,14 @@ class Panther:
         # Collect Path Variables
         request.collect_path_variables(found_path=found_path)
 
-        try:  # They Both(middleware.before() & _endpoint()) Have The Same Exception (APIException)
+        try:  # They Both(middleware.before() & _endpoint()) Have The Same Exception (APIError)
             # Call Middlewares .before()
             for middleware in config.HTTP_MIDDLEWARES:
                 request = await middleware.before(request=request)
+                if request is None:
+                    logger.critical(
+                        f'Make sure to return the `request` at the end of `{middleware.__class__.__name__}.before()`')
+                    return await self._raise(send, monitoring=monitoring)
 
             # Call Endpoint
             response = await endpoint(request=request)
@@ -186,15 +201,19 @@ class Panther:
             response = self._handle_exceptions(e)
 
         except Exception as e:  # noqa: BLE001
-            # Every unhandled exception in Panther or code will catch here
+            # All unhandled exceptions are caught here
             exception = clean_traceback_message(exception=e)
             logger.critical(exception)
-            return await self._raise(send, monitoring=monitoring, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return await self._raise(send, monitoring=monitoring)
 
-        # Call 'After' Middleware
+        # Call Middlewares .after()
         for middleware in config.REVERSED_HTTP_MIDDLEWARES:
             try:
                 response = await middleware.after(response=response)
+                if response is None:
+                    logger.critical(
+                        f'Make sure to return the `response` at the end of `{middleware.__class__.__name__}.after()`')
+                    return await self._raise(send, monitoring=monitoring)
             except APIError as e:  # noqa: PERF203
                 response = self._handle_exceptions(e)
 
@@ -249,7 +268,7 @@ class Panther:
         )
 
     @classmethod
-    async def _raise(cls, send, *, monitoring, status_code: int):
+    async def _raise(cls, send, *, monitoring, status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR):
         await http_response(
             send,
             headers={'content-type': 'application/json'},
