@@ -74,7 +74,7 @@ class API:
 
             # 6. Get Cached Response
             if self.cache and self.request.method == 'GET':
-                if cached := get_cached_response_data(request=self.request, cache_exp_time=self.cache_exp_time):
+                if cached := await get_cached_response_data(request=self.request, cache_exp_time=self.cache_exp_time):
                     return Response(data=cached.data, status_code=cached.status_code)
 
             # 7. Put PathVariables and Request(If User Wants It) In kwargs
@@ -94,7 +94,7 @@ class API:
 
             # 10. Set New Response To Cache
             if self.cache and self.request.method == 'GET':
-                set_cache_response(
+                await set_cache_response(
                     request=self.request,
                     response=response,
                     cache_exp_time=self.cache_exp_time

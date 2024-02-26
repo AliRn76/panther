@@ -57,7 +57,7 @@ class RequestClient:
         return Response(
             data=json.loads(self.response.get('body', b'null')),
             status_code=self.header['status'],
-            headers=self.header['headers'],
+            headers={key.decode(): value.decode() for key, value in self.header['headers']},
         )
 
 

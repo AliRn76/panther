@@ -18,7 +18,7 @@ from panther.exceptions import AuthenticationAPIError, InvalidPathVariableAPIErr
 from panther.utils import Singleton, ULID
 
 if TYPE_CHECKING:
-    from redis import Redis
+    from redis.asyncio import Redis
 
 logger = logging.getLogger('panther')
 
@@ -38,15 +38,6 @@ class PubSub:
             queue.put(msg)
 
 
-class WebsocketListener(Thread):
-    def __init__(self):
-        super().__init__(target=config.WEBSOCKET_CONNECTIONS, daemon=True)
-
-    def run(self):
-        with contextlib.suppress(Exception):
-            super().run()
-
-
 class WebsocketConnections(Singleton):
     def __init__(self, pubsub_connection: Redis | Manager):
         self.connections = {}
@@ -56,20 +47,20 @@ class WebsocketConnections(Singleton):
         if isinstance(self.pubsub_connection, SyncManager):
             self.pubsub = PubSub(manager=self.pubsub_connection)
 
-    def __call__(self):
+    async def __call__(self):
         if isinstance(self.pubsub_connection, SyncManager):
             # We don't have redis connection, so use the `multiprocessing.PubSub`
             queue = self.pubsub.subscribe()
             logger.info("Subscribed to 'websocket_connections' queue")
             while True:
                 received_message = queue.get()
-                self._handle_received_message(received_message=received_message)
+                await self._handle_received_message(received_message=received_message)
         else:
             # We have a redis connection, so use it for pubsub
             self.pubsub = self.pubsub_connection.pubsub()
-            self.pubsub.subscribe('websocket_connections')
+            await self.pubsub.subscribe('websocket_connections')
             logger.info("Subscribed to 'websocket_connections' channel")
-            for channel_data in self.pubsub.listen():
+            async for channel_data in self.pubsub.listen():
                 match channel_data['type']:
                     # Subscribed
                     case 'subscribe':
@@ -78,12 +69,12 @@ class WebsocketConnections(Singleton):
                     # Message Received
                     case 'message':
                         loaded_data = json.loads(channel_data['data'].decode())
-                        self._handle_received_message(received_message=loaded_data)
+                        await self._handle_received_message(received_message=loaded_data)
 
                     case unknown_type:
                         logger.debug(f'Unknown Channel Type: {unknown_type}')
 
-    def _handle_received_message(self, received_message):
+    async def _handle_received_message(self, received_message):
         if (
                 isinstance(received_message, dict)
                 and (connection_id := received_message.get('connection_id'))
@@ -94,28 +85,20 @@ class WebsocketConnections(Singleton):
             # Check Action of WS
             match received_message['action']:
                 case 'send':
-                    asyncio.run(self.connections[connection_id].send(data=received_message['data']))
+                    await self.connections[connection_id].send(data=received_message['data'])
                 case 'close':
-                    with contextlib.suppress(RuntimeError):
-                        asyncio.run(self.connections[connection_id].close(
-                            code=received_message['data']['code'],
-                            reason=received_message['data']['reason']
-                        ))
-                        # We are trying to disconnect the connection between a thread and a user
-                        # from another thread, it's working, but we have to find another solution for it
-                        #
-                        # Error:
-                        # Task <Task pending coro=<Websocket.close()>> got Future
-                        # <Task pending coro=<WebSocketCommonProtocol.transfer_data()>>
-                        # attached to a different loop
+                    await self.connections[connection_id].close(
+                        code=received_message['data']['code'],
+                        reason=received_message['data']['reason']
+                    )
                 case unknown_action:
                     logger.debug(f'Unknown Message Action: {unknown_action}')
 
-    def publish(self, connection_id: str, action: Literal['send', 'close'], data: any):
+    async def publish(self, connection_id: str, action: Literal['send', 'close'], data: any):
         publish_data = {'connection_id': connection_id, 'action': action, 'data': data}
 
         if redis.is_connected:
-            redis.publish('websocket_connections', json.dumps(publish_data))
+            await redis.publish('websocket_connections', json.dumps(publish_data))
         else:
             self.pubsub.publish(publish_data)
 

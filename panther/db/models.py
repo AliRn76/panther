@@ -65,5 +65,5 @@ class BaseUser(Model):
         await self.update_last_login()
         return config.AUTHENTICATION.login(self.id)
 
-    def logout(self) -> dict:
-        return config.AUTHENTICATION.logout(self._auth_token)
+    async def logout(self) -> dict:
+        return await config.AUTHENTICATION.logout(self._auth_token)

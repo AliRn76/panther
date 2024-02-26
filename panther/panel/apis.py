@@ -78,6 +78,6 @@ async def healthcheck_api():
                 checks.append(False)
     # Redis
     if redis.is_connected:
-        checks.append(redis.ping())
+        checks.append(await redis.ping())
 
     return Response(all(checks))

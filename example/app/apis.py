@@ -85,8 +85,8 @@ async def res_request_data_with_output_model(request: Request):
 
 @API(input_model=UserInputSerializer)
 async def using_redis(request: Request):
-    redis.set('ali', '1')
-    logger.debug(f"{redis.get('ali') = }")
+    await redis.set('ali', '1')
+    logger.debug(f"{await redis.get('ali') = }")
     return Response()
 
 

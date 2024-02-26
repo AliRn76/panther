@@ -64,7 +64,7 @@ you have to use `--preload`, like below:
         from panther import status
         await self.close(code=status.WS_1000_NORMAL_CLOSURE, reason='I just want to close it')
         ```
-    - Out of websocket class scope **(Not Recommended)**: You can close it with `close_websocket_connection()` from `panther.websocket`, it's `async` function with takes 3 args, `connection_id`, `code` and `reason`, like below: 
+    - Out of websocket class scope: You can close it with `close_websocket_connection()` from `panther.websocket`, it's `async` function with takes 3 args, `connection_id`, `code` and `reason`, like below: 
         ```python
         from panther import status
         from panther.websocket import close_websocket_connection

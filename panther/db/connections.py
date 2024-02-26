@@ -10,8 +10,8 @@ from panther.configs import config
 from panther.utils import Singleton
 
 try:
-    from redis import Redis as _Redis
-except ModuleNotFoundError:
+    from redis.asyncio import Redis as _Redis
+except ImportError:
     # This '_Redis' is not going to be used,
     #   If user really wants to use redis,
     #   we are going to force him to install it in `panther._load_configs.load_redis`
@@ -117,7 +117,12 @@ class RedisConnection(Singleton, _Redis):
 
             super().__init__(host=host, port=port, db=db, **kwargs)
             self.is_connected = True
-            self.ping()
+            self.sync_ping()
+
+    def sync_ping(self):
+        from redis import Redis
+
+        Redis(host=self.host, port=self.port, **self.kwargs).ping()
 
     def create_connection_for_websocket(self) -> _Redis:
         if not hasattr(self, 'websocket_connection'):

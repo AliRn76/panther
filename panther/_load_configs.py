@@ -55,8 +55,8 @@ def load_redis(_configs: dict, /) -> None:
     if redis_config := _configs.get('REDIS'):
         # Check redis module installation
         try:
-            from redis import Redis as _Redis
-        except ModuleNotFoundError as e:
+            from redis.asyncio import Redis
+        except ImportError as e:
             raise import_error(e, package='redis')
         redis_class_path = redis_config.get('class', 'panther.db.connections.Redis')
         redis_class = import_class(redis_class_path)
@@ -154,10 +154,10 @@ def load_middlewares(_configs: dict, /) -> None:
             raise _exception_handler(field='MIDDLEWARES', error='is not a sub class of BaseMiddleware')
 
         middleware_instance = middleware_class(**data)
-        if isinstance(middleware_instance, BaseMiddleware | HTTPMiddleware):
+        if middleware_instance.__class__.__bases__[0] in (BaseMiddleware, HTTPMiddleware):
             middlewares['http'].append(middleware_instance)
 
-        if isinstance(middleware_instance, BaseMiddleware | WebsocketMiddleware):
+        if middleware_instance.__class__.__bases__[0] in (BaseMiddleware, WebsocketMiddleware):
             middlewares['ws'].append(middleware_instance)
 
     config.HTTP_MIDDLEWARES = middlewares['http']

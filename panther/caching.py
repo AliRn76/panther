@@ -32,7 +32,7 @@ def local_cache_key(*, request: Request, cache_exp_time: timedelta | None = None
         return key
 
 
-def get_cached_response_data(*, request: Request, cache_exp_time: timedelta) -> CachedResponse | None:
+async def get_cached_response_data(*, request: Request, cache_exp_time: timedelta) -> CachedResponse | None:
     """
     If redis.is_connected:
         Get Cached Data From Redis
@@ -41,7 +41,7 @@ def get_cached_response_data(*, request: Request, cache_exp_time: timedelta) -> 
     """
     if redis.is_connected:  # noqa: Unresolved References
         key = cache_key(request)
-        data = (redis.get(key) or b'{}').decode()
+        data = (await redis.get(key) or b'{}').decode()
         if cached_value := json.loads(data):
             return CachedResponse(*cached_value)
 
@@ -53,7 +53,7 @@ def get_cached_response_data(*, request: Request, cache_exp_time: timedelta) -> 
     return None
 
 
-def set_cache_response(*, request: Request, response: Response, cache_exp_time: timedelta | int) -> None:
+async def set_cache_response(*, request: Request, response: Response, cache_exp_time: timedelta | int) -> None:
     """
     If redis.is_connected:
         Cache The Data In Redis
@@ -78,9 +78,9 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
                 'your response are going to cache in redis forever '
                 '** set DEFAULT_CACHE_EXP in configs or pass the cache_exp_time in @API.get() for prevent this **'
             )
-            redis.set(key, cache_data)
+            await redis.set(key, cache_data)
         else:
-            redis.set(key, cache_data, ex=cache_exp_time)
+            await redis.set(key, cache_data, ex=cache_exp_time)
 
     else:
         key = local_cache_key(request=request, cache_exp_time=cache_exp_time)

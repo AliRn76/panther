@@ -31,7 +31,7 @@ REDIS = {
 
 ### How it works?
 
-- Panther creates a redis connection depends on `REDIS` block you defined in `configs`
+- Panther creates an async redis connection depends on `REDIS` block you defined in `configs`
 
 - You can access to it from `from panther.db.connections import redis`
 
@@ -39,7 +39,7 @@ REDIS = {
     ```python  
     from panther.db.connections import redis
     
-    redis.set('name', 'Ali')
-    result = redis.get('name')
+    await redis.set('name', 'Ali')
+    result = await redis.get('name')
     print(result)  
     ```  

@@ -12,7 +12,6 @@ from panther import status
 from panther._load_configs import *
 from panther._utils import clean_traceback_message, http_response, is_function_async, reformat_code, \
     check_class_type_endpoint, check_function_type_endpoint
-from panther.base_websocket import WebsocketListener
 from panther.cli.utils import print_info
 from panther.configs import config
 from panther.exceptions import APIError, PantherError
@@ -227,15 +226,19 @@ class Panther:
 
     async def handle_ws_listener(self):
         """
+        Start Websocket Listener (Redis/ Queue)
+
         Cause of --preload in gunicorn we have to keep this function here,
         and we can't move it to __init__ of Panther
 
             * Each process should start this listener for itself,
               but they have same Manager()
         """
-        # Start Websocket Listener (Redis/ Queue)
+
         if config.HAS_WS:
-            WebsocketListener().start()
+            # Schedule the async function to run in the background,
+            #   We don't need to await for this task
+            asyncio.create_task(config.WEBSOCKET_CONNECTIONS())
 
     async def handle_startup(self):
         if startup := config.STARTUP or self._startup:
