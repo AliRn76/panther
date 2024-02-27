@@ -2,6 +2,7 @@ import random
 from unittest import TestCase
 
 from panther.base_request import BaseRequest
+from panther.exceptions import PantherError
 from panther.routings import (
     finalize_urls,
     find_endpoint,
@@ -17,63 +18,84 @@ class TestRoutingFunctions(TestCase):
 
     # Collecting
     def test_collect_ellipsis_urls(self):
-        urls = {
+        urls1 = {
             'user/': {
                 '<user_id>/': ...,
-                'profile/': ...,
+            },
+        }
+        urls2 = {
+            'user/': {
                 'list/': ...,
             },
         }
 
-        with self.assertLogs() as captured:
-            collected_urls = flatten_urls(urls)
+        try:
+            flatten_urls(urls1)
+        except PantherError as exc:
+            assert exc.args[0] == "URL Can't Point To Ellipsis. ('user/<user_id>/' -> ...)"
+        else:
+            assert False
 
-        assert len(captured.records) == 3
-        assert captured.records[0].getMessage() == "URL Can't Point To Ellipsis. ('user/<user_id>/' -> ...)"
-        assert captured.records[1].getMessage() == "URL Can't Point To Ellipsis. ('user/profile/' -> ...)"
-        assert captured.records[2].getMessage() == "URL Can't Point To Ellipsis. ('user/list/' -> ...)"
+        try:
+            flatten_urls(urls2)
+        except PantherError as exc:
+            assert exc.args[0] == "URL Can't Point To Ellipsis. ('user/list/' -> ...)"
+        else:
+            assert False
 
-        assert collected_urls == {}
-
-    def test_collect_None_urls(self):  # noqa: N802
-        urls = {
+    def test_collect_None_urls(self):
+        urls1 = {
             'user/': {
-                '<user_id>/': None,
-                'profile/': None,
                 'list/': None,
             },
         }
+        urls2 = {
+            'user/': {
+                '<user_id>/': None,
+            },
+        }
 
-        with self.assertLogs() as captured:
-            collected_urls = flatten_urls(urls)
+        try:
+            flatten_urls(urls1)
+        except PantherError as exc:
+            assert exc.args[0] == "URL Can't Point To None. ('user/list/' -> None)"
+        else:
+            assert False
 
-        assert len(captured.records) == 3
-        assert captured.records[0].getMessage() == "URL Can't Point To None. ('user/<user_id>/' -> None)"
-        assert captured.records[1].getMessage() == "URL Can't Point To None. ('user/profile/' -> None)"
-        assert captured.records[2].getMessage() == "URL Can't Point To None. ('user/list/' -> None)"
-
-        assert collected_urls == {}
+        try:
+            flatten_urls(urls2)
+        except PantherError as exc:
+            assert exc.args[0] == "URL Can't Point To None. ('user/<user_id>/' -> None)"
+        else:
+            assert False
 
     def test_collect_invalid_urls(self):
         def temp_func(): pass
 
-        urls = {
+        urls1 = {
             'user/': {
                 '?': temp_func,
-                '%^': temp_func,
+            },
+        }
+        urls2 = {
+            'user/': {
                 'لیست': temp_func,
             },
         }
 
-        with self.assertLogs() as captured:
-            collected_urls = flatten_urls(urls)
+        try:
+            flatten_urls(urls1)
+        except PantherError as exc:
+            assert exc.args[0] == "URL Is Not Valid. --> 'user/?/'"
+        else:
+            assert False
 
-        assert len(captured.records) == 3
-        assert captured.records[0].getMessage() == "URL Is Not Valid. --> 'user/?/'"
-        assert captured.records[1].getMessage() == "URL Is Not Valid. --> 'user/%^/'"
-        assert captured.records[2].getMessage() == "URL Is Not Valid. --> 'user/لیست/'"
-
-        assert collected_urls == {}
+        try:
+            flatten_urls(urls2)
+        except PantherError as exc:
+            assert exc.args[0] == "URL Is Not Valid. --> 'user/لیست/'"
+        else:
+            assert False
 
     def test_collect_empty_url(self):
         def temp_func(): pass
@@ -503,6 +525,47 @@ class TestRoutingFunctions(TestCase):
             },
         }
         assert finalized_urls == expected_result
+
+    def test_finalize_urls_with_same_level_path_variables(self):
+        def temp_func(): pass
+
+        urls1 = {
+            'user': {
+                '<index1>/': temp_func,
+                '<index2>/': temp_func,
+            }
+        }
+        urls2 = {
+            'user': {
+                '<index1>/': {'detail': temp_func},
+                '<index2>/': temp_func,
+                '<index3>/': {'detail': temp_func},
+                '<index4>/': {'detail': temp_func},
+            }
+        }
+
+        try:
+            finalize_urls(flatten_urls(urls1))
+        except PantherError as exc:
+            assert exc.args[0] == (
+                "URLs can't have same-level path variables that point to an endpoint: "
+                "\n\t- /user/<index1>"
+                "\n\t- /user/<index2>"
+            )
+        else:
+            assert False
+
+        try:
+            finalize_urls(flatten_urls(urls2))
+        except PantherError as exc:
+            assert exc.args[0] == (
+                "URLs can't have same-level path variables that point to a dict: "
+                "\n\t- /user/<index1>"
+                "\n\t- /user/<index3>"
+                "\n\t- /user/<index4>"
+            )
+        else:
+            assert False
 
     # Find Endpoint
     def test_find_endpoint_root_url(self):

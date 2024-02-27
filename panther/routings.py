@@ -1,4 +1,3 @@
-import logging
 import re
 from collections import Counter
 from collections.abc import Callable, Mapping, MutableMapping
@@ -6,9 +5,7 @@ from copy import deepcopy
 from functools import partial, reduce
 
 from panther.configs import config
-
-
-logger = logging.getLogger('panther')
+from panther.exceptions import PantherError
 
 
 def flatten_urls(urls: dict) -> dict:
@@ -28,20 +25,17 @@ def _flattening_urls(data: dict | Callable, url: str = ''):
         url = url.removeprefix('/')
 
         # Collect it, if it doesn't have problem
-        if _is_url_endpoint_valid(url=url, endpoint=data):
-            yield url, data
+        _is_url_endpoint_valid(url=url, endpoint=data)
+        yield url, data
 
 
-def _is_url_endpoint_valid(url: str, endpoint: Callable) -> bool:
+def _is_url_endpoint_valid(url: str, endpoint: Callable):
     if endpoint is ...:
-        logger.error(f"URL Can't Point To Ellipsis. ('{url}' -> ...)")
+        raise PantherError(f"URL Can't Point To Ellipsis. ('{url}' -> ...)")
     elif endpoint is None:
-        logger.error(f"URL Can't Point To None. ('{url}' -> None)")
+        raise PantherError(f"URL Can't Point To None. ('{url}' -> None)")
     elif url and not re.match(r'^[a-zA-Z<>0-9_/-]+$', url):
-        logger.error(f"URL Is Not Valid. --> '{url}'")
-    else:
-        return True
-    return False
+        raise PantherError(f"URL Is Not Valid. --> '{url}'")
 
 
 def finalize_urls(urls: dict) -> dict:
@@ -60,7 +54,33 @@ def finalize_urls(urls: dict) -> dict:
             else:
                 path = {single_path: path or endpoint}
         urls_list.append(path)
-    return _merge(*urls_list) if urls_list else {}
+    final_urls = _merge(*urls_list) if urls_list else {}
+    check_urls_path_variables(final_urls)
+    return final_urls
+
+
+def check_urls_path_variables(urls: dict, path: str = '', ) -> None:
+    middle_route_error = []
+    last_route_error = []
+    for key, value in urls.items():
+        new_path = f'{path}/{key}'
+
+        if isinstance(value, dict):
+            if key.startswith('<'):
+                middle_route_error.append(new_path)
+            check_urls_path_variables(value, path=new_path)
+        elif key.startswith('<'):
+            last_route_error.append(new_path)
+
+    if len(middle_route_error) > 1:
+        msg = '\n\t- ' + '\n\t- '.join(e for e in middle_route_error)
+        raise PantherError(
+            f"URLs can't have same-level path variables that point to a dict: {msg}")
+
+    if len(last_route_error) > 1:
+        msg = '\n\t- ' + '\n\t- '.join(e for e in last_route_error)
+        raise PantherError(
+            f"URLs can't have same-level path variables that point to an endpoint: {msg}")
 
 
 def _merge(destination: MutableMapping, *sources) -> MutableMapping:
