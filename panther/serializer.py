@@ -67,22 +67,41 @@ class MetaModelSerializer:
             raise AttributeError(msg) from None
 
         # Check `fields`
-        if (fields := getattr(config, 'fields', None)) is None:
+        if not hasattr(config, 'fields'):
             msg = f'`{cls_name}.Config.fields` is required.'
             raise AttributeError(msg) from None
 
-        for field_name in fields:
-            if field_name not in model.model_fields:
-                msg = f'`{cls_name}.Config.fields.{field_name}` is not valid.'
-                raise AttributeError(msg) from None
+        if config.fields != '*':
+            for field_name in config.fields:
+                if field_name == '*':
+                    msg = f"`{cls_name}.Config.fields.{field_name}` is not valid. Did you mean `fields = '*'`"
+                    raise AttributeError(msg) from None
+
+                if field_name not in model.model_fields:
+                    msg = f'`{cls_name}.Config.fields.{field_name}` is not in `{model.__name__}.model_fields`'
+                    raise AttributeError(msg) from None
 
         # Check `required_fields`
         if not hasattr(config, 'required_fields'):
             config.required_fields = []
 
-        for required in config.required_fields:
-            if required not in config.fields:
-                msg = f'`{cls_name}.Config.required_fields.{required}` should be in `Config.fields` too.'
+        if config.required_fields != '*':
+            for required in config.required_fields:
+                if required not in config.fields:
+                    msg = f'`{cls_name}.Config.required_fields.{required}` should be in `Config.fields` too.'
+                    raise AttributeError(msg) from None
+
+        # Check `exclude`
+        if not hasattr(config, 'exclude'):
+            config.exclude = []
+
+        for field_name in config.exclude:
+            if field_name not in model.model_fields:
+                msg = f'`{cls_name}.Config.exclude.{field_name}` is not valid.'
+                raise AttributeError(msg) from None
+
+            if config.fields != '*' and field_name not in config.fields:
+                msg = f'`{cls_name}.Config.exclude.{field_name}` is not defined in `Config.fields`.'
                 raise AttributeError(msg) from None
 
     @classmethod
@@ -90,15 +109,27 @@ class MetaModelSerializer:
         field_definitions = {}
 
         # Define `fields`
-        for field_name in config.fields:
-            field_definitions[field_name] = (
-                config.model.model_fields[field_name].annotation,
-                config.model.model_fields[field_name]
-            )
+        if config.fields == '*':
+            for field_name, field in config.model.model_fields.items():
+                field_definitions[field_name] = (field.annotation, field)
+        else:
+            for field_name in config.fields:
+                field_definitions[field_name] = (
+                    config.model.model_fields[field_name].annotation,
+                    config.model.model_fields[field_name]
+                )
+
+        # Apply `exclude`
+        for field_name in config.exclude:
+            del field_definitions[field_name]
 
         # Apply `required_fields`
-        for required in config.required_fields:
-            field_definitions[required][1].default = PydanticUndefined
+        if config.required_fields == '*':
+            for field in field_definitions:
+                field[1].default = PydanticUndefined
+        else:
+            for required in config.required_fields:
+                field_definitions[required][1].default = PydanticUndefined
 
         # Collect and Override `Class Fields`
         for key, value in namespace.pop('__annotations__', {}).items():

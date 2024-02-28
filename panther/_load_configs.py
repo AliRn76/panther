@@ -58,7 +58,7 @@ def load_redis(_configs: dict, /) -> None:
             from redis.asyncio import Redis
         except ImportError as e:
             raise import_error(e, package='redis')
-        redis_class_path = redis_config.get('class', 'panther.db.connections.Redis')
+        redis_class_path = redis_config.get('class', 'panther.db.connections.RedisConnection')
         redis_class = import_class(redis_class_path)
         # We have to create another dict then pop the 'class' else we can't pass the tests
         args = redis_config.copy()

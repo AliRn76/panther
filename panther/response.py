@@ -25,8 +25,8 @@ class Response:
         :param headers: should be dict of headers
         :param status_code: should be int
         """
+        self.headers = headers or {}
         self.data = self.prepare_data(data=data)
-        self.headers = self.prepare_headers(headers=headers)
         self.status_code = self.check_status_code(status_code=status_code)
 
     @property
@@ -38,12 +38,17 @@ class Response:
             return b''
         return json.dumps(self.data)
 
-    def prepare_headers(self, headers: dict | None) -> dict:
+    @property
+    def headers(self) -> dict:
         return {
             'Content-Type': self.content_type,
             'Content-Length': len(self.body),
             'Access-Control-Allow-Origin': '*',
-        } | (headers or {})
+        } | self._headers
+
+    @headers.setter
+    def headers(self, headers: dict):
+        self._headers = headers
 
     def prepare_data(self, data: any):
         """Make sure the response data is only ResponseDataTypes or Iterable of ResponseDataTypes"""
@@ -75,6 +80,9 @@ class Response:
         """This method is called in API.__call__"""
         # Dict
         if isinstance(data, dict):
+            for field_name, field in output_model.model_fields.items():
+                if field.validation_alias and field_name in data:
+                    data[field.validation_alias] = data.pop(field_name)
             return output_model(**data).model_dump()
 
         # Iterable
