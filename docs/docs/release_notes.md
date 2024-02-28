@@ -1,6 +1,7 @@
 ### 4.0.0
 - Move `database` and `redis` connections from `MIDDLEWARES` to their own block, `DATABASE` and `REDIS`
-- Make queries `async`
+- Make `Database` queries `async`
+- Make `Redis` queries `async`
 - Add `login()` & `logout()` to `JWTAuthentication` and used it in `BaseUser`
 - Support `Authentication` & `Authorization` in `Websocket`
 - Rename all exceptions suffix from `Exception` to `Error` (https://peps.python.org/pep-0008/#exception-names)

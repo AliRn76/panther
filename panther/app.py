@@ -1,13 +1,18 @@
 import functools
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Literal
 
 from orjson import JSONDecodeError
 from pydantic import ValidationError
 
 from panther._utils import is_function_async
-from panther.caching import cache_key, get_cached_response_data, set_cache_response
+from panther.caching import (
+    get_response_from_cache,
+    set_response_in_cache,
+    get_throttling_from_cache,
+    increment_throttling_in_cache
+)
 from panther.configs import config
 from panther.exceptions import (
     APIError,
@@ -19,8 +24,7 @@ from panther.exceptions import (
 )
 from panther.request import Request
 from panther.response import Response
-from panther.throttling import Throttling, throttling_storage
-from panther.utils import round_datetime
+from panther.throttling import Throttling
 
 __all__ = ('API', 'GenericAPI')
 
@@ -62,11 +66,11 @@ class API:
             # 2. Authentication
             await self.handle_authentications()
 
-            # 3. Throttling
-            self.handle_throttling()
-
-            # 4. Permissions
+            # 3. Permissions
             await self.handle_permissions()
+
+            # 4. Throttling
+            await self.handle_throttling()
 
             # 5. Validate Input
             if self.request.method in ['POST', 'PUT', 'PATCH']:
@@ -74,7 +78,7 @@ class API:
 
             # 6. Get Cached Response
             if self.cache and self.request.method == 'GET':
-                if cached := await get_cached_response_data(request=self.request, cache_exp_time=self.cache_exp_time):
+                if cached := await get_response_from_cache(request=self.request, cache_exp_time=self.cache_exp_time):
                     return Response(data=cached.data, status_code=cached.status_code)
 
             # 7. Put PathVariables and Request(If User Wants It) In kwargs
@@ -94,7 +98,7 @@ class API:
 
             # 10. Set New Response To Cache
             if self.cache and self.request.method == 'GET':
-                await set_cache_response(
+                await set_response_in_cache(
                     request=self.request,
                     response=response,
                     cache_exp_time=self.cache_exp_time
@@ -116,15 +120,12 @@ class API:
             user = await config.AUTHENTICATION.authentication(self.request)
             self.request.user = user
 
-    def handle_throttling(self) -> None:
+    async def handle_throttling(self) -> None:
         if throttling := self.throttling or config.THROTTLING:
-            key = cache_key(self.request)
-            time = round_datetime(datetime.now(), throttling.duration)
-            throttling_key = f'{time}-{key}'
-            if throttling_storage[throttling_key] > throttling.rate:
+            if await get_throttling_from_cache(self.request, duration=throttling.duration) + 1 > throttling.rate:
                 raise ThrottlingAPIError
 
-            throttling_storage[throttling_key] += 1
+            await increment_throttling_in_cache(self.request, duration=throttling.duration)
 
     async def handle_permissions(self) -> None:
         for perm in self.permissions:
