@@ -184,5 +184,13 @@ class MetaModelSerializer:
 
 
 class ModelSerializer(metaclass=MetaModelSerializer):
-    def create(self) -> type[Model]:
-        return self.model.insert_one(self.model_dump())
+    async def create(self) -> Model:
+        return await self.model.insert_one(self.model_dump())
+
+    async def update(self, instance: Model) -> Model:
+        await instance.update(self.model_dump())
+        return instance
+
+    async def partial_update(self, instance: Model) -> Model:
+        await instance.update(self.model_dump(exclude_none=True))
+        return instance
