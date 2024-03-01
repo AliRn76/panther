@@ -6,6 +6,7 @@
 - Support `Authentication` & `Authorization` in `Websocket`
 - Rename all exceptions suffix from `Exception` to `Error` (https://peps.python.org/pep-0008/#exception-names)
 - Support `pantherdb 1.4`
+- Remove `watchfiles` from required dependencies
 - Minor Improvements
 
 ### 3.9.0

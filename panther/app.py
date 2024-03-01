@@ -64,10 +64,10 @@ class API:
                 raise MethodNotAllowedAPIError
 
             # 2. Authentication
-            await self.handle_authentications()
+            await self.handle_authentication()
 
             # 3. Permissions
-            await self.handle_permissions()
+            await self.handle_permission()
 
             # 4. Throttling
             await self.handle_throttling()
@@ -112,7 +112,7 @@ class API:
 
         return wrapper
 
-    async def handle_authentications(self) -> None:
+    async def handle_authentication(self) -> None:
         if self.auth:
             if not config.AUTHENTICATION:
                 logger.critical('"AUTHENTICATION" has not been set in configs')
@@ -127,7 +127,7 @@ class API:
 
             await increment_throttling_in_cache(self.request, duration=throttling.duration)
 
-    async def handle_permissions(self) -> None:
+    async def handle_permission(self) -> None:
         for perm in self.permissions:
             if type(perm.authorization).__name__ != 'method':
                 logger.error(f'{perm.__name__}.authorization should be "classmethod"')

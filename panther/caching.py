@@ -15,7 +15,7 @@ from panther.utils import generate_hash_value_from_string, round_datetime
 logger = logging.getLogger('panther')
 
 caches = {}
-CachedResponse = namedtuple('Cached', ['data', 'status_code'])
+CachedResponse = namedtuple('CachedResponse', ['data', 'status_code'])
 
 
 def api_cache_key(request: Request, cache_exp_time: timedelta | None = None) -> str:

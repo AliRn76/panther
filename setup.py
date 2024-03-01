@@ -21,6 +21,7 @@ EXTRAS_REQUIRE = {
         'python-jose~=3.3',
         'websockets~=12.0',
         'cryptography~=42.0',
+        'watchfiles~=0.21.0',
     ],
 }
 
@@ -54,7 +55,6 @@ setup(
         'pydantic~=2.6',
         'rich~=13.7',
         'uvicorn~=0.27',
-        'watchfiles~=0.21.0',
     ],
     extras_require=EXTRAS_REQUIRE,
 )

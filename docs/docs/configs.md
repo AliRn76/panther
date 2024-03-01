@@ -7,11 +7,13 @@ Panther collect all the configs from your `core/configs.py` or the module you pa
 > <b>Type:</b> `bool` (<b>Default:</b> `False`)
  
 It should be `True` if you want to use `panther monitor` command
-and see the monitoring logs
+and watch the monitoring
 
 If `True`:
 
 - Log every request in `logs/monitoring.log`
+
+_Requires [watchfiles](https://watchfiles.helpmanual.io) package._
 
 ---
 ### [LOG_QUERIES](https://pantherpy.github.io/log_queries)
@@ -32,6 +34,8 @@ List of middlewares you want to use
 > <b>Type:</b> `str | None` (<b>Default:</b> `None`)
 
 Every request goes through `authentication()` method of this `class` (if `auth = True`)
+
+_Requires [python-jose](https://python-jose.readthedocs.io/en/latest/) package._
 
 _Example:_ `AUTHENTICATION = 'panther.authentications.JWTAuthentication'`
 
@@ -119,6 +123,8 @@ It will reformat your code on every reload (on every change if you run the proje
 
 You may want to write your custom `ruff.toml` in root of your project.
 
+_Requires [ruff](https://docs.astral.sh/ruff/) package._
+
 Reference: [https://docs.astral.sh/ruff/formatter/](https://docs.astral.sh/ruff/formatter/)
 
 _Example:_ `AUTO_REFORMAT = True`
@@ -132,5 +138,7 @@ We use it to create `database` connection
 ---
 ### [REDIS](https://pantherpy.github.io/redis)
 > <b>Type:</b> `dict` (<b>Default:</b> `{}`)
+
+_Requires [redis](https://redis-py.readthedocs.io/en/stable/) package._
 
 We use it to create `redis` connection

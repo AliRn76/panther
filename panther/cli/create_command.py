@@ -77,7 +77,7 @@ class CreateProject:
             },
             {
                 'field': 'monitoring',
-                'message': 'Do You Want To Use Built-in Monitoring',
+                'message': 'Do You Want To Use Built-in Monitoring (Required `watchfiles`)',
                 'is_boolean': True,
             },
             {
@@ -167,19 +167,19 @@ class CreateProject:
             field_name = question.pop('field')
             question['default'] = getattr(self, field_name)
             is_boolean = question.pop('is_boolean', False)
-            clean_output = str  # Do Nothing
+            convert_output = str  # Do Nothing
             if is_boolean:
                 question['message'] += f' (default is {self._to_str(question["default"])})'
                 question['validation_func'] = self._is_boolean
                 question['error_message'] = "Invalid Choice, '{}' not in ['y', 'n']"
-                clean_output = self._to_boolean
+                convert_output = self._to_boolean
 
             # Check Question Condition
             if 'condition' in question and eval(question.pop('condition')) is False:
                 print(flush=True)
             # Ask Question
             else:
-                setattr(self, field_name, clean_output(self.ask(**question)))
+                setattr(self, field_name, convert_output(self.ask(**question)))
             self.progress(i + 1)
 
     def ask(
