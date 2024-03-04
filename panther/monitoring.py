@@ -37,4 +37,8 @@ class Monitoring:
                 response_time = response_time * 1_000
                 time_unit = 'ms'
 
+            elif response_time >= 10:
+                response_time = response_time / 60
+                time_unit = ' m'
+
             logger.info(f'{self.log} | {round(response_time, 4)} {time_unit} | {status}')

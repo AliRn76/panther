@@ -153,17 +153,14 @@ def load_middlewares(_configs: dict, /) -> None:
         if issubclass(middleware_class, BaseMiddleware) is False:
             raise _exception_handler(field='MIDDLEWARES', error='is not a sub class of BaseMiddleware')
 
-        middleware_instance = middleware_class(**data)
-        if middleware_instance.__class__.__bases__[0] in (BaseMiddleware, HTTPMiddleware):
-            middlewares['http'].append(middleware_instance)
+        if middleware_class.__bases__[0] in (BaseMiddleware, HTTPMiddleware):
+            middlewares['http'].append((middleware_class, data))
 
-        if middleware_instance.__class__.__bases__[0] in (BaseMiddleware, WebsocketMiddleware):
-            middlewares['ws'].append(middleware_instance)
+        if middleware_class.__bases__[0] in (BaseMiddleware, WebsocketMiddleware):
+            middlewares['ws'].append((middleware_class, data))
 
     config.HTTP_MIDDLEWARES = middlewares['http']
     config.WS_MIDDLEWARES = middlewares['ws']
-    config.REVERSED_HTTP_MIDDLEWARES = middlewares['http'][::-1]
-    config.REVERSED_WS_MIDDLEWARES = middlewares['ws'][::-1]
 
 
 def load_auto_reformat(_configs: dict, /) -> None:

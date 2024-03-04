@@ -266,7 +266,7 @@ class TestWebsocket(TestCase):
 
         assert responses[0]['type'] == 'websocket.close'
         assert responses[0]['code'] == 1000
-        assert responses[0]['reason'] == 'Authentication Error'
+        assert responses[0]['reason'] == ''
 
     def test_with_auth_not_defined(self):
         ws = WebsocketClient(app=self.app)
@@ -274,11 +274,11 @@ class TestWebsocket(TestCase):
             responses = ws.connect('with-auth?authorization=Bearer token')
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == '"WS_AUTHENTICATION" has not been set in configs'
+        assert captured.records[0].getMessage() == '`WS_AUTHENTICATION` has not been set in configs'
 
         assert responses[0]['type'] == 'websocket.close'
         assert responses[0]['code'] == 1000
-        assert responses[0]['reason'] == 'Authentication Error'
+        assert responses[0]['reason'] == ''
 
     def test_with_auth_success(self):
         global WS_AUTHENTICATION, SECRET_KEY, DATABASE
@@ -304,7 +304,7 @@ class TestWebsocket(TestCase):
 
         assert responses[0]['type'] == 'websocket.close'
         assert responses[0]['code'] == 1000
-        assert responses[0]['reason'] == 'Authentication Error'
+        assert responses[0]['reason'] == ''
 
     def test_with_permission(self):
         ws = WebsocketClient(app=self.app)
@@ -327,4 +327,4 @@ class TestWebsocket(TestCase):
 
         assert responses[0]['type'] == 'websocket.close'
         assert responses[0]['code'] == 1000
-        assert responses[0]['reason'] == 'Permission Denied'
+        assert responses[0]['reason'] == ''

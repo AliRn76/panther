@@ -39,9 +39,7 @@ class TestRun(TestCase):
         assert config.SECRET_KEY == secret_key.encode()
 
         assert len(config.HTTP_MIDDLEWARES) == 0
-        assert len(config.REVERSED_HTTP_MIDDLEWARES) == 0
         assert len(config.WS_MIDDLEWARES) == 0
-        assert len(config.REVERSED_WS_MIDDLEWARES) == 0
 
         assert config.USER_MODEL.__name__ == tests.sample_project.app.models.User.__name__
         assert config.USER_MODEL.__module__.endswith('app.models')

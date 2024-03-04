@@ -79,7 +79,7 @@ class Panther:
                 await self.handle_ws_listener()
                 await self.handle_startup()
             elif message["type"] == 'lifespan.shutdown':
-                # It's not happening :\, so handle the shutdown in __del__ for now ...
+                # It's not happening :\, so handle the shutdown in __del__ ...
                 pass
             return
 
@@ -95,60 +95,56 @@ class Panther:
         # Create Temp Connection
         temp_connection = Websocket(scope=scope, receive=receive, send=send)
         await monitoring.before(request=temp_connection)
+        temp_connection._monitoring = monitoring
 
         # Find Endpoint
         endpoint, found_path = find_endpoint(path=temp_connection.path)
         if endpoint is None:
-            await monitoring.after('Rejected')
-            return await temp_connection.close(status.WS_1000_NORMAL_CLOSURE)
+            logger.debug(f'Path `{temp_connection.path}` not found')
+            return await temp_connection.close()
 
         # Check Endpoint Type
         if not issubclass(endpoint, GenericWebsocket):
-            logger.critical(f'You may have forgotten to inherit from GenericWebsocket on the {endpoint.__name__}()')
-            await monitoring.after('Rejected')
-            return await temp_connection.close(status.WS_1014_BAD_GATEWAY)
+            logger.critical(f'You may have forgotten to inherit from `GenericWebsocket` on the `{endpoint.__name__}()`')
+            return await temp_connection.close()
 
         # Create The Connection
         del temp_connection
         connection = endpoint(scope=scope, receive=receive, send=send)
+        connection._monitoring = monitoring
 
         # Collect Path Variables
         connection.collect_path_variables(found_path=found_path)
 
+        middlewares = [middleware(**data) for middleware, data in config.WS_MIDDLEWARES]
+
         # Call Middlewares .before()
-        if await self._run_ws_middlewares_before_listen(connection=connection):
-            # Only Listen() If Middlewares Didn't Raise Anything
-            await config.WEBSOCKET_CONNECTIONS.new_connection(connection=connection)
-            await monitoring.after('Accepted')
-            await connection.listen()
+        await self._run_ws_middlewares_before_listen(connection=connection, middlewares=middlewares)
+
+        # Listen The Connection
+        await config.WEBSOCKET_CONNECTIONS.listen(connection=connection)
 
         # Call Middlewares .after()
-        await self._run_ws_middlewares_after_listen(connection=connection)
-
-        # Done
-        await monitoring.after('Closed')
-        return None
+        middlewares.reverse()
+        await self._run_ws_middlewares_after_listen(connection=connection, middlewares=middlewares)
 
     @classmethod
-    async def _run_ws_middlewares_before_listen(cls, *, connection) -> bool:
-        for middleware in config.WS_MIDDLEWARES:
-            try:
+    async def _run_ws_middlewares_before_listen(cls, *, connection, middlewares):
+        try:
+            for middleware in middlewares:
                 new_connection = await middleware.before(request=connection)
                 if new_connection is None:
                     logger.critical(
                         f'Make sure to return the `request` at the end of `{middleware.__class__.__name__}.before()`')
                     await connection.close()
-                    return False
                 connection = new_connection
-
-            except APIError:
-                await connection.close()
-                return False
-        return True
+        except APIError as e:
+            connection.log(e.detail)
+            await connection.close()
 
     @classmethod
-    async def _run_ws_middlewares_after_listen(cls, *, connection):
-        for middleware in config.REVERSED_WS_MIDDLEWARES:
+    async def _run_ws_middlewares_after_listen(cls, *, connection, middlewares):
+        for middleware in middlewares:
             with contextlib.suppress(APIError):
                 connection = await middleware.after(response=connection)
                 if connection is None:
@@ -184,9 +180,10 @@ class Panther:
         # Collect Path Variables
         request.collect_path_variables(found_path=found_path)
 
+        middlewares = [middleware(**data) for middleware, data in config.HTTP_MIDDLEWARES]
         try:  # They Both(middleware.before() & _endpoint()) Have The Same Exception (APIError)
             # Call Middlewares .before()
-            for middleware in config.HTTP_MIDDLEWARES:
+            for middleware in middlewares:
                 request = await middleware.before(request=request)
                 if request is None:
                     logger.critical(
@@ -206,7 +203,8 @@ class Panther:
             return await self._raise(send, monitoring=monitoring)
 
         # Call Middlewares .after()
-        for middleware in config.REVERSED_HTTP_MIDDLEWARES:
+        middlewares.reverse()
+        for middleware in middlewares:
             try:
                 response = await middleware.after(response=response)
                 if response is None:

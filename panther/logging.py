@@ -63,6 +63,11 @@ LOGGING = {
         'query': {
             'handlers': ['default', 'query_file'],
             'level': 'DEBUG',
-        }
+        },
+        'uvicorn.error': {
+            'handlers': ['default'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
     }
 }

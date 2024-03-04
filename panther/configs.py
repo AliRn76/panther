@@ -52,10 +52,8 @@ class Config(Singleton):
     DEFAULT_CACHE_EXP: timedelta | None
     THROTTLING: Throttling | None
     SECRET_KEY: bytes | None
-    HTTP_MIDDLEWARES: list
-    WS_MIDDLEWARES: list
-    REVERSED_HTTP_MIDDLEWARES: list
-    REVERSED_WS_MIDDLEWARES: list
+    HTTP_MIDDLEWARES: list[tuple]
+    WS_MIDDLEWARES: list[tuple]
     USER_MODEL: ModelMetaclass | None
     AUTHENTICATION: ModelMetaclass | None
     WS_AUTHENTICATION: ModelMetaclass | None
@@ -98,8 +96,6 @@ default_configs = {
     'SECRET_KEY': None,
     'HTTP_MIDDLEWARES': [],
     'WS_MIDDLEWARES': [],
-    'REVERSED_HTTP_MIDDLEWARES': [],
-    'REVERSED_WS_MIDDLEWARES': [],
     'USER_MODEL': None,
     'AUTHENTICATION': None,
     'WS_AUTHENTICATION': None,

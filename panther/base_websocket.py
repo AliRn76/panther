@@ -11,6 +11,7 @@ from panther.base_request import BaseRequest
 from panther.configs import config
 from panther.db.connections import redis
 from panther.exceptions import AuthenticationAPIError, InvalidPathVariableAPIError
+from panther.monitoring import Monitoring
 from panther.utils import Singleton, ULID
 
 if TYPE_CHECKING:
@@ -69,7 +70,7 @@ class WebsocketConnections(Singleton):
                         await self._handle_received_message(received_message=loaded_data)
 
                     case unknown_type:
-                        logger.debug(f'Unknown Channel Type: {unknown_type}')
+                        logger.error(f'Unknown Channel Type: {unknown_type}')
 
     async def _handle_received_message(self, received_message):
         if (
@@ -89,7 +90,7 @@ class WebsocketConnections(Singleton):
                         reason=received_message['data']['reason']
                     )
                 case unknown_action:
-                    logger.debug(f'Unknown Message Action: {unknown_action}')
+                    logger.error(f'Unknown Message Action: {unknown_action}')
 
     async def publish(self, connection_id: str, action: Literal['send', 'close'], data: any):
         publish_data = {'connection_id': connection_id, 'action': action, 'data': data}
@@ -99,74 +100,108 @@ class WebsocketConnections(Singleton):
         else:
             self.pubsub.publish(publish_data)
 
-    async def new_connection(self, connection: Websocket) -> None:
+    async def listen(self, connection: Websocket) -> None:
         # 1. Authentication
-        connection_closed = await self.handle_authentication(connection=connection)
+        if not connection.is_rejected:
+            await self.handle_authentication(connection=connection)
 
         # 2. Permissions
-        connection_closed = connection_closed or await self.handle_permissions(connection=connection)
+        if not connection.is_rejected:
+            await self.handle_permissions(connection=connection)
 
-        if connection_closed:
-            # Connection is closed so don't continue anymore ...
+        if connection.is_rejected:
+            # Connection is rejected so don't continue the flow ...
             return None
 
         # 3. Put PathVariables and Request(If User Wants It) In kwargs
         try:
             kwargs = connection.clean_parameters(connection.connect)
         except InvalidPathVariableAPIError as e:
-            return await connection.close(status.WS_1000_NORMAL_CLOSURE, reason=str(e))
+            connection.log(e.detail)
+            return await connection.close()
 
         # 4. Connect To Endpoint
         await connection.connect(**kwargs)
 
-        if not hasattr(connection, '_connection_id'):
-            # User didn't even call the `self.accept()` so close the connection
-            await connection.close()
+        # 5. Check Connection
+        if not connection.is_connected and not connection.is_rejected:
+            # User didn't call the `self.accept()` or `self.close()` so we `close()` the connection (reject)
+            return await connection.close()
 
-        # 5. Connection Accepted
+        # 6. Listen Connection
+        await self.listen_connection(connection=connection)
+
+    async def listen_connection(self, connection: Websocket):
+        while True:
+            response = await connection.asgi_receive()
+            if response['type'] == 'websocket.connect':
+                continue
+
+            if response['type'] == 'websocket.disconnect':
+                # Connect has to be closed by the client
+                await self.connection_closed(connection=connection)
+                break
+
+            if 'text' in response:
+                await connection.receive(data=response['text'])
+            else:
+                await connection.receive(data=response['bytes'])
+
+    async def connection_accepted(self, connection: Websocket) -> None:
+        # Generate ConnectionID
+        connection._connection_id = ULID.new()
+
+        # Save Connection
+        self.connections[connection.connection_id] = connection
+
+        # Logs
+        await connection.monitoring.after('Accepted')
+        connection.log(f'Accepted {connection.connection_id}')
+
+    async def connection_closed(self, connection: Websocket, from_server: bool = False) -> None:
         if connection.is_connected:
-            self.connections_count += 1
-
-            # Save New ConnectionID
-            self.connections[connection.connection_id] = connection
-
-    def remove_connection(self, connection: Websocket) -> None:
-        if connection.is_connected:
-            self.connections_count -= 1
             del self.connections[connection.connection_id]
+            await connection.monitoring.after('Closed')
+            connection.log(f'Closed {connection.connection_id}')
+            connection._connection_id = ''
+
+        elif connection.is_rejected is False and from_server is True:
+            await connection.monitoring.after('Rejected')
+            connection.log('Rejected')
+            connection._is_rejected = True
 
     @classmethod
-    async def handle_authentication(cls, connection: Websocket) -> bool:
+    async def handle_authentication(cls, connection: Websocket):
         """Return True if connection is closed, False otherwise."""
         if connection.auth:
             if not config.WS_AUTHENTICATION:
-                logger.critical('"WS_AUTHENTICATION" has not been set in configs')
-                await connection.close(reason='Authentication Error')
-                return True
-            try:
-                connection.user = await config.WS_AUTHENTICATION.authentication(connection)
-            except AuthenticationAPIError as e:
-                await connection.close(reason=e.detail)
-        return False
+                logger.critical('`WS_AUTHENTICATION` has not been set in configs')
+                await connection.close()
+            else:
+                try:
+                    connection.user = await config.WS_AUTHENTICATION.authentication(connection)
+                except AuthenticationAPIError as e:
+                    connection.log(e.detail)
+                    await connection.close()
 
     @classmethod
-    async def handle_permissions(cls, connection: Websocket) -> bool:
+    async def handle_permissions(cls, connection: Websocket):
         """Return True if connection is closed, False otherwise."""
         for perm in connection.permissions:
             if type(perm.authorization).__name__ != 'method':
-                logger.error(f'{perm.__name__}.authorization should be "classmethod"')
-                await connection.close(reason='Permission Denied')
-                return True
-            if await perm.authorization(connection) is False:
-                await connection.close(reason='Permission Denied')
-                return True
-        return False
+                logger.critical(f'{perm.__name__}.authorization should be "classmethod"')
+                await connection.close()
+            elif await perm.authorization(connection) is False:
+                connection.log('Permission Denied')
+                await connection.close()
 
 
 class Websocket(BaseRequest):
-    is_connected: bool = False
     auth: bool = False
     permissions: list = []
+    _connection_id: str = ''
+    _is_rejected: bool = False
+    _monitoring: Monitoring
 
     def __init_subclass__(cls, **kwargs):
         if cls.__module__ != 'panther.websocket':
@@ -180,12 +215,7 @@ class Websocket(BaseRequest):
 
     async def accept(self, subprotocol: str | None = None, headers: dict | None = None) -> None:
         await self.asgi_send({'type': 'websocket.accept', 'subprotocol': subprotocol, 'headers': headers or {}})
-        self.is_connected = True
-
-        # Generate ConnectionID
-        self._connection_id = ULID.new()
-
-        logger.debug(f'Accepting WS Connection {self._connection_id}')
+        await config.WEBSOCKET_CONNECTIONS.connection_accepted(connection=self)
 
     async def send(self, data: any = None) -> None:
         logger.debug(f'Sending WS Message to {self.connection_id}')
@@ -204,28 +234,26 @@ class Websocket(BaseRequest):
         await self.asgi_send({'type': 'websocket.send', 'bytes': bytes_data})
 
     async def close(self, code: int = status.WS_1000_NORMAL_CLOSURE, reason: str = '') -> None:
-        connection_id = getattr(self, '_connection_id', '')
-        logger.debug(f'Closing WS Connection {connection_id} Code: {code}')
-        self.is_connected = False
-        config.WEBSOCKET_CONNECTIONS.remove_connection(self)
         await self.asgi_send({'type': 'websocket.close', 'code': code, 'reason': reason})
-
-    async def listen(self) -> None:
-        while self.is_connected:
-            response = await self.asgi_receive()
-            if response['type'] == 'websocket.connect':
-                continue
-
-            if response['type'] == 'websocket.disconnect':
-                break
-
-            if 'text' in response:
-                await self.receive(data=response['text'])
-            else:
-                await self.receive(data=response['bytes'])
+        await config.WEBSOCKET_CONNECTIONS.connection_closed(connection=self, from_server=True)
 
     @property
     def connection_id(self) -> str:
-        if not hasattr(self, '_connection_id'):
-            logger.error('You should first `self.accept()` the connection then use the `self.connection_id`')
-        return self._connection_id
+        if self.is_connected:
+            return self._connection_id
+        logger.error('You should first `self.accept()` the connection then use the `self.connection_id`')
+
+    @property
+    def is_connected(self) -> bool:
+        return bool(self._connection_id)
+
+    @property
+    def is_rejected(self) -> bool:
+        return self._is_rejected
+
+    @property
+    def monitoring(self) -> Monitoring:
+        return self._monitoring
+
+    def log(self, message: str):
+        logger.debug(f'WS {self.path} --> {message}')

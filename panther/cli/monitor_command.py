@@ -44,8 +44,9 @@ class Monitoring:
             f.readlines()  # Set cursor at the end of the file
 
             for _ in watch(self.monitoring_log_file):
-                self.rows.append(f.readline().split('|'))
-                live.update(self.generate_table())
+                for line in f.readlines():
+                    self.rows.append(line.split('|'))
+                    live.update(self.generate_table())
 
     def initialize(self) -> str:
         # Check requirements
