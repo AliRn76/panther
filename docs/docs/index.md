@@ -21,10 +21,11 @@
 - Built-in API **Caching** System (In Memory, **Redis**)
 - Built-in **Authentication** Classes
 - Built-in **Permission** Classes
+- Built-in Visual API **Monitoring** (In Terminal)
 - Support Custom **Background Tasks**
 - Support Custom **Middlewares**
 - Support Custom **Throttling**
-- Visual API **Monitoring** (In Terminal)
+- Support **Function-Base** and **Class-Base** APIs
 - It's One Of The **Fastest Python Frameworks** 
 ---
 
@@ -195,6 +196,12 @@
 
 
 > **Next Step: [First CRUD](https://pantherpy.github.io/function_first_crud)**
+
+---
+
+### How Panther Works!
+
+![diagram](https://raw.githubusercontent.com/AliRn76/panther/master/docs/docs/images/diagram.png)
 
 ---
 

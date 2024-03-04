@@ -80,10 +80,8 @@ def scrypt(password: str, salt: bytes, digest: bool = False) -> str | bytes:
         dklen=dk_len
     )
     if digest:
-
         return hashlib.md5(derived_key).hexdigest()
-    else:
-        return derived_key
+    return derived_key
 
 
 def encrypt_password(password: str) -> str:

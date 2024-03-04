@@ -1,11 +1,7 @@
 from __future__ import annotations
 
-import asyncio
-import contextlib
 import logging
-from multiprocessing import Manager
 from multiprocessing.managers import SyncManager
-from threading import Thread
 from typing import TYPE_CHECKING, Literal
 
 import orjson as json
@@ -24,7 +20,7 @@ logger = logging.getLogger('panther')
 
 
 class PubSub:
-    def __init__(self, manager):
+    def __init__(self, manager: SyncManager):
         self._manager = manager
         self._subscribers = self._manager.list()
 
@@ -39,7 +35,7 @@ class PubSub:
 
 
 class WebsocketConnections(Singleton):
-    def __init__(self, pubsub_connection: Redis | Manager):
+    def __init__(self, pubsub_connection: Redis | SyncManager):
         self.connections = {}
         self.connections_count = 0
         self.pubsub_connection = pubsub_connection
@@ -49,7 +45,8 @@ class WebsocketConnections(Singleton):
 
     async def __call__(self):
         if isinstance(self.pubsub_connection, SyncManager):
-            # We don't have redis connection, so use the `multiprocessing.PubSub`
+            # We don't have redis connection, so use the `multiprocessing.Manager`
+            self.pubsub: PubSub
             queue = self.pubsub.subscribe()
             logger.info("Subscribed to 'websocket_connections' queue")
             while True:
@@ -110,7 +107,7 @@ class WebsocketConnections(Singleton):
         connection_closed = connection_closed or await self.handle_permissions(connection=connection)
 
         if connection_closed:
-            # Don't run the following code...
+            # Connection is closed so don't continue anymore ...
             return None
 
         # 3. Put PathVariables and Request(If User Wants It) In kwargs
