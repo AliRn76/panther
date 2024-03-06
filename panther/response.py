@@ -1,13 +1,16 @@
 from types import NoneType
+from typing import Generator, AsyncGenerator
 
 import orjson as json
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic._internal._model_construction import ModelMetaclass
 
 from panther import status
+from panther._utils import to_async_generator
 from panther.db.cursor import Cursor
+from panther.monitoring import Monitoring
 
-ResponseDataTypes = list | tuple | set | Cursor | dict | int | float | str | bool | bytes | NoneType | ModelMetaclass
+ResponseDataTypes = list | tuple | set | Cursor | dict | int | float | str | bool | bytes | Generator | AsyncGenerator | NoneType | ModelMetaclass
 IterableDataTypes = list | tuple | set | Cursor
 
 
@@ -26,7 +29,7 @@ class Response:
         :param status_code: should be int
         """
         self.headers = headers or {}
-        self.data = self.prepare_data(data=data)
+        self.data: ResponseDataTypes = self.prepare_data(data=data)
         self.status_code = self.check_status_code(status_code=status_code)
 
     @property
@@ -45,6 +48,10 @@ class Response:
             'Content-Length': len(self.body),
             'Access-Control-Allow-Origin': '*',
         } | self._headers
+
+    @property
+    def bytes_headers(self) -> list[list[bytes]]:
+        return [[k.encode(), str(v).encode()] for k, v in (self.headers or {}).items()]
 
     @headers.setter
     def headers(self, headers: dict):
@@ -93,12 +100,56 @@ class Response:
         msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'
         raise TypeError(msg)
 
+    async def send_headers(self, send, /):
+        await send({'type': 'http.response.start', 'status': self.status_code, 'headers': self.bytes_headers})
+
+    async def send_body(self, send, /):
+        await send({'type': 'http.response.body', 'body': self.body, 'more_body': False})
+
+    async def send(self, send, /, monitoring: Monitoring):
+        await self.send_headers(send)
+        await self.send_body(send)
+        await monitoring.after(self.status_code)
+
     def __str__(self):
         if len(data := str(self.data)) > 30:
             data = f'{data:.27}...'
         return f'Response(status_code={self.status_code}, data={data})'
 
     __repr__ = __str__
+
+
+class StreamingResponse(Response):
+    def prepare_data(self, data: any) -> AsyncGenerator:
+        if isinstance(data, AsyncGenerator):
+            return data
+        elif isinstance(data, Generator):
+            return to_async_generator(data)
+        msg = f'Invalid Response Type: {type(data)}'
+        raise TypeError(msg)
+
+    @property
+    def headers(self) -> dict:
+        return {'Access-Control-Allow-Origin': '*'} | self._headers
+
+    @headers.setter
+    def headers(self, headers: dict):
+        self._headers = headers
+
+    @property
+    async def body(self) -> AsyncGenerator:
+        async for chunk in self.data:
+            if isinstance(chunk, bytes):
+                yield chunk
+            elif chunk is None:
+                yield b''
+            else:
+                yield json.dumps(chunk)
+
+    async def send_body(self, send, /):
+        async for chunk in self.body:
+            await send({'type': 'http.response.body', 'body': chunk, 'more_body': True})
+        await send({'type': 'http.response.body', 'body': b'', 'more_body': False})
 
 
 class HTMLResponse(Response):

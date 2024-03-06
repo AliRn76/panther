@@ -18,7 +18,7 @@ from panther.authentications import JWTAuthentication
 from panther.background_tasks import BackgroundTask, background_tasks
 from panther.db.connections import redis
 from panther.request import Request
-from panther.response import HTMLResponse, Response
+from panther.response import HTMLResponse, Response, StreamingResponse
 from panther.throttling import Throttling
 from panther.websocket import close_websocket_connection, send_message_to_websocket
 
@@ -213,3 +213,18 @@ async def login_api():
 @API(auth=True)
 def logout_api(request: Request):
     return request.user.logout()
+
+
+def reader():
+    from faker import Faker
+    import time
+    f = Faker()
+    for _ in range(5):
+        yield f.name()
+        time.sleep(1)
+
+
+@API()
+def stream_api():
+    # Test --> curl http://127.0.0.1:8000/stream/ --no-buffer
+    return StreamingResponse(reader())

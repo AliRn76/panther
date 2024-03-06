@@ -2,6 +2,7 @@
 - Move `database` and `redis` connections from `MIDDLEWARES` to their own block, `DATABASE` and `REDIS`
 - Make `Database` queries `async`
 - Make `Redis` queries `async`
+- Add `StreamingResponse`
 - Add `generics` API classes
 - Add `login()` & `logout()` to `JWTAuthentication` and used it in `BaseUser`
 - Support `Authentication` & `Authorization` in `Websocket`

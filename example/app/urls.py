@@ -39,4 +39,5 @@ urls = {
     'custom-response/': custom_response_class_api,
     'image/': ImageAPI,
     'logout/': logout_api,
+    'stream/': stream_api,
 }

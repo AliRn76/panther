@@ -7,10 +7,12 @@ from collections.abc import Callable
 from logging.config import dictConfig
 from pathlib import Path
 
+import orjson as json
+
 import panther.logging
 from panther import status
 from panther._load_configs import *
-from panther._utils import clean_traceback_message, http_response, is_function_async, reformat_code, \
+from panther._utils import clean_traceback_message, is_function_async, reformat_code, \
     check_class_type_endpoint, check_function_type_endpoint
 from panther.cli.utils import print_info
 from panther.configs import config
@@ -214,13 +216,7 @@ class Panther:
             except APIError as e:  # noqa: PERF203
                 response = self._handle_exceptions(e)
 
-        await http_response(
-            send,
-            status_code=response.status_code,
-            monitoring=monitoring,
-            headers=response.headers,
-            body=response.body,
-        )
+        await response.send(send, monitoring=monitoring)
 
     async def handle_ws_listener(self):
         """
@@ -270,10 +266,9 @@ class Panther:
 
     @classmethod
     async def _raise(cls, send, *, monitoring, status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR):
-        await http_response(
-            send,
-            headers={'content-type': 'application/json'},
-            status_code=status_code,
-            monitoring=monitoring,
-            exception=True,
-        )
+        headers = [[b'content-type', b'application/json']]
+        body = json.dumps({'detail': status.status_text[status_code]})
+        await monitoring.after(status_code)
+        await send({'type': 'http.response.start', 'status': status_code, 'headers': headers})
+        await send({'type': 'http.response.body', 'body': body, 'more_body': False})
+

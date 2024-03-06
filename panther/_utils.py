@@ -1,9 +1,10 @@
+import asyncio
 import importlib
 import logging
 import re
 import subprocess
 import types
-import typing
+from typing import Any, Generator, Iterator, AsyncGenerator
 from collections.abc import Callable
 from traceback import TracebackException
 
@@ -16,42 +17,7 @@ from panther.file_handler import File
 logger = logging.getLogger('panther')
 
 
-async def _http_response_start(send: Callable, /, headers: dict, status_code: int) -> None:
-    bytes_headers = [[k.encode(), str(v).encode()] for k, v in (headers or {}).items()]
-    await send({
-        'type': 'http.response.start',
-        'status': status_code,
-        'headers': bytes_headers,
-    })
-
-
-async def _http_response_body(send: Callable, /, body: bytes) -> None:
-    if body:
-        await send({'type': 'http.response.body', 'body': body})
-    else:  # body = b''
-        await send({'type': 'http.response.body'})
-
-
-async def http_response(
-        send: Callable,
-        /,
-        *,
-        monitoring,  # type: MonitoringMiddleware
-        status_code: int,
-        headers: dict,
-        body: bytes = b'',
-        exception: bool = False,
-) -> None:
-    if exception:
-        body = json.dumps({'detail': status.status_text[status_code]})
-
-    await monitoring.after(status_code)
-
-    await _http_response_start(send, headers=headers, status_code=status_code)
-    await _http_response_body(send, body=body)
-
-
-def import_class(dotted_path: str, /) -> type[typing.Any]:
+def import_class(dotted_path: str, /) -> type[Any]:
     """
     Example:
     -------
@@ -149,3 +115,24 @@ def check_class_type_endpoint(endpoint: Callable) -> Callable:
         raise TypeError
 
     return endpoint.call_method
+
+
+def async_next(iterator: Iterator):
+    """
+    The StopIteration exception is a special case in Python,
+    particularly when it comes to asynchronous programming and the use of asyncio.
+    This is because StopIteration is not meant to be caught in the traditional sense;
+        it's used internally by Python to signal the end of an iteration.
+    """
+    try:
+        return next(iterator)
+    except StopIteration:
+        raise StopAsyncIteration
+
+
+async def to_async_generator(generator: Generator) -> AsyncGenerator:
+    while True:
+        try:
+            yield await asyncio.to_thread(async_next, iter(generator))
+        except StopAsyncIteration:
+            break
