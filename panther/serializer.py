@@ -1,10 +1,12 @@
 import typing
+from typing import TypeVar, Type
 
-from pydantic import create_model, BaseModel
-from pydantic.fields import FieldInfo
+from pydantic import create_model, BaseModel, ConfigDict
+from pydantic.fields import FieldInfo, Field
 from pydantic_core._pydantic_core import PydanticUndefined
 
 from panther.db import Model
+from panther.request import Request
 
 
 class MetaModelSerializer:
@@ -183,14 +185,32 @@ class MetaModelSerializer:
         } | namespace.pop('model_config', {})
 
 
-class ModelSerializer(metaclass=MetaModelSerializer):
-    async def create(self) -> Model:
-        return await self.model.insert_one(self.model_dump())
+T = TypeVar('T')
 
-    async def update(self, instance: Model) -> Model:
-        await instance.update(self.model_dump())
+
+class ModelSerializer(metaclass=MetaModelSerializer):
+    model: Type[T] = Field(exclude=True)  # Only available in create(), update(), partial_update()
+    request: Request = Field(default=None, exclude=True)  # Only available in create(), update(), partial_update()
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    async def create(self, validated_data: dict) -> T:
+        """
+        validated_data = ModelSerializer.model_dump()
+        """
+        return await self.model.insert_one(validated_data)
+
+    async def update(self, instance: T, validated_data: dict) -> T:
+        """
+        instance = UpdateAPI.object()
+        validated_data = ModelSerializer.model_dump()
+        """
+        await instance.update(validated_data)
         return instance
 
-    async def partial_update(self, instance: Model) -> Model:
-        await instance.update(self.model_dump(exclude_none=True))
+    async def partial_update(self, instance: T, validated_data: dict) -> T:
+        """
+        instance = UpdateAPI.object()
+        validated_data = ModelSerializer.model_dump(exclude_none=True)
+        """
+        await instance.update(validated_data)
         return instance

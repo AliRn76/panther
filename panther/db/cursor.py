@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from sys import version_info
 
-from pymongo.cursor import Cursor as _Cursor
+try:
+    from pymongo.cursor import Cursor as _Cursor
+except ImportError:
+    # This '_Cursor' is not going to be used,
+    #   If user really wants to use it,
+    #   we are going to force him to install it in `panther.db.connections.MongoDBConnection.init`
+    _Cursor = type('_Cursor', (), {})
 
 if version_info >= (3, 11):
     from typing import Self

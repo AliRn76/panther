@@ -39,10 +39,10 @@ __all__ = (
 logger = logging.getLogger('panther')
 
 
-def load_configs_module(_configs, /) -> dict:
+def load_configs_module(module_name: str, /) -> dict:
     """Read the config file as dict"""
-    if _configs:
-        _module = sys.modules[_configs]
+    if module_name:
+        _module = sys.modules[module_name]
     else:
         try:
             _module = import_module('core.configs')
