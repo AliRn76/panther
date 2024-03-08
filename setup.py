@@ -51,7 +51,7 @@ setup(
     },
     install_requires=[
         'httptools~=0.6',
-        'pantherdb==1.4.0',
+        'pantherdb==1.5.0',
         'pydantic~=2.6',
         'rich~=13.7',
         'uvicorn~=0.27',
