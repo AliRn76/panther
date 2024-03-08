@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from multiprocessing.managers import SyncManager
 from typing import TYPE_CHECKING, Literal
@@ -169,6 +170,22 @@ class WebsocketConnections(Singleton):
             await connection.monitoring.after('Rejected')
             connection.log('Rejected')
             connection._is_rejected = True
+
+    async def start(self):
+        """
+        Start Websocket Listener (Redis/ Queue)
+
+        Cause of --preload in gunicorn we have to keep this function here,
+        and we can't move it to __init__ of Panther
+
+            * Each process should start this listener for itself,
+              but they have same Manager()
+        """
+
+        if config.HAS_WS:
+            # Schedule the async function to run in the background,
+            #   We don't need to await for this task
+            asyncio.create_task(self())
 
     @classmethod
     async def handle_authentication(cls, connection: Websocket):

@@ -69,8 +69,7 @@ class Panther:
         if scope['type'] == 'lifespan':
             message = await receive()
             if message["type"] == 'lifespan.startup':
-                await self.handle_ws_listener()
-                await self.handle_startup()
+                await config.WEBSOCKET_CONNECTIONS.start()
                 await Event.run_startups()
             elif message["type"] == 'lifespan.shutdown':
                 # It's not happening :\, so handle the shutdowns in __del__ ...
@@ -210,21 +209,6 @@ class Panther:
 
         await response.send(send, monitoring=monitoring)
 
-    async def handle_ws_listener(self):
-        """
-        Start Websocket Listener (Redis/ Queue)
-
-        Cause of --preload in gunicorn we have to keep this function here,
-        and we can't move it to __init__ of Panther
-
-            * Each process should start this listener for itself,
-              but they have same Manager()
-        """
-
-        if config.HAS_WS:
-            # Schedule the async function to run in the background,
-            #   We don't need to await for this task
-            asyncio.create_task(config.WEBSOCKET_CONNECTIONS())
     def __del__(self):
         Event.run_shutdowns()
 
