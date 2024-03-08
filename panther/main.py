@@ -12,10 +12,10 @@ import orjson as json
 import panther.logging
 from panther import status
 from panther._load_configs import *
-from panther._utils import clean_traceback_message, is_function_async, reformat_code, \
-    check_class_type_endpoint, check_function_type_endpoint
+from panther._utils import clean_traceback_message, reformat_code, check_class_type_endpoint, check_function_type_endpoint
 from panther.cli.utils import print_info
 from panther.configs import config
+from panther.events import Event
 from panther.exceptions import APIError, PantherError
 from panther.monitoring import Monitoring
 from panther.request import Request
@@ -27,18 +27,9 @@ logger = logging.getLogger('panther')
 
 
 class Panther:
-    def __init__(
-            self,
-            name: str,
-            configs=None,
-            urls: dict | None = None,
-            startup: Callable = None,
-            shutdown: Callable = None
-    ):
+    def __init__(self, name: str, configs: str | None = None, urls: dict | None = None):
         self._configs_module_name = configs
         self._urls = urls
-        self._startup = startup
-        self._shutdown = shutdown
 
         config.BASE_DIR = Path(name).resolve().parent
 
@@ -80,8 +71,9 @@ class Panther:
             if message["type"] == 'lifespan.startup':
                 await self.handle_ws_listener()
                 await self.handle_startup()
+                await Event.run_startups()
             elif message["type"] == 'lifespan.shutdown':
-                # It's not happening :\, so handle the shutdown in __del__ ...
+                # It's not happening :\, so handle the shutdowns in __del__ ...
                 pass
             return
 
@@ -233,29 +225,8 @@ class Panther:
             # Schedule the async function to run in the background,
             #   We don't need to await for this task
             asyncio.create_task(config.WEBSOCKET_CONNECTIONS())
-
-    async def handle_startup(self):
-        if startup := config.STARTUP or self._startup:
-            if is_function_async(startup):
-                await startup()
-            else:
-                startup()
-
-    def handle_shutdown(self):
-        if shutdown := config.SHUTDOWN or self._shutdown:
-            if is_function_async(shutdown):
-                try:
-                    asyncio.run(shutdown())
-                except ModuleNotFoundError:
-                    # Error: import of asyncio halted; None in sys.modules
-                    #   And as I figured it out, it only happens when we are running with
-                    #   gunicorn and Uvicorn workers (-k uvicorn.workers.UvicornWorker)
-                    pass
-            else:
-                shutdown()
-
     def __del__(self):
-        self.handle_shutdown()
+        Event.run_shutdowns()
 
     @classmethod
     def _handle_exceptions(cls, e: APIError, /) -> Response:

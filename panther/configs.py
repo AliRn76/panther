@@ -64,8 +64,8 @@ class Config(Singleton):
     WEBSOCKET_CONNECTIONS: typing.Callable | None
     BACKGROUND_TASKS: bool
     HAS_WS: bool
-    STARTUP: Callable | None
-    SHUTDOWN: Callable | None
+    STARTUPS: list[Callable]
+    SHUTDOWNS: list[Callable]
     AUTO_REFORMAT: bool
     QUERY_ENGINE: typing.Callable | None
     DATABASE: typing.Callable | None
@@ -106,8 +106,8 @@ default_configs = {
     'WEBSOCKET_CONNECTIONS': None,
     'BACKGROUND_TASKS': False,
     'HAS_WS': False,
-    'STARTUP': None,
-    'SHUTDOWN': None,
+    'STARTUPS': [],
+    'SHUTDOWNS': [],
     'AUTO_REFORMAT': False,
     'QUERY_ENGINE': None,
     'DATABASE': None,
