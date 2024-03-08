@@ -16,7 +16,7 @@ from panther.cli.template import (
     AUTO_REFORMAT_PART,
     DATABASE_PANTHERDB_PART,
     DATABASE_MONGODB_PART,
-    USER_MODEL_PART,
+    USER_MODEL_PART, REDIS_PART,
 )
 from panther.cli.utils import cli_error
 
@@ -34,6 +34,7 @@ class CreateProject:
         self.base_directory = '.'
         self.database = '0'
         self.database_encryption = False
+        self.redis = False
         self.authentication = False
         self.monitoring = True
         self.log_queries = True
@@ -60,7 +61,7 @@ class CreateProject:
             },
             {
                 'field': 'database',
-                'message': '    0: PantherDB\n    1: MongoDB (Required `pymongo`)\n    2: No Database\nChoose Your Database (default is 0)',
+                'message': '    0: PantherDB (File-Base, No Requirements)\n    1: MongoDB (Required `pymongo`)\n    2: No Database\nChoose Your Database (default is 0)',
                 'validation_func': lambda x: x in ['0', '1', '2'],
                 'error_message': "Invalid Choice, '{}' not in ['0', '1', '2']",
             },
@@ -69,6 +70,11 @@ class CreateProject:
                 'message': 'Do You Want Encryption For Your Database (Required `cryptography`)',
                 'is_boolean': True,
                 'condition': "self.database == '0'"
+            },
+            {
+                'field': 'redis',
+                'message': 'Do You Want To Use Redis (Required `redis`)',
+                'is_boolean': True,
             },
             {
                 'field': 'authentication',
@@ -87,7 +93,7 @@ class CreateProject:
             },
             {
                 'field': 'auto_reformat',
-                'message': 'Do You Want To Use Auto Reformat (Required `ruff`)',
+                'message': 'Do You Want To Use Auto Code Reformat (Required `ruff`)',
                 'is_boolean': True,
             },
         ]
@@ -139,6 +145,8 @@ class CreateProject:
         log_queries_part = LOG_QUERIES_PART if self.log_queries else ''
         auto_reformat_part = AUTO_REFORMAT_PART if self.auto_reformat else ''
         database_encryption = 'True' if self.database_encryption else 'False'
+        database_extension = 'pdb' if self.database_encryption else 'json'
+        redis_part = REDIS_PART if self.redis else ''
         if self.database == '0':
             database_part = DATABASE_PANTHERDB_PART
         elif self.database == '1':
@@ -153,6 +161,8 @@ class CreateProject:
         data = data.replace('{AUTO_REFORMAT}', auto_reformat_part)
         data = data.replace('{DATABASE}', database_part)
         data = data.replace('{PANTHERDB_ENCRYPTION}', database_encryption)  # Should be after `DATABASE`
+        data = data.replace('{PANTHERDB_EXTENSION}', database_extension)  # Should be after `DATABASE`
+        data = data.replace('{REDIS}', redis_part)
 
         data = data.replace('{PROJECT_NAME}', self.project_name.lower())
         data = data.replace('{PANTHER_VERSION}', version())
@@ -192,6 +202,7 @@ class CreateProject:
     ) -> str:
         value = Prompt.ask(message, console=self.input_console).lower() or default
         while not validation_func(value):
+            # Remove the last line, show error message and ask again
             [print(end=self.REMOVE_LAST_LINE, flush=True) for _ in range(message.count('\n') + 1)]
             error = validation_func(value, return_error=True) if show_validation_error else value
             self.console.print(error_message.format(error), style='bold red')
