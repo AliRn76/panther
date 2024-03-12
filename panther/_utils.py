@@ -114,7 +114,7 @@ def check_class_type_endpoint(endpoint: Callable) -> Callable:
         logger.critical(f'You may have forgotten to inherit from GenericAPI on the {endpoint.__name__}()')
         raise TypeError
 
-    return endpoint.call_method
+    return endpoint().call_method
 
 
 def async_next(iterator: Iterator):

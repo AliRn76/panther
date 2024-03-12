@@ -1,7 +1,5 @@
 import logging
 
-import pymongo
-
 from panther import status
 from panther.app import GenericAPI
 from panther.db import Model
@@ -18,7 +16,7 @@ class ObjectRequired:
         """
         Used in `RetrieveAPI`, `UpdateAPI`, `DeleteAPI`
         """
-        logger.error('`object()` method in not implemented.')
+        logger.error(f'`object()` method is not implemented in {self.__class__} .')
         raise APIError(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
@@ -26,8 +24,9 @@ class ObjectsRequired:
     async def objects(self, request: Request, **kwargs) -> list[Model] | Cursor:
         """
         Used in `ListAPI`
+        Should return `.find()`
         """
-        logger.error('`objects()` method in not implemented.')
+        logger.error(f'`objects()` method is not implemented in {self.__class__} .')
         raise APIError(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
@@ -42,25 +41,6 @@ class ListAPI(GenericAPI, ObjectsRequired):
     search_fields: list
     filter_fields: list
 
-    def process_filters(self, query_params: dict) -> dict:
-        if hasattr(self, 'filter_fields'):
-            return {field: query_params[field] for field in self.filter_fields if field in query_params}
-
-    def process_sort(self, query_params: dict) -> list:
-        if hasattr(self, 'sort_fields') and 'sort' in query_params:
-            return [
-                (field, -1 if param[0] == '-' else 1)
-                for field in self.sort_fields for param in query_params['sort'].split(',')
-                if field == param.removeprefix('-')
-            ]
-
-    def process_search(self, query_params: dict) -> dict:
-        if hasattr(self, 'search_fields') and 'search' in query_params:
-            value = query_params['search']
-            if search := [{field: {'$regex': value}} for field in self.search_fields]:
-                return {'$or': search}
-        return {}
-
     async def get(self, request: Request, **kwargs):
         objects = await self.objects(request=request, **kwargs)
         query = {}
@@ -74,6 +54,26 @@ class ListAPI(GenericAPI, ObjectsRequired):
             objects = objects.sort(sort)
 
         return Response(data=objects, status_code=status.HTTP_200_OK)
+
+    def process_filters(self, query_params: dict) -> dict:
+        if hasattr(self, 'filter_fields'):
+            return {field: query_params[field] for field in self.filter_fields if field in query_params}
+        return {}
+
+    def process_search(self, query_params: dict) -> dict:
+        if hasattr(self, 'search_fields') and 'search' in query_params:
+            value = query_params['search']
+            if search := [{field: {'$regex': value}} for field in self.search_fields]:
+                return {'$or': search}
+        return {}
+
+    def process_sort(self, query_params: dict) -> list:
+        if hasattr(self, 'sort_fields') and 'sort' in query_params:
+            return [
+                (field, -1 if param[0] == '-' else 1)
+                for field in self.sort_fields for param in query_params['sort'].split(',')
+                if field == param.removeprefix('-')
+            ]
 
 
 class CreateAPI(GenericAPI):

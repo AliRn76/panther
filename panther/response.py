@@ -10,8 +10,9 @@ from panther._utils import to_async_generator
 from panther.db.cursor import Cursor
 from panther.monitoring import Monitoring
 
-ResponseDataTypes = list | tuple | set | Cursor | dict | int | float | str | bool | bytes | Generator | AsyncGenerator | NoneType | ModelMetaclass
+ResponseDataTypes = list | tuple | set | Cursor | dict | int | float | str | bool | bytes | NoneType | ModelMetaclass
 IterableDataTypes = list | tuple | set | Cursor
+StreamingDataTypes = Generator | AsyncGenerator
 
 
 class Response:
@@ -29,7 +30,7 @@ class Response:
         :param status_code: should be int
         """
         self.headers = headers or {}
-        self.data: ResponseDataTypes = self.prepare_data(data=data)
+        self.data = self.prepare_data(data=data)
         self.status_code = self.check_status_code(status_code=status_code)
 
     @property
@@ -78,7 +79,7 @@ class Response:
     @classmethod
     def check_status_code(cls, status_code: any):
         if not isinstance(status_code, int):
-            error = f'Response "status_code" Should Be "int". ("{status_code}" is {type(status_code)})'
+            error = f'Response `status_code` Should Be `int`. (`{status_code}` is {type(status_code)})'
             raise TypeError(error)
         return status_code
 
@@ -120,6 +121,8 @@ class Response:
 
 
 class StreamingResponse(Response):
+    content_type = 'application/octet-stream'
+
     def prepare_data(self, data: any) -> AsyncGenerator:
         if isinstance(data, AsyncGenerator):
             return data
@@ -130,7 +133,10 @@ class StreamingResponse(Response):
 
     @property
     def headers(self) -> dict:
-        return {'Access-Control-Allow-Origin': '*'} | self._headers
+        return {
+            'Content-Type': self.content_type,
+            'Access-Control-Allow-Origin': '*',
+        } | self._headers
 
     @headers.setter
     def headers(self, headers: dict):

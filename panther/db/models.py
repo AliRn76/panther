@@ -63,7 +63,6 @@ class BaseUser(Model):
 
     async def login(self) -> dict:
         """Return dict of access and refresh token"""
-        await self.update_last_login()
         return config.AUTHENTICATION.login(self.id)
 
     async def logout(self) -> dict:

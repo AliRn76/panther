@@ -221,7 +221,7 @@ class Panther:
 
     @classmethod
     async def _raise(cls, send, *, monitoring, status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR):
-        headers = [[b'content-type', b'application/json']]
+        headers = [[b'Content-Type', b'application/json']]
         body = json.dumps({'detail': status.status_text[status_code]})
         await monitoring.after(status_code)
         await send({'type': 'http.response.start', 'status': status_code, 'headers': headers})

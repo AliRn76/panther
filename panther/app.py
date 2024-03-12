@@ -117,8 +117,7 @@ class API:
             if not config.AUTHENTICATION:
                 logger.critical('"AUTHENTICATION" has not been set in configs')
                 raise APIError
-            user = await config.AUTHENTICATION.authentication(self.request)
-            self.request.user = user
+            self.request.user = await config.AUTHENTICATION.authentication(self.request)
 
     async def handle_throttling(self) -> None:
         if throttling := self.throttling or config.THROTTLING:
@@ -176,26 +175,27 @@ class GenericAPI:
     async def delete(self, *args, **kwargs):
         raise MethodNotAllowedAPIError
 
-    @classmethod
-    async def call_method(cls, *args, **kwargs):
-        match kwargs['request'].method:
+    async def call_method(self, request: Request):
+        match request.method:
             case 'GET':
-                func = cls().get
+                func = self.get
             case 'POST':
-                func = cls().post
+                func = self.post
             case 'PUT':
-                func = cls().put
+                func = self.put
             case 'PATCH':
-                func = cls().patch
+                func = self.patch
             case 'DELETE':
-                func = cls().delete
+                func = self.delete
+            case _:
+                raise MethodNotAllowedAPIError
 
         return await API(
-            input_model=cls.input_model,
-            output_model=cls.output_model,
-            auth=cls.auth,
-            permissions=cls.permissions,
-            throttling=cls.throttling,
-            cache=cls.cache,
-            cache_exp_time=cls.cache_exp_time,
-        )(func)(*args, **kwargs)
+            input_model=self.input_model,
+            output_model=self.output_model,
+            auth=self.auth,
+            permissions=self.permissions,
+            throttling=self.throttling,
+            cache=self.cache,
+            cache_exp_time=self.cache_exp_time,
+        )(func)(request=request)

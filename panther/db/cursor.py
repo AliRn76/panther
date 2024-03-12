@@ -26,6 +26,7 @@ class Cursor(_Cursor):
         if cls:
             self.models[collection.name] = cls
             self.cls = cls
+            self.filter = kwargs['filter']
         else:
             self.cls = self.models[collection.name]
         super().__init__(collection, *args, **kwargs)
