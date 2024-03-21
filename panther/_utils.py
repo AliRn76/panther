@@ -8,9 +8,6 @@ from typing import Any, Generator, Iterator, AsyncGenerator
 from collections.abc import Callable
 from traceback import TracebackException
 
-import orjson as json
-
-from panther import status
 from panther.exceptions import PantherError
 from panther.file_handler import File
 

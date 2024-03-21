@@ -189,6 +189,18 @@ T = TypeVar('T')
 
 
 class ModelSerializer(metaclass=MetaModelSerializer):
+    """
+    Doc:
+        https://pantherpy.github.io/serializer/#style-2-model-serializer
+    Example:
+        class PersonSerializer(ModelSerializer):
+            class Meta:
+                model = Person
+                fields = '*'
+                exclude = ['created_date']  # Optional
+                required_fields = ['first_name', 'last_name']  # Optional
+                optional_fields = ['age']  # Optional
+    """
     model: Type[T] = Field(exclude=True)  # Only available in create(), update(), partial_update()
     request: Request = Field(default=None, exclude=True)  # Only available in create(), update(), partial_update()
     model_config = ConfigDict(arbitrary_types_allowed=True)

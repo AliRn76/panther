@@ -8,10 +8,11 @@ from pydantic._internal._model_construction import ModelMetaclass
 from panther import status
 from panther._utils import to_async_generator
 from panther.db.cursor import Cursor
+from pantherdb import Cursor as PantherDBCursor
 from panther.monitoring import Monitoring
 
-ResponseDataTypes = list | tuple | set | Cursor | dict | int | float | str | bool | bytes | NoneType | ModelMetaclass
-IterableDataTypes = list | tuple | set | Cursor
+ResponseDataTypes = list | tuple | set | Cursor | PantherDBCursor | dict | int | float | str | bool | bytes | NoneType | ModelMetaclass
+IterableDataTypes = list | tuple | set | Cursor | PantherDBCursor
 StreamingDataTypes = Generator | AsyncGenerator
 
 

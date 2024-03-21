@@ -4,7 +4,7 @@ from datetime import timedelta
 from typing import Literal
 
 from orjson import JSONDecodeError
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
 
 from panther._utils import is_function_async
 from panther.caching import (
@@ -24,6 +24,7 @@ from panther.exceptions import (
 )
 from panther.request import Request
 from panther.response import Response
+from panther.serializer import ModelSerializer
 from panther.throttling import Throttling
 
 __all__ = ('API', 'GenericAPI')
@@ -140,9 +141,11 @@ class API:
 
     @classmethod
     def validate_input(cls, model, request: Request):
+        if isinstance(request.data, bytes):
+            raise BadRequestAPIError(detail='Content-Type is not valid')
+        if request.data is None:
+            raise BadRequestAPIError(detail='Request body is required')
         try:
-            if isinstance(request.data, bytes):
-                raise BadRequestAPIError(detail='Content-Type is not valid')
             return model(**request.data)
         except ValidationError as validation_error:
             error = {'.'.join(loc for loc in e['loc']): e['msg'] for e in validation_error.errors()}
@@ -152,8 +155,8 @@ class API:
 
 
 class GenericAPI:
-    input_model = None
-    output_model = None
+    input_model: type[ModelSerializer] | type[BaseModel] = None
+    output_model: type[ModelSerializer] | type[BaseModel] = None
     auth: bool = False
     permissions: list | None = None
     throttling: Throttling | None = None

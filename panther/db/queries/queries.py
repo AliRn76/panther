@@ -193,7 +193,7 @@ class Query(BaseQuery):
             >>> ]
             >>> await User.insert_many(users)
         """
-        return super().insert_many(documents)
+        return await super().insert_many(documents)
 
     # # # # # Delete # # # # #
     @check_connection

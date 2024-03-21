@@ -7,7 +7,7 @@
 - Add `login()` & `logout()` to `JWTAuthentication` and used it in `BaseUser`
 - Support `Authentication` & `Authorization` in `Websocket`
 - Rename all exceptions suffix from `Exception` to `Error` (https://peps.python.org/pep-0008/#exception-names)
-- Support `pantherdb 1.4`
+- Support `pantherdb 2.0.0` (`Cursor` Added)
 - Remove `watchfiles` from required dependencies
 - Support `exclude` and `optional_fields` in `ModelSerializer`
 - Minor Improvements

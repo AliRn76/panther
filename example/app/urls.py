@@ -40,4 +40,5 @@ urls = {
     'image/': ImageAPI,
     'logout/': logout_api,
     'stream/': stream_api,
+    'pagination/': PaginationAPI,
 }

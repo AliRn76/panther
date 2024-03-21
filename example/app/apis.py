@@ -16,7 +16,11 @@ from panther import status
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
 from panther.background_tasks import BackgroundTask, background_tasks
+from pantherdb import Cursor as PantherDBCursor
 from panther.db.connections import redis
+from panther.db.cursor import Cursor
+from panther.generics import ListAPI
+from panther.pagination import Pagination
 from panther.request import Request
 from panther.response import HTMLResponse, Response, StreamingResponse
 from panther.throttling import Throttling
@@ -228,3 +232,13 @@ def reader():
 def stream_api():
     # Test --> curl http://127.0.0.1:8000/stream/ --no-buffer
     return StreamingResponse(reader())
+
+
+class PaginationAPI(ListAPI):
+    pagination = Pagination
+    sort_fields = ['username', 'id']
+    filter_fields = ['username']
+    search_fields = ['username']
+
+    async def objects(self, request: Request, **kwargs) -> Cursor | PantherDBCursor:
+        return await User.find()

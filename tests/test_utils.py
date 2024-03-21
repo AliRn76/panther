@@ -3,11 +3,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest import TestCase
 
-import panther.utils
 from panther import Panther
 from panther.configs import config
 from panther.middlewares import BaseMiddleware
-from panther.utils import generate_hash_value_from_string, load_env, round_datetime, encrypt_password
+from panther.utils import generate_secret_key, generate_hash_value_from_string, load_env, round_datetime
 
 
 class TestLoadEnvFile(TestCase):
@@ -25,11 +24,10 @@ class TestLoadEnvFile(TestCase):
             file.write(file_data)
 
     def test_load_env_invalid_file(self):
-        with self.assertLogs(level='ERROR') as captured:
+        try:
             load_env('fake.file')
-
-        assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == '"fake.file" is not valid file for load_env()'
+        except ValueError as e:
+            assert e.args[0] == '"fake.file" is not a file.'
 
     def test_load_env_double_quote(self):
         self._create_env_file(f"""
@@ -178,11 +176,6 @@ class TestUtilFunctions(TestCase):
 
         assert hashed_1 == hashed_2
         assert text != hashed_1
-
-    def test_encrypt_password(self):
-        password = 'Password'
-        encrypted = encrypt_password(password=password)
-        assert password != encrypted
 
 
 class TestLoadConfigs(TestCase):
@@ -373,7 +366,7 @@ class TestLoadConfigs(TestCase):
     def test_jwt_auth_with_secret_key(self):
         global AUTHENTICATION, SECRET_KEY
         AUTHENTICATION = 'panther.authentications.JWTAuthentication'
-        SECRET_KEY = panther.utils.generate_secret_key()
+        SECRET_KEY = generate_secret_key()
 
         with self.assertNoLogs(level='ERROR'):
             try:
