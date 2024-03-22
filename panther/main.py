@@ -208,7 +208,7 @@ class Panther:
             except APIError as e:  # noqa: PERF203
                 response = self._handle_exceptions(e)
 
-        await response.send(send, monitoring=monitoring)
+        await response.send(send, receive, monitoring=monitoring)
 
     def __del__(self):
         Event.run_shutdowns()

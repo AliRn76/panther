@@ -224,7 +224,9 @@ def reader():
     import time
     f = Faker()
     for _ in range(5):
-        yield f.name()
+        name = f.name()
+        print(f'{name=}')
+        yield name
         time.sleep(1)
 
 

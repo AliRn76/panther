@@ -1,3 +1,4 @@
+import asyncio
 from types import NoneType
 from typing import Generator, AsyncGenerator
 
@@ -105,12 +106,12 @@ class Response:
     async def send_headers(self, send, /):
         await send({'type': 'http.response.start', 'status': self.status_code, 'headers': self.bytes_headers})
 
-    async def send_body(self, send, /):
+    async def send_body(self, send, receive, /):
         await send({'type': 'http.response.body', 'body': self.body, 'more_body': False})
 
-    async def send(self, send, /, monitoring: Monitoring):
+    async def send(self, send, receive, /, monitoring: Monitoring):
         await self.send_headers(send)
-        await self.send_body(send)
+        await self.send_body(send, receive)
         await monitoring.after(self.status_code)
 
     def __str__(self):
@@ -123,6 +124,15 @@ class Response:
 
 class StreamingResponse(Response):
     content_type = 'application/octet-stream'
+
+    def __init__(self, *args, **kwargs):
+        self.connection_closed = False
+        super().__init__(*args, **kwargs)
+
+    async def listen_to_disconnection(self, receive):
+        message = await receive()
+        if message['type'] == 'http.disconnect':
+            self.connection_closed = True
 
     def prepare_data(self, data: any) -> AsyncGenerator:
         if isinstance(data, AsyncGenerator):
@@ -153,10 +163,14 @@ class StreamingResponse(Response):
             else:
                 yield json.dumps(chunk)
 
-    async def send_body(self, send, /):
+    async def send_body(self, send, receive, /):
+        asyncio.create_task(self.listen_to_disconnection(receive))
         async for chunk in self.body:
+            if self.connection_closed:
+                break
             await send({'type': 'http.response.body', 'body': chunk, 'more_body': True})
-        await send({'type': 'http.response.body', 'body': b'', 'more_body': False})
+        else:
+            await send({'type': 'http.response.body', 'body': b'', 'more_body': False})
 
 
 class HTMLResponse(Response):
