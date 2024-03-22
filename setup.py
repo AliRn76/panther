@@ -55,6 +55,7 @@ setup(
         'pydantic~=2.6',
         'rich~=13.7',
         'uvicorn~=0.27',
+        'pytz~=2024.1',
     ],
     extras_require=EXTRAS_REQUIRE,
 )

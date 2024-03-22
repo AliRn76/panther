@@ -51,6 +51,7 @@ class Panther:
         load_redis(self._configs_module)
         load_startup(self._configs_module)
         load_shutdown(self._configs_module)
+        load_timezone(self._configs_module)
         load_database(self._configs_module)
         load_secret_key(self._configs_module)
         load_monitoring(self._configs_module)

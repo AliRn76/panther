@@ -1,6 +1,8 @@
 import sys
 from typing import Sequence, Iterable
 
+from pantherdb import Cursor as PantherDBCursor
+
 from panther.configs import QueryObservable
 from panther.db.cursor import Cursor
 from panther.db.queries.base_queries import BaseQuery
@@ -57,7 +59,7 @@ class Query(BaseQuery):
     @classmethod
     @check_connection
     @log_query
-    async def find(cls, _filter: dict | None = None, /, **kwargs) -> list[Self] | Cursor:
+    async def find(cls, _filter: dict | None = None, /, **kwargs) -> PantherDBCursor | Cursor:
         """
         Get documents from the database.
 

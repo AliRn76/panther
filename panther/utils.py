@@ -7,6 +7,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import ClassVar
 
+import pytz
+
+from panther.configs import config
+
 logger = logging.getLogger('panther')
 
 URANDOM_SIZE = 16
@@ -102,3 +106,8 @@ class ULID:
             cls.crockford_base32_characters[int(bits[i: i + 5], base=2)]
             for i in range(0, 130, 5)
         )
+
+
+def timezone_now():
+    tz = pytz.timezone(config.TIMEZONE)
+    return datetime.now(tz=tz)

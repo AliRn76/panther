@@ -142,3 +142,13 @@ We use it to create `database` connection
 _Requires [redis](https://redis-py.readthedocs.io/en/stable/) package._
 
 We use it to create `redis` connection
+
+
+---
+### [TIMEZONE](https://pantherpy.github.io/timezone)
+> <b>Type:</b> `str` (<b>Default:</b> `'UTC'`)
+
+Used in `panther.utils.timezone_now()` which returns a `datetime` based on your `timezone`
+
+And `panther.utils.timezone_now()` used in `BaseUser.date_created` and `BaseUser.last_login` 
+

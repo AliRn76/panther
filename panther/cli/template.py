@@ -11,6 +11,7 @@ from panther import status, version
 from panther.app import API
 from panther.request import Request
 from panther.response import Response
+from panther.utils import timezone_now
 
 
 @API()
@@ -24,7 +25,7 @@ async def info_api(request: Request):
         'panther_version': version(),
         'method': request.method,
         'query_params': request.query_params,
-        'datetime_now': datetime.now().isoformat(),
+        'datetime_now': timezone_now().isoformat(),
         'user_agent': request.headers.user_agent,
     }
     return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
@@ -66,6 +67,8 @@ SECRET_KEY = env['SECRET_KEY']{DATABASE}{REDIS}{USER_MODEL}{AUTHENTICATION}{MONI
 
 # More Info: https://PantherPy.GitHub.io/urls/
 URLs = 'core.urls.url_routing'
+
+TIMEZONE = 'UTC'
 """ % datetime.now().date().isoformat()
 
 env = """SECRET_KEY='%s'
@@ -126,7 +129,7 @@ from panther.app import API
 from panther.request import Request
 from panther.response import Response
 from panther.throttling import Throttling
-from panther.utils import load_env
+from panther.utils import load_env, timezone_now
 
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
@@ -135,6 +138,7 @@ SECRET_KEY = env['SECRET_KEY']{DATABASE}{REDIS}{USER_MODEL}{AUTHENTICATION}{MONI
 
 InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
 
+TIMEZONE = 'UTC'
 
 @API()
 async def hello_world_api():
@@ -147,7 +151,7 @@ async def info_api(request: Request):
         'panther_version': version(),
         'method': request.method,
         'query_params': request.query_params,
-        'datetime_now': datetime.now().isoformat(),
+        'datetime_now': timezone_now().isoformat(),
         'user_agent': request.headers.user_agent,
     }
     return Response(data=data, status_code=status.HTTP_202_ACCEPTED)

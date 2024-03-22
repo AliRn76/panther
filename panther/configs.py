@@ -66,6 +66,7 @@ class Config(Singleton):
     HAS_WS: bool
     STARTUPS: list[Callable]
     SHUTDOWNS: list[Callable]
+    TIMEZONE: str
     AUTO_REFORMAT: bool
     QUERY_ENGINE: typing.Callable | None
     DATABASE: typing.Callable | None
@@ -108,6 +109,7 @@ default_configs = {
     'HAS_WS': False,
     'STARTUPS': [],
     'SHUTDOWNS': [],
+    'TIMEZONE': 'UTC',
     'AUTO_REFORMAT': False,
     'QUERY_ENGINE': None,
     'DATABASE': None,

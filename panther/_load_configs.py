@@ -21,6 +21,7 @@ __all__ = (
     'load_redis',
     'load_startup',
     'load_shutdown',
+    'load_timezone',
     'load_database',
     'load_secret_key',
     'load_monitoring',
@@ -74,6 +75,11 @@ def load_startup(_configs: dict, /) -> None:
 def load_shutdown(_configs: dict, /) -> None:
     if shutdown := _configs.get('SHUTDOWN'):
         config.SHUTDOWN = import_class(shutdown)
+
+
+def load_timezone(_configs: dict, /) -> None:
+    if timezone := _configs.get('TIMEZONE'):
+        config.TIMEZONE = timezone
 
 
 def load_database(_configs: dict, /) -> None:

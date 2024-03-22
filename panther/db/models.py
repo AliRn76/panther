@@ -7,7 +7,7 @@ from pydantic import Field, field_validator
 
 from panther.configs import config
 from panther.db.queries import Query
-from panther.utils import scrypt, URANDOM_SIZE
+from panther.utils import scrypt, URANDOM_SIZE, timezone_now
 
 with contextlib.suppress(ImportError):
     # Only required if user wants to use mongodb
@@ -56,10 +56,10 @@ class Model(PydanticBaseModel, Query):
 class BaseUser(Model):
     password: str = Field('', max_length=64)
     last_login: datetime | None = None
-    date_created:  datetime | None = Field(default_factory=datetime.now)
+    date_created:  datetime | None = Field(default_factory=timezone_now)
 
     async def update_last_login(self) -> None:
-        await self.update(last_login=datetime.now())
+        await self.update(last_login=timezone_now())
 
     async def login(self) -> dict:
         """Return dict of access and refresh token"""
