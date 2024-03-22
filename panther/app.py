@@ -36,11 +36,11 @@ class API:
     def __init__(
             self,
             *,
-            input_model=None,
-            output_model=None,
+            input_model: type[ModelSerializer] | type[BaseModel] | None = None,
+            output_model: type[ModelSerializer] | type[BaseModel] | None = None,
             auth: bool = False,
             permissions: list | None = None,
-            throttling: Throttling = None,
+            throttling: Throttling | None = None,
             cache: bool = False,
             cache_exp_time: timedelta | int | None = None,
             methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
@@ -58,7 +58,7 @@ class API:
     def __call__(self, func):
         @functools.wraps(func)
         async def wrapper(request: Request) -> Response:
-            self.request: Request = request  # noqa: Non-self attribute could not be type hinted
+            self.request = request
 
             # 1. Check Method
             if self.methods and self.request.method not in self.methods:
