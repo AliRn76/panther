@@ -1,3 +1,4 @@
+import copy
 import typing
 from dataclasses import dataclass
 from datetime import timedelta
@@ -7,7 +8,6 @@ from typing import Callable
 from pydantic._internal._model_construction import ModelMetaclass
 
 from panther.throttling import Throttling
-from panther.utils import Singleton
 
 
 class JWTConfig:
@@ -45,7 +45,7 @@ class QueryObservable:
 
 
 @dataclass
-class Config(Singleton):
+class Config:
     BASE_DIR: Path
     MONITORING: bool
     LOG_QUERIES: bool
@@ -84,7 +84,7 @@ class Config(Singleton):
 
     def refresh(self):
         # In some tests we need to `refresh` the `config` values
-        for key, value in default_configs.items():
+        for key, value in copy.deepcopy(default_configs).items():
             setattr(self, key, value)
 
 
@@ -115,4 +115,4 @@ default_configs = {
     'DATABASE': None,
 }
 
-config = Config(**default_configs)
+config = Config(**copy.deepcopy(default_configs))

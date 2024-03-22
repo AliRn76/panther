@@ -7,14 +7,18 @@ from panther.configs import config
 class Event:
     @staticmethod
     def startup(func):
+        config.STARTUPS.append(func)
+
         def wrapper():
-            config.STARTUPS.append(func)
+            return func()
         return wrapper
 
     @staticmethod
     def shutdown(func):
+        config.SHUTDOWNS.append(func)
+
         def wrapper():
-            config.SHUTDOWNS.append(func)
+            return func()
         return wrapper
 
     @staticmethod
