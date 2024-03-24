@@ -133,9 +133,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-
       - name: Install motor
-        run: pip install pymongo
+        run: pip install motor
 
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.10.0
