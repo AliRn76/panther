@@ -1,10 +1,15 @@
 ### 4.0.0
 - Move `database` and `redis` connections from `MIDDLEWARES` to their own block, `DATABASE` and `REDIS`
-- Make queries `async`
+- Make `Database` queries `async`
+- Make `Redis` queries `async`
+- Add `StreamingResponse`
+- Add `generics` API classes
 - Add `login()` & `logout()` to `JWTAuthentication` and used it in `BaseUser`
 - Support `Authentication` & `Authorization` in `Websocket`
 - Rename all exceptions suffix from `Exception` to `Error` (https://peps.python.org/pep-0008/#exception-names)
-- Support `pantherdb 1.4`
+- Support `pantherdb 2.0.0` (`Cursor` Added)
+- Remove `watchfiles` from required dependencies
+- Support `exclude` and `optional_fields` in `ModelSerializer`
 - Minor Improvements
 
 ### 3.9.0

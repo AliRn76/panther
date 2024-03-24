@@ -233,7 +233,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
                     fields = ['ok', 'no']
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == '`Serializer3.Config.fields.ok` is not valid.'
+            assert e.args[0] == '`Serializer3.Config.fields.ok` is not in `Book.model_fields`'
         else:
             assert False
 
@@ -259,6 +259,48 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
         except Exception as e:
             assert isinstance(e, AttributeError)
             assert e.args[0] == '`Serializer5.Config.model` is not subclass of `panther.db.Model`.'
+        else:
+            assert False
+
+    async def test_define_class_with_invalid_exclude_1(self):
+        try:
+            class Serializer6(ModelSerializer):
+                class Config:
+                    model = Book
+                    fields = ['name', 'author', 'pages_count']
+                    exclude = ['not_found']
+
+        except Exception as e:
+            assert isinstance(e, AttributeError)
+            assert e.args[0] == '`Serializer6.Config.exclude.not_found` is not valid.'
+        else:
+            assert False
+
+    async def test_define_class_with_invalid_exclude_2(self):
+        try:
+            class Serializer7(ModelSerializer):
+                class Config:
+                    model = Book
+                    fields = ['name', 'pages_count']
+                    exclude = ['author']
+
+        except Exception as e:
+            assert isinstance(e, AttributeError)
+            assert e.args[0] == '`Serializer7.Config.exclude.author` is not defined in `Config.fields`.'
+        else:
+            assert False
+
+    async def test_with_star_fields_with_exclude3(self):
+        try:
+            class Serializer8(ModelSerializer):
+                class Config:
+                    model = Book
+                    fields = ['*']
+                    exclude = ['author']
+
+        except Exception as e:
+            assert isinstance(e, AttributeError)
+            assert e.args[0] == "`Serializer8.Config.fields.*` is not valid. Did you mean `fields = '*'`"
         else:
             assert False
 
@@ -319,3 +361,39 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
 
         serialized = Serializer2(name='book', author='AliRn', pages_count='12')
         assert serialized.__doc__ is None
+
+    async def test_with_exclude(self):
+        class Serializer(ModelSerializer):
+            class Config:
+                model = Book
+                fields = ['name', 'author', 'pages_count']
+                exclude = ['author']
+
+        serialized = Serializer(name='book', author='AliRn', pages_count='12')
+        assert set(serialized.model_dump().keys()) == {'name', 'pages_count'}
+        assert serialized.name == 'book'
+        assert serialized.pages_count == 12
+
+    async def test_with_star_fields(self):
+        class Serializer(ModelSerializer):
+            class Config:
+                model = Book
+                fields = '*'
+
+        serialized = Serializer(name='book', author='AliRn', pages_count='12')
+        assert set(serialized.model_dump().keys()) == {'id', 'name', 'author', 'pages_count'}
+        assert serialized.name == 'book'
+        assert serialized.author == 'AliRn'
+        assert serialized.pages_count == 12
+
+    async def test_with_star_fields_with_exclude(self):
+        class Serializer(ModelSerializer):
+            class Config:
+                model = Book
+                fields = '*'
+                exclude = ['author']
+
+        serialized = Serializer(name='book', author='AliRn', pages_count='12')
+        assert set(serialized.model_dump().keys()) == {'id', 'name', 'pages_count'}
+        assert serialized.name == 'book'
+        assert serialized.pages_count == 12

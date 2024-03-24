@@ -1,4 +1,5 @@
 import time
+import asyncio
 from datetime import timedelta
 from unittest import IsolatedAsyncioTestCase
 
@@ -10,19 +11,19 @@ from tests._utils import check_two_dicts
 
 @API()
 async def without_cache_api():
-    time.sleep(0.01)
+    await asyncio.sleep(0.01)
     return {'detail': time.time()}
 
 
 @API(cache=True)
 async def with_cache_api():
-    time.sleep(0.01)
+    await asyncio.sleep(0.01)
     return {'detail': time.time()}
 
 
 @API(cache=True, cache_exp_time=timedelta(seconds=5))
 async def expired_cache_api():
-    time.sleep(0.01)
+    await asyncio.sleep(0.01)
     return {'detail': time.time()}
 
 
@@ -65,7 +66,7 @@ class TestCaching(IsolatedAsyncioTestCase):
 
         # Check Logs
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == '"cache_exp_time" is not very accurate when redis is not connected.'
+        assert captured.records[0].getMessage() == '`cache_exp_time` is not very accurate when `redis` is not connected.'
 
         # Second Request
         res2 = await self.client.get('with-expired-cache')
@@ -74,7 +75,7 @@ class TestCaching(IsolatedAsyncioTestCase):
         # Response should be cached
         assert check_two_dicts(res1.data, res2.data) is True
 
-        time.sleep(5)
+        await asyncio.sleep(5)
 
         # Third Request
         res3 = await self.client.get('with-expired-cache')

@@ -2,6 +2,7 @@ import operator
 from abc import abstractmethod
 from functools import reduce
 from sys import version_info
+from typing import Iterator
 
 from pydantic_core._pydantic_core import ValidationError
 
@@ -10,7 +11,7 @@ from panther.db.utils import prepare_id_for_query
 from panther.exceptions import DatabaseError
 
 if version_info >= (3, 11):
-    from typing import Self, Iterator
+    from typing import Self
 else:
     from typing import TypeVar
 

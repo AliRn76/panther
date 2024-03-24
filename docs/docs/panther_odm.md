@@ -16,18 +16,36 @@ user: User = await User.find_one({'id': 1}, name='Ali')
 Get documents from the database.
 
 ```python  
-users: list[User] = await User.find(age=18, name='Ali')
+users: Cursor = await User.find(age=18, name='Ali')
 or
-users: list[User] = await User.find({'age': 18, 'name': 'Ali'})
+users: Cursor = await User.find({'age': 18, 'name': 'Ali'})
 or
-users: list[User] = await User.find({'age': 18}, name='Ali')
+users: Cursor = await User.find({'age': 18}, name='Ali')
 ```  
+
+#### skip, limit and sort
+
+`skip()`, `limit()` and `sort()` are also available as chain methods
+
+```python  
+users: Cursor = await User.find(age=18, name='Ali').skip(10).limit(10).sort([('age', -1), ('name', 1)])
+```  
+
+#### cursor
+
+The `find()` method, returns a `Crusor` depends on the database
+- `from panther.db.cursor import Cursor ` for `MongoDB`
+- `from pantherdb import Cursor` for `PantherDB`
+
+You can work with these cursors as list and directly pass them to `Response(data=cursor)`
+
+They are designed to return an instance of your model in `iterations`(`__next__()`) or accessing by index(`__getitem__()`)
 
 ### all
 Get all documents from the database. (Alias of `.find()`)
   
 ```python  
-users: list[User] = User.all()
+users: Cursor = User.all()
 ```
 
 ### first
@@ -73,19 +91,7 @@ pipeline = [
     ...
 ]
 users: Iterable[dict] = await User.aggregate(pipeline)
-```  
-
-### find with skip, limit, sort
-Get limited documents from the database from offset and sorted by something
-> Only available in mongodb
-
-```python  
-users: list[User] = await User.find(age=18, name='Ali').limit(10).skip(10).sort('_id', -1)
-or
-users: list[User] = await User.find({'age': 18, 'name': 'Ali'}).limit(10).skip(10).sort('_id', -1)
-or
-users: list[User] = await User.find({'age': 18}, name='Ali').limit(10).skip(10).sort('_id', -1)
-```  
+```
 
 ### count  
 Count the number of documents in this collection.
@@ -234,7 +240,7 @@ is_inserted, user = await User.find_one_or_insert({'age': 18}, name='Ali')
 ### find_one_or_raise
 - Get a single document from the database]
   - **or** 
-- Raise an `APIError(f'{Model} Does Not Exist')`
+- Raise an `NotFoundAPIError(f'{Model} Does Not Exist')`
   
 ```python  
 from app.models import User
@@ -248,6 +254,7 @@ user: User = await User.find_one_or_raise({'age': 18}, name='Ali')
 
 ### save
 Save the document.
+
 - If it has id --> `Update` It
 - else --> `Insert` It
 

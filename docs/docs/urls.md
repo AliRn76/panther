@@ -14,7 +14,7 @@
     - Example: `user/<user_id>/blog/<title>/`
     - The `endpoint` should have parameters with those names too
     - Example Function-Base: `async def profile_api(user_id: int, title: str):`
-    - Example Class-Base: `async def get(user_id: int, title: str):`
+    - Example Class-Base: `async def get(self, user_id: int, title: str):`
 
 ## Example
 

@@ -8,7 +8,8 @@ import pytest
 from panther import Panther
 from panther.db import Model
 from panther.db.connections import db
-from panther.db.cursor import Cursor
+from panther.db.cursor import Cursor as MongoCursor
+from pantherdb import Cursor as PantherDBCursor
 
 f = faker.Faker()
 
@@ -33,9 +34,23 @@ class _BaseDatabaseTestCase:
         assert book.name == name
         assert book.pages_count == pages_count
 
-    async def test_insert_many(self):
+    async def test_insert_many_with_insert_one(self):
         insert_count = await self._insert_many()
         assert insert_count > 1
+
+    async def test_insert_many(self):
+        insert_count = random.randint(2, 10)
+        data = [
+            {'name': f.name(), 'author': f.name(), 'pages_count': random.randint(0, 10)}
+            for _ in range(insert_count)
+        ]
+        books = await Book.insert_many(data)
+        inserted_books = [
+            {'_id': book._id, 'name': book.name, 'author': book.author, 'pages_count': book.pages_count}
+            for book in books
+        ]
+        assert len(books) == insert_count
+        assert data == inserted_books
 
     # # # FindOne
     async def test_find_one_not_found(self):
@@ -157,9 +172,9 @@ class _BaseDatabaseTestCase:
         _len = sum(1 for _ in books)
 
         if self.__class__.__name__ == 'TestMongoDB':
-            assert isinstance(books, Cursor)
+            assert isinstance(books, MongoCursor)
         else:
-            assert isinstance(books, list)
+            assert isinstance(books, PantherDBCursor)
         assert _len == insert_count
         for book in books:
             assert isinstance(book, Book)
@@ -174,9 +189,9 @@ class _BaseDatabaseTestCase:
         _len = sum(1 for _ in books)
 
         if self.__class__.__name__ == 'TestMongoDB':
-            assert isinstance(books, Cursor)
+            assert isinstance(books, MongoCursor)
         else:
-            assert isinstance(books, list)
+            assert isinstance(books, PantherDBCursor)
         assert _len == 0
 
     async def test_find_without_filter(self):
@@ -188,9 +203,9 @@ class _BaseDatabaseTestCase:
         _len = sum(1 for _ in books)
 
         if self.__class__.__name__ == 'TestMongoDB':
-            assert isinstance(books, Cursor)
+            assert isinstance(books, MongoCursor)
         else:
-            assert isinstance(books, list)
+            assert isinstance(books, PantherDBCursor)
         assert _len == insert_count
         for book in books:
             assert isinstance(book, Book)
@@ -204,9 +219,9 @@ class _BaseDatabaseTestCase:
         _len = sum(1 for _ in books)
 
         if self.__class__.__name__ == 'TestMongoDB':
-            assert isinstance(books, Cursor)
+            assert isinstance(books, MongoCursor)
         else:
-            assert isinstance(books, list)
+            assert isinstance(books, PantherDBCursor)
 
         assert _len == insert_count
         for book in books:
@@ -418,9 +433,9 @@ class _BaseDatabaseTestCase:
         _len = sum(1 for _ in books)
 
         if self.__class__.__name__ == 'TestMongoDB':
-            assert isinstance(books, Cursor)
+            assert isinstance(books, MongoCursor)
         else:
-            assert isinstance(books, list)
+            assert isinstance(books, PantherDBCursor)
         assert _len == updated_count == insert_count
         for book in books:
             assert book.author == author

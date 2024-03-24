@@ -9,11 +9,11 @@ from panther.utils import Singleton
 class TestBackgroundTasks(TestCase):
     def setUp(self):
         self.obj = BackgroundTasks()
-        config['background_tasks'] = True
+        config.BACKGROUND_TASKS = True
 
     def tearDown(self):
         del Singleton._instances[BackgroundTasks]
-        config['background_tasks'] = False
+        config.BACKGROUND_TASKS = False
 
     def test_background_tasks_singleton(self):
         new_obj = BackgroundTasks()
@@ -60,7 +60,7 @@ class TestBackgroundTasks(TestCase):
         with self.assertLogs() as captured:
             self.obj.add_task(task)
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'Task will be ignored, `BACKGROUND_TASKS` is not True in `core/configs.py`'
+        assert captured.records[0].getMessage() == 'Task will be ignored, `BACKGROUND_TASKS` is not True in `configs`'
         assert self.obj.tasks == []
 
     def test_add_task_with_args(self):

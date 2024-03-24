@@ -3,12 +3,20 @@
 > <b>Type:</b> `str`
 >  
 > <b>Default:</b> `None`
-  
-You can set your Authentication class in `configs`, now, if you set `auth=True` in `@API()`, Panther will use this class for authentication of every `API`, and put the `user` in `request.user` or `raise HTTP_401_UNAUTHORIZED` 
 
-We implemented a built-in authentication class which used `JWT` for authentication.
+You can set Authentication class in your `configs` 
+
+Panther use it, to authenticate every API/ WS if `auth=True` and give you the user or `raise HTTP_401_UNAUTHORIZED`
+
+The `user` will be in `request.user` in APIs and in `self.user` in WSs 
+
+--- 
+
+We implemented 2 built-in authentication classes which use `JWT` for authentication.
+
 But, You can use your own custom authentication class too.
 
+--- 
 
 ### JWTAuthentication
 
@@ -17,7 +25,7 @@ This class will
 - Get the `token` from `Authorization` header of request.
 - Check the `Bearer`
 - `decode` the `token` 
-- Find the matched `user` (It uses the `USER_MODEL`)
+- Find the matched `user`
 
 > `JWTAuthentication` is going to use `panther.db.models.BaseUser` if you didn't set the `USER_MODEL` in your `configs`
 
@@ -59,9 +67,7 @@ JWTConfig = {
 
 
 #### Websocket Authentication
-This class is very useful when you are trying to authenticate the user in websocket
-
-Add this into your `configs`:
+The `QueryParamJWTAuthentication` is very useful when you are trying to authenticate the user in websocket, you just have to add this into your `configs`:
 ```python
 WS_AUTHENTICATION = 'panther.authentications.QueryParamJWTAuthentication'
 ```
@@ -77,7 +83,9 @@ WS_AUTHENTICATION = 'panther.authentications.QueryParamJWTAuthentication'
     - Or raise `panther.exceptions.AuthenticationAPIError` 
   
 
-- Address it in `configs`
-  - `AUTHENTICATION = 'project_name.core.authentications.CustomAuthentication'`
+- Add it into your `configs`
+  ```python
+  AUTHENTICATION = 'project_name.core.authentications.CustomAuthentication'
+  ```
 
-> You can see the source code of JWTAuthentication [[here]](https://github.com/AliRn76/panther/blob/da2654ccdd83ebcacda91a1aaf51d5aeb539eff5/panther/authentications.py#L38) 
+> You can see the source code of JWTAuthentication [[here]](https://github.com/AliRn76/panther/blob/da2654ccdd83ebcacda91a1aaf51d5aeb539eff5/panther/authentications.py) 

@@ -69,15 +69,15 @@ class TestAuthentication(IsolatedAsyncioTestCase):
         assert res.data is None
 
     async def test_user_auth_required_without_auth_class(self):
-        auth_config = config['authentication']
-        config['authentication'] = None
+        auth_config = config.AUTHENTICATION
+        config.AUTHENTICATION = None
         with self.assertLogs(level='CRITICAL') as captured:
             res = await self.client.get('auth-required')
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == '"AUTHENTICATION" has not been set in configs'
         assert res.status_code == 500
         assert res.data['detail'] == 'Internal Server Error'
-        config['authentication'] = auth_config
+        config.AUTHENTICATION = auth_config
 
     async def test_user_auth_required_without_token(self):
         with self.assertLogs(level='ERROR') as captured:

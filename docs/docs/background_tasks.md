@@ -110,7 +110,7 @@ Panther is going to run the `background tasks` as a thread in the background on 
     task = BackgroundTask(do_something, 'Ali', 26)
     ```
 
-- > Default interval is 1.
+- > Default of interval() is 1.
 
 - > The -1 interval means infinite, 
 

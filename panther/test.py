@@ -4,7 +4,7 @@ from typing import Literal
 
 import orjson as json
 
-from panther.response import Response
+from panther.response import Response, HTMLResponse, PlainTextResponse, StreamingResponse
 
 __all__ = ('APIClient', 'WebsocketClient')
 
@@ -12,12 +12,13 @@ __all__ = ('APIClient', 'WebsocketClient')
 class RequestClient:
     def __init__(self, app: Callable):
         self.app = app
+        self.response = b''
 
     async def send(self, data: dict):
         if data['type'] == 'http.response.start':
             self.header = data
         else:
-            self.response = data
+            self.response += data['body']
 
     async def receive(self):
         return {
@@ -54,11 +55,22 @@ class RequestClient:
             receive=self.receive,
             send=self.send,
         )
-        return Response(
-            data=json.loads(self.response.get('body', b'null')),
-            status_code=self.header['status'],
-            headers=self.header['headers'],
-        )
+        response_headers = {key.decode(): value.decode() for key, value in self.header['headers']}
+        if response_headers['Content-Type'] == 'text/html; charset=utf-8':
+            data = self.response.decode()
+            return HTMLResponse(data=data, status_code=self.header['status'], headers=response_headers)
+
+        elif response_headers['Content-Type'] == 'text/plain; charset=utf-8':
+            data = self.response.decode()
+            return PlainTextResponse(data=data, status_code=self.header['status'], headers=response_headers)
+
+        elif response_headers['Content-Type'] == 'application/octet-stream':
+            data = self.response.decode()
+            return PlainTextResponse(data=data, status_code=self.header['status'], headers=response_headers)
+
+        else:
+            data = json.loads(self.response or b'null')
+            return Response(data=data, status_code=self.header['status'], headers=response_headers)
 
 
 class APIClient:

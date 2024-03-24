@@ -1,14 +1,16 @@
 import typing
+from typing import TypeVar, Type
 
-from pydantic import create_model, BaseModel
-from pydantic.fields import FieldInfo
+from pydantic import create_model, BaseModel, ConfigDict
+from pydantic.fields import FieldInfo, Field
 from pydantic_core._pydantic_core import PydanticUndefined
 
 from panther.db import Model
+from panther.request import Request
 
 
 class MetaModelSerializer:
-    KNOWN_CONFIGS = ['model', 'fields', 'required_fields']
+    KNOWN_CONFIGS = ['model', 'fields', 'exclude', 'required_fields', 'optional_fields']
 
     def __new__(
             cls,
@@ -18,6 +20,9 @@ class MetaModelSerializer:
             **kwargs
     ):
         if cls_name == 'ModelSerializer':
+            # Put `model` and `request` to the main class with `create_model()`
+            namespace['__annotations__'].pop('model')
+            namespace['__annotations__'].pop('request')
             cls.model_serializer = type(cls_name, (), namespace)
             return super().__new__(cls)
 
@@ -38,7 +43,8 @@ class MetaModelSerializer:
             __module__=namespace['__module__'],
             __validators__=namespace,
             __base__=(cls.model_serializer, BaseModel),
-            model=(typing.ClassVar, config.model),
+            model=(typing.ClassVar[type[BaseModel]], config.model),
+            request=(Request, Field(None, exclude=True)),
             **field_definitions
         )
 
@@ -67,22 +73,70 @@ class MetaModelSerializer:
             raise AttributeError(msg) from None
 
         # Check `fields`
-        if (fields := getattr(config, 'fields', None)) is None:
+        if not hasattr(config, 'fields'):
             msg = f'`{cls_name}.Config.fields` is required.'
             raise AttributeError(msg) from None
 
-        for field_name in fields:
-            if field_name not in model.model_fields:
-                msg = f'`{cls_name}.Config.fields.{field_name}` is not valid.'
-                raise AttributeError(msg) from None
+        if config.fields != '*':
+            for field_name in config.fields:
+                if field_name == '*':
+                    msg = f"`{cls_name}.Config.fields.{field_name}` is not valid. Did you mean `fields = '*'`"
+                    raise AttributeError(msg) from None
+
+                if field_name not in model.model_fields:
+                    msg = f'`{cls_name}.Config.fields.{field_name}` is not in `{model.__name__}.model_fields`'
+                    raise AttributeError(msg) from None
 
         # Check `required_fields`
         if not hasattr(config, 'required_fields'):
             config.required_fields = []
 
-        for required in config.required_fields:
-            if required not in config.fields:
-                msg = f'`{cls_name}.Config.required_fields.{required}` should be in `Config.fields` too.'
+        if config.required_fields != '*':
+            for required in config.required_fields:
+                if required not in config.fields:
+                    msg = f'`{cls_name}.Config.required_fields.{required}` should be in `Config.fields` too.'
+                    raise AttributeError(msg) from None
+
+        # Check `optional_fields`
+        if not hasattr(config, 'optional_fields'):
+            config.optional_fields = []
+
+        if config.optional_fields != '*':
+            for optional in config.optional_fields:
+                if optional not in config.fields:
+                    msg = f'`{cls_name}.Config.optional_fields.{optional}` should be in `Config.fields` too.'
+                    raise AttributeError(msg) from None
+
+        # Check `required_fields` and `optional_fields` together
+        if (
+                (config.optional_fields == '*' and config.required_fields != []) or
+                (config.required_fields == '*' and config.optional_fields != [])
+        ):
+            msg = (
+                f"`{cls_name}.Config.optional_fields` and "
+                f"`{cls_name}.Config.required_fields` can't include same fields at the same time"
+            )
+            raise AttributeError(msg) from None
+        for optional in config.optional_fields:
+            for required in config.required_fields:
+                if optional == required:
+                    msg = (
+                        f"`{optional}` can't be in `{cls_name}.Config.optional_fields` and "
+                        f"`{cls_name}.Config.required_fields` at the same time"
+                    )
+                    raise AttributeError(msg) from None
+
+        # Check `exclude`
+        if not hasattr(config, 'exclude'):
+            config.exclude = []
+
+        for field_name in config.exclude:
+            if field_name not in model.model_fields:
+                msg = f'`{cls_name}.Config.exclude.{field_name}` is not valid.'
+                raise AttributeError(msg) from None
+
+            if config.fields != '*' and field_name not in config.fields:
+                msg = f'`{cls_name}.Config.exclude.{field_name}` is not defined in `Config.fields`.'
                 raise AttributeError(msg) from None
 
     @classmethod
@@ -90,15 +144,35 @@ class MetaModelSerializer:
         field_definitions = {}
 
         # Define `fields`
-        for field_name in config.fields:
-            field_definitions[field_name] = (
-                config.model.model_fields[field_name].annotation,
-                config.model.model_fields[field_name]
-            )
+        if config.fields == '*':
+            for field_name, field in config.model.model_fields.items():
+                field_definitions[field_name] = (field.annotation, field)
+        else:
+            for field_name in config.fields:
+                field_definitions[field_name] = (
+                    config.model.model_fields[field_name].annotation,
+                    config.model.model_fields[field_name]
+                )
+
+        # Apply `exclude`
+        for field_name in config.exclude:
+            del field_definitions[field_name]
 
         # Apply `required_fields`
-        for required in config.required_fields:
-            field_definitions[required][1].default = PydanticUndefined
+        if config.required_fields == '*':
+            for value in field_definitions.values():
+                value[1].default = PydanticUndefined
+        else:
+            for field_name in config.required_fields:
+                field_definitions[field_name][1].default = PydanticUndefined
+
+        # Apply `optional_fields`
+        if config.optional_fields == '*':
+            for value in field_definitions.values():
+                value[1].default = value[0]()
+        else:
+            for field_name in config.optional_fields:
+                field_definitions[field_name][1].default = field_definitions[field_name][0]()
 
         # Collect and Override `Class Fields`
         for key, value in namespace.pop('__annotations__', {}).items():
@@ -112,9 +186,43 @@ class MetaModelSerializer:
         return {
             attr: getattr(config, attr) for attr in dir(config)
             if not attr.startswith('__') and attr not in cls.KNOWN_CONFIGS
-        } | namespace.pop('model_config', {})
+        } | namespace.pop('model_config', {}) | {'arbitrary_types_allowed': True}
 
 
 class ModelSerializer(metaclass=MetaModelSerializer):
-    def create(self) -> type[Model]:
-        return self.model.insert_one(self.model_dump())
+    """
+    Doc:
+        https://pantherpy.github.io/serializer/#style-2-model-serializer
+    Example:
+        class PersonSerializer(ModelSerializer):
+            class Meta:
+                model = Person
+                fields = '*'
+                exclude = ['created_date']  # Optional
+                required_fields = ['first_name', 'last_name']  # Optional
+                optional_fields = ['age']  # Optional
+    """
+    model: type[BaseModel]
+    request: Request
+
+    async def create(self, validated_data: dict) -> Model:
+        """
+        validated_data = ModelSerializer.model_dump()
+        """
+        return await self.model.insert_one(validated_data)
+
+    async def update(self, instance: Model, validated_data: dict) -> Model:
+        """
+        instance = UpdateAPI.object()
+        validated_data = ModelSerializer.model_dump()
+        """
+        await instance.update(validated_data)
+        return instance
+
+    async def partial_update(self, instance: Model, validated_data: dict) -> Model:
+        """
+        instance = UpdateAPI.object()
+        validated_data = ModelSerializer.model_dump(exclude_none=True)
+        """
+        await instance.update(validated_data)
+        return instance

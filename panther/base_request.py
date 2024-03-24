@@ -60,8 +60,6 @@ class BaseRequest:
         self.scope = scope
         self.asgi_send = send
         self.asgi_receive = receive
-        self._data = ...
-        self._validated_data = None
         self._headers: Headers | None = None
         self._params: dict | None = None
         self.user: Model | None = None
@@ -116,25 +114,22 @@ class BaseRequest:
         }
 
     def clean_parameters(self, func: Callable) -> dict:
-        kwargs = {}
+        kwargs = self.path_variables.copy()
+
         for variable_name, variable_type in func.__annotations__.items():
             # Put Request/ Websocket In kwargs (If User Wants It)
             if issubclass(variable_type, BaseRequest):
                 kwargs[variable_name] = self
-                continue
 
-            for name, value in self.path_variables.items():
-                if name == variable_name:
-                    # Check the type and convert the value
-                    if variable_type is bool:
-                        kwargs[name] = value.lower() not in ['false', '0']
+            elif variable_name in kwargs:
+                # Cast To Boolean
+                if variable_type is bool:
+                    kwargs[variable_name] = kwargs[variable_name].lower() not in ['false', '0']
 
-                    elif variable_type is int:
-                        try:
-                            kwargs[name] = int(value)
-                        except ValueError:
-                            raise InvalidPathVariableAPIError(value=value, variable_type=variable_type)
-                    else:
-                        kwargs[name] = value
+                # Cast To Int
+                elif variable_type is int:
+                    try:
+                        kwargs[variable_name] = int(kwargs[variable_name])
+                    except ValueError:
+                        raise InvalidPathVariableAPIError(value=kwargs[variable_name], variable_type=variable_type)
         return kwargs
-

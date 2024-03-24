@@ -1,6 +1,8 @@
 import sys
 from typing import Sequence, Iterable
 
+from pantherdb import Cursor as PantherDBCursor
+
 from panther.configs import QueryObservable
 from panther.db.cursor import Cursor
 from panther.db.queries.base_queries import BaseQuery
@@ -57,7 +59,7 @@ class Query(BaseQuery):
     @classmethod
     @check_connection
     @log_query
-    async def find(cls, _filter: dict | None = None, /, **kwargs) -> list[Self] | Cursor:
+    async def find(cls, _filter: dict | None = None, /, **kwargs) -> PantherDBCursor | Cursor:
         """
         Get documents from the database.
 
@@ -193,7 +195,7 @@ class Query(BaseQuery):
             >>> ]
             >>> await User.insert_many(users)
         """
-        return super().insert_many(documents)
+        return await super().insert_many(documents)
 
     # # # # # Delete # # # # #
     @check_connection
@@ -324,7 +326,7 @@ class Query(BaseQuery):
         return await cls.find()
 
     @classmethod
-    async def find_one_or_insert(cls, _filter: dict | None = None, /, **kwargs) -> tuple[bool, Self]:
+    async def find_one_or_insert(cls, _filter: dict | None = None, /, **kwargs) -> tuple[Self, bool]:
         """
         Get a single document from the database.
         or
@@ -341,8 +343,8 @@ class Query(BaseQuery):
             >>> await User.find_one_or_insert({'age': 18}, name='Ali')
         """
         if obj := await cls.find_one(_filter, **kwargs):
-            return False, obj
-        return True, await cls.insert_one(_filter, **kwargs)
+            return obj, False
+        return await cls.insert_one(_filter, **kwargs), True
 
     @classmethod
     async def find_one_or_raise(cls, _filter: dict | None = None, /, **kwargs) -> Self:

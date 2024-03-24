@@ -1,13 +1,18 @@
 import functools
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Literal
 
 from orjson import JSONDecodeError
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
 
 from panther._utils import is_function_async
-from panther.caching import cache_key, get_cached_response_data, set_cache_response
+from panther.caching import (
+    get_response_from_cache,
+    set_response_in_cache,
+    get_throttling_from_cache,
+    increment_throttling_in_cache
+)
 from panther.configs import config
 from panther.exceptions import (
     APIError,
@@ -19,8 +24,8 @@ from panther.exceptions import (
 )
 from panther.request import Request
 from panther.response import Response
-from panther.throttling import Throttling, throttling_storage
-from panther.utils import round_datetime
+from panther.serializer import ModelSerializer
+from panther.throttling import Throttling
 
 __all__ = ('API', 'GenericAPI')
 
@@ -31,11 +36,11 @@ class API:
     def __init__(
             self,
             *,
-            input_model=None,
-            output_model=None,
+            input_model: type[ModelSerializer] | type[BaseModel] | None = None,
+            output_model: type[ModelSerializer] | type[BaseModel] | None = None,
             auth: bool = False,
             permissions: list | None = None,
-            throttling: Throttling = None,
+            throttling: Throttling | None = None,
             cache: bool = False,
             cache_exp_time: timedelta | int | None = None,
             methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
@@ -53,20 +58,20 @@ class API:
     def __call__(self, func):
         @functools.wraps(func)
         async def wrapper(request: Request) -> Response:
-            self.request: Request = request  # noqa: Non-self attribute could not be type hinted
+            self.request = request
 
             # 1. Check Method
             if self.methods and self.request.method not in self.methods:
                 raise MethodNotAllowedAPIError
 
             # 2. Authentication
-            await self.handle_authentications()
+            await self.handle_authentication()
 
-            # 3. Throttling
-            self.handle_throttling()
+            # 3. Permissions
+            await self.handle_permission()
 
-            # 4. Permissions
-            await self.handle_permissions()
+            # 4. Throttling
+            await self.handle_throttling()
 
             # 5. Validate Input
             if self.request.method in ['POST', 'PUT', 'PATCH']:
@@ -74,7 +79,7 @@ class API:
 
             # 6. Get Cached Response
             if self.cache and self.request.method == 'GET':
-                if cached := get_cached_response_data(request=self.request, cache_exp_time=self.cache_exp_time):
+                if cached := await get_response_from_cache(request=self.request, cache_exp_time=self.cache_exp_time):
                     return Response(data=cached.data, status_code=cached.status_code)
 
             # 7. Put PathVariables and Request(If User Wants It) In kwargs
@@ -89,11 +94,12 @@ class API:
             # 9. Clean Response
             if not isinstance(response, Response):
                 response = Response(data=response)
-            response._clean_data_with_output_model(output_model=self.output_model)  # noqa: SLF001
+            if self.output_model and response.data:
+                response.data = response.apply_output_model(response.data, output_model=self.output_model)
 
             # 10. Set New Response To Cache
             if self.cache and self.request.method == 'GET':
-                set_cache_response(
+                await set_response_in_cache(
                     request=self.request,
                     response=response,
                     cache_exp_time=self.cache_exp_time
@@ -107,26 +113,21 @@ class API:
 
         return wrapper
 
-    async def handle_authentications(self) -> None:
-        auth_class = config['authentication']
+    async def handle_authentication(self) -> None:
         if self.auth:
-            if not auth_class:
+            if not config.AUTHENTICATION:
                 logger.critical('"AUTHENTICATION" has not been set in configs')
                 raise APIError
-            user = await auth_class.authentication(self.request)
-            self.request.user = user
+            self.request.user = await config.AUTHENTICATION.authentication(self.request)
 
-    def handle_throttling(self) -> None:
-        if throttling := self.throttling or config['throttling']:
-            key = cache_key(self.request)
-            time = round_datetime(datetime.now(), throttling.duration)
-            throttling_key = f'{time}-{key}'
-            if throttling_storage[throttling_key] > throttling.rate:
+    async def handle_throttling(self) -> None:
+        if throttling := self.throttling or config.THROTTLING:
+            if await get_throttling_from_cache(self.request, duration=throttling.duration) + 1 > throttling.rate:
                 raise ThrottlingAPIError
 
-            throttling_storage[throttling_key] += 1
+            await increment_throttling_in_cache(self.request, duration=throttling.duration)
 
-    async def handle_permissions(self) -> None:
+    async def handle_permission(self) -> None:
         for perm in self.permissions:
             if type(perm.authorization).__name__ != 'method':
                 logger.error(f'{perm.__name__}.authorization should be "classmethod"')
@@ -136,15 +137,17 @@ class API:
 
     def handle_input_validation(self):
         if self.input_model:
-            validated_data = self.validate_input(model=self.input_model, request=self.request)
-            self.request.set_validated_data(validated_data)
+            self.request.validated_data = self.validate_input(model=self.input_model, request=self.request)
 
     @classmethod
     def validate_input(cls, model, request: Request):
+        if isinstance(request.data, bytes):
+            raise BadRequestAPIError(detail='Content-Type is not valid')
+        if request.data is None:
+            raise BadRequestAPIError(detail='Request body is required')
         try:
-            if isinstance(request.data, bytes):
-                raise BadRequestAPIError(detail='Content-Type is not valid')
-            return model(**request.data)
+            # `request` will be ignored in regular `BaseModel`
+            return model(**request.data, request=request)
         except ValidationError as validation_error:
             error = {'.'.join(loc for loc in e['loc']): e['msg'] for e in validation_error.errors()}
             raise BadRequestAPIError(detail=error)
@@ -153,8 +156,8 @@ class API:
 
 
 class GenericAPI:
-    input_model = None
-    output_model = None
+    input_model: type[ModelSerializer] | type[BaseModel] = None
+    output_model: type[ModelSerializer] | type[BaseModel] = None
     auth: bool = False
     permissions: list | None = None
     throttling: Throttling | None = None
@@ -176,26 +179,27 @@ class GenericAPI:
     async def delete(self, *args, **kwargs):
         raise MethodNotAllowedAPIError
 
-    @classmethod
-    async def call_method(cls, *args, **kwargs):
-        match kwargs['request'].method:
+    async def call_method(self, request: Request):
+        match request.method:
             case 'GET':
-                func = cls().get
+                func = self.get
             case 'POST':
-                func = cls().post
+                func = self.post
             case 'PUT':
-                func = cls().put
+                func = self.put
             case 'PATCH':
-                func = cls().patch
+                func = self.patch
             case 'DELETE':
-                func = cls().delete
+                func = self.delete
+            case _:
+                raise MethodNotAllowedAPIError
 
         return await API(
-            input_model=cls.input_model,
-            output_model=cls.output_model,
-            auth=cls.auth,
-            permissions=cls.permissions,
-            throttling=cls.throttling,
-            cache=cls.cache,
-            cache_exp_time=cls.cache_exp_time,
-        )(func)(*args, **kwargs)
+            input_model=self.input_model,
+            output_model=self.output_model,
+            auth=self.auth,
+            permissions=self.permissions,
+            throttling=self.throttling,
+            cache=self.cache,
+            cache_exp_time=self.cache_exp_time,
+        )(func)(request=request)

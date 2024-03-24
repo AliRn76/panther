@@ -9,7 +9,6 @@ from typing import Callable, Literal
 from panther._utils import is_function_async
 from panther.utils import Singleton
 
-
 __all__ = (
     'BackgroundTask',
     'background_tasks',

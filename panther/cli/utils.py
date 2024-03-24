@@ -3,6 +3,7 @@ import platform
 
 from rich import print as rprint
 
+from panther.configs import Config
 from panther.exceptions import PantherError
 
 logger = logging.getLogger('panther')
@@ -108,21 +109,20 @@ def print_uvicorn_help_message():
     rprint('Run `uvicorn --help` for more help')
 
 
-def print_info(config: dict):
+def print_info(config: Config):
     from panther.db.connections import redis
 
-
-    mo = config['monitoring']
-    lq = config['log_queries']
-    bt = config['background_tasks']
-    ws = config['has_ws']
+    mo = config.MONITORING
+    lq = config.LOG_QUERIES
+    bt = config.BACKGROUND_TASKS
+    ws = config.HAS_WS
     rd = redis.is_connected
-    bd = '{0:<39}'.format(str(config['base_dir']))
+    bd = '{0:<39}'.format(str(config.BASE_DIR))
     if len(bd) > 39:
         bd = f'{bd[:36]}...'
 
     # Monitoring
-    if config['monitoring']:
+    if config.MONITORING:
         monitor = f'{h} * Run "panther monitor" in another session for Monitoring{h}\n'
     else:
         monitor = None
@@ -139,7 +139,7 @@ def print_info(config: dict):
 
     # Gunicorn if Websocket
     gunicorn_msg = None
-    if config['has_ws']:
+    if config.HAS_WS:
         try:
             import gunicorn
             gunicorn_msg = f'{h} * You have WS so make sure to run gunicorn with --preload{h}\n'

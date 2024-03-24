@@ -9,51 +9,53 @@ from panther.configs import config
 from panther.db.connections import redis
 from panther.request import Request
 from panther.response import Response, ResponseDataTypes
+from panther.throttling import throttling_storage
 from panther.utils import generate_hash_value_from_string, round_datetime
 
 logger = logging.getLogger('panther')
 
 caches = {}
-CachedResponse = namedtuple('Cached', ['data', 'status_code'])
+CachedResponse = namedtuple('CachedResponse', ['data', 'status_code'])
 
 
-def cache_key(request: Request, /) -> str:
+def api_cache_key(request: Request, cache_exp_time: timedelta | None = None) -> str:
     client = request.user and request.user.id or request.client.ip
     query_params_hash = generate_hash_value_from_string(request.scope['query_string'].decode('utf-8'))
-    return f'{client}-{request.path}-{query_params_hash}-{request.validated_data}'
+    key = f'{client}-{request.path}-{query_params_hash}-{request.validated_data}'
 
-
-def local_cache_key(*, request: Request, cache_exp_time: timedelta | None = None) -> str:
-    key = cache_key(request)
     if cache_exp_time:
         time = round_datetime(datetime.now(), cache_exp_time)
         return f'{time}-{key}'
-    else:
-        return key
+
+    return key
 
 
-def get_cached_response_data(*, request: Request, cache_exp_time: timedelta) -> CachedResponse | None:
+def throttling_cache_key(request: Request, duration: timedelta) -> str:
+    client = request.user and request.user.id or request.client.ip
+    time = round_datetime(datetime.now(), duration)
+    return f'{time}-{client}-{request.path}'
+
+
+async def get_response_from_cache(*, request: Request, cache_exp_time: timedelta) -> CachedResponse | None:
     """
     If redis.is_connected:
         Get Cached Data From Redis
     else:
         Get Cached Data From Memory
     """
-    if redis.is_connected:  # noqa: Unresolved References
-        key = cache_key(request)
-        data = (redis.get(key) or b'{}').decode()
+    if redis.is_connected:
+        key = api_cache_key(request=request)
+        data = (await redis.get(key) or b'{}').decode()
         if cached_value := json.loads(data):
             return CachedResponse(*cached_value)
 
     else:
-        key = local_cache_key(request=request, cache_exp_time=cache_exp_time)
+        key = api_cache_key(request=request, cache_exp_time=cache_exp_time)
         if cached_value := caches.get(key):
             return CachedResponse(*cached_value)
 
-    return None
 
-
-def set_cache_response(*, request: Request, response: Response, cache_exp_time: timedelta | int) -> None:
+async def set_response_in_cache(*, request: Request, response: Response, cache_exp_time: timedelta | int) -> None:
     """
     If redis.is_connected:
         Cache The Data In Redis
@@ -64,9 +66,9 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
     cache_data: tuple[ResponseDataTypes, int] = (response.data, response.status_code)
 
     if redis.is_connected:
-        key = cache_key(request)
+        key = api_cache_key(request=request)
 
-        cache_exp_time = cache_exp_time or config['default_cache_exp']
+        cache_exp_time = cache_exp_time or config.DEFAULT_CACHE_EXP
         cache_data: bytes = json.dumps(cache_data)
 
         if not isinstance(cache_exp_time, timedelta | int | NoneType):
@@ -76,15 +78,48 @@ def set_cache_response(*, request: Request, response: Response, cache_exp_time: 
         if cache_exp_time is None:
             logger.warning(
                 'your response are going to cache in redis forever '
-                '** set DEFAULT_CACHE_EXP in configs or pass the cache_exp_time in @API.get() for prevent this **'
+                '** set DEFAULT_CACHE_EXP in `configs` or set the `cache_exp_time` in `@API.get()` to prevent this **'
             )
-            redis.set(key, cache_data)
+            await redis.set(key, cache_data)
         else:
-            redis.set(key, cache_data, ex=cache_exp_time)
+            await redis.set(key, cache_data, ex=cache_exp_time)
 
     else:
-        key = local_cache_key(request=request, cache_exp_time=cache_exp_time)
+        key = api_cache_key(request=request, cache_exp_time=cache_exp_time)
         caches[key] = cache_data
 
         if cache_exp_time:
-            logger.info('"cache_exp_time" is not very accurate when redis is not connected.')
+            logger.info('`cache_exp_time` is not very accurate when `redis` is not connected.')
+
+
+async def get_throttling_from_cache(request: Request, duration: timedelta) -> int:
+    """
+    If redis.is_connected:
+        Get Cached Data From Redis
+    else:
+        Get Cached Data From Memory
+    """
+    key = throttling_cache_key(request=request, duration=duration)
+
+    if redis.is_connected:
+        data = (await redis.get(key) or b'0').decode()
+        return json.loads(data)
+
+    else:
+        return throttling_storage[key]
+
+
+async def increment_throttling_in_cache(request: Request, duration: timedelta) -> None:
+    """
+    If redis.is_connected:
+        Increment The Data In Redis
+    else:
+        Increment The Data In Memory
+    """
+    key = throttling_cache_key(request=request, duration=duration)
+
+    if redis.is_connected:
+        await redis.incrby(key, amount=1)
+
+    else:
+        throttling_storage[key] += 1

@@ -15,7 +15,7 @@ class BookWebsocket(GenericWebsocket):
         await self.accept()
         print(f'{self.connection_id=}')
 
-    async def receive(self, data: str | bytes = None):
+    async def receive(self, data: str | bytes):
         # Just Echo The Message
         await self.send(data=data)
 ```
@@ -64,7 +64,7 @@ you have to use `--preload`, like below:
         from panther import status
         await self.close(code=status.WS_1000_NORMAL_CLOSURE, reason='I just want to close it')
         ```
-    - Out of websocket class scope **(Not Recommended)**: You can close it with `close_websocket_connection()` from `panther.websocket`, it's `async` function with takes 3 args, `connection_id`, `code` and `reason`, like below: 
+    - Out of websocket class scope: You can close it with `close_websocket_connection()` from `panther.websocket`, it's `async` function with takes 3 args, `connection_id`, `code` and `reason`, like below: 
         ```python
         from panther import status
         from panther.websocket import close_websocket_connection
@@ -83,6 +83,5 @@ you have to use `--preload`, like below:
         '/ws/<user_id>/<room_id>/': UserWebsocket   
     }
    ``` 
-12. WebSocket Echo Example -> [Https://GitHub.com/PantherPy/echo_websocket](https://github.com/PantherPy/echo_websocket)
-13. Enjoy.
+12. Enjoy.
 

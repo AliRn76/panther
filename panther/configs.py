@@ -1,3 +1,4 @@
+import copy
 import typing
 from dataclasses import dataclass
 from datetime import timedelta
@@ -7,7 +8,6 @@ from typing import Callable
 from pydantic._internal._model_construction import ModelMetaclass
 
 from panther.throttling import Throttling
-from panther.utils import Singleton
 
 
 class JWTConfig:
@@ -41,80 +41,78 @@ class QueryObservable:
     @classmethod
     def update(cls):
         for observer in cls.observers:
-            observer._reload_bases(parent=config.query_engine)
+            observer._reload_bases(parent=config.QUERY_ENGINE)
 
 
 @dataclass
-class Config(Singleton):
-    base_dir: Path
-    monitoring: bool
-    log_queries: bool
-    default_cache_exp: timedelta | None
-    throttling: Throttling | None
-    secret_key: bytes | None
-    http_middlewares: list
-    ws_middlewares: list
-    reversed_http_middlewares: list
-    reversed_ws_middlewares: list
-    user_model: ModelMetaclass | None
-    authentication: ModelMetaclass | None
-    ws_authentication: ModelMetaclass | None
-    jwt_config: JWTConfig | None
-    models: list[dict]
-    flat_urls: dict
-    urls: dict
-    websocket_connections: typing.Callable | None
-    background_tasks: bool
-    has_ws: bool
-    startup: Callable | None
-    shutdown: Callable | None
-    auto_reformat: bool
-    query_engine: typing.Callable | None
-    database: typing.Callable | None
+class Config:
+    BASE_DIR: Path
+    MONITORING: bool
+    LOG_QUERIES: bool
+    DEFAULT_CACHE_EXP: timedelta | None
+    THROTTLING: Throttling | None
+    SECRET_KEY: bytes | None
+    HTTP_MIDDLEWARES: list[tuple]
+    WS_MIDDLEWARES: list[tuple]
+    USER_MODEL: ModelMetaclass | None
+    AUTHENTICATION: ModelMetaclass | None
+    WS_AUTHENTICATION: ModelMetaclass | None
+    JWT_CONFIG: JWTConfig | None
+    MODELS: list[dict]
+    FLAT_URLS: dict
+    URLS: dict
+    WEBSOCKET_CONNECTIONS: typing.Callable | None
+    BACKGROUND_TASKS: bool
+    HAS_WS: bool
+    STARTUPS: list[Callable]
+    SHUTDOWNS: list[Callable]
+    TIMEZONE: str
+    AUTO_REFORMAT: bool
+    QUERY_ENGINE: typing.Callable | None
+    DATABASE: typing.Callable | None
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)
-        if key == 'query_engine' and value:
+        if key == 'QUERY_ENGINE' and value:
             QueryObservable.update()
 
     def __setitem__(self, key, value):
-        setattr(self, key, value)
+        setattr(self, key.upper(), value)
 
     def __getitem__(self, item):
-        return getattr(self, item)
+        return getattr(self, item.upper())
 
     def refresh(self):
         # In some tests we need to `refresh` the `config` values
-        for key, value in default_configs.items():
+        for key, value in copy.deepcopy(default_configs).items():
             setattr(self, key, value)
 
 
 default_configs = {
-    'base_dir': Path(),
-    'monitoring': False,
-    'log_queries': False,
-    'default_cache_exp': None,
-    'throttling': None,
-    'secret_key': None,
-    'http_middlewares': [],
-    'ws_middlewares': [],
-    'reversed_http_middlewares': [],
-    'reversed_ws_middlewares': [],
-    'user_model': None,
-    'authentication': None,
-    'ws_authentication': None,
-    'jwt_config': None,
-    'models': [],
-    'flat_urls': {},
-    'urls': {},
-    'websocket_connections': None,
-    'background_tasks': False,
-    'has_ws': False,
-    'startup': None,
-    'shutdown': None,
-    'auto_reformat': False,
-    'query_engine': None,
-    'database': None,
+    'BASE_DIR': Path(),
+    'MONITORING': False,
+    'LOG_QUERIES': False,
+    'DEFAULT_CACHE_EXP': None,
+    'THROTTLING': None,
+    'SECRET_KEY': None,
+    'HTTP_MIDDLEWARES': [],
+    'WS_MIDDLEWARES': [],
+    'USER_MODEL': None,
+    'AUTHENTICATION': None,
+    'WS_AUTHENTICATION': None,
+    'JWT_CONFIG': None,
+    'MODELS': [],
+    'FLAT_URLS': {},
+    'URLS': {},
+    'WEBSOCKET_CONNECTIONS': None,
+    'BACKGROUND_TASKS': False,
+    'HAS_WS': False,
+    'STARTUPS': [],
+    'SHUTDOWNS': [],
+    'TIMEZONE': 'UTC',
+    'AUTO_REFORMAT': False,
+    'QUERY_ENGINE': None,
+    'DATABASE': None,
 }
 
-config = Config(**default_configs)
+config = Config(**copy.deepcopy(default_configs))

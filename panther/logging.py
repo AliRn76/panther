@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from panther.configs import config
 
-LOGS_DIR = config['base_dir'] / 'logs'
+LOGS_DIR = config.BASE_DIR / 'logs'
 
 
 class FileHandler(logging.FileHandler):
@@ -63,6 +63,11 @@ LOGGING = {
         'query': {
             'handlers': ['default', 'query_file'],
             'level': 'DEBUG',
-        }
+        },
+        'uvicorn.error': {
+            'handlers': ['default'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
     }
 }

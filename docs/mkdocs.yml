@@ -26,9 +26,10 @@ edit_uri: edit/master/docs/
 
 nav:
   - Introduction: 'index.md'
-  - First Crud:
+  - How To CRUD:
       - Function Base: 'function_first_crud.md'
       - Class Base: 'class_first_crud.md'
+      - Generic: 'generic_crud.md'
   - Database: 'database.md'
   - Panther ODM: 'panther_odm.md'
   - Configs: 'configs.md'
@@ -37,6 +38,7 @@ nav:
   - WebSocket: 'websocket.md'
   - Middlewares: 'middlewares.md'
   - Authentications: 'authentications.md'
+  - Events: 'events.md'
   - URLs: 'urls.md'
   - Throttling: 'throttling.md'
   - Background Tasks: 'background_tasks.md'

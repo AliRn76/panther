@@ -1,5 +1,5 @@
 import logging
-from typing import Literal
+from typing import Literal, Callable
 
 import orjson as json
 
@@ -10,6 +10,11 @@ logger = logging.getLogger('panther')
 
 
 class Request(BaseRequest):
+    def __init__(self, scope: dict, receive: Callable, send: Callable):
+        self._data = ...
+        self.validated_data = None  # It's been set in API.validate_input()
+        super().__init__(scope=scope, receive=receive, send=send)
+
     @property
     def method(self) -> Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']:
         return self.scope['method']
@@ -28,17 +33,6 @@ class Request(BaseRequest):
                     logger.warning(f"'{unknown}' Content-Type is not supported")
                     self._data = self.__body
         return self._data
-
-    def set_validated_data(self, validated_data) -> None:
-        self._validated_data = validated_data
-
-    @property
-    def validated_data(self):
-        """
-        Return The Validated Data
-        It has been set on API.validate_input() while request is happening.
-        """
-        return getattr(self, '_validated_data', None)
 
     async def read_body(self) -> None:
         """Read the entire body from an incoming ASGI message."""

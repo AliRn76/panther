@@ -1,13 +1,20 @@
+import asyncio
 from types import NoneType
+from typing import Generator, AsyncGenerator
 
 import orjson as json
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic._internal._model_construction import ModelMetaclass
 
+from panther import status
+from panther._utils import to_async_generator
 from panther.db.cursor import Cursor
+from pantherdb import Cursor as PantherDBCursor
+from panther.monitoring import Monitoring
 
-ResponseDataTypes = list | tuple | set | dict | int | float | str | bool | bytes | NoneType | ModelMetaclass
-IterableDataTypes = list | tuple | set | Cursor
+ResponseDataTypes = list | tuple | set | Cursor | PantherDBCursor | dict | int | float | str | bool | bytes | NoneType | ModelMetaclass
+IterableDataTypes = list | tuple | set | Cursor | PantherDBCursor
+StreamingDataTypes = Generator | AsyncGenerator
 
 
 class Response:
@@ -17,16 +24,16 @@ class Response:
         self,
         data: ResponseDataTypes = None,
         headers: dict | None = None,
-        status_code: int = 200,
+        status_code: int = status.HTTP_200_OK,
     ):
         """
-        :param data: should be int | float | dict | list | tuple | set | str | bool | bytes | NoneType
-            or instance of Pydantic.BaseModel
+        :param data: should be an instance of ResponseDataTypes
+        :param headers: should be dict of headers
         :param status_code: should be int
         """
-        self.data = self._clean_data_type(data)
-        self._check_status_code(status_code)
-        self._headers = headers
+        self.headers = headers or {}
+        self.data = self.prepare_data(data=data)
+        self.status_code = self.check_status_code(status_code=status_code)
 
     @property
     def body(self) -> bytes:
@@ -40,53 +47,72 @@ class Response:
     @property
     def headers(self) -> dict:
         return {
-            'content-type': self.content_type,
-            'content-length': len(self.body),
-            'access-control-allow-origin': '*',
-        } | (self._headers or {})
+            'Content-Type': self.content_type,
+            'Content-Length': len(self.body),
+            'Access-Control-Allow-Origin': '*',
+        } | self._headers
 
-    def _clean_data_type(self, data: any):
+    @property
+    def bytes_headers(self) -> list[list[bytes]]:
+        return [[k.encode(), str(v).encode()] for k, v in (self.headers or {}).items()]
+
+    @headers.setter
+    def headers(self, headers: dict):
+        self._headers = headers
+
+    def prepare_data(self, data: any):
         """Make sure the response data is only ResponseDataTypes or Iterable of ResponseDataTypes"""
-        if issubclass(type(data), PydanticBaseModel):
+        if isinstance(data, (int | float | str | bool | bytes | NoneType)):
+            return data
+
+        elif isinstance(data, dict):
+            return {key: self.prepare_data(value) for key, value in data.items()}
+
+        elif issubclass(type(data), PydanticBaseModel):
             return data.model_dump()
 
         elif isinstance(data, IterableDataTypes):
-            return [self._clean_data_type(d) for d in data]
-
-        elif isinstance(data, dict):
-            return {key: self._clean_data_type(value) for key, value in data.items()}
-
-        elif isinstance(data, (int | float | str | bool | bytes | NoneType)):
-            return data
+            return [self.prepare_data(d) for d in data]
 
         else:
             msg = f'Invalid Response Type: {type(data)}'
             raise TypeError(msg)
 
-    def _check_status_code(self, status_code: any):
+    @classmethod
+    def check_status_code(cls, status_code: any):
         if not isinstance(status_code, int):
-            error = f'Response "status_code" Should Be "int". ("{status_code}" is {type(status_code)})'
+            error = f'Response `status_code` Should Be `int`. (`{status_code}` is {type(status_code)})'
             raise TypeError(error)
-
-        self.status_code = status_code
-
-    def _clean_data_with_output_model(self, output_model: ModelMetaclass | None):
-        if self.data and output_model:
-            self.data = self._serialize_with_output_model(self.data, output_model=output_model)
+        return status_code
 
     @classmethod
-    def _serialize_with_output_model(cls, data: any, /, output_model: ModelMetaclass):
+    def apply_output_model(cls, data: any, /, output_model: ModelMetaclass):
+        """This method is called in API.__call__"""
         # Dict
         if isinstance(data, dict):
+            for field_name, field in output_model.model_fields.items():
+                if field.validation_alias and field_name in data:
+                    data[field.validation_alias] = data.pop(field_name)
             return output_model(**data).model_dump()
 
         # Iterable
         if isinstance(data, IterableDataTypes):
-            return [cls._serialize_with_output_model(d, output_model=output_model) for d in data]
+            return [cls.apply_output_model(d, output_model=output_model) for d in data]
 
         # Str | Bool | Bytes
         msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'
         raise TypeError(msg)
+
+    async def send_headers(self, send, /):
+        await send({'type': 'http.response.start', 'status': self.status_code, 'headers': self.bytes_headers})
+
+    async def send_body(self, send, receive, /):
+        await send({'type': 'http.response.body', 'body': self.body, 'more_body': False})
+
+    async def send(self, send, receive, /, monitoring: Monitoring):
+        await self.send_headers(send)
+        await self.send_body(send, receive)
+        await monitoring.after(self.status_code)
 
     def __str__(self):
         if len(data := str(self.data)) > 30:
@@ -94,6 +120,57 @@ class Response:
         return f'Response(status_code={self.status_code}, data={data})'
 
     __repr__ = __str__
+
+
+class StreamingResponse(Response):
+    content_type = 'application/octet-stream'
+
+    def __init__(self, *args, **kwargs):
+        self.connection_closed = False
+        super().__init__(*args, **kwargs)
+
+    async def listen_to_disconnection(self, receive):
+        message = await receive()
+        if message['type'] == 'http.disconnect':
+            self.connection_closed = True
+
+    def prepare_data(self, data: any) -> AsyncGenerator:
+        if isinstance(data, AsyncGenerator):
+            return data
+        elif isinstance(data, Generator):
+            return to_async_generator(data)
+        msg = f'Invalid Response Type: {type(data)}'
+        raise TypeError(msg)
+
+    @property
+    def headers(self) -> dict:
+        return {
+            'Content-Type': self.content_type,
+            'Access-Control-Allow-Origin': '*',
+        } | self._headers
+
+    @headers.setter
+    def headers(self, headers: dict):
+        self._headers = headers
+
+    @property
+    async def body(self) -> AsyncGenerator:
+        async for chunk in self.data:
+            if isinstance(chunk, bytes):
+                yield chunk
+            elif chunk is None:
+                yield b''
+            else:
+                yield json.dumps(chunk)
+
+    async def send_body(self, send, receive, /):
+        asyncio.create_task(self.listen_to_disconnection(receive))
+        async for chunk in self.body:
+            if self.connection_closed:
+                break
+            await send({'type': 'http.response.body', 'body': chunk, 'more_body': True})
+        else:
+            await send({'type': 'http.response.body', 'body': b'', 'more_body': False})
 
 
 class HTMLResponse(Response):

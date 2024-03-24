@@ -30,30 +30,28 @@ class TestRun(TestCase):
         Panther(__name__)
 
         assert isinstance(config, Config)
-        assert config['base_dir'] == base_dir
-        assert config['monitoring'] is True
-        assert config['log_queries'] is True
-        assert config['default_cache_exp'] == timedelta(seconds=10)
-        assert config['throttling'].rate == 10
-        assert config['throttling'].duration == timedelta(seconds=10)
-        assert config['secret_key'] == secret_key.encode()
+        assert config.BASE_DIR == base_dir
+        assert config.MONITORING is True
+        assert config.LOG_QUERIES is True
+        assert config.DEFAULT_CACHE_EXP == timedelta(seconds=10)
+        assert config.THROTTLING.rate == 10
+        assert config.THROTTLING.duration == timedelta(seconds=10)
+        assert config.SECRET_KEY == secret_key.encode()
 
-        assert len(config['http_middlewares']) == 0
-        assert len(config['reversed_http_middlewares']) == 0
-        assert len(config['ws_middlewares']) == 0
-        assert len(config['reversed_ws_middlewares']) == 0
+        assert len(config.HTTP_MIDDLEWARES) == 0
+        assert len(config.WS_MIDDLEWARES) == 0
 
-        assert config['user_model'].__name__ == tests.sample_project.app.models.User.__name__
-        assert config['user_model'].__module__.endswith('app.models')
-        assert config['jwt_config'].algorithm == 'HS256'
-        assert config['jwt_config'].life_time == timedelta(days=2).total_seconds()
-        assert config['jwt_config'].key == secret_key
+        assert config.USER_MODEL.__name__ == tests.sample_project.app.models.User.__name__
+        assert config.USER_MODEL.__module__.endswith('app.models')
+        assert config.JWT_CONFIG.algorithm == 'HS256'
+        assert config.JWT_CONFIG.life_time == timedelta(days=2).total_seconds()
+        assert config.JWT_CONFIG.key == secret_key
 
-        assert '' in config['urls']
-        config['urls'].pop('')
+        assert '' in config.URLS
+        config.URLS.pop('')
 
-        assert 'second' in config['urls']
-        config['urls'].pop('second')
+        assert 'second' in config.URLS
+        config.URLS.pop('second')
 
         urls = {
             '_panel': {
@@ -65,5 +63,5 @@ class TestRun(TestCase):
                 'health': healthcheck_api
             },
         }
-        assert config['urls'] == urls
-        assert config['query_engine'].__name__ == 'BasePantherDBQuery'
+        assert config.URLS == urls
+        assert config.QUERY_ENGINE.__name__ == 'BasePantherDBQuery'

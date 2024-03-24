@@ -16,7 +16,7 @@ from panther.cli.template import (
     AUTO_REFORMAT_PART,
     DATABASE_PANTHERDB_PART,
     DATABASE_MONGODB_PART,
-    USER_MODEL_PART,
+    USER_MODEL_PART, REDIS_PART,
 )
 from panther.cli.utils import cli_error
 
@@ -34,6 +34,7 @@ class CreateProject:
         self.base_directory = '.'
         self.database = '0'
         self.database_encryption = False
+        self.redis = False
         self.authentication = False
         self.monitoring = True
         self.log_queries = True
@@ -60,7 +61,7 @@ class CreateProject:
             },
             {
                 'field': 'database',
-                'message': '    0: PantherDB\n    1: MongoDB (Required `pymongo`)\n    2: No Database\nChoose Your Database (default is 0)',
+                'message': '    0: PantherDB (File-Base, No Requirements)\n    1: MongoDB (Required `pymongo`)\n    2: No Database\nChoose Your Database (default is 0)',
                 'validation_func': lambda x: x in ['0', '1', '2'],
                 'error_message': "Invalid Choice, '{}' not in ['0', '1', '2']",
             },
@@ -71,13 +72,18 @@ class CreateProject:
                 'condition': "self.database == '0'"
             },
             {
+                'field': 'redis',
+                'message': 'Do You Want To Use Redis (Required `redis`)',
+                'is_boolean': True,
+            },
+            {
                 'field': 'authentication',
                 'message': 'Do You Want To Use JWT Authentication (Required `python-jose`)',
                 'is_boolean': True,
             },
             {
                 'field': 'monitoring',
-                'message': 'Do You Want To Use Built-in Monitoring',
+                'message': 'Do You Want To Use Built-in Monitoring (Required `watchfiles`)',
                 'is_boolean': True,
             },
             {
@@ -87,7 +93,7 @@ class CreateProject:
             },
             {
                 'field': 'auto_reformat',
-                'message': 'Do You Want To Use Auto Reformat (Required `ruff`)',
+                'message': 'Do You Want To Use Auto Code Reformat (Required `ruff`)',
                 'is_boolean': True,
             },
         ]
@@ -139,6 +145,8 @@ class CreateProject:
         log_queries_part = LOG_QUERIES_PART if self.log_queries else ''
         auto_reformat_part = AUTO_REFORMAT_PART if self.auto_reformat else ''
         database_encryption = 'True' if self.database_encryption else 'False'
+        database_extension = 'pdb' if self.database_encryption else 'json'
+        redis_part = REDIS_PART if self.redis else ''
         if self.database == '0':
             database_part = DATABASE_PANTHERDB_PART
         elif self.database == '1':
@@ -153,6 +161,8 @@ class CreateProject:
         data = data.replace('{AUTO_REFORMAT}', auto_reformat_part)
         data = data.replace('{DATABASE}', database_part)
         data = data.replace('{PANTHERDB_ENCRYPTION}', database_encryption)  # Should be after `DATABASE`
+        data = data.replace('{PANTHERDB_EXTENSION}', database_extension)  # Should be after `DATABASE`
+        data = data.replace('{REDIS}', redis_part)
 
         data = data.replace('{PROJECT_NAME}', self.project_name.lower())
         data = data.replace('{PANTHER_VERSION}', version())
@@ -167,19 +177,19 @@ class CreateProject:
             field_name = question.pop('field')
             question['default'] = getattr(self, field_name)
             is_boolean = question.pop('is_boolean', False)
-            clean_output = str  # Do Nothing
+            convert_output = str  # Do Nothing
             if is_boolean:
                 question['message'] += f' (default is {self._to_str(question["default"])})'
                 question['validation_func'] = self._is_boolean
                 question['error_message'] = "Invalid Choice, '{}' not in ['y', 'n']"
-                clean_output = self._to_boolean
+                convert_output = self._to_boolean
 
             # Check Question Condition
             if 'condition' in question and eval(question.pop('condition')) is False:
                 print(flush=True)
             # Ask Question
             else:
-                setattr(self, field_name, clean_output(self.ask(**question)))
+                setattr(self, field_name, convert_output(self.ask(**question)))
             self.progress(i + 1)
 
     def ask(
@@ -192,6 +202,7 @@ class CreateProject:
     ) -> str:
         value = Prompt.ask(message, console=self.input_console).lower() or default
         while not validation_func(value):
+            # Remove the last line, show error message and ask again
             [print(end=self.REMOVE_LAST_LINE, flush=True) for _ in range(message.count('\n') + 1)]
             error = validation_func(value, return_error=True) if show_validation_error else value
             self.console.print(error_message.format(error), style='bold red')

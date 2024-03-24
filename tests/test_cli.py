@@ -23,7 +23,7 @@ def interactive_cli_1_mock_responses(index=None):
     global interactive_cli_1_index
     if index is None:
         index = interactive_cli_1_index
-    responses = ['project1', 'project1_dir', 'n', '0', 'y', 'y', 'y', 'y', 'y']
+    responses = ['project1', 'project1_dir', 'n', '0', 'y', 'n', 'y', 'y', 'y', 'y']
     response = responses[index]
     interactive_cli_1_index += 1
     return response
@@ -33,7 +33,7 @@ def interactive_cli_2_mock_responses(index=None):
     global interactive_cli_2_index
     if index is None:
         index = interactive_cli_2_index
-    responses = ['project2', 'project2_dir', 'y', '0', 'y', 'y', 'y', 'y', 'y']
+    responses = ['project2', 'project2_dir', 'y', '0', 'y', 'n', 'y', 'y', 'y', 'y']
     response = responses[index]
     interactive_cli_2_index += 1
     return response

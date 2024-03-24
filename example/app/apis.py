@@ -16,9 +16,13 @@ from panther import status
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
 from panther.background_tasks import BackgroundTask, background_tasks
+from pantherdb import Cursor as PantherDBCursor
 from panther.db.connections import redis
+from panther.db.cursor import Cursor
+from panther.generics import ListAPI
+from panther.pagination import Pagination
 from panther.request import Request
-from panther.response import HTMLResponse, Response
+from panther.response import HTMLResponse, Response, StreamingResponse
 from panther.throttling import Throttling
 from panther.websocket import close_websocket_connection, send_message_to_websocket
 
@@ -85,8 +89,8 @@ async def res_request_data_with_output_model(request: Request):
 
 @API(input_model=UserInputSerializer)
 async def using_redis(request: Request):
-    redis.set('ali', '1')
-    logger.debug(f"{redis.get('ali') = }")
+    await redis.set('ali', '1')
+    logger.debug(f"{await redis.get('ali') = }")
     return Response()
 
 
@@ -213,3 +217,30 @@ async def login_api():
 @API(auth=True)
 def logout_api(request: Request):
     return request.user.logout()
+
+
+def reader():
+    from faker import Faker
+    import time
+    f = Faker()
+    for _ in range(5):
+        name = f.name()
+        print(f'{name=}')
+        yield name
+        time.sleep(1)
+
+
+@API()
+def stream_api():
+    # Test --> curl http://127.0.0.1:8000/stream/ --no-buffer
+    return StreamingResponse(reader())
+
+
+class PaginationAPI(ListAPI):
+    pagination = Pagination
+    sort_fields = ['username', 'id']
+    filter_fields = ['username']
+    search_fields = ['username']
+
+    async def objects(self, request: Request, **kwargs) -> Cursor | PantherDBCursor:
+        return await User.find()

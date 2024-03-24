@@ -21,6 +21,7 @@ EXTRAS_REQUIRE = {
         'python-jose~=3.3',
         'websockets~=12.0',
         'cryptography~=42.0',
+        'watchfiles~=0.21.0',
     ],
 }
 
@@ -50,11 +51,11 @@ setup(
     },
     install_requires=[
         'httptools~=0.6',
-        'pantherdb==1.4.0',
+        'pantherdb==2.0.0',
         'pydantic~=2.6',
         'rich~=13.7',
         'uvicorn~=0.27',
-        'watchfiles~=0.21.0',
+        'pytz~=2024.1',
     ],
     extras_require=EXTRAS_REQUIRE,
 )

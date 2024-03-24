@@ -1,6 +1,8 @@
 from sys import version_info
 from typing import Iterable
 
+from pantherdb import Cursor
+
 from panther.db.connections import db
 from panther.db.queries.base_queries import BaseQuery
 from panther.db.utils import prepare_id_for_query
@@ -27,9 +29,11 @@ class BasePantherDBQuery(BaseQuery):
         return None
 
     @classmethod
-    async def find(cls, _filter: dict | None = None, /, **kwargs) -> list[Self]:
-        documents = db.session.collection(cls.__name__).find(**cls._merge(_filter, kwargs))
-        return [cls._create_model_instance(document=document) for document in documents]
+    async def find(cls, _filter: dict | None = None, /, **kwargs) -> Cursor:
+        cursor = db.session.collection(cls.__name__).find(**cls._merge(_filter, kwargs))
+        cursor.response_type = cls._create_model_instance
+        cursor.cls = cls
+        return cursor
 
     @classmethod
     async def first(cls, _filter: dict | None = None, /, **kwargs) -> Self | None:
@@ -65,12 +69,12 @@ class BasePantherDBQuery(BaseQuery):
     @classmethod
     async def insert_many(cls, documents: Iterable[dict]) -> list[Self]:
         result = []
-        for _document in documents:
-            prepare_id_for_query(_document, is_mongo=False)
-            cls._validate_data(data=_document)
-            document = db.session.collection(cls.__name__).insert_one(**_document)
-            result.append(document)
-
+        for document in documents:
+            prepare_id_for_query(document, is_mongo=False)
+            cls._validate_data(data=document)
+            inserted_document = db.session.collection(cls.__name__).insert_one(**document)
+            document['_id'] = inserted_document['_id']
+            result.append(cls._create_model_instance(document=document))
         return result
 
     # # # # # Delete # # # # #

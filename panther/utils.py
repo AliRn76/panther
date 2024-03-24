@@ -7,6 +7,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import ClassVar
 
+import pytz
+
+from panther.configs import config
+
 logger = logging.getLogger('panther')
 
 URANDOM_SIZE = 16
@@ -25,8 +29,7 @@ def load_env(env_file: str | Path, /) -> dict[str, str]:
     variables = {}
 
     if env_file is None or not Path(env_file).is_file():
-        logger.critical(f'"{env_file}" is not valid file for load_env()')
-        return variables
+        raise ValueError(f'"{env_file}" is not a file.') from None
 
     with open(env_file) as file:
         for line in file.readlines():
@@ -80,26 +83,8 @@ def scrypt(password: str, salt: bytes, digest: bool = False) -> str | bytes:
         dklen=dk_len
     )
     if digest:
-
         return hashlib.md5(derived_key).hexdigest()
-    else:
-        return derived_key
-
-
-def encrypt_password(password: str) -> str:
-    salt = os.urandom(URANDOM_SIZE)
-    derived_key = scrypt(password=password, salt=salt, digest=True)
-
-    return f'{salt.hex()}{derived_key}'
-
-
-def check_password(stored_password: str, new_password: str) -> bool:
-    size = URANDOM_SIZE * 2
-    salt = stored_password[:size]
-    stored_hash = stored_password[size:]
-    derived_key = scrypt(password=new_password, salt=bytes.fromhex(salt), digest=True)
-
-    return derived_key == stored_hash
+    return derived_key
 
 
 class ULID:
@@ -121,3 +106,8 @@ class ULID:
             cls.crockford_base32_characters[int(bits[i: i + 5], base=2)]
             for i in range(0, 130, 5)
         )
+
+
+def timezone_now():
+    tz = pytz.timezone(config.TIMEZONE)
+    return datetime.now(tz=tz)

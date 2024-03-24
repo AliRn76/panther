@@ -14,8 +14,11 @@
 ## Custom Middleware
 ### Middleware Types
   We have 3 type of Middlewares, make sure that you are inheriting from the correct one:
+
   - `Base Middleware`: which is used for both `websocket` and `http` requests 
+
   - `HTTP Middleware`: which is only used for `http` requests
+
   - `Websocket Middleware`: which is only used for `websocket` requests
 
 ### Write Custom Middleware
