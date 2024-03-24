@@ -14,7 +14,7 @@ with contextlib.suppress(ImportError):
     import bson
 
 
-def validate_id(value, handler):
+def validate_object_id(value, handler):
     if config.DATABASE.__class__.__name__ == 'MongoDBConnection':
         if isinstance(value, bson.ObjectId):
             return value
@@ -27,7 +27,7 @@ def validate_id(value, handler):
     return str(value)
 
 
-ID = Annotated[str, WrapValidator(validate_id), PlainSerializer(lambda x: str(x), return_type=str)]
+ID = Annotated[str, WrapValidator(validate_object_id), PlainSerializer(lambda x: str(x), return_type=str)]
 
 
 class Model(PydanticBaseModel, Query):

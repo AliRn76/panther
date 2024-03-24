@@ -290,7 +290,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
         else:
             assert False
 
-    async def test_with_star_fields_with_exclude(self):
+    async def test_with_star_fields_with_exclude3(self):
         try:
             class Serializer8(ModelSerializer):
                 class Config:

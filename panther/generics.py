@@ -1,3 +1,4 @@
+import contextlib
 import logging
 
 from pantherdb import Cursor as PantherDBCursor
@@ -12,6 +13,10 @@ from panther.pagination import Pagination
 from panther.request import Request
 from panther.response import Response
 from panther.serializer import ModelSerializer
+
+with contextlib.suppress(ImportError):
+    # Only required if user wants to use mongodb
+    import bson
 
 logger = logging.getLogger('panther')
 
@@ -64,7 +69,7 @@ class ListAPI(GenericAPI, ObjectsRequired):
         self._check_objects(cursor)
 
         query = {}
-        query |= self.process_filters(query_params=request.query_params)
+        query |= self.process_filters(query_params=request.query_params, cursor=cursor)
         query |= self.process_search(query_params=request.query_params)
 
         if query:
@@ -78,10 +83,18 @@ class ListAPI(GenericAPI, ObjectsRequired):
 
         return Response(data=cursor, status_code=status.HTTP_200_OK)
 
-    def process_filters(self, query_params: dict) -> dict:
+    def process_filters(self, query_params: dict, cursor: Cursor | PantherDBCursor) -> dict:
+        _filter = {}
         if hasattr(self, 'filter_fields'):
-            return {field: query_params[field] for field in self.filter_fields if field in query_params}
-        return {}
+            for field in self.filter_fields:
+                if field in query_params:
+                    if config.DATABASE.__class__.__name__ == 'MongoDBConnection':
+                        with contextlib.suppress(Exception):
+                            if cursor.cls.model_fields[field].metadata[0].func.__name__ == 'validate_object_id':
+                                _filter[field] = bson.ObjectId(query_params[field])
+                                continue
+                    _filter[field] = query_params[field]
+        return _filter
 
     def process_search(self, query_params: dict) -> dict:
         if hasattr(self, 'search_fields') and 'search' in query_params:
@@ -111,7 +124,6 @@ class CreateAPI(GenericAPI):
     input_model: type[ModelSerializer]
 
     async def post(self, request: Request, **kwargs):
-        request.validated_data.request = request
         instance = await request.validated_data.create(
             validated_data=request.validated_data.model_dump()
         )
@@ -122,7 +134,6 @@ class UpdateAPI(GenericAPI, ObjectRequired):
     input_model: type[ModelSerializer]
 
     async def put(self, request: Request, **kwargs):
-        request.validated_data.request = request
         instance = await self.object(request=request, **kwargs)
         self._check_object(instance)
 
@@ -133,7 +144,6 @@ class UpdateAPI(GenericAPI, ObjectRequired):
         return Response(data=instance, status_code=status.HTTP_200_OK)
 
     async def patch(self, request: Request, **kwargs):
-        request.validated_data.request = request
         instance = await self.object(request=request, **kwargs)
         self._check_object(instance)
 

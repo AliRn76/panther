@@ -20,6 +20,9 @@ class MetaModelSerializer:
             **kwargs
     ):
         if cls_name == 'ModelSerializer':
+            # Put `model` and `request` to the main class with `create_model()`
+            namespace['__annotations__'].pop('model')
+            namespace['__annotations__'].pop('request')
             cls.model_serializer = type(cls_name, (), namespace)
             return super().__new__(cls)
 
@@ -40,7 +43,8 @@ class MetaModelSerializer:
             __module__=namespace['__module__'],
             __validators__=namespace,
             __base__=(cls.model_serializer, BaseModel),
-            model=(typing.ClassVar, config.model),
+            model=(typing.ClassVar[type[BaseModel]], config.model),
+            request=(Request, Field(None, exclude=True)),
             **field_definitions
         )
 
@@ -182,10 +186,7 @@ class MetaModelSerializer:
         return {
             attr: getattr(config, attr) for attr in dir(config)
             if not attr.startswith('__') and attr not in cls.KNOWN_CONFIGS
-        } | namespace.pop('model_config', {})
-
-
-T = TypeVar('T')
+        } | namespace.pop('model_config', {}) | {'arbitrary_types_allowed': True}
 
 
 class ModelSerializer(metaclass=MetaModelSerializer):
@@ -201,17 +202,16 @@ class ModelSerializer(metaclass=MetaModelSerializer):
                 required_fields = ['first_name', 'last_name']  # Optional
                 optional_fields = ['age']  # Optional
     """
-    model: Type[T] = Field(exclude=True)  # Only available in create(), update(), partial_update()
-    request: Request = Field(default=None, exclude=True)  # Only available in create(), update(), partial_update()
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model: type[BaseModel]
+    request: Request
 
-    async def create(self, validated_data: dict) -> T:
+    async def create(self, validated_data: dict) -> Model:
         """
         validated_data = ModelSerializer.model_dump()
         """
         return await self.model.insert_one(validated_data)
 
-    async def update(self, instance: T, validated_data: dict) -> T:
+    async def update(self, instance: Model, validated_data: dict) -> Model:
         """
         instance = UpdateAPI.object()
         validated_data = ModelSerializer.model_dump()
@@ -219,7 +219,7 @@ class ModelSerializer(metaclass=MetaModelSerializer):
         await instance.update(validated_data)
         return instance
 
-    async def partial_update(self, instance: T, validated_data: dict) -> T:
+    async def partial_update(self, instance: Model, validated_data: dict) -> Model:
         """
         instance = UpdateAPI.object()
         validated_data = ModelSerializer.model_dump(exclude_none=True)

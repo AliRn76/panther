@@ -146,7 +146,8 @@ class API:
         if request.data is None:
             raise BadRequestAPIError(detail='Request body is required')
         try:
-            return model(**request.data)
+            # `request` will be ignored in regular `BaseModel`
+            return model(**request.data, request=request)
         except ValidationError as validation_error:
             error = {'.'.join(loc for loc in e['loc']): e['msg'] for e in validation_error.errors()}
             raise BadRequestAPIError(detail=error)

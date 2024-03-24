@@ -3,7 +3,7 @@ from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
 from panther.db import Model
-from panther.generics import RetrieveAPI, ListAPI, UpdateAPI, DeleteAPI
+from panther.generics import RetrieveAPI, ListAPI, UpdateAPI, DeleteAPI, CreateAPI
 from panther.pagination import Pagination
 from panther.request import Request
 from panther.serializer import ModelSerializer
@@ -51,6 +51,10 @@ class UpdateAPITest(UpdateAPI):
         return await User.find_one(id=kwargs['id'])
 
 
+class CreateAPITest(CreateAPI):
+    input_model = UserSerializer
+
+
 class DeleteAPITest(DeleteAPI):
     async def object(self, request: Request, **kwargs) -> Model:
         return await User.find_one(id=kwargs['id'])
@@ -61,6 +65,7 @@ urls = {
     'list': ListAPITest,
     'full-list': FullListAPITest,
     'update/<id>': UpdateAPITest,
+    'create': CreateAPITest,
     'delete/<id>': DeleteAPITest,
 }
 
@@ -202,6 +207,15 @@ class TestGeneric(IsolatedAsyncioTestCase):
         new_users = await User.find()
         users[1].name = 'NewName'
         assert {(u.id, u.name) for u in new_users} == {(u.id, u.name) for u in users}
+
+    async def test_create(self):
+        res = await self.client.post('create', payload={'name': 'Sara'})
+        assert res.status_code == 201
+        assert res.data['name'] == 'Sara'
+
+        new_users = await User.find()
+        assert len([i for i in new_users])
+        assert new_users[0].name == 'Sara'
 
     async def test_delete(self):
         users = await User.insert_many([{'name': 'Ali'}, {'name': 'Hamed'}])
