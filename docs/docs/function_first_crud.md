@@ -1,6 +1,6 @@
 We assume you could run the project with [Introduction](https://pantherpy.github.io/#installation)
 
-Now let's write custom API `Create`, `Retrieve`, `Update` and `Delete` for a `Book`:
+Now let's write custom APIs for `Create`, `Retrieve`, `Update` and `Delete` a `Book`:
 
 ## Structure & Requirements
 ### Create Model
@@ -142,7 +142,7 @@ Now we are going to create a book on `post` request, We need to:
     async def book_api(request: Request):
         body: BookSerializer = request.validated_data
     
-        Book.insert_one(
+        await Book.insert_one(
             name=body.name,
             author=body.author,
             pages_count=body.pages_count,
@@ -165,7 +165,7 @@ Now we are going to create a book on `post` request, We need to:
         if request.method == 'POST':
             body: BookSerializer = request.validated_data
     
-            Book.create(
+            await Book.insert_one(
                 name=body.name,
                 author=body.author,
                 pages_count=body.pages_count,
@@ -189,7 +189,7 @@ Now we are going to create a book on `post` request, We need to:
         if request.method == 'POST':
             body: BookSerializer = request.validated_data
     
-            book: Book = Book.create(
+            book: Book = await Book.insert_one(
                 name=body.name,
                 author=body.author,
                 pages_count=body.pages_count,
@@ -224,7 +224,7 @@ async def book_api(request: Request):
         ...
 
     elif request.method == 'GET':
-        books: list[Book] = Book.find()
+        books = await Book.find()
         return Response(data=books, status_code=status.HTTP_200_OK)
 
     return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
@@ -265,7 +265,7 @@ Assume we don't want to return field `author` in response:
             ...
     
         elif request.method == 'GET':
-            books: list[Book] = Book.find()
+            books = await Book.find()
             return Response(data=books, status_code=status.HTTP_200_OK)
     
         return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
@@ -299,7 +299,7 @@ async def book_api(request: Request):
         ...
 
     elif request.method == 'GET':
-        books: list[Book] = Book.find()
+        books = await Book.find()
         return Response(data=books, status_code=status.HTTP_200_OK)
 
     return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
@@ -338,7 +338,7 @@ async def book_api(request: Request):
         ...
 
     elif request.method == 'GET':
-        books: list[Book] = Book.find()
+        books = await Book.find()
         return Response(data=books, status_code=status.HTTP_200_OK)
 
     return Response(status_code=status.HTTP_501_NOT_IMPLEMENTED)
@@ -393,7 +393,7 @@ For `retrieve`, `update` and `delete` API, we are going to
     @API()
     async def single_book_api(request: Request, book_id: int):
         if request.method == 'GET':
-            if book := Book.find_one(id=book_id):
+            if book := await Book.find_one(id=book_id):
                 return Response(data=book, status_code=status.HTTP_200_OK)
             else:
                 return Response(status_code=status.HTTP_404_NOT_FOUND)
@@ -420,12 +420,12 @@ For `retrieve`, `update` and `delete` API, we are going to
             if request.method == 'GET':
                 ...
             elif request.method == 'PUT':
-                book: Book = Book.find_one(id=book_id)
-                book.update(
+                book: Book = await Book.find_one(id=book_id)
+                await book.update(
                     name=body.name, 
                     author=body.author, 
                     pages_count=body.pages_count
-                    )
+                )
                 return Response(status_code=status.HTTP_202_ACCEPTED)
         ```
 
@@ -446,7 +446,7 @@ For `retrieve`, `update` and `delete` API, we are going to
             if request.method == 'GET':
                 ...
             elif request.method == 'PUT':
-                is_updated: bool = Book.update_one({'id': book_id}, request.validated_data.model_dump())
+                is_updated: bool = await Book.update_one({'id': book_id}, request.validated_data.model_dump())
                 data = {'is_updated': is_updated}
                 return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
         ```
@@ -468,7 +468,7 @@ For `retrieve`, `update` and `delete` API, we are going to
             if request.method == 'GET':
                 ...
             elif request.method == 'PUT':
-                updated_count: int = Book.update_many({'id': book_id}, request.validated_data.model_dump())
+                updated_count: int = await Book.update_many({'id': book_id}, request.validated_data.model_dump())
                 data = {'updated_count': updated_count}
                 return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
         ```
@@ -496,7 +496,7 @@ For `retrieve`, `update` and `delete` API, we are going to
                 elif request.method == 'PUT':
                     ...
                 elif request.method == 'DELETE':
-                    is_deleted: bool = Book.delete_one(id=book_id)
+                    is_deleted: bool = await Book.delete_one(id=book_id)
                     if is_deleted:
                         return Response(status_code=status.HTTP_204_NO_CONTENT)
                     else:
@@ -520,7 +520,7 @@ For `retrieve`, `update` and `delete` API, we are going to
                 elif request.method == 'PUT':
                     ...
                 elif request.method == 'DELETE':
-                    is_deleted: bool = Book.delete_one(id=book_id)
+                    is_deleted: bool = await Book.delete_one(id=book_id)
                     return Response(status_code=status.HTTP_204_NO_CONTENT)
         ```
        
@@ -542,6 +542,6 @@ For `retrieve`, `update` and `delete` API, we are going to
                 elif request.method == 'PUT':
                     ...
                 elif request.method == 'DELETE':
-                    deleted_count: int = Book.delete_many(id=book_id)
+                    deleted_count: int = await Book.delete_many(id=book_id)
                     return Response(status_code=status.HTTP_204_NO_CONTENT)
         ```

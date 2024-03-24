@@ -15,7 +15,7 @@ class BookWebsocket(GenericWebsocket):
         await self.accept()
         print(f'{self.connection_id=}')
 
-    async def receive(self, data: str | bytes = None):
+    async def receive(self, data: str | bytes):
         # Just Echo The Message
         await self.send(data=data)
 ```
@@ -83,6 +83,5 @@ you have to use `--preload`, like below:
         '/ws/<user_id>/<room_id>/': UserWebsocket   
     }
    ``` 
-12. WebSocket Echo Example -> [Https://GitHub.com/PantherPy/echo_websocket](https://github.com/PantherPy/echo_websocket)
-13. Enjoy.
+12. Enjoy.
 

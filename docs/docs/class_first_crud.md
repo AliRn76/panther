@@ -1,6 +1,6 @@
 We assume you could run the project with [Introduction](https://pantherpy.github.io/#installation)
 
-Now let's write custom API `Create`, `Retrieve`, `Update` and `Delete` for a `Book`:
+Now let's write custom APIs for `Create`, `Retrieve`, `Update` and `Delete` a `Book`:
 
 ## Structure & Requirements
 ### Create Model
@@ -82,7 +82,7 @@ Now we are going to create a book on `post` request, We need to:
     
     class BookAPI(GenericAPI):
         
-        def post(self):
+        async def post(self):
             ...
     ```
 
@@ -95,7 +95,7 @@ Now we are going to create a book on `post` request, We need to:
     
     class BookAPI(GenericAPI):
         
-        def post(self, request: Request):
+        async def post(self, request: Request):
             ...
     ```
 
@@ -122,7 +122,7 @@ Now we are going to create a book on `post` request, We need to:
     class BookAPI(GenericAPI):
         input_model = BookSerializer
    
-        def post(self, request: Request):
+        async def post(self, request: Request):
             ...
     
     ```
@@ -138,7 +138,7 @@ Now we are going to create a book on `post` request, We need to:
     class BookAPI(GenericAPI):
         input_model = BookSerializer
    
-        def post(self, request: Request):
+        async def post(self, request: Request):
             body: BookSerializer = request.validated_data
             ...
     ```
@@ -156,9 +156,9 @@ Now we are going to create a book on `post` request, We need to:
     class BookAPI(GenericAPI):
         input_model = BookSerializer
     
-        def post(self, request: Request):
+        async def post(self, request: Request):
             body: BookSerializer = request.validated_data
-            Book.insert_one(
+            await Book.insert_one(
                 name=body.name,
                 author=body.author,
                 pages_count=body.pages_count,
@@ -180,15 +180,14 @@ Now we are going to create a book on `post` request, We need to:
     class BookAPI(GenericAPI):
         input_model = BookSerializer
     
-        def post(self, request: Request):
+        async def post(self, request: Request):
             body: BookSerializer = request.validated_data
-            book = Book.insert_one(
+            book = await Book.insert_one(
                 name=body.name,
                 author=body.author,
                 pages_count=body.pages_count,
             )
             return Response(data=book, status_code=status.HTTP_201_CREATED)
-
     ```
 
 > The response.data can be `Instance of Models`, `dict`, `str`, `tuple`, `list`, `str` or `None`
@@ -213,11 +212,11 @@ from app.models import Book
 class BookAPI(GenericAPI):
     input_model = BookSerializer
 
-    def post(self, request: Request):
+    async def post(self, request: Request):
         ...
     
-    def get(self):
-        books: list[Book] = Book.find()
+    async def get(self):
+        books = await Book.find()
         return Response(data=books, status_code=status.HTTP_200_OK)
    
 ```
@@ -256,11 +255,11 @@ Assume we don't want to return field `author` in response:
         input_model = BookSerializer
         output_model = BookOutputSerializer
     
-        def post(self, request: Request):
+        async def post(self, request: Request):
             ...
     
-        def get(self):
-            books: list[Book] = Book.find()
+        async def get(self):
+            books = await Book.find()
             return Response(data=books, status_code=status.HTTP_200_OK)
     ```
 
@@ -292,11 +291,11 @@ class BookAPI(GenericAPI):
     cache = True
     cache_exp_time = timedelta(seconds=10)
 
-    def post(self, request: Request):
+    async def post(self, request: Request):
         ...
 
-    def get(self):
-        books: list[Book] = Book.find()
+    async def get(self):
+        books = await Book.find()
         return Response(data=books, status_code=status.HTTP_200_OK)
     
 ```
@@ -329,11 +328,11 @@ class BookAPI(GenericAPI):
     cache_exp_time = timedelta(seconds=10)
     throttling = Throttling(rate=10, duration=timedelta(minutes=1))
 
-    def post(self, request: Request):
+    async def post(self, request: Request):
         ...
 
-    def get(self):
-        books: list[Book] = Book.find()
+    async def get(self):
+        books = await Book.find()
         return Response(data=books, status_code=status.HTTP_200_OK)
    
 ```
@@ -383,8 +382,8 @@ For `retrieve`, `update` and `delete` API, we are going to
    
     class SingleBookAPI(GenericAPI):
         
-        def get(self, book_id: int):
-            if book := Book.find_one(id=book_id):
+        async def get(self, book_id: int):
+            if book := await Book.find_one(id=book_id):
                 return Response(data=book, status_code=status.HTTP_200_OK)
             else:
                 return Response(status_code=status.HTTP_404_NOT_FOUND)
@@ -406,11 +405,11 @@ from app.serializers import BookSerializer
 class SingleBookAPI(GenericAPI):
     input_model = BookSerializer
    
-    def get(self, book_id: int):
+    async def get(self, book_id: int):
         ...
         
-    def put(self, request: Request, book_id: int):
-        is_updated: bool = Book.update_one({'id': book_id}, request.validated_data.model_dump())
+    async def put(self, request: Request, book_id: int):
+        is_updated: bool = await Book.update_one({'id': book_id}, request.validated_data.model_dump())
         data = {'is_updated': is_updated}
         return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 ```
@@ -431,14 +430,14 @@ from app.models import Book
 class SingleBookAPI(GenericAPI):
     input_model = BookSerializer
 
-    def get(self, book_id: int):
+    async def get(self, book_id: int):
         ...
     
-    def put(self, request: Request, book_id: int):
+    async def put(self, request: Request, book_id: int):
         ...
           
-    def delete(self, book_id: int):
-        is_deleted: bool = Book.delete_one(id=book_id)
+    async def delete(self, book_id: int):
+        is_deleted: bool = await Book.delete_one(id=book_id)
         if is_deleted:
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         else:

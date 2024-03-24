@@ -42,15 +42,16 @@ If you want to work with `Panther` in a `single-file` structure, follow the step
     app = Panther(__name__, configs=__name__, urls=url_routing)
     ```
 4. Run the project
-    ```bash
-    panther run 
-    ```
+
+    - If name of your file is `main.py` --> 
+    ```panther run```
+   - else use `uvicorn` -->
+   ```uvicorn file_name:app```
 
 ### Notes
 - `URLs` is a required config unless you pass the `urls` directly to the `Panther`  
 - When you pass the `configs` to the `Panther(configs=...)`, Panther is going to load the configs from this file, 
 else it is going to load `core/configs.py` file
-- You can pass the `startup` and `shutdown` functions to the `Panther()` too.
 
    ```python
    from panther import Panther
@@ -64,11 +65,5 @@ else it is going to load `core/configs.py` file
         '/': hello_world_api,
    }
    
-   def startup():
-      pass
-   
-   def shutdown():
-      pass
-   
-   app = Panther(__name__, configs=__name__, urls=url_routing, startup=startup, shutdown=shutdown)
+   app = Panther(__name__, configs=__name__, urls=url_routing)
    ```

@@ -3,6 +3,17 @@ from pantherdb import Cursor as PantherDBCursor
 
 
 class Pagination:
+    """
+    Request URL:
+        example.com/users?limit=10&skip=0
+    Response Data:
+        {
+            'count': 10,
+            'next': '?limit=10&skip=10',
+            'previous': None,
+            results: [...]
+        }
+    """
     DEFAULT_LIMIT = 20
     DEFAULT_SKIP = 0
 
