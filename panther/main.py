@@ -70,7 +70,8 @@ class Panther:
         if scope['type'] == 'lifespan':
             message = await receive()
             if message["type"] == 'lifespan.startup':
-                await config.WEBSOCKET_CONNECTIONS.start()
+                if config.HAS_WS:
+                    await config.WEBSOCKET_CONNECTIONS.start()
                 await Event.run_startups()
             elif message["type"] == 'lifespan.shutdown':
                 # It's not happening :\, so handle the shutdowns in __del__ ...

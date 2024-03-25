@@ -1,3 +1,6 @@
+### 4.0.1
+- Fix an issue in `startup` lifespan
+
 ### 4.0.0
 - Move `database` and `redis` connections from `MIDDLEWARES` to their own block, `DATABASE` and `REDIS`
 - Make `Database` queries `async`

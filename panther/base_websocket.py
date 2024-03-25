@@ -182,10 +182,9 @@ class WebsocketConnections(Singleton):
               but they have same Manager()
         """
 
-        if config.HAS_WS:
-            # Schedule the async function to run in the background,
-            #   We don't need to await for this task
-            asyncio.create_task(self())
+        # Schedule the async function to run in the background,
+        #   We don't need to await for this task
+        asyncio.create_task(self())
 
     @classmethod
     async def handle_authentication(cls, connection: Websocket):
