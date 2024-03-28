@@ -24,7 +24,7 @@ class RetrieveAPITest(RetrieveAPI):
 
 
 class ListAPITest(ListAPI):
-    async def objects(self, request: Request, **kwargs):
+    async def cursor(self, request: Request, **kwargs):
         return await User.find()
 
 
@@ -34,7 +34,7 @@ class FullListAPITest(ListAPI):
     filter_fields = ['name', 'age']
     pagination = Pagination
 
-    async def objects(self, request: Request, **kwargs):
+    async def cursor(self, request: Request, **kwargs):
         return await Person.find()
 
 

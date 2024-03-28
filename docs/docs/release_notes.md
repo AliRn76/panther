@@ -1,3 +1,7 @@
+### 4.1.0
+- Support `prepare_response` in `Serializers`
+- Rename `objects()` to `cursor()`
+
 ### 4.0.1
 - Fix an issue in `startup` lifespan
 

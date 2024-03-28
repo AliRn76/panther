@@ -27,7 +27,7 @@ class ObjectRequired:
             logger.critical(f'`{self.__class__.__name__}.object()` should return instance of a Model --> `find_one()`')
             raise APIError
 
-    async def object(self, request: Request, **kwargs) -> Model:
+    async def object(self, request: Request, **kwargs):
         """
         Used in `RetrieveAPI`, `UpdateAPI`, `DeleteAPI`
         """
@@ -35,18 +35,18 @@ class ObjectRequired:
         raise APIError(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
-class ObjectsRequired:
-    def _check_objects(self, cursor):
+class CursorRequired:
+    def _check_cursor(self, cursor):
         if isinstance(cursor, (Cursor, PantherDBCursor)) is False:
-            logger.critical(f'`{self.__class__.__name__}.objects()` should return a Cursor --> `find()`')
+            logger.critical(f'`{self.__class__.__name__}.cursor()` should return a Cursor --> `find()`')
             raise APIError
 
-    async def objects(self, request: Request, **kwargs) -> Cursor | PantherDBCursor:
+    async def cursor(self, request: Request, **kwargs) -> Cursor | PantherDBCursor:
         """
         Used in `ListAPI`
         Should return `.find()`
         """
-        logger.error(f'`objects()` method is not implemented in {self.__class__} .')
+        logger.error(f'`cursor()` method is not implemented in {self.__class__} .')
         raise APIError(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 
@@ -58,15 +58,19 @@ class RetrieveAPI(GenericAPI, ObjectRequired):
         return Response(data=instance, status_code=status.HTTP_200_OK)
 
 
-class ListAPI(GenericAPI, ObjectsRequired):
+class ListAPI(GenericAPI, CursorRequired):
     sort_fields: list[str]
     search_fields: list[str]
     filter_fields: list[str]
     pagination: type[Pagination]
 
     async def get(self, request: Request, **kwargs):
-        cursor = await self.objects(request=request, **kwargs)
-        self._check_objects(cursor)
+        cursor = await self.prepare_cursor(request=request, **kwargs)
+        return Response(data=cursor, status_code=status.HTTP_200_OK)
+
+    async def prepare_cursor(self, request: Request, **kwargs):
+        cursor = await self.cursor(request=request, **kwargs)
+        self._check_cursor(cursor)
 
         query = {}
         query |= self.process_filters(query_params=request.query_params, cursor=cursor)
@@ -81,7 +85,7 @@ class ListAPI(GenericAPI, ObjectsRequired):
         if pagination := self.process_pagination(query_params=request.query_params, cursor=cursor):
             cursor = await pagination.paginate()
 
-        return Response(data=cursor, status_code=status.HTTP_200_OK)
+        return cursor
 
     def process_filters(self, query_params: dict, cursor: Cursor | PantherDBCursor) -> dict:
         _filter = {}
@@ -90,6 +94,7 @@ class ListAPI(GenericAPI, ObjectsRequired):
                 if field in query_params:
                     if config.DATABASE.__class__.__name__ == 'MongoDBConnection':
                         with contextlib.suppress(Exception):
+                            # Change type of the value if it is ObjectId
                             if cursor.cls.model_fields[field].metadata[0].func.__name__ == 'validate_object_id':
                                 _filter[field] = bson.ObjectId(query_params[field])
                                 continue
@@ -161,3 +166,7 @@ class DeleteAPI(GenericAPI, ObjectRequired):
 
         await instance.delete()
         return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+class ListCreateAPI(CreateAPI, ListAPI):
+    pass

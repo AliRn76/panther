@@ -95,7 +95,7 @@ class API:
             if not isinstance(response, Response):
                 response = Response(data=response)
             if self.output_model and response.data:
-                response.data = response.apply_output_model(response.data, output_model=self.output_model)
+                response.data = await response.apply_output_model(output_model=self.output_model)
 
             # 10. Set New Response To Cache
             if self.cache and self.request.method == 'GET':

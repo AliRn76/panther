@@ -27,9 +27,9 @@ class Headers:
     sec_websocket_version: str
     sec_websocket_key: str
 
-    def __init__(self, headers):
-        self.__headers = headers
-        self.__pythonic_headers = {k.lower().replace('-', '_'): v for k, v in headers.items()}
+    def __init__(self, headers: list):
+        self.__headers = {header[0].decode('utf-8'): header[1].decode('utf-8') for header in headers}
+        self.__pythonic_headers = {k.lower().replace('-', '_'): v for k, v in self.__headers.items()}
 
     def __getattr__(self, item: str):
         if result := self.__pythonic_headers.get(item):
@@ -68,8 +68,7 @@ class BaseRequest:
     @property
     def headers(self) -> Headers:
         if self._headers is None:
-            _headers = {header[0].decode('utf-8'): header[1].decode('utf-8') for header in self.scope['headers']}
-            self._headers = Headers(_headers)
+            self._headers = Headers(self.scope['headers'])
         return self._headers
 
     @property
@@ -77,8 +76,7 @@ class BaseRequest:
         if self._params is None:
             self._params = {}
             if (query_string := self.scope['query_string']) != b'':
-                query_string = query_string.decode('utf-8').split('&')
-                for param in query_string:
+                for param in query_string.decode('utf-8').split('&'):
                     k, *_, v = param.split('=')
                     self._params[k] = v
         return self._params

@@ -1,5 +1,5 @@
 import typing
-from typing import TypeVar, Type
+from typing import Any
 
 from pydantic import create_model, BaseModel, ConfigDict
 from pydantic.fields import FieldInfo, Field
@@ -205,13 +205,13 @@ class ModelSerializer(metaclass=MetaModelSerializer):
     model: type[BaseModel]
     request: Request
 
-    async def create(self, validated_data: dict) -> Model:
+    async def create(self, validated_data: dict):
         """
         validated_data = ModelSerializer.model_dump()
         """
         return await self.model.insert_one(validated_data)
 
-    async def update(self, instance: Model, validated_data: dict) -> Model:
+    async def update(self, instance: Model, validated_data: dict):
         """
         instance = UpdateAPI.object()
         validated_data = ModelSerializer.model_dump()
@@ -219,10 +219,13 @@ class ModelSerializer(metaclass=MetaModelSerializer):
         await instance.update(validated_data)
         return instance
 
-    async def partial_update(self, instance: Model, validated_data: dict) -> Model:
+    async def partial_update(self, instance: Model, validated_data: dict):
         """
         instance = UpdateAPI.object()
         validated_data = ModelSerializer.model_dump(exclude_none=True)
         """
         await instance.update(validated_data)
         return instance
+
+    async def prepare_response(self, instance: Any, data: dict) -> dict:
+        return data

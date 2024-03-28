@@ -26,7 +26,7 @@
 - Support Custom **Middlewares**
 - Support Custom **Throttling**
 - Support **Function-Base** and **Class-Base** APIs
-- It's One Of The **Fastest Python Frameworks** 
+- It's One Of The **Fastest Python Framework** 
 ---
 
 ### Supported by
@@ -35,25 +35,6 @@
       <img alt="jetbrains" src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/jb_beam_50x50.png">
     </a>
 </center>
-
----
-
-### Benchmark
-
-| Framework  | Throughput (Request/Second) |
-|------------|-----------------------------|
-| Blacksheep | 5,339                       |
-| Muffin     | 5,320                       |
-| Panther    | 5,112                       |
-| Sanic      | 3,660                       |
-| FastAPI    | 3,260                       |
-| Tornado    | 2,081                       |
-| Bottle     | 2,045                       |
-| Django     | 821                         |
-| Flask      | 749                         |
-
-
-> **More Detail:** [https://GitHub.com/PantherPy/frameworks-benchmark](https://GitHub.com/PantherPy/frameworks-benchmark)
 
 ---
 
@@ -96,7 +77,7 @@
     ```shell
     $ panther run --reload
     ```
-  _* Panther uses [Uvicorn](https://github.com/encode/uvicorn) as ASGI (Asynchronous Server Gateway Interface) but you can run the project with [Granian](https://pypi.org/project/granian/), [daphne](https://pypi.org/project/daphne/) or any ASGI server too_
+  _* Panther uses [Uvicorn](https://github.com/encode/uvicorn) as ASGI (Asynchronous Server Gateway Interface) but you can run the project with [Granian](https://pypi.org/project/granian/), [daphne](https://pypi.org/project/daphne/) or any ASGI server_
 
 - #### Monitoring Requests
 

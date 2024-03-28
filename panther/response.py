@@ -1,10 +1,9 @@
 import asyncio
 from types import NoneType
-from typing import Generator, AsyncGenerator
+from typing import Generator, AsyncGenerator, Any, Type
 
 import orjson as json
-from pydantic import BaseModel as PydanticBaseModel
-from pydantic._internal._model_construction import ModelMetaclass
+from pydantic import BaseModel
 
 from panther import status
 from panther._utils import to_async_generator
@@ -12,7 +11,7 @@ from panther.db.cursor import Cursor
 from pantherdb import Cursor as PantherDBCursor
 from panther.monitoring import Monitoring
 
-ResponseDataTypes = list | tuple | set | Cursor | PantherDBCursor | dict | int | float | str | bool | bytes | NoneType | ModelMetaclass
+ResponseDataTypes = list | tuple | set | Cursor | PantherDBCursor | dict | int | float | str | bool | bytes | NoneType | Type[BaseModel]
 IterableDataTypes = list | tuple | set | Cursor | PantherDBCursor
 StreamingDataTypes = Generator | AsyncGenerator
 
@@ -32,6 +31,7 @@ class Response:
         :param status_code: should be int
         """
         self.headers = headers or {}
+        self.initial_data = data
         self.data = self.prepare_data(data=data)
         self.status_code = self.check_status_code(status_code=status_code)
 
@@ -68,7 +68,7 @@ class Response:
         elif isinstance(data, dict):
             return {key: self.prepare_data(value) for key, value in data.items()}
 
-        elif issubclass(type(data), PydanticBaseModel):
+        elif issubclass(type(data), BaseModel):
             return data.model_dump()
 
         elif isinstance(data, IterableDataTypes):
@@ -79,25 +79,42 @@ class Response:
             raise TypeError(msg)
 
     @classmethod
-    def check_status_code(cls, status_code: any):
+    def check_status_code(cls, status_code: Any):
         if not isinstance(status_code, int):
             error = f'Response `status_code` Should Be `int`. (`{status_code}` is {type(status_code)})'
             raise TypeError(error)
         return status_code
 
-    @classmethod
-    def apply_output_model(cls, data: any, /, output_model: ModelMetaclass):
+    async def apply_output_model(self, output_model: Type[BaseModel]):
         """This method is called in API.__call__"""
+
         # Dict
-        if isinstance(data, dict):
+        if isinstance(self.data, dict):
+            # Apply `validation_alias` (id -> _id)
             for field_name, field in output_model.model_fields.items():
-                if field.validation_alias and field_name in data:
-                    data[field.validation_alias] = data.pop(field_name)
-            return output_model(**data).model_dump()
+                if field.validation_alias and field_name in self.data:
+                    self.data[field.validation_alias] = self.data.pop(field_name)
+            output = output_model(**self.data)
+            if hasattr(output_model, 'prepare_response'):
+                return await output.prepare_response(instance=self.initial_data, data=output.model_dump())
+            return output.model_dump()
 
         # Iterable
-        if isinstance(data, IterableDataTypes):
-            return [cls.apply_output_model(d, output_model=output_model) for d in data]
+        results = []
+        if isinstance(self.data, IterableDataTypes):
+            for i, d in enumerate(self.data):
+                # Apply `validation_alias` (id -> _id)
+                for field_name, field in output_model.model_fields.items():
+                    if field.validation_alias and field_name in d:
+                        d[field.validation_alias] = d.pop(field_name)
+
+                output = output_model(**d)
+                if hasattr(output_model, 'prepare_response'):
+                    result = await output.prepare_response(instance=self.initial_data[i], data=output.model_dump())
+                else:
+                    result = output.model_dump()
+                results.append(result)
+            return results
 
         # Str | Bool | Bytes
         msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'

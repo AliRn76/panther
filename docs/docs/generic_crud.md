@@ -124,7 +124,7 @@ Let's return list of books of `GET` method, we need to:
         ...
     ```
 
-2. define `objects` method, so the `ListAPI` knows to return which books
+2. define `cursor` method, so the `ListAPI` knows to return which books
 
     ```python
     from panther.generics import CreateAPI, ListAPI
@@ -136,7 +136,7 @@ Let's return list of books of `GET` method, we need to:
     class BookAPI(CreateAPI, ListAPI):
         input_model = BookSerializer
     
-        async def objects(self, request: Request, **kwargs):
+        async def cursor(self, request: Request, **kwargs):
             return await Book.find()
     ```
 
@@ -212,7 +212,7 @@ class BookAPI(CreateAPI, ListAPI):
     filter_fields = ['name', 'author']
     sort_fields = ['name', 'pages_count']
 
-    async def objects(self, request: Request, **kwargs):
+    async def cursor(self, request: Request, **kwargs):
         return await Book.find()
 ```
 
