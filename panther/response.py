@@ -31,6 +31,8 @@ class Response:
         :param status_code: should be int
         """
         self.headers = headers or {}
+        if isinstance(data, Cursor):
+            data = list(data)
         self.initial_data = data
         self.data = self.prepare_data(data=data)
         self.status_code = self.check_status_code(status_code=status_code)
@@ -60,7 +62,7 @@ class Response:
     def headers(self, headers: dict):
         self._headers = headers
 
-    def prepare_data(self, data: any):
+    def prepare_data(self, data: Any):
         """Make sure the response data is only ResponseDataTypes or Iterable of ResponseDataTypes"""
         if isinstance(data, (int | float | str | bool | bytes | NoneType)):
             return data
