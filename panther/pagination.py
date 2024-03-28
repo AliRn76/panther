@@ -36,7 +36,10 @@ class Pagination:
         previous_skip = max(self.skip - self.limit, 0)
         return f'?limit={self.limit}&skip={previous_skip}'
 
-    async def paginate(self):
+    def paginate(self):
+        return self.cursor.skip(skip=self.skip).limit(limit=self.limit)
+
+    async def template(self, response: list):
         count = await self.cursor.cls.count(self.cursor.filter)
         has_next = not bool(self.limit + self.skip >= count)
 
@@ -44,5 +47,5 @@ class Pagination:
             'count': count,
             'next': self.build_next_params() if has_next else None,
             'previous': self.build_previous_params() if self.skip else None,
-            'results': self.cursor.skip(skip=self.skip).limit(limit=self.limit)
+            'results': response
         }

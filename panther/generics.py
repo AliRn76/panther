@@ -65,10 +65,10 @@ class ListAPI(GenericAPI, CursorRequired):
     pagination: type[Pagination]
 
     async def get(self, request: Request, **kwargs):
-        cursor = await self.prepare_cursor(request=request, **kwargs)
-        return Response(data=cursor, status_code=status.HTTP_200_OK)
+        cursor, pagination = await self.prepare_cursor(request=request, **kwargs)
+        return Response(data=cursor, pagination=pagination, status_code=status.HTTP_200_OK)
 
-    async def prepare_cursor(self, request: Request, **kwargs):
+    async def prepare_cursor(self, request: Request, **kwargs) -> tuple[Cursor | PantherDBCursor, Pagination | None]:
         cursor = await self.cursor(request=request, **kwargs)
         self._check_cursor(cursor)
 
@@ -83,9 +83,9 @@ class ListAPI(GenericAPI, CursorRequired):
             cursor = cursor.sort(sort)
 
         if pagination := self.process_pagination(query_params=request.query_params, cursor=cursor):
-            cursor = await pagination.paginate()
+            cursor = pagination.paginate()
 
-        return cursor
+        return cursor, pagination
 
     def process_filters(self, query_params: dict, cursor: Cursor | PantherDBCursor) -> dict:
         _filter = {}

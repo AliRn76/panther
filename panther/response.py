@@ -10,6 +10,7 @@ from panther._utils import to_async_generator
 from panther.db.cursor import Cursor
 from pantherdb import Cursor as PantherDBCursor
 from panther.monitoring import Monitoring
+from panther.pagination import Pagination
 
 ResponseDataTypes = list | tuple | set | Cursor | PantherDBCursor | dict | int | float | str | bool | bytes | NoneType | Type[BaseModel]
 IterableDataTypes = list | tuple | set | Cursor | PantherDBCursor
@@ -24,13 +25,17 @@ class Response:
         data: ResponseDataTypes = None,
         headers: dict | None = None,
         status_code: int = status.HTTP_200_OK,
+        pagination: Pagination | None = None,
     ):
         """
         :param data: should be an instance of ResponseDataTypes
         :param headers: should be dict of headers
         :param status_code: should be int
+        :param pagination: instance of Pagination or None
+            Its template() method will be used
         """
         self.headers = headers or {}
+        self.pagination: Pagination | None = pagination
         if isinstance(data, Cursor):
             data = list(data)
         self.initial_data = data

@@ -1,5 +1,6 @@
 ### 4.1.1
 - Fix an issue in `Response.prepare_data()` when `data` is `Cursor`
+- Split `paginate` and `template` in `Pagination`
 
 ### 4.1.0
 - Support `prepare_response` in `Serializers`

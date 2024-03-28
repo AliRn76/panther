@@ -96,6 +96,8 @@ class API:
                 response = Response(data=response)
             if self.output_model and response.data:
                 response.data = await response.apply_output_model(output_model=self.output_model)
+            if response.pagination:
+                response.data = await response.pagination.template(response.data)
 
             # 10. Set New Response To Cache
             if self.cache and self.request.method == 'GET':
