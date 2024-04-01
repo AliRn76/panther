@@ -1,3 +1,4 @@
+import contextlib
 import os
 
 import uvicorn
@@ -75,6 +76,7 @@ def run(args: list[str]) -> None:
     command.update(_handle_commands(args))
     command.update(args)
     try:
-        uvicorn.run('main:app', **command)
+        with contextlib.suppress(KeyboardInterrupt):
+            uvicorn.run('main:app', **command)
     except TypeError as e:
         cli_error(e)
