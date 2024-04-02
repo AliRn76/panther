@@ -1,139 +1,87 @@
-use std::cell::OnceCell;
-use std::error::Error;
+#![allow(unused)]
 
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyString};
+use pyo3::PyResult;
+use pyo3::types::PyDict;
 
+use std::sync::RwLock;
+use std::sync::Arc;
 use crate::tree::Tree;
 
 mod tree;
 
-// static mut URLS: Option<Tree<String, PyObject>> = None;
-
-#[derive(Debug)]
-#[pyclass]
-struct Urls {
-    urls: OnceCell<Tree<String, PyObject>>, 
+#[derive(Debug, Clone, PartialEq, Eq, core::hash::Hash)]
+enum Routing {
+    Param(String),
+    Route(String),
 }
 
+#[derive(Debug, Clone)]
+#[pyclass(module = "routing")]
+pub struct Urls {
+    urls: TreeRef,
+}
+
+type TreeRef = Arc<RwLock<Tree<Routing, Option<Py<PyAny>>>>>;
+
+#[pymethods]
 impl Urls {
-    fn parse_urls_dict(py_urls: &PyDict) -> Self {
-        fn create(p_urls: &PyDict) -> Tree<String, PyObject> {
-            let gil = unsafe { Python::assume_gil_acquired() };
 
-            let mut urls: Tree<String, PyObject> = Tree::new(gil.Ellipsis());
+    #[new]
+    fn parse_urls_dict(urls: &PyDict) -> PyResult<Self> {
+        let mut tree: TreeRef = Arc::new(RwLock::new(Tree::new(None)));
+        let pydata: &PyDict = urls.downcast()?;
 
-            for (key, value) in p_urls.iter() {
-                if value.is_exact_instance_of::<PyDict>() {
-                    match value.downcast::<PyDict>() {
-                        Ok(p_dict) => {
-                            urls.entry(key.to_string()).or_insert(create(p_dict));
-                        }
-                        Err(_) => {}
+        fn create(dict: &PyDict, subtree: TreeRef) -> Option<TreeRef> {
+            for (k, v) in dict.into_iter() {
+                // println!("{:?},\n\n {:?}\n\n", &k, &v);
+                let key = k.extract::<String>().unwrap();
+
+                if !v.is_exact_instance_of::<PyDict>() {
+                    println!("is Obj: {:?}", &v);
+                    if key.chars().next() == Some('<') {
+                        subtree.write().unwrap().entry(Routing::Param(key));
+                    } else {
+                        subtree.write().unwrap().entry(Routing::Route(key));
                     }
+                    subtree.write().unwrap().value = Some(Py::from(v));
+                    return Some(subtree.clone());
                 } else {
-                    match value.extract::<PyObject>() {
-                        Ok(object) => {
-                            urls.entry(key.to_string()).or_insert(Tree::new(object));
-                        }
-                        Err(_) => {}
+                    let mut st: TreeRef = Arc::new(RwLock::new(Tree::new(None)));
+                    let sa = create(v.extract::<&PyDict>().unwrap(), st.clone());
+                    println!("is Dict: {:?}", v.extract::<&PyDict>().unwrap());
+                    if key.chars().next() == Some('<') {
+                        subtree.write().unwrap().entry(Routing::Param(key)).or_insert(st.clone());
+                    } else {
+                        subtree.write().unwrap().entry(Routing::Route(key)).or_insert(st.clone());
+                    }
+                    return match sa {
+                        Some(res) => Some(res),
+                        None => None,
                     }
                 }
             }
-            return urls
+            return None;
         }
-        let final_urls = create(py_urls);
-        let cell = OnceCell::new();
-        cell.set(final_urls).expect("failed to create OneCell");
-        Self { urls: cell }
+        create(urls, tree.clone());
+        Ok(Self { urls: tree })
+    }
+
+    fn print(&self) {
+        println!("\n\n\n\n{:?}", self.urls)
     }
 
     fn finding_endpoint(&self, path: String) -> Option<(PyObject, String)> {
         let path: String = clean_path(path);
         let parts: Vec<&str> = path.split('/').collect();
 
-        match self.urls.get() {
-           Some(tree) => {
-                let a = tree.iter().last().unwrap();
-                return Some((tree.iter().last().unwrap().1.clone() , a.0.iter().last().unwrap().to_owned().to_owned()));
-                    // return Some((tree[parts.first().unwrap().to_owned()].value.clone(), parts.last().unwrap().to_owned().to_string()))
-            },
-            None => return None,
-        }
-           
-        // for (i, part) in parts.iter().enumerate() {
-        //     let last_path: bool = (i + 1) == parts_len;
-        //
-        //     let mut urls_ref: &Urls = self.urls.get().unwrap().iter;
-        //     match urls_ref.urls.get() {
-        //         Some(found) => {
-        //             if is_dict(&found.value) == false {
-        //                 return if last_path {
-        //                     found_path = push_path(found_path, part.to_string());
-        //                     Some((found.clone().value, found_path.to_string()))
-        //                 } else {
-        //                     None
-        //                 };
-        //             }
-        //             if is_dict(&found.value) {
-        //                 if last_path {
-        //                     return match found.get("") {
-        //                         Some(inner_found) => {
-        //                             if is_dict(&inner_found.value) == false {
-        //                                 found_path = push_path(found_path, part.to_string());
-        //                                 Some((inner_found.clone().value, found_path.to_string()))
-        //                             } else {
-        //                                 None
-        //                             }
-        //                         }
-        //                         None => { None }
-        //                     };
-        //                 } else {
-        //                     found_path = push_path(found_path, part.to_string());
-        //                     urls_ref = &Urls { urls: found };
-        //                     continue;
-        //                 }
-        //             }
-        //         }
-        //         None => {
-        //             for (_key, _v) in self.urls.get().into_iter() {
-        //                 if _key.len() == 0 {
-        //                     continue;
-        //                 }
-        //                 let key = _key.get(0).unwrap();
-        //
-        //                 if key.starts_with('<') {
-        //                     let value = urls.get(*key).unwrap();
-        //
-        //                     println!("value: {:?}", value);
-        //                     if last_path {
-        //                         if is_dict(&value.value) == false {
-        //                             found_path = push_path(found_path, key.to_string());
-        //                             return Some((value.clone().value, found_path.to_string()));
-        //                         } else if is_dict(&value.value) {
-        //                             match value.get("") {
-        //                                 Some(inner_found) => {
-        //                                     if is_dict(&inner_found.value) == false {
-        //                                         found_path = push_path(found_path, key.to_string());
-        //                                         return Some((inner_found.clone().value, found_path.to_string()));
-        //                                     }
-        //                                 }
-        //                                 None => {}
-        //                             };
-        //                         }
-        //                     } else if is_dict(&value.value) == false {
-        //                         return None;
-        //                     } else if is_dict(&value.value) {
-        //                         found_path = push_path(found_path, key.to_string());
-        //                         urls = value.clone();
-        //                         break;
-        //                     }
-        //                 } else {
-        //                     return None;
-        //                 }
-        //             }
-        //         }
-        //     }
+        todo!()
+        // match self.urls.get() {
+        //    Some(tree) => {
+        //         let a = tree.iter().last().unwrap();
+        //         return Some((tree.iter().last().unwrap().1.clone() , a.0.iter().last().unwrap().to_owned().to_owned()));
+        //     },
+        //     None => return None,
         // }
     }
 }
@@ -144,12 +92,6 @@ fn find_endpoint(urls: &Urls, path: String) -> Option<(PyObject, String)> {
         None => { None }
         Some(result) => { Some(result) }
     }
-}
-
-#[pyfunction]
-fn initialize_routing(py_urls: &PyDict) -> Urls {
-    let urls = Urls::parse_urls_dict(py_urls);
-    urls
 }
 
 fn clean_path(raw_path: String) -> String {
@@ -163,30 +105,15 @@ fn clean_path(raw_path: String) -> String {
     path.trim_end_matches('/').trim_start_matches('/').to_string()
 }
 
-
 fn push_path(mut path: String, part: String) -> String {
     path.push_str(&part);
     path.push('/');
     path
 }
 
-
-
 #[pymodule]
-fn panther_core(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(find_endpoint, m)?)?;
-    m.add_function(wrap_pyfunction!(initialize_routing, m)?)?;
+fn panther_core(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<Urls>()?;
 
     Ok(())
 }
-
-
-// fn is_callable(value: PyObject) -> bool {
-//     value.is_callable()
-// }
-
-// fn is_dict(value: &Py<PyAny>) -> bool {
-//     Python::with_gil(|py| {
-//         value.is_instance::<PyDict>(py)
-//     })
-// }
