@@ -66,7 +66,7 @@ LOGGING = {
         },
         'uvicorn.error': {
             'handlers': ['default'],
-            'level': 'WARNING',
+            'level': 'INFO',
             'propagate': False,
         },
     }
