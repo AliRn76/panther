@@ -4,8 +4,8 @@ use pyo3::prelude::*;
 use pyo3::PyResult;
 use pyo3::types::PyDict;
 
-use std::sync::RwLock;
 use std::sync::Arc;
+use std::collections::{HashMap, VecDeque};
 use crate::tree::Tree;
 
 mod tree;
@@ -22,49 +22,74 @@ pub struct Urls {
     urls: TreeRef,
 }
 
-type TreeRef = Arc<RwLock<Tree<Routing, Option<Py<PyAny>>>>>;
+type TreeRef = Arc<Tree<Routing, Option<Py<PyAny>>>>;
 
 #[pymethods]
 impl Urls {
 
     #[new]
     fn parse_urls_dict(urls: &PyDict) -> PyResult<Self> {
-        let mut tree: TreeRef = Arc::new(RwLock::new(Tree::new(None)));
+        let mut vq = VecDeque::new();
         let pydata: &PyDict = urls.downcast()?;
+        #[derive(Debug)]
+        struct Rout{
+            key: Routing,
+            obj: Option<Py<PyAny>>,
+        };
 
-        fn create(dict: &PyDict, subtree: TreeRef) -> Option<TreeRef> {
+        fn create(dict: &PyDict, vq: &mut VecDeque<Rout>) {
             for (k, v) in dict.into_iter() {
-                // println!("{:?},\n\n {:?}\n\n", &k, &v);
                 let key = k.extract::<String>().unwrap();
 
                 if !v.is_exact_instance_of::<PyDict>() {
-                    println!("is Obj: {:?}", &v);
                     if key.chars().next() == Some('<') {
-                        subtree.write().unwrap().entry(Routing::Param(key));
+                        vq.push_front( Rout {
+                            key: Routing::Param(key),
+                            obj: Some(v.into()),
+                        } );
                     } else {
-                        subtree.write().unwrap().entry(Routing::Route(key));
+                        vq.push_front( Rout {
+                            key: Routing::Route(key),
+                            obj: Some(v.into()),
+                        } );
                     }
-                    subtree.write().unwrap().value = Some(Py::from(v));
-                    return Some(subtree.clone());
                 } else {
-                    let mut st: TreeRef = Arc::new(RwLock::new(Tree::new(None)));
-                    let sa = create(v.extract::<&PyDict>().unwrap(), st.clone());
-                    println!("is Dict: {:?}", v.extract::<&PyDict>().unwrap());
                     if key.chars().next() == Some('<') {
-                        subtree.write().unwrap().entry(Routing::Param(key)).or_insert(st.clone());
+                        vq.push_front( Rout {
+                            key: Routing::Param(key),
+                            obj: None,
+                        } );
                     } else {
-                        subtree.write().unwrap().entry(Routing::Route(key)).or_insert(st.clone());
+                        vq.push_front( Rout {
+                            key: Routing::Route(key),
+                            obj: None,
+                        } );
                     }
-                    return match sa {
-                        Some(res) => Some(res),
-                        None => None,
-                    }
+                    create(v.extract::<&PyDict>().unwrap(), vq);
                 }
             }
-            return None;
         }
-        create(urls, tree.clone());
-        Ok(Self { urls: tree })
+        create(urls, &mut vq);
+        let mut tree = Tree::new(None);
+        let mut map = HashMap::new();
+        for r in vq.iter() {
+            if let Some(v) = &r.obj {
+                map.insert(r.key.clone(), Arc::new(Tree::new(Some(v.clone()))));
+            } else {
+                tree = Tree::new(None);
+                tree.subtrees = map;
+                map = HashMap::new();
+                map.insert(r.key.clone(), tree.clone().into());
+
+            }
+        }
+        if !map.is_empty() {
+            tree = Tree::new(None);
+            tree.subtrees = map;
+        }
+        let tree_ref: TreeRef = Arc::new(tree);
+        println!("{:?}", &vq);
+        Ok(Self { urls: tree_ref })
     }
 
     fn print(&self) {
@@ -76,13 +101,6 @@ impl Urls {
         let parts: Vec<&str> = path.split('/').collect();
 
         todo!()
-        // match self.urls.get() {
-        //    Some(tree) => {
-        //         let a = tree.iter().last().unwrap();
-        //         return Some((tree.iter().last().unwrap().1.clone() , a.0.iter().last().unwrap().to_owned().to_owned()));
-        //     },
-        //     None => return None,
-        // }
     }
 }
 
