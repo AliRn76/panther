@@ -52,8 +52,11 @@ class WebsocketConnections(Singleton):
             queue = self.pubsub.subscribe()
             logger.info("Subscribed to 'websocket_connections' queue")
             while True:
-                received_message = queue.get()
-                await self._handle_received_message(received_message=received_message)
+                try:
+                    received_message = queue.get()
+                    await self._handle_received_message(received_message=received_message)
+                except InterruptedError:
+                    break
         else:
             # We have a redis connection, so use it for pubsub
             self.pubsub = self.pubsub_connection.pubsub()

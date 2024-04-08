@@ -58,7 +58,7 @@ class BaseUser(Model):
 
     async def login(self) -> dict:
         """Return dict of access and refresh token"""
-        return config.AUTHENTICATION.login(self.id)
+        return config.AUTHENTICATION.login(str(self.id))
 
     async def logout(self) -> dict:
         return await config.AUTHENTICATION.logout(self._auth_token)

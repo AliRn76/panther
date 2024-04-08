@@ -122,7 +122,13 @@ class RedisConnection(Singleton, _Redis):
     def sync_ping(self):
         from redis import Redis
 
-        Redis(host=self.host, port=self.port, **self.kwargs).ping()
+        Redis(host=self.host, port=self.port, socket_timeout=3, **self.kwargs).ping()
+
+    async def execute_command(self, *args, **options):
+        if self.is_connected:
+            return await super().execute_command(*args, **options)
+        msg = '`REDIS` is not found in `configs`'
+        raise ValueError(msg)
 
     def create_connection_for_websocket(self) -> _Redis:
         if not hasattr(self, 'websocket_connection'):
