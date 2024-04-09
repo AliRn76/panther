@@ -12,3 +12,4 @@ docs/site/*
 *coverage*
 target/
 Cargo.lock
+.marks
