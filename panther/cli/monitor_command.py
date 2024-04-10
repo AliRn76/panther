@@ -1,6 +1,7 @@
 import contextlib
 import logging
 import os
+import platform
 import signal
 from collections import deque
 from pathlib import Path
@@ -43,7 +44,12 @@ class Monitoring:
         ):
             f.readlines()  # Set cursor at the end of the file
 
-            for _ in watch(self.monitoring_log_file):
+            if platform.system() == 'Windows':
+                watching = watch(self.monitoring_log_file, force_polling=True)
+            else:
+                watching = watch(self.monitoring_log_file)
+
+            for _ in watching:
                 for line in f.readlines():
                     self.rows.append(line.split('|'))
                     live.update(self.generate_table())
@@ -63,7 +69,8 @@ class Monitoring:
         self.update_rows()
 
         # Register the signal handler
-        signal.signal(signal.SIGWINCH, self.update_rows)
+        if platform.system() != 'Windows':
+            signal.signal(signal.SIGWINCH, self.update_rows)
 
     def generate_table(self) -> Panel:
         # 2023-03-24 01:42:52 | GET | /user/317/ | 127.0.0.1:48856 |  0.0366 ms | 200
