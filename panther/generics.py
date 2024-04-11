@@ -23,7 +23,7 @@ logger = logging.getLogger('panther')
 
 class ObjectRequired:
     def _check_object(self, instance):
-        if issubclass(type(instance), Model) is False:
+        if instance and issubclass(type(instance), Model) is False:
             logger.critical(f'`{self.__class__.__name__}.object()` should return instance of a Model --> `find_one()`')
             raise APIError
 
@@ -129,9 +129,11 @@ class CreateAPI(GenericAPI):
     input_model: type[ModelSerializer]
 
     async def post(self, request: Request, **kwargs):
-        instance = await request.validated_data.create(
-            validated_data=request.validated_data.model_dump()
-        )
+        instance = await request.validated_data.create(validated_data={
+            field: getattr(request.validated_data, field)
+            for field in request.validated_data.model_fields_set
+            if field != 'request'
+        })
         return Response(data=instance, status_code=status.HTTP_201_CREATED)
 
 
@@ -160,13 +162,30 @@ class UpdateAPI(GenericAPI, ObjectRequired):
 
 
 class DeleteAPI(GenericAPI, ObjectRequired):
+    async def pre_delete(self, instance, request: Request, **kwargs):
+        pass
+
+    async def post_delete(self, instance, request: Request, **kwargs):
+        pass
+
     async def delete(self, request: Request, **kwargs):
         instance = await self.object(request=request, **kwargs)
         self._check_object(instance)
 
+        await self.pre_delete(instance, request=request, **kwargs)
         await instance.delete()
+        await self.post_delete(instance, request=request, **kwargs)
+
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 class ListCreateAPI(CreateAPI, ListAPI):
+    pass
+
+
+class UpdateDeleteAPI(UpdateAPI, DeleteAPI):
+    pass
+
+
+class RetrieveUpdateDeleteAPI(RetrieveAPI, UpdateAPI, DeleteAPI):
     pass

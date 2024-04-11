@@ -364,8 +364,6 @@ class Query(BaseQuery):
 
         raise NotFoundAPIError(detail=f'{cls.__name__} Does Not Exist')
 
-    @check_connection
-    @log_query
     async def save(self) -> None:
         """
         Save the document
@@ -384,8 +382,14 @@ class Query(BaseQuery):
             >>> user = User(name='Ali')
             >>> await user.save()
         """
-        document = self.model_dump(exclude=['_id'])
+        document = {field: getattr(self, field) for field in self.model_fields_set if field != 'request'}
+
         if self.id:
             await self.update(document)
         else:
             await self.insert_one(document)
+
+    async def reload(self) -> Self:
+        new_obj = await self.find_one(id=self.id)
+        [setattr(self, f, getattr(new_obj, f)) for f in new_obj.model_fields]
+        return self

@@ -151,15 +151,15 @@ class API:
             # `request` will be ignored in regular `BaseModel`
             return model(**request.data, request=request)
         except ValidationError as validation_error:
-            error = {'.'.join(loc for loc in e['loc']): e['msg'] for e in validation_error.errors()}
+            error = {'.'.join(str(loc) for loc in e['loc']): e['msg'] for e in validation_error.errors()}
             raise BadRequestAPIError(detail=error)
         except JSONDecodeError:
             raise JSONDecodeAPIError
 
 
 class GenericAPI:
-    input_model: type[ModelSerializer] | type[BaseModel] = None
-    output_model: type[ModelSerializer] | type[BaseModel] = None
+    input_model: type[ModelSerializer] | type[BaseModel] | None = None
+    output_model: type[ModelSerializer] | type[BaseModel] | None = None
     auth: bool = False
     permissions: list | None = None
     throttling: Throttling | None = None
@@ -181,6 +181,12 @@ class GenericAPI:
     async def delete(self, *args, **kwargs):
         raise MethodNotAllowedAPIError
 
+    async def get_input_model(self, request: Request) -> type[ModelSerializer] | type[BaseModel] | None:
+        return None
+
+    async def get_output_model(self, request: Request) -> type[ModelSerializer] | type[BaseModel] | None:
+        return None
+
     async def call_method(self, request: Request):
         match request.method:
             case 'GET':
@@ -197,8 +203,8 @@ class GenericAPI:
                 raise MethodNotAllowedAPIError
 
         return await API(
-            input_model=self.input_model,
-            output_model=self.output_model,
+            input_model=self.input_model or await self.get_input_model(request=request),
+            output_model=self.output_model or await self.get_output_model(request=request),
             auth=self.auth,
             permissions=self.permissions,
             throttling=self.throttling,

@@ -21,7 +21,7 @@ def validate_object_id(value, handler):
         else:
             try:
                 return bson.ObjectId(value)
-            except bson.objectid.InvalidId as e:
+            except Exception as e:
                 msg = 'Invalid ObjectId'
                 raise ValueError(msg) from e
     return str(value)

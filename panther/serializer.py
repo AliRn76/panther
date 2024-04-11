@@ -65,8 +65,8 @@ class MetaModelSerializer:
 
         # Check `model` type
         try:
-            if not issubclass(model, Model):
-                msg = f'`{cls_name}.Config.model` is not subclass of `panther.db.Model`.'
+            if not issubclass(model, (Model, BaseModel)):
+                msg = f'`{cls_name}.Config.model` is not subclass of `panther.db.Model` or `pydantic.BaseModel`.'
                 raise AttributeError(msg) from None
         except TypeError:
             msg = f'`{cls_name}.Config.model` is not subclass of `panther.db.Model`.'
