@@ -1,7 +1,7 @@
 from functools import cached_property
 
 from panther import status
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_serializer
 
 from panther.exceptions import APIError
 
@@ -14,6 +14,23 @@ class File(BaseModel):
     @cached_property
     def size(self):
         return len(self.file)
+
+    def save(self) -> str:
+        if hasattr(self, '_file_name'):
+            return self._file_name
+
+        self._file_name = self.file_name
+        # TODO: check for duplication
+        with open(self._file_name, 'wb') as file:
+            file.write(self.file)
+
+        return self.file_name
+
+    @model_serializer(mode='wrap')
+    def _serialize(self, handler):
+        result = handler(self)
+        result['path'] = self.save()
+        return result
 
     def __repr__(self) -> str:
         return f'{self.__repr_name__()}(file_name={self.file_name}, content_type={self.content_type})'
