@@ -102,21 +102,36 @@ class BaseMongoDBQuery(BaseQuery):
 
     # # # # # Update # # # # #
     async def update(self, _update: dict | None = None, /, **kwargs) -> None:
-        document = self._merge(_update, kwargs)
-        document.pop('_id', None)
-        self._validate_data(data=document, is_updating=True)
+        merged_update_query = self._merge(_update, kwargs)
+        merged_update_query.pop('_id', None)
 
-        for field, value in document.items():
-            setattr(self, field, value)
-        update_fields = {'$set': document}
-        await db.session[self.__class__.__name__].update_one({'_id': self._id}, update_fields)
+        self._validate_data(data=merged_update_query, is_updating=True)
+
+        update_query = {}
+        for field, value in merged_update_query.items():
+            if field.startswith('$'):
+                update_query[field] = value
+            else:
+                update_query['$set'] = update_query.get('$set', {})
+                update_query['$set'][field] = value
+                setattr(self, field, value)
+
+        await db.session[self.__class__.__name__].update_one({'_id': self._id}, update_query)
 
     @classmethod
     async def update_one(cls, _filter: dict, _update: dict | None = None, /, **kwargs) -> bool:
         prepare_id_for_query(_filter, is_mongo=True)
-        update_fields = {'$set': cls._merge(_update, kwargs)}
+        merged_update_query = cls._merge(_update, kwargs)
 
-        result = await db.session[cls.__name__].update_one(_filter, update_fields)
+        update_query = {}
+        for field, value in merged_update_query.items():
+            if field.startswith('$'):
+                update_query[field] = value
+            else:
+                update_query['$set'] = update_query.get('$set', {})
+                update_query['$set'][field] = value
+
+        result = await db.session[cls.__name__].update_one(_filter, update_query)
         return bool(result.matched_count)
 
     @classmethod
