@@ -1,3 +1,15 @@
+### 4.2.0
+- Support `OPTIONS` method
+
+### 4.1.3
+- Add `reload()` method to queries
+- Add `get_input_model()` & `get_output_model()` to `GenericAPI`
+- Support `per_delete()` & `post_delete()` in `DeleteAPI` 
+- Support mongodb operators in `update(`) & `update_one()`
+
+### 4.1.2
+- Fix some issues for `Windows`
+
 ### 4.1.1
 - Fix an issue in `Response.prepare_data()` when `data` is `Cursor`
 - Split `paginate` and `template` in `Pagination`

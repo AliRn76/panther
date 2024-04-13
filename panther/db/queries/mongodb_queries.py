@@ -61,7 +61,7 @@ class BaseMongoDBQuery(BaseQuery):
 
     @classmethod
     async def aggregate(cls, pipeline: Sequence[dict]) -> Iterable[dict]:
-        return await db.session[cls.__name__].aggregate(pipeline)
+        return await db.session[cls.__name__].aggregate(pipeline).to_list(None)
 
     # # # # # Count # # # # #
     @classmethod

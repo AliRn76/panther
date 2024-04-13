@@ -61,7 +61,7 @@ class CreateProject:
             },
             {
                 'field': 'database',
-                'message': '    0: PantherDB (File-Base, No Requirements)\n    1: MongoDB (Required `pymongo`)\n    2: No Database\nChoose Your Database (default is 0)',
+                'message': '    0: PantherDB (File-Base, No Requirements)\n    1: MongoDB (Required `motor`)\n    2: No Database\nChoose Your Database (default is 0)',
                 'validation_func': lambda x: x in ['0', '1', '2'],
                 'error_message': "Invalid Choice, '{}' not in ['0', '1', '2']",
             },

@@ -1,5 +1,6 @@
 from collections import namedtuple
 from collections.abc import Callable
+from urllib.parse import parse_qsl
 
 from panther.db import Model
 from panther.exceptions import InvalidPathVariableAPIError
@@ -74,11 +75,7 @@ class BaseRequest:
     @property
     def query_params(self) -> dict:
         if self._params is None:
-            self._params = {}
-            if (query_string := self.scope['query_string']) != b'':
-                for param in query_string.decode('utf-8').split('&'):
-                    k, *_, v = param.split('=')
-                    self._params[k] = v
+            self._params = {k: v for k, v in parse_qsl(self.scope['query_string'].decode('utf-8'))}
         return self._params
 
     @property

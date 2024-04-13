@@ -140,6 +140,7 @@ InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
 
 TIMEZONE = 'UTC'
 
+
 @API()
 async def hello_world_api():
     return {'detail': 'Hello World'}

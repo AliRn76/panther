@@ -54,5 +54,5 @@ def _convert_to_object_id(_id):
     try:
         return bson.ObjectId(_id)
     except bson.objectid.InvalidId:
-        msg = f'id={_id} is invalid bson.ObjectId'
-        raise bson.errors.InvalidId(msg)
+        logger.warning(f'id={_id} is not a valid bson.ObjectId')
+        return None

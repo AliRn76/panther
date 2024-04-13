@@ -227,6 +227,21 @@ class _BaseDatabaseTestCase:
         for book in books:
             assert isinstance(book, Book)
 
+    async def test_aggregation(self):
+        # Insert Many
+        insert_count = await self._insert_many()
+
+        # Find All with aggregate
+        books = await Book.aggregate([])
+        _len = sum(1 for _ in books)
+
+        assert isinstance(books, list)
+
+        assert _len == insert_count
+        for book in books:
+            assert isinstance(book, dict)
+            assert {*book.keys()} == {'_id', 'name', 'author', 'pages_count'}
+
     # # # Count
     async def test_count_all(self):
         # Insert Many
@@ -501,6 +516,9 @@ class TestPantherDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
 
     def tearDown(self) -> None:
         Path(self.DB_PATH).unlink()
+
+    async def test_aggregation(self):
+        pass
 
 
 @pytest.mark.mongodb
