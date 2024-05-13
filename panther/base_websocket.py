@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import asyncio
-import logging
+import orjson as json
 from multiprocessing.managers import SyncManager
 from typing import TYPE_CHECKING, Literal
 
-import orjson as json
-
+import logging
 from panther import status
 from panther.base_request import BaseRequest
 from panther.configs import config
@@ -53,9 +52,14 @@ class WebsocketConnections(Singleton):
             logger.info("Subscribed to 'websocket_connections' queue")
             while True:
                 try:
-                    received_message = queue.get()
+                    received_message = await asyncio.to_thread(queue.get)
+                    if received_message is None:
+                        # The None came from the CancelledError, so break the loop
+                        break
                     await self._handle_received_message(received_message=received_message)
-                except InterruptedError:
+                except (InterruptedError, asyncio.CancelledError):
+                    # Put the None to the queue, so the executor knows that it ends
+                    queue.put(None)
                     break
         else:
             # We have a redis connection, so use it for pubsub
