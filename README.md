@@ -25,7 +25,7 @@
 - Support Custom **Middlewares**
 - Support Custom **Throttling**
 - Support **Function-Base** and **Class-Base** APIs
-- It's One Of The **Fastest Python Framework** 
+- It's One Of The **Fastest Python Framework** ([Benchmark](https://www.techempower.com/benchmarks/#section=test&runid=d3364379-1bf7-465f-bcb1-e9c65b4840f9&hw=ph&test=fortune&l=zik0zj-6bi))
 ---
 
 ### Supported by
