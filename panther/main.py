@@ -194,7 +194,7 @@ class Panther:
         except Exception as e:  # noqa: BLE001
             # All unhandled exceptions are caught here
             exception = clean_traceback_message(exception=e)
-            logger.critical(exception)
+            logger.exception(exception)
             return await self._raise(send, monitoring=monitoring)
 
         # Call Middlewares .after()

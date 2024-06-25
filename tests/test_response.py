@@ -441,7 +441,7 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.body == b'012345'
 
     async def test_invalid_status_code(self):
-        with self.assertLogs(level='CRITICAL') as captured:
+        with self.assertLogs(level='ERROR') as captured:
             res = await self.client.get('invalid-status-code/')
 
         assert len(captured.records) == 1
