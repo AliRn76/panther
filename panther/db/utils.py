@@ -29,7 +29,7 @@ def log_query(func):
 def check_connection(func):
     async def wrapper(*args, **kwargs):
         if config.QUERY_ENGINE is None:
-            msg = "You don't have active database connection, Check your middlewares"
+            msg = "You don't have active database connection, Check your DATABASE block in configs"
             raise NotImplementedError(msg)
         return await func(*args, **kwargs)
 
