@@ -75,7 +75,7 @@ class MongoDBConnection(BaseDatabaseConnection):
 
 class PantherDBConnection(BaseDatabaseConnection):
     def init(self, path: str | None = None, encryption: bool = False):
-        params = {'db_name': str(path), 'return_dict': True, 'return_cursor': True}
+        params = {'db_name': path, 'return_dict': True, 'return_cursor': True}
         if encryption:
             try:
                 import cryptography
