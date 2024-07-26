@@ -364,6 +364,26 @@ class Query(BaseQuery):
 
         raise NotFoundAPIError(detail=f'{cls.__name__} Does Not Exist')
 
+    @classmethod
+    async def exists(cls, _filter: dict | None = None, /, **kwargs) -> bool:
+        """
+        Check if document exists in collection or not
+
+        Example:
+        -------
+            >>> from app.models import User
+
+            >>> await User.exists(age=18, name='Ali')
+            or
+            >>> await User.exists({'age': 18, 'name': 'Ali'})
+            or
+            >>> await User.exists({'age': 18}, name='Ali')
+        """
+        if await cls.count(_filter, **kwargs) > 0:
+            return True
+        else:
+            return False
+
     async def save(self) -> None:
         """
         Save the document

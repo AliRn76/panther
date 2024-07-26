@@ -142,7 +142,7 @@ def print_info(config: Config):
     if config.HAS_WS:
         try:
             import gunicorn
-            gunicorn_msg = f'{h} * You have WS so make sure to run gunicorn with --preload{h}\n'
+            gunicorn_msg = f'{h} * You have WS, so make sure to run gunicorn with --preload{h}\n'
         except ImportError:
             pass
 

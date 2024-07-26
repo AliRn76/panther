@@ -27,6 +27,12 @@ class GenericWebsocket(Websocket):
         """
         return await super().send(data=data)
 
+    async def close(self, code: int = status.WS_1000_NORMAL_CLOSURE, reason: str = ''):
+        """
+        Called whenever server or client, wants to close the connection
+        """
+        return await super().close(code=code, reason=reason)
+
 
 async def send_message_to_websocket(connection_id: str, data: any):
     await config.WEBSOCKET_CONNECTIONS.publish(connection_id=connection_id, action='send', data=data)

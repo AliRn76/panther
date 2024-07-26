@@ -50,6 +50,20 @@ def generate_secret_key() -> str:
 
 
 def round_datetime(dt: datetime, delta: timedelta):
+    """
+    Example:
+        >>> round_datetime(datetime(2024, 7, 15, 13, 22, 11, 562159), timedelta(days=2))
+        datetime.datetime(2024, 7, 16, 0, 0)
+
+        >>> round_datetime(datetime(2024, 7, 16, 13, 22, 11, 562159), timedelta(days=2))
+        datetime.datetime(2024, 7, 16, 0, 0)
+
+        >>> round_datetime(datetime(2024, 7, 17, 13, 22, 11, 562159), timedelta(days=2))
+        datetime.datetime(2024, 7, 18, 0, 0)
+
+        >>> round_datetime(datetime(2024, 7, 18, 13, 22, 11, 562159), timedelta(days=2))
+        datetime.datetime(2024, 7, 18, 0, 0)
+    """
     return datetime.min + round((dt - datetime.min) / delta) * delta
 
 
