@@ -96,6 +96,8 @@ class BasePantherDBQuery(BaseQuery):
         self._validate_data(data=kwargs, is_updating=True)
 
         for field, value in document.items():
+            if isinstance(value, dict):
+                value = type(getattr(self, field))(**value)
             setattr(self, field, value)
         db.session.collection(self.__class__.__name__).update_one({'_id': self._id}, **document)
 

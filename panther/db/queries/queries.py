@@ -2,6 +2,7 @@ import sys
 from typing import Sequence, Iterable
 
 from pantherdb import Cursor as PantherDBCursor
+from pydantic import BaseModel
 
 from panther.configs import QueryObservable
 from panther.db.cursor import Cursor
@@ -402,7 +403,12 @@ class Query(BaseQuery):
             >>> user = User(name='Ali')
             >>> await user.save()
         """
-        document = {field: getattr(self, field) for field in self.model_fields_set if field != 'request'}
+        document = {
+            field: getattr(self, field).model_dump()
+            if issubclass(type(getattr(self, field)), BaseModel)
+            else getattr(self, field)
+            for field in self.model_fields_set if field != 'request'
+        }
 
         if self.id:
             await self.update(document)

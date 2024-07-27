@@ -114,6 +114,8 @@ class BaseMongoDBQuery(BaseQuery):
             else:
                 update_query['$set'] = update_query.get('$set', {})
                 update_query['$set'][field] = value
+                if isinstance(value, dict):
+                    value = type(getattr(self, field))(**value)
                 setattr(self, field, value)
 
         await db.session[self.__class__.__name__].update_one({'_id': self._id}, update_query)
