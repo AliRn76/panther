@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - 'release-*'
+      - 'improvement-*'
 
 jobs:
   qodana:
