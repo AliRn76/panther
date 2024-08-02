@@ -407,7 +407,7 @@ class Query(BaseQuery):
             field: getattr(self, field).model_dump()
             if issubclass(type(getattr(self, field)), BaseModel)
             else getattr(self, field)
-            for field in self.model_fields_set if field != 'request'
+            for field in self.model_fields.keys() if field != 'request'
         }
 
         if self.id:
