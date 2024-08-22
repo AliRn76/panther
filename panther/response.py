@@ -1,11 +1,13 @@
 import asyncio
 from types import NoneType
-from typing import Generator, AsyncGenerator, Any, Type
+from typing import Generator, AsyncGenerator, Any, LiteralString, Type
 
 import orjson as json
 from pydantic import BaseModel
+from jinja2 import Environment, FileSystemLoader
 
 from panther import status
+from panther.configs import config
 from panther._utils import to_async_generator
 from panther.db.cursor import Cursor
 from pantherdb import Cursor as PantherDBCursor
@@ -215,3 +217,29 @@ class PlainTextResponse(Response):
         if isinstance(self.data, bytes):
             return self.data
         return self.data.encode()
+
+
+class TemplateResponse(HTMLResponse):
+    environment = Environment(loader=FileSystemLoader(config.TEMPLATES_DIR))
+
+    def __init__(
+        self,
+        source: str | LiteralString | NoneType = None,
+        path: str | NoneType = None,
+        context: dict | NoneType = None,
+        headers: dict | NoneType = None,
+        status_code: int = status.HTTP_200_OK,
+        pagination: Pagination | NoneType = None,
+    ):
+        """
+        :param source: should be a string
+        :param path: should be path of template file
+        :param context: should be dict of items
+        :param headers: should be dict of headers
+        :param status_code: should be int
+        :param pagination: instance of Pagination or None
+            Its template() method will be used
+        """
+
+        template = self.environment.get_template(path) if path is not None else self.environment.from_string(source)
+        super().__init__(template.render(context), headers, status_code, pagination=pagination)

@@ -56,6 +56,7 @@ setup(
         'rich~=13.7.1',
         'uvicorn~=0.27.1',
         'pytz~=2024.1',
+        'Jinja2~=3.1',
     ],
     extras_require=EXTRAS_REQUIRE,
 )

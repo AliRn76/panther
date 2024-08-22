@@ -58,6 +58,7 @@ class Panther:
         load_throttling(self._configs_module)
         load_user_model(self._configs_module)
         load_log_queries(self._configs_module)
+        load_templates_dir(self._configs_module)
         load_middlewares(self._configs_module)
         load_auto_reformat(self._configs_module)
         load_background_tasks(self._configs_module)

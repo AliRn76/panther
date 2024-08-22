@@ -22,7 +22,7 @@ from panther.db.cursor import Cursor
 from panther.generics import ListAPI
 from panther.pagination import Pagination
 from panther.request import Request
-from panther.response import HTMLResponse, Response, StreamingResponse
+from panther.response import HTMLResponse, Response, StreamingResponse, TemplateResponse
 from panther.throttling import Throttling
 from panther.websocket import close_websocket_connection, send_message_to_websocket
 
@@ -167,6 +167,11 @@ class HTMLAPI(GenericAPI):
         return HTMLResponse(data=html_data)
 
 
+class TemplateAPI(GenericAPI):
+    def get(self, *args, **kwargs) -> TemplateResponse:
+        return TemplateResponse(path='index.html', context={'username': 'Ali', 'age': 12})
+
+
 @API()
 async def send_message_to_websocket_api(connection_id: str):
     await send_message_to_websocket(connection_id=connection_id, data='Hello From API')
@@ -222,6 +227,7 @@ def logout_api(request: Request):
 def reader():
     from faker import Faker
     import time
+
     f = Faker()
     for _ in range(5):
         name = f.name()

@@ -29,6 +29,7 @@ __all__ = (
     'load_user_model',
     'load_log_queries',
     'load_middlewares',
+    'load_templates_dir',
     'load_auto_reformat',
     'load_background_tasks',
     'load_default_cache_exp',
@@ -80,6 +81,11 @@ def load_shutdown(_configs: dict, /) -> None:
 def load_timezone(_configs: dict, /) -> None:
     if timezone := _configs.get('TIMEZONE'):
         config.TIMEZONE = timezone
+
+
+def load_templates_dir(_configs: dict, /) -> None:
+    if templates_dir := _configs.get('TEMPLATES_DIR'):
+        config.TEMPLATES_DIR = templates_dir
 
 
 def load_database(_configs: dict, /) -> None:

@@ -2,7 +2,7 @@ from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
 from panther.app import API, GenericAPI
-from panther.response import Response, HTMLResponse, PlainTextResponse, StreamingResponse
+from panther.response import Response, HTMLResponse, PlainTextResponse, StreamingResponse, TemplateResponse
 from panther.test import APIClient
 
 
@@ -117,6 +117,18 @@ class ReturnHTMLResponse(GenericAPI):
 
 
 @API()
+async def return_template_response() -> TemplateResponse:
+    return TemplateResponse(source='<html><body><p>{{ content }}</p></body></html>', context={'content': 'Hello World'})
+
+
+class ReturnTemplateResponse(GenericAPI):
+    def get(self) -> TemplateResponse:
+        return TemplateResponse(
+            source='<html><body><p>{{ content }}</p></body></html>', context={'content': 'Hello World'}
+        )
+
+
+@API()
 async def return_plain_response():
     return PlainTextResponse('Hello World')
 
@@ -160,7 +172,7 @@ urls = {
     'response-tuple': return_response_tuple,
     'html': return_html_response,
     'plain': return_plain_response,
-
+    'template': return_template_response,
     'nothing-cls': ReturnNothing,
     'none-cls': ReturnNone,
     'dict-cls': ReturnDict,
@@ -172,8 +184,8 @@ urls = {
     'response-list-cls': ReturnResponseList,
     'response-tuple-cls': ReturnResponseTuple,
     'html-cls': ReturnHTMLResponse,
+    'template-cls': ReturnTemplateResponse,
     'plain-cls': ReturnPlainResponse,
-
     'stream': ReturnStreamingResponse,
     'async-stream': ReturnAsyncStreamingResponse,
     'invalid-status-code': ReturnInvalidStatusCode,
@@ -405,6 +417,26 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.headers['Content-Type'] == 'text/html; charset=utf-8'
         assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '41'
+
+    async def test_response_template(self) -> None:
+        res: Response = await self.client.get('template/')
+        assert res.status_code == 200
+        assert res.data == '<html><body><p>Hello World</p></body></html>'
+        assert res.body == b'<html><body><p>Hello World</p></body></html>'
+        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert res.headers['Content-Type'] == 'text/html; charset=utf-8'
+        assert res.headers['Access-Control-Allow-Origin'] == '*'
+        assert res.headers['Content-Length'] == '44'
+
+    async def test_response_template_cls(self) -> None:
+        res: Response = await self.client.get('template-cls/')
+        assert res.status_code == 200
+        assert res.data == '<html><body><p>Hello World</p></body></html>'
+        assert res.body == b'<html><body><p>Hello World</p></body></html>'
+        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert res.headers['Content-Type'] == 'text/html; charset=utf-8'
+        assert res.headers['Access-Control-Allow-Origin'] == '*'
+        assert res.headers['Content-Length'] == '44'
 
     async def test_response_plain(self):
         res = await self.client.get('plain/')

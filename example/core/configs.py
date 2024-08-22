@@ -65,6 +65,8 @@ DEFAULT_CACHE_EXP = timedelta(seconds=10)
 
 # THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))
 
+# TEMPLATES_DIR = 'templates'
+
 
 async def startup():
     print('Starting Up')
