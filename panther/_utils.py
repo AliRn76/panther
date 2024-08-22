@@ -4,12 +4,13 @@ import logging
 import re
 import subprocess
 import types
-from typing import Any, Generator, Iterator, AsyncGenerator
 from collections.abc import Callable
 from traceback import TracebackException
+from typing import Any, Generator, Iterator, AsyncGenerator
 
 from panther.exceptions import PantherError
 from panther.file_handler import File
+from panther.websocket import GenericWebsocket
 
 logger = logging.getLogger('panther')
 
@@ -99,19 +100,18 @@ def reformat_code(base_dir):
 def check_function_type_endpoint(endpoint: types.FunctionType) -> Callable:
     # Function Doesn't Have @API Decorator
     if not hasattr(endpoint, '__wrapped__'):
-        logger.critical(f'You may have forgotten to use @API() on the {endpoint.__name__}()')
-        raise TypeError
-    return endpoint
+        raise PantherError(
+            f'You may have forgotten to use `@API()` on the `{endpoint.__module__}.{endpoint.__name__}()`')
 
 
 def check_class_type_endpoint(endpoint: Callable) -> Callable:
     from panther.app import GenericAPI
 
-    if not issubclass(endpoint, GenericAPI):
-        logger.critical(f'You may have forgotten to inherit from GenericAPI on the {endpoint.__name__}()')
-        raise TypeError
-
-    return endpoint().call_method
+    if not issubclass(endpoint, (GenericAPI, GenericWebsocket)):
+        raise PantherError(
+            f'You may have forgotten to inherit from `panther.app.GenericAPI` or `panther.app.GenericWebsocket` '
+            f'on the `{endpoint.__module__}.{endpoint.__name__}()`'
+        )
 
 
 def async_next(iterator: Iterator):

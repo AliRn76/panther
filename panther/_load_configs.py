@@ -1,9 +1,10 @@
 import logging
 import sys
+import types
 from importlib import import_module
 from multiprocessing import Manager
 
-from panther._utils import import_class
+from panther._utils import import_class, check_function_type_endpoint, check_class_type_endpoint
 from panther.background_tasks import background_tasks
 from panther.base_websocket import WebsocketConnections
 from panther.cli.utils import import_error
@@ -36,6 +37,7 @@ __all__ = (
     'load_authentication_class',
     'load_urls',
     'load_websocket_connections',
+    'check_endpoints_inheritance',
 )
 
 logger = logging.getLogger('panther')
@@ -263,6 +265,15 @@ def load_websocket_connections():
         # Use the redis pubsub if `redis.is_connected`, else use the `multiprocessing.Manager`
         pubsub_connection = redis.create_connection_for_websocket() if redis.is_connected else Manager()
         config.WEBSOCKET_CONNECTIONS = WebsocketConnections(pubsub_connection=pubsub_connection)
+
+
+def check_endpoints_inheritance():
+    """Should be after `load_urls()`"""
+    for _, endpoint in config.FLAT_URLS.items():
+        if isinstance(endpoint, types.FunctionType):
+            check_function_type_endpoint(endpoint=endpoint)
+        else:
+            check_class_type_endpoint(endpoint=endpoint)
 
 
 def _exception_handler(field: str, error: str | Exception) -> PantherError:

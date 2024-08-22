@@ -67,6 +67,8 @@ class Panther:
         load_urls(self._configs_module, urls=self._urls)
         load_websocket_connections()
 
+        check_endpoints_inheritance()
+
     async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
         if scope['type'] == 'lifespan':
             message = await receive()
@@ -160,18 +162,9 @@ class Panther:
         await request.read_body()
 
         # Find Endpoint
-        _endpoint, found_path = find_endpoint(path=request.path)
-        if _endpoint is None:
+        endpoint, found_path = find_endpoint(path=request.path)
+        if endpoint is None:
             return await self._raise(send, monitoring=monitoring, status_code=status.HTTP_404_NOT_FOUND)
-
-        # Check Endpoint Type
-        try:
-            if isinstance(_endpoint, types.FunctionType):
-                endpoint = check_function_type_endpoint(endpoint=_endpoint)
-            else:
-                endpoint = check_class_type_endpoint(endpoint=_endpoint)
-        except TypeError:
-            return await self._raise(send, monitoring=monitoring, status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
         # Collect Path Variables
         request.collect_path_variables(found_path=found_path)
@@ -185,6 +178,10 @@ class Panther:
                     logger.critical(
                         f'Make sure to return the `request` at the end of `{middleware.__class__.__name__}.before()`')
                     return await self._raise(send, monitoring=monitoring)
+
+            # Prepare the method
+            if not isinstance(endpoint, types.FunctionType):
+                endpoint = endpoint().call_method
 
             # Call Endpoint
             response = await endpoint(request=request)

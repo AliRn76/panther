@@ -379,6 +379,60 @@ class TestLoadConfigs(TestCase):
                 AUTHENTICATION = None
                 SECRET_KEY = None
 
+    def test_check_function_endpoint_decorator(self):
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__, urls={'/': invalid_api})
+            except SystemExit:
+                assert True
+            else:
+                assert False
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == 'You may have forgotten to use `@API()` on the `tests.test_utils.invalid_api()`'
+
+    def test_check_class_endpoint_inheritance(self):
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__, urls={'/': InvalidAPI})
+            except SystemExit:
+                assert True
+            else:
+                assert False
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == (
+            f'You may have forgotten to inherit from `panther.app.GenericAPI` or `panther.app.GenericWebsocket` '
+            f'on the `tests.test_utils.InvalidAPI()`'
+        )
+
+    def test_check_websocket_inheritance(self):
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__, urls={'/': InvalidWebsocket})
+            except SystemExit:
+                assert True
+            else:
+                assert False
+
+        assert len(captured.records) == 1
+        assert captured.records[0].getMessage() == (
+            f'You may have forgotten to inherit from `panther.app.GenericAPI` or `panther.app.GenericWebsocket` '
+            f'on the `tests.test_utils.InvalidWebsocket()`'
+        )
+
+
+def invalid_api():
+    pass
+
+
+class InvalidAPI:
+    pass
+
+
+class InvalidWebsocket:
+    pass
+
 
 class CorrectTestMiddleware(BaseMiddleware):
     pass
