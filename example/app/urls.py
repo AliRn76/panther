@@ -32,6 +32,7 @@ urls = {
     'patch-user-class/': PatchUser,
     'file-class/': FileAPI,
     'html-response/': HTMLAPI,
+    'template-response/': TemplateAPI,
     '': single_user,
     'ws/<user_id>/': UserWebsocket,
     'send/<connection_id>/': send_message_to_websocket_api,

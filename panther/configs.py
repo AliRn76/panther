@@ -67,6 +67,7 @@ class Config:
     STARTUPS: list[Callable]
     SHUTDOWNS: list[Callable]
     TIMEZONE: str
+    TEMPLATES_DIR: str | list[str]
     AUTO_REFORMAT: bool
     QUERY_ENGINE: typing.Callable | None
     DATABASE: typing.Callable | None
@@ -110,6 +111,7 @@ default_configs = {
     'STARTUPS': [],
     'SHUTDOWNS': [],
     'TIMEZONE': 'UTC',
+    'TEMPLATES_DIR': 'templates',
     'AUTO_REFORMAT': False,
     'QUERY_ENGINE': None,
     'DATABASE': None,

@@ -68,6 +68,14 @@ It is used when you set `cache=True` in `@API` decorator
 _Example:_ `DEFAULT_CACHE_EXP = timedelta(seconds=10)`
 
 ---
+### [TEMPLATES_DIR](https://pantherpy.github.io/templates_dir)
+> <b>Type:</b> `str | list[str]` (<b>Default:</b> `'tempaltes'`)
+
+We use it when want to have different template directories
+
+_Example:_ `TEMPLATES_DIR = ['templates', 'app/templates']
+
+---
 ### [THROTTLING](https://pantherpy.github.io/throttling)
 > <b>Type:</b> `Throttling | None` (<b>Default:</b> `None`)
 

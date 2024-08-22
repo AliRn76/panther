@@ -1,3 +1,6 @@
+### 4.3.0
+- Support `Jinja2 Template Engine` 
+
 ### 4.2.0
 - Support `OPTIONS` method
 
