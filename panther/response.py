@@ -1,6 +1,15 @@
 import asyncio
+from sys import version_info
 from types import NoneType
-from typing import Generator, AsyncGenerator, Any, LiteralString, Type
+from typing import Generator, AsyncGenerator, Any, Type
+
+if version_info >= (3, 11):
+    from typing import LiteralString
+else:
+    from typing import TypeVar
+
+    LiteralString = TypeVar('LiteralString')
+
 
 import orjson as json
 from pydantic import BaseModel
