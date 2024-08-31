@@ -28,7 +28,7 @@ class BaseQuery:
     def _clean_error_message(cls, validation_error: ValidationError, is_updating: bool = False) -> str:
         error = ', '.join(
             '{field}="{error}"'.format(
-                field='.'.join(loc for loc in e['loc']),
+                field='.'.join(str(loc) for loc in e['loc']),
                 error=e['msg']
             )
             for e in validation_error.errors()
