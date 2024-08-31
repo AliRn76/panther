@@ -39,7 +39,7 @@ class MetaModelSerializer:
 
         # 4. Create a serializer
         return create_model(
-            __model_name=cls_name,
+            cls_name,
             __module__=namespace['__module__'],
             __validators__=namespace,
             __base__=(cls.model_serializer, BaseModel),

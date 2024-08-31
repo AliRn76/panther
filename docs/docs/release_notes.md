@@ -1,3 +1,6 @@
+### 4.3.2
+- Support `Python 3.13` 
+
 ### 4.3.0
 - Support `Jinja2 Template Engine` 
 
