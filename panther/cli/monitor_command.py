@@ -19,7 +19,7 @@ from panther.configs import config
 with contextlib.suppress(ImportError):
     from watchfiles import watch
 
-loggerr = logging.getLogger('panther')
+logger = logging.getLogger('panther')
 
 
 class Monitoring:
@@ -30,7 +30,7 @@ class Monitoring:
     def monitor(self) -> None:
         if error := self.initialize():
             # Don't continue if initialize() has error
-            loggerr.error(error)
+            logger.error(error)
             return
 
         with (
@@ -51,7 +51,10 @@ class Monitoring:
 
             for _ in watching:
                 for line in f.readlines():
-                    self.rows.append(line.split('|'))
+                    # line = date_time | method | path | ip:port | response_time(seconds) | status
+                    columns = line.split('|')
+                    columns[4] = self._clean_response_time(float(columns[4]))
+                    self.rows.append(columns)
                     live.update(self.generate_table())
 
     def initialize(self) -> str:
@@ -99,6 +102,20 @@ class Monitoring:
         # Print of each line needs two line, so --> x // 2
         lines = (os.get_terminal_size()[1] - 6) // 2
         self.rows = deque(self.rows, maxlen=lines)
+
+    @classmethod
+    def _clean_response_time(cls, response_time: int) -> str:
+        time_unit = ' s'
+
+        if response_time < 0.01:
+            response_time = response_time * 1_000
+            time_unit = 'ms'
+
+        elif response_time >= 10:
+            response_time = response_time / 60
+            time_unit = ' m'
+
+        return f'{round(response_time, 4)} {time_unit}'
 
 
 monitor = Monitoring().monitor

@@ -11,7 +11,7 @@ logger = logging.getLogger('monitoring')
 class Monitoring:
     """
     Create Log Message Like Below:
-    date time | method | path | ip:port | response_time [ms, s] | status
+    date_time | method | path | ip:port | response_time(seconds) | status
     """
     def __init__(self, is_ws: bool = False):
         self.is_ws = is_ws
@@ -30,15 +30,5 @@ class Monitoring:
 
     async def after(self, status: int | Literal['Accepted', 'Rejected', 'Closed'], /):
         if config.MONITORING:
-            response_time = perf_counter() - self.start_time
-            time_unit = ' s'
-
-            if response_time < 0.01:
-                response_time = response_time * 1_000
-                time_unit = 'ms'
-
-            elif response_time >= 10:
-                response_time = response_time / 60
-                time_unit = ' m'
-
-            logger.info(f'{self.log} | {round(response_time, 4)} {time_unit} | {status}')
+            response_time = perf_counter() - self.start_time  # Seconds
+            logger.info(f'{self.log} | {response_time} | {status}')
