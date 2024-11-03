@@ -29,12 +29,16 @@ EXTRAS_REQUIRE = {
         'redis==5.0.1',
         'motor~=3.5.0',
         'bpython~=0.24',
-        'ruff~=0.1.9',
         'python-jose~=3.3.0',
+        'ruff~=0.1.9',
         'websockets~=12.0',
         'cryptography~=42.0.8',
         'watchfiles~=0.21.0',
     ],
+    'dev': [
+        'ruff~=0.1.9',
+        'pytest~=8.3.3'
+    ]
 }
 
 setup(
