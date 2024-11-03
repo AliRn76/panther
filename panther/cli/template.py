@@ -63,7 +63,7 @@ from panther.utils import load_env
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-SECRET_KEY = env['SECRET_KEY']{DATABASE}{REDIS}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}
+SECRET_KEY = env['SECRET_KEY']{DATABASE}{REDIS}{VALKEY}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}
 
 # More Info: https://PantherPy.GitHub.io/urls/
 URLs = 'core.urls.url_routing'
@@ -134,7 +134,7 @@ from panther.utils import load_env, timezone_now
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-SECRET_KEY = env['SECRET_KEY']{DATABASE}{REDIS}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}
+SECRET_KEY = env['SECRET_KEY']{DATABASE}{REDIS}{VALKEY}{USER_MODEL}{AUTHENTICATION}{MONITORING}{LOG_QUERIES}{AUTO_REFORMAT}
 
 InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
 
@@ -201,6 +201,16 @@ REDIS_PART = """
 # More Info: https://PantherPy.GitHub.io/redis/
 REDIS = {
     'class': 'panther.db.connections.RedisConnection',
+    'host': '127.0.0.1',
+    'port': 6379,
+    'db': 0,
+}"""
+
+VALKEY_PART = """
+
+# More Info: https://PantherPy.GitHub.io/valkey/
+VALKEY = {
+    'class': 'panther.db.connections.ValkeyConnection',
     'host': '127.0.0.1',
     'port': 6379,
     'db': 0,

@@ -7,7 +7,7 @@ from typing import Literal
 from panther.base_websocket import Websocket
 from panther.cli.utils import import_error
 from panther.configs import config
-from panther.db.connections import redis
+from panther.db.connections import cache
 from panther.db.models import BaseUser, Model
 from panther.exceptions import AuthenticationAPIError
 from panther.request import Request
@@ -67,7 +67,7 @@ class JWTAuthentication(BaseAuthentication):
             msg = 'Authorization keyword is not valid'
             raise cls.exception(msg) from None
 
-        if redis.is_connected and await cls._check_in_cache(token=token):
+        if cache.is_connected and await cls._check_in_cache(token=token):
             msg = 'User logged out'
             raise cls.exception(msg) from None
 
@@ -134,22 +134,22 @@ class JWTAuthentication(BaseAuthentication):
     @classmethod
     async def logout(cls, raw_token: str) -> None:
         *_, token = raw_token.split()
-        if redis.is_connected:
+        if cache.is_connected:
             payload = cls.decode_jwt(token=token)
             remaining_exp_time = payload['exp'] - time.time()
             await cls._set_in_cache(token=token, exp=int(remaining_exp_time))
         else:
-            logger.error('`redis` middleware is required for `logout()`')
+            logger.error('`redis/valkey` middleware is required for `logout()`')
 
     @classmethod
     async def _set_in_cache(cls, token: str, exp: int) -> None:
         key = generate_hash_value_from_string(token)
-        await redis.set(key, b'', ex=exp)
+        await cache.set(key, b'', ex=exp)
 
     @classmethod
     async def _check_in_cache(cls, token: str) -> bool:
         key = generate_hash_value_from_string(token)
-        return bool(await redis.exists(key))
+        return bool(await cache.exists(key))
 
     @staticmethod
     def exception(message: str | JWTError | UnicodeEncodeError, /) -> type[AuthenticationAPIError]:

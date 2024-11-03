@@ -4,7 +4,7 @@ from panther import status
 from panther.app import API
 from panther.configs import config
 from panther.db.connections import db
-from panther.db.connections import redis
+from panther.db.connections import cache
 from panther.panel.utils import get_model_fields
 from panther.request import Request
 from panther.response import Response
@@ -76,8 +76,8 @@ async def healthcheck_api():
                 checks.append(ping)
             except PyMongoError:
                 checks.append(False)
-    # Redis
-    if redis.is_connected:
-        checks.append(await redis.ping())
+    # Cache server
+    if cache.is_connected:
+        checks.append(await cache.ping())
 
     return Response(all(checks))

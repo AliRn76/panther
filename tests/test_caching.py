@@ -66,7 +66,7 @@ class TestCaching(IsolatedAsyncioTestCase):
 
         # Check Logs
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == '`cache_exp_time` is not very accurate when `redis` is not connected.'
+        assert captured.records[0].getMessage() == '`cache_exp_time` is not very accurate when `redis/valkey` is not connected.'
 
         # Second Request
         res2 = await self.client.get('with-expired-cache')

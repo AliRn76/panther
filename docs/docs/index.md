@@ -18,7 +18,7 @@
 - Include Simple **File-Base** Database ([PantherDB](https://pypi.org/project/pantherdb/))
 - Built-in Document-oriented Databases **ODM** (**MongoDB**, PantherDB)
 - Built-in **Websocket** Support
-- Built-in API **Caching** System (In Memory, **Redis**)
+- Built-in API **Caching** System (In Memory, **Redis**, **Valkey**)
 - Built-in **Authentication** Classes
 - Built-in **Permission** Classes
 - Built-in Visual API **Monitoring** (In Terminal)
@@ -58,7 +58,7 @@
     <summary>3. <b>Install Panther</b></summary>
     - ⬇ Normal Installation
       <pre><b>$ pip install panther</b></pre>
-    -  ⬇ Include full requirements (MongoDB, JWTAuth, Ruff, Redis, Websockets, Cryptography, bpython)
+    -  ⬇ Include full requirements (MongoDB, JWTAuth, Ruff, Redis, Valkey, Websockets, Cryptography, bpython)
       <pre>$ pip install panther[full]</pre>
   </details>
   

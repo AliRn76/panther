@@ -6,7 +6,7 @@ from types import NoneType
 import orjson as json
 
 from panther.configs import config
-from panther.db.connections import redis
+from panther.db.connections import cache
 from panther.request import Request
 from panther.response import Response, ResponseDataTypes
 from panther.throttling import throttling_storage
@@ -38,14 +38,14 @@ def throttling_cache_key(request: Request, duration: timedelta) -> str:
 
 async def get_response_from_cache(*, request: Request, cache_exp_time: timedelta) -> CachedResponse | None:
     """
-    If redis.is_connected:
-        Get Cached Data From Redis
+    If redis.is_connected or valkey.is_connected:
+        Get Cached Data From Redis or Valkey
     else:
         Get Cached Data From Memory
     """
-    if redis.is_connected:
+    if cache.is_connected:
         key = api_cache_key(request=request)
-        data = (await redis.get(key) or b'{}').decode()
+        data = (await cache.get(key) or b'{}').decode()
         if cached_value := json.loads(data):
             return CachedResponse(*cached_value)
 
@@ -57,15 +57,15 @@ async def get_response_from_cache(*, request: Request, cache_exp_time: timedelta
 
 async def set_response_in_cache(*, request: Request, response: Response, cache_exp_time: timedelta | int) -> None:
     """
-    If redis.is_connected:
-        Cache The Data In Redis
+    If redis.is_connected or valkey.is_connected:
+        Cache The Data In Redis or Valkey
     else:
         Cache The Data In Memory
     """
 
     cache_data: tuple[ResponseDataTypes, int] = (response.data, response.status_code)
 
-    if redis.is_connected:
+    if cache.is_connected:
         key = api_cache_key(request=request)
 
         cache_exp_time = cache_exp_time or config.DEFAULT_CACHE_EXP
@@ -77,32 +77,32 @@ async def set_response_in_cache(*, request: Request, response: Response, cache_e
 
         if cache_exp_time is None:
             logger.warning(
-                'your response are going to cache in redis forever '
+                'your response are going to cache in server forever '
                 '** set DEFAULT_CACHE_EXP in `configs` or set the `cache_exp_time` in `@API.get()` to prevent this **'
             )
-            await redis.set(key, cache_data)
+            await cache.set(key, cache_data)
         else:
-            await redis.set(key, cache_data, ex=cache_exp_time)
+            await cache.set(key, cache_data, ex=cache_exp_time)
 
     else:
         key = api_cache_key(request=request, cache_exp_time=cache_exp_time)
         caches[key] = cache_data
 
         if cache_exp_time:
-            logger.info('`cache_exp_time` is not very accurate when `redis` is not connected.')
+            logger.info('`cache_exp_time` is not very accurate when `redis/valkey` is not connected.')
 
 
 async def get_throttling_from_cache(request: Request, duration: timedelta) -> int:
     """
-    If redis.is_connected:
-        Get Cached Data From Redis
+    If redis.is_connected or valkey.is_connected:
+        Get Cached Data From Redis or Valkey
     else:
         Get Cached Data From Memory
     """
     key = throttling_cache_key(request=request, duration=duration)
 
-    if redis.is_connected:
-        data = (await redis.get(key) or b'0').decode()
+    if cache.is_connected:
+        data = (await cache.get(key) or b'0').decode()
         return json.loads(data)
 
     else:
@@ -111,15 +111,15 @@ async def get_throttling_from_cache(request: Request, duration: timedelta) -> in
 
 async def increment_throttling_in_cache(request: Request, duration: timedelta) -> None:
     """
-    If redis.is_connected:
-        Increment The Data In Redis
+    If redis.is_connected or valkey.is_connected:
+        Increment The Data In Redis or Valkey
     else:
         Increment The Data In Memory
     """
     key = throttling_cache_key(request=request, duration=duration)
 
-    if redis.is_connected:
-        await redis.incrby(key, amount=1)
+    if cache.is_connected:
+        await cache.incrby(key, amount=1)
 
     else:
         throttling_storage[key] += 1
