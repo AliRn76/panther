@@ -16,7 +16,7 @@ from panther.cli.template import (
     AUTO_REFORMAT_PART,
     DATABASE_PANTHERDB_PART,
     DATABASE_MONGODB_PART,
-    USER_MODEL_PART, REDIS_PART,
+    USER_MODEL_PART, REDIS_PART, VALKEY_PART
 )
 from panther.cli.utils import cli_error
 
@@ -35,6 +35,7 @@ class CreateProject:
         self.database = '0'
         self.database_encryption = False
         self.redis = False
+        self.valkey = False
         self.authentication = False
         self.monitoring = True
         self.log_queries = True
@@ -74,6 +75,11 @@ class CreateProject:
             {
                 'field': 'redis',
                 'message': 'Do You Want To Use Redis (Required `redis`)',
+                'is_boolean': True,
+            },
+            {
+                'field': 'valkey',
+                'message': 'Do You Want To Use Valkey (Required `valkey`)',
                 'is_boolean': True,
             },
             {
@@ -147,6 +153,8 @@ class CreateProject:
         database_encryption = 'True' if self.database_encryption else 'False'
         database_extension = 'pdb' if self.database_encryption else 'json'
         redis_part = REDIS_PART if self.redis else ''
+        valkey_part = VALKEY_PART if self.valkey else ''
+
         if self.database == '0':
             database_part = DATABASE_PANTHERDB_PART
         elif self.database == '1':
@@ -163,6 +171,7 @@ class CreateProject:
         data = data.replace('{PANTHERDB_ENCRYPTION}', database_encryption)  # Should be after `DATABASE`
         data = data.replace('{PANTHERDB_EXTENSION}', database_extension)  # Should be after `DATABASE`
         data = data.replace('{REDIS}', redis_part)
+        data = data.replace('{VALKEY}', valkey_part)
 
         data = data.replace('{PROJECT_NAME}', self.project_name.lower())
         data = data.replace('{PANTHER_VERSION}', version())
