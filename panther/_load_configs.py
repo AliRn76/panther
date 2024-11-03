@@ -9,7 +9,7 @@ from panther.background_tasks import background_tasks
 from panther.base_websocket import WebsocketConnections
 from panther.cli.utils import import_error
 from panther.configs import JWTConfig, config
-from panther.db.connections import redis
+from panther.db.connections import cache
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.exceptions import PantherError
@@ -20,6 +20,7 @@ from panther.routings import finalize_urls, flatten_urls
 __all__ = (
     'load_configs_module',
     'load_redis',
+    'load_valkey',
     'load_startup',
     'load_shutdown',
     'load_timezone',
@@ -68,6 +69,21 @@ def load_redis(_configs: dict, /) -> None:
         args = redis_config.copy()
         args.pop('class', None)
         redis_class(**args, init=True)
+
+
+def load_valkey(_configs: dict, /) -> None:
+    if valkey_config := _configs.get('VALKEY'):
+        # Check valkey module installation
+        try:
+            from valkey.asyncio import Valkey
+        except ImportError as e:
+            raise import_error(e, package='valkey')
+        valkey_class_path = valkey_config.get('class', 'panther.db.connections.ValkeyConnection')
+        valkey_class = import_class(valkey_class_path)
+        # We have to create another dict then pop the 'class' else we can't pass the tests
+        args = valkey_config.copy()
+        args.pop('class', None)
+        valkey_class(**args, init=True)
 
 
 def load_startup(_configs: dict, /) -> None:
@@ -254,7 +270,7 @@ def load_urls(_configs: dict, /, urls: dict | None) -> None:
 
 
 def load_websocket_connections():
-    """Should be after `load_redis()`"""
+    """Should be after `load_redis()/load_valkey()`"""
     if config.HAS_WS:
         # Check `websockets`
         try:
@@ -262,8 +278,8 @@ def load_websocket_connections():
         except ImportError as e:
             raise import_error(e, package='websockets')
 
-        # Use the redis pubsub if `redis.is_connected`, else use the `multiprocessing.Manager`
-        pubsub_connection = redis.create_connection_for_websocket() if redis.is_connected else Manager()
+        # Use the redis/valkey pubsub if `cache.is_connected`, else use the `multiprocessing.Manager`
+        pubsub_connection = cache.create_connection_for_websocket() if cache.is_connected else Manager()
         config.WEBSOCKET_CONNECTIONS = WebsocketConnections(pubsub_connection=pubsub_connection)
 
 
