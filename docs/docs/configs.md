@@ -151,6 +151,13 @@ _Requires [redis](https://redis-py.readthedocs.io/en/stable/) package._
 
 We use it to create `redis` connection
 
+---
+### [VALKEY](https://pantherpy.github.io/valkey)
+> <b>Type:</b> `dict` (<b>Default:</b> `{}`)
+
+_Requires [valkey](https://valkey-py.readthedocs.io/en/stable/) package._
+
+We use it to create `valkey` connection
 
 ---
 ### [TIMEZONE](https://pantherpy.github.io/timezone)

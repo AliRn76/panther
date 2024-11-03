@@ -1,3 +1,6 @@
+### 4.3.3
+- Support 'valkey' as a cache backend
+
 ### 4.3.2
 - Support `Python 3.13` 
 
