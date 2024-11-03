@@ -77,7 +77,7 @@ async def set_response_in_cache(*, request: Request, response: Response, cache_e
 
         if cache_exp_time is None:
             logger.warning(
-                'your response are going to cache in redis forever '
+                'your response are going to cache in server forever '
                 '** set DEFAULT_CACHE_EXP in `configs` or set the `cache_exp_time` in `@API.get()` to prevent this **'
             )
             await cache.set(key, cache_data)
@@ -89,7 +89,7 @@ async def set_response_in_cache(*, request: Request, response: Response, cache_e
         caches[key] = cache_data
 
         if cache_exp_time:
-            logger.info('`cache_exp_time` is not very accurate when `redis` is not connected.')
+            logger.info('`cache_exp_time` is not very accurate when `redis/valkey` is not connected.')
 
 
 async def get_throttling_from_cache(request: Request, duration: timedelta) -> int:
