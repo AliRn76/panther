@@ -110,13 +110,13 @@ def print_uvicorn_help_message():
 
 
 def print_info(config: Config):
-    from panther.db.connections import redis
+    from panther.db.connections import cache
 
     mo = config.MONITORING
     lq = config.LOG_QUERIES
     bt = config.BACKGROUND_TASKS
     ws = config.HAS_WS
-    rd = redis.is_connected
+    rd = cache.is_connected
     bd = '{0:<39}'.format(str(config.BASE_DIR))
     if len(bd) > 39:
         bd = f'{bd[:36]}...'
@@ -148,7 +148,7 @@ def print_info(config: Config):
 
     # Message
     info_message = f"""{logo}
-{h}   Redis: {rd}                                       \t   {h}
+{h}   Cache Server: {rd}                                       \t   {h}
 {h}   Websocket: {ws}                                   \t   {h}
 {h}   Monitoring: {mo}                                  \t   {h}
 {h}   Log Queries: {lq}                                 \t   {h}
