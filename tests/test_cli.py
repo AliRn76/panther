@@ -66,6 +66,7 @@ class TestCLI(TestCase):
 │       \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/    │
 │                                                          │
 │   Redis: False                                           │
+│   Valkey: False                                          │
 │   Websocket: False                                       │
 │   Monitoring: True                                       │
 │   Log Queries: True                                      │
