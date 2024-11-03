@@ -9,13 +9,14 @@ import logging
 from panther import status
 from panther.base_request import BaseRequest
 from panther.configs import config
-from panther.db.connections import redis
+from panther.db.connections import cache
 from panther.exceptions import AuthenticationAPIError, InvalidPathVariableAPIError
 from panther.monitoring import Monitoring
 from panther.utils import Singleton, ULID
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis
+    from valkey.asyncio import Valkey
 
 logger = logging.getLogger('panther')
 
@@ -36,7 +37,7 @@ class PubSub:
 
 
 class WebsocketConnections(Singleton):
-    def __init__(self, pubsub_connection: Redis | SyncManager):
+    def __init__(self, pubsub_connection: Redis | Valkey | SyncManager):
         self.connections = {}
         self.connections_count = 0
         self.pubsub_connection = pubsub_connection
@@ -46,7 +47,7 @@ class WebsocketConnections(Singleton):
 
     async def __call__(self):
         if isinstance(self.pubsub_connection, SyncManager):
-            # We don't have redis connection, so use the `multiprocessing.Manager`
+            # We don't have redis/valkey connection, so use the `multiprocessing.Manager`
             self.pubsub: PubSub
             queue = self.pubsub.subscribe()
             logger.info("Subscribed to 'websocket_connections' queue")
@@ -62,7 +63,7 @@ class WebsocketConnections(Singleton):
                     queue.put(None)
                     break
         else:
-            # We have a redis connection, so use it for pubsub
+            # We have a redis/valkey connection, so use it for pubsub
             self.pubsub = self.pubsub_connection.pubsub()
             await self.pubsub.subscribe('websocket_connections')
             logger.info("Subscribed to 'websocket_connections' channel")
@@ -103,8 +104,8 @@ class WebsocketConnections(Singleton):
     async def publish(self, connection_id: str, action: Literal['send', 'close'], data: any):
         publish_data = {'connection_id': connection_id, 'action': action, 'data': data}
 
-        if redis.is_connected:
-            await redis.publish('websocket_connections', json.dumps(publish_data))
+        if cache.is_connected:
+            await cache.publish('websocket_connections', json.dumps(publish_data))
         else:
             self.pubsub.publish(publish_data)
 
