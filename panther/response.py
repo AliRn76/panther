@@ -249,6 +249,7 @@ class TemplateResponse(HTMLResponse):
         :param pagination: instance of Pagination or None
             Its template() method will be used
         """
-
+        if not context:
+            context = {}
         template = self.environment.get_template(path) if path is not None else self.environment.from_string(source)
         super().__init__(template.render(context), headers, status_code, pagination=pagination)
