@@ -229,8 +229,6 @@ class PlainTextResponse(Response):
 
 
 class TemplateResponse(HTMLResponse):
-    environment = Environment(loader=FileSystemLoader(config.TEMPLATES_DIR))
-
     def __init__(
         self,
         source: str | LiteralString | NoneType = None,
@@ -249,7 +247,5 @@ class TemplateResponse(HTMLResponse):
         :param pagination: instance of Pagination or None
             Its template() method will be used
         """
-        if not context:
-            context = {}
-        template = self.environment.get_template(path) if path is not None else self.environment.from_string(source)
-        super().__init__(template.render(context), headers, status_code, pagination=pagination)
+        template = config.JINJA_ENVIRONMENT.get_template(path) if path is not None else config.JINJA_ENVIRONMENT.from_string(source)
+        super().__init__(template.render(context or {}), headers, status_code, pagination=pagination)
