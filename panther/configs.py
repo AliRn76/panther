@@ -5,6 +5,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Callable
 
+import jinja2
 from pydantic._internal._model_construction import ModelMetaclass
 
 from panther.throttling import Throttling
@@ -68,6 +69,7 @@ class Config:
     SHUTDOWNS: list[Callable]
     TIMEZONE: str
     TEMPLATES_DIR: str | list[str]
+    JINJA_ENVIRONMENT: jinja2.Environment | None
     AUTO_REFORMAT: bool
     QUERY_ENGINE: typing.Callable | None
     DATABASE: typing.Callable | None
@@ -111,7 +113,8 @@ default_configs = {
     'STARTUPS': [],
     'SHUTDOWNS': [],
     'TIMEZONE': 'UTC',
-    'TEMPLATES_DIR': 'templates',
+    'TEMPLATES_DIR': '.',
+    'JINJA_ENVIRONMENT': None,
     'AUTO_REFORMAT': False,
     'QUERY_ENGINE': None,
     'DATABASE': None,

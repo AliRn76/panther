@@ -1,3 +1,6 @@
+### 4.3.4
+- Fix an issue on TemplateResponse when TEMPLATES_DIR is '.'
+
 ### 4.3.3
 - Fix not provided context in TemplateResponse
 

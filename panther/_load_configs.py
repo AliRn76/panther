@@ -4,6 +4,8 @@ import types
 from importlib import import_module
 from multiprocessing import Manager
 
+import jinja2
+
 from panther._utils import import_class, check_function_type_endpoint, check_class_type_endpoint
 from panther.background_tasks import background_tasks
 from panther.base_websocket import WebsocketConnections
@@ -88,6 +90,11 @@ def load_timezone(_configs: dict, /) -> None:
 def load_templates_dir(_configs: dict, /) -> None:
     if templates_dir := _configs.get('TEMPLATES_DIR'):
         config.TEMPLATES_DIR = templates_dir
+
+    if config.TEMPLATES_DIR == '.':
+        config.TEMPLATES_DIR = config.BASE_DIR
+
+    config.JINJA_ENVIRONMENT = jinja2.Environment(loader=jinja2.FileSystemLoader(config.TEMPLATES_DIR))
 
 
 def load_database(_configs: dict, /) -> None:
