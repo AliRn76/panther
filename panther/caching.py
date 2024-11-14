@@ -15,7 +15,7 @@ from panther.utils import generate_hash_value_from_string, round_datetime
 logger = logging.getLogger('panther')
 
 caches = {}
-CachedResponse = namedtuple('CachedResponse', ['data', 'content_type', 'status_code'])
+CachedResponse = namedtuple('CachedResponse', ['data', 'headers', 'status_code', 'pagination'])
 
 
 def api_cache_key(request: Request, cache_exp_time: timedelta | None = None) -> str:
@@ -63,7 +63,12 @@ async def set_response_in_cache(*, request: Request, response: Response, cache_e
         Cache The Data In Memory
     """
 
-    cache_data: tuple[ResponseDataTypes, int] = (response.data, response.content_type, response.status_code)
+    cache_data: tuple[ResponseDataTypes, int] = (
+        response.data,
+        response.headers,
+        response.status_code,
+        response.pagination,
+    )
 
     if redis.is_connected:
         key = api_cache_key(request=request)
