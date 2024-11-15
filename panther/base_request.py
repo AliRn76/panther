@@ -46,6 +46,9 @@ class Headers:
         items = ', '.join(f'{k}={v}' for k, v in self.__headers.items())
         return f'Headers({items})'
 
+    def __contains__(self, item):
+        return (item in self.__headers) or (item in self.__pythonic_headers)
+
     __repr__ = __str__
 
     @property
