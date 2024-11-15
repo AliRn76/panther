@@ -77,7 +77,7 @@
                         <div class="px-4 py-2 border-t border-gray-600">
                             ${value.map((item, index) => `
                                 <div class="py-1 text-sm text-gray-300">
-                                    <span class="text-gray-400">[${index}]:</span> 
+                                    <span class="text-gray-400">[${index}]:</span>
                                     ${formatValue(item, getDataType(item))}
                                 </div>
                             `).join('')}
@@ -98,7 +98,7 @@
                         <div class="px-4 py-2 border-t border-gray-600">
                             ${Object.entries(value).map(([key, val]) => `
                                 <div class="py-1 text-sm text-gray-300">
-                                    <span class="text-gray-400">${key}:</span> 
+                                    <span class="text-gray-400">${key}:</span>
                                     ${formatValue(val, getDataType(val))}
                                 </div>
                             `).join('')}
