@@ -1,4 +1,3 @@
-import asyncio
 import contextlib
 import logging
 import sys
@@ -12,7 +11,7 @@ import orjson as json
 import panther.logging
 from panther import status
 from panther._load_configs import *
-from panther._utils import clean_traceback_message, reformat_code, check_class_type_endpoint, check_function_type_endpoint
+from panther._utils import traceback_message, reformat_code
 from panther.cli.utils import print_info
 from panther.configs import config
 from panther.events import Event
@@ -38,7 +37,7 @@ class Panther:
             if config.AUTO_REFORMAT:
                 reformat_code(base_dir=config.BASE_DIR)
         except Exception as e:  # noqa: BLE001
-            logger.error(e.args[0] if isinstance(e, PantherError) else clean_traceback_message(e))
+            logger.error(e.args[0] if isinstance(e, PantherError) else traceback_message(exception=e))
             sys.exit()
 
         # Print Info
@@ -191,8 +190,8 @@ class Panther:
 
         except Exception as e:  # noqa: BLE001
             # All unhandled exceptions are caught here
-            exception = clean_traceback_message(exception=e)
-            logger.critical(exception)
+            exception = traceback_message(exception=e)
+            logger.error(exception)
             return await self._raise(send, monitoring=monitoring)
 
         # Call Middlewares .after()
@@ -226,4 +225,3 @@ class Panther:
         await monitoring.after(status_code)
         await send({'type': 'http.response.start', 'status': status_code, 'headers': headers})
         await send({'type': 'http.response.body', 'body': body, 'more_body': False})
-
