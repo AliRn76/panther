@@ -43,7 +43,7 @@ class Response:
         :param headers: should be dict of headers
         :param status_code: should be int
         :param pagination: instance of Pagination or None
-            Its template() method will be used
+            The `pagination.template()` method will be used
         """
         self.headers = headers or {}
         self.pagination: Pagination | None = pagination
@@ -236,7 +236,6 @@ class TemplateResponse(HTMLResponse):
         context: dict | NoneType = None,
         headers: dict | NoneType = None,
         status_code: int = status.HTTP_200_OK,
-        pagination: Pagination | NoneType = None,
     ):
         """
         :param source: should be a string
@@ -244,8 +243,13 @@ class TemplateResponse(HTMLResponse):
         :param context: should be dict of items
         :param headers: should be dict of headers
         :param status_code: should be int
-        :param pagination: instance of Pagination or None
-            Its template() method will be used
         """
-        template = config.JINJA_ENVIRONMENT.get_template(path) if path is not None else config.JINJA_ENVIRONMENT.from_string(source)
-        super().__init__(template.render(context or {}), headers, status_code, pagination=pagination)
+        if path:
+            template = config.JINJA_ENVIRONMENT.get_template(name=path)
+        else:
+            template = config.JINJA_ENVIRONMENT.from_string(source=source)
+        super().__init__(
+            data=template.render(context or {}),
+            headers=headers,
+            status_code=status_code,
+        )

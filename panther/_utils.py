@@ -78,15 +78,9 @@ def is_function_async(func: Callable) -> bool:
     return bool(func.__code__.co_flags & (1 << 7))
 
 
-def clean_traceback_message(exception: Exception) -> str:
-    """We are ignoring packages traceback message"""
+def traceback_message(exception: Exception) -> str:
     tb = TracebackException(type(exception), exception, exception.__traceback__)
-    stack = tb.stack.copy()
-    for t in stack:
-        if t.filename.find('site-packages/panther') != -1 or t.filename.find('site-packages\\panther') != -1:
-            tb.stack.remove(t)
-    _traceback = list(tb.format(chain=False))
-    return exception if len(_traceback) == 1 else f'{exception}\n' + ''.join(_traceback)
+    return ''.join(tb.format(chain=False))
 
 
 def reformat_code(base_dir):
