@@ -1,3 +1,4 @@
+from panther.configs import config
 from panther.db.models import Model
 
 
@@ -15,3 +16,10 @@ def get_model_fields(model):
         else:
             result[k] = getattr(v.annotation, '__name__', str(v.annotation))
     return result
+
+def get_models():
+    return [{
+        'index': i,
+        'name': model.__name__,
+        'module': model.__module__,
+    } for i, model in enumerate(config.MODELS)]
