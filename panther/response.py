@@ -78,19 +78,20 @@ class Response:
     def headers(self, headers: dict):
         self._headers = headers
 
-    def prepare_data(self, data: Any):
+    @classmethod
+    def prepare_data(cls, data: Any):
         """Make sure the response data is only ResponseDataTypes or Iterable of ResponseDataTypes"""
         if isinstance(data, (int | float | str | bool | bytes | NoneType)):
             return data
 
         elif isinstance(data, dict):
-            return {key: self.prepare_data(value) for key, value in data.items()}
+            return {key: cls.prepare_data(value) for key, value in data.items()}
 
         elif issubclass(type(data), BaseModel):
             return data.model_dump()
 
         elif isinstance(data, IterableDataTypes):
-            return [self.prepare_data(d) for d in data]
+            return [cls.prepare_data(d) for d in data]
 
         else:
             msg = f'Invalid Response Type: {type(data)}'
