@@ -1,11 +1,18 @@
+import http.cookies
 import string
 import random
 from pydantic import BaseModel
 
 from panther import Panther
 from panther.app import API
+from panther.base_websocket import Websocket
 from panther.db import Model
 from panther.panel.urls import urls as admin_url
+from panther.authentications import BaseAuthentication
+from panther.request import Request
+
+
+cookie: http.cookies.BaseCookie[str] = http.cookies.SimpleCookie()
 
 
 class Book(BaseModel):
@@ -29,6 +36,16 @@ async def generate_data():
             is_male=False,
         )
 
+class CookieAuthentication(BaseAuthentication):
+
+    @classmethod
+    async def authentication(cls, request: Request | Websocket):
+        if 'cookie' in request.headers:
+            return True
+        raise cls.exception('Cookie Not Found')
+
+
+AUTHENTICATION = 'admin_panel.CookieAuthentication'
 DATABASE = {
     'engine': {
         'class': 'panther.db.connections.PantherDBConnection',
