@@ -64,7 +64,7 @@ setup(
         'console_scripts': ['panther=panther.cli.main:start'],
     },
     package_data={
-        'panther': ['cli/*'],
+        'panther': ['cli/*', 'panel/templates/*'],
     },
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
