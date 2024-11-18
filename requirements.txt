@@ -6,3 +6,5 @@ pytest
 cryptography~=42.0
 websockets
 pymongo
+mkdocs
+mkdocs-material

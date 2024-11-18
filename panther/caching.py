@@ -8,14 +8,14 @@ import orjson as json
 from panther.configs import config
 from panther.db.connections import redis
 from panther.request import Request
-from panther.response import Response, ResponseDataTypes
+from panther.response import Response
 from panther.throttling import throttling_storage
 from panther.utils import generate_hash_value_from_string, round_datetime
 
 logger = logging.getLogger('panther')
 
 caches = {}
-CachedResponse = namedtuple('CachedResponse', ['data', 'headers', 'status_code', 'pagination'])
+CachedResponse = namedtuple('CachedResponse', ['data', 'headers', 'status_code'])
 
 
 def api_cache_key(request: Request, cache_exp_time: timedelta | None = None) -> str:
@@ -46,13 +46,16 @@ async def get_response_from_cache(*, request: Request, cache_exp_time: timedelta
     if redis.is_connected:
         key = api_cache_key(request=request)
         data = (await redis.get(key) or b'{}').decode()
-        if cached_value := json.loads(data):
-            return CachedResponse(*cached_value)
-
+        if value := json.loads(data):
+            return CachedResponse(
+                data=value[0].encode(),
+                headers=value[1],
+                status_code=value[2]
+            )
     else:
         key = api_cache_key(request=request, cache_exp_time=cache_exp_time)
-        if cached_value := caches.get(key):
-            return CachedResponse(*cached_value)
+        if value := caches.get(key):
+            return CachedResponse(*value)
 
 
 async def set_response_in_cache(*, request: Request, response: Response, cache_exp_time: timedelta | int) -> None:
@@ -63,21 +66,14 @@ async def set_response_in_cache(*, request: Request, response: Response, cache_e
         Cache The Data In Memory
     """
 
-    cache_data: tuple[ResponseDataTypes, int] = (
-        response.data,
-        response.headers,
-        response.status_code,
-        response.pagination,
-    )
-
     if redis.is_connected:
         key = api_cache_key(request=request)
-
+        cache_data: tuple[str, str, int] = (response.body.decode(), response.headers, response.status_code)
         cache_exp_time = cache_exp_time or config.DEFAULT_CACHE_EXP
         cache_data: bytes = json.dumps(cache_data)
 
         if not isinstance(cache_exp_time, timedelta | int | NoneType):
-            msg = '"cache_exp_time" should be instance of "datetime.timedelta" or "int" or "None"'
+            msg = '`cache_exp_time` should be instance of `datetime.timedelta`, `int` or `None`'
             raise TypeError(msg)
 
         if cache_exp_time is None:
@@ -91,6 +87,8 @@ async def set_response_in_cache(*, request: Request, response: Response, cache_e
 
     else:
         key = api_cache_key(request=request, cache_exp_time=cache_exp_time)
+        cache_data: tuple[bytes, str, int] = (response.body, response.headers, response.status_code)
+
         caches[key] = cache_data
 
         if cache_exp_time:

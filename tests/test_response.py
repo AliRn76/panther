@@ -473,11 +473,11 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.body == b'012345'
 
     async def test_invalid_status_code(self):
-        with self.assertLogs(level='CRITICAL') as captured:
+        with self.assertLogs(level='ERROR') as captured:
             res = await self.client.get('invalid-status-code/')
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage().split('\n')[0] == "Response `status_code` Should Be `int`. (`ali` is <class 'str'>)"
+        assert captured.records[0].getMessage().split('\n')[-2] == "TypeError: Response `status_code` Should Be `int`. (`ali` is <class 'str'>)"
 
         assert res.status_code == 500
         assert res.data == {'detail': 'Internal Server Error'}

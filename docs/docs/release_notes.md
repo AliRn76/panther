@@ -1,4 +1,7 @@
 ### 4.3.4
+- Cache Response Headers
+
+### 4.3.4
 - Fix an issue on TemplateResponse when TEMPLATES_DIR is '.'
 
 ### 4.3.3

@@ -11,7 +11,7 @@ from panther.caching import (
     get_response_from_cache,
     set_response_in_cache,
     get_throttling_from_cache,
-    increment_throttling_in_cache,
+    increment_throttling_in_cache
 )
 from panther.configs import config
 from panther.exceptions import (
@@ -20,7 +20,7 @@ from panther.exceptions import (
     JSONDecodeAPIError,
     MethodNotAllowedAPIError,
     ThrottlingAPIError,
-    BadRequestAPIError,
+    BadRequestAPIError
 )
 from panther.request import Request
 from panther.response import Response
@@ -51,7 +51,7 @@ class API:
         self.permissions = permissions or []
         self.throttling = throttling
         self.cache = cache
-        self.cache_exp_time = cache_exp_time
+        self.cache_exp_time = cache_exp_time # or config.DEFAULT_CACHE_EXP
         self.methods = methods
         self.request: Request | None = None
 
@@ -84,12 +84,7 @@ class API:
             # 6. Get Cached Response
             if self.cache and self.request.method == 'GET':
                 if cached := await get_response_from_cache(request=self.request, cache_exp_time=self.cache_exp_time):
-                    return Response(
-                        data=cached.data,
-                        headers=cached.headers,
-                        status_code=cached.status_code,
-                        pagination=cached.pagination,
-                    )
+                    return Response(data=cached.data, headers=cached.headers, status_code=cached.status_code)
 
             # 7. Put PathVariables and Request(If User Wants It) In kwargs
             kwargs = self.request.clean_parameters(func)
