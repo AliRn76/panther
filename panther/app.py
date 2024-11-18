@@ -11,7 +11,7 @@ from panther.caching import (
     get_response_from_cache,
     set_response_in_cache,
     get_throttling_from_cache,
-    increment_throttling_in_cache
+    increment_throttling_in_cache,
 )
 from panther.configs import config
 from panther.exceptions import (
@@ -20,7 +20,7 @@ from panther.exceptions import (
     JSONDecodeAPIError,
     MethodNotAllowedAPIError,
     ThrottlingAPIError,
-    BadRequestAPIError
+    BadRequestAPIError,
 )
 from panther.request import Request
 from panther.response import Response
@@ -34,16 +34,16 @@ logger = logging.getLogger('panther')
 
 class API:
     def __init__(
-            self,
-            *,
-            input_model: type[ModelSerializer] | type[BaseModel] | None = None,
-            output_model: type[ModelSerializer] | type[BaseModel] | None = None,
-            auth: bool = False,
-            permissions: list | None = None,
-            throttling: Throttling | None = None,
-            cache: bool = False,
-            cache_exp_time: timedelta | int | None = None,
-            methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
+        self,
+        *,
+        input_model: type[ModelSerializer] | type[BaseModel] | None = None,
+        output_model: type[ModelSerializer] | type[BaseModel] | None = None,
+        auth: bool = False,
+        permissions: list | None = None,
+        throttling: Throttling | None = None,
+        cache: bool = False,
+        cache_exp_time: timedelta | int | None = None,
+        methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
     ):
         self.input_model = input_model
         self.output_model = output_model
@@ -84,7 +84,12 @@ class API:
             # 6. Get Cached Response
             if self.cache and self.request.method == 'GET':
                 if cached := await get_response_from_cache(request=self.request, cache_exp_time=self.cache_exp_time):
-                    return Response(data=cached.data, status_code=cached.status_code)
+                    return Response(
+                        data=cached.data,
+                        headers=cached.headers,
+                        status_code=cached.status_code,
+                        pagination=cached.pagination,
+                    )
 
             # 7. Put PathVariables and Request(If User Wants It) In kwargs
             kwargs = self.request.clean_parameters(func)
@@ -105,11 +110,7 @@ class API:
 
             # 10. Set New Response To Cache
             if self.cache and self.request.method == 'GET':
-                await set_response_in_cache(
-                    request=self.request,
-                    response=response,
-                    cache_exp_time=self.cache_exp_time
-                )
+                await set_response_in_cache(request=self.request, response=response, cache_exp_time=self.cache_exp_time)
 
             # 11. Warning CacheExpTime
             if self.cache_exp_time and self.cache is False:
