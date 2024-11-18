@@ -5,6 +5,7 @@ from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
 from panther.app import API
+from panther.response import HTMLResponse
 from panther.test import APIClient
 from tests._utils import check_two_dicts
 
@@ -26,15 +27,21 @@ async def expired_cache_api():
     await asyncio.sleep(0.01)
     return {'detail': time.time()}
 
+@API(cache=True)
+async def expired_cache_html_response():
+    await asyncio.sleep(0.01)
+    return HTMLResponse(data=f'<html>{time.time()}</html>')
+
 
 urls = {
     'without-cache': without_cache_api,
     'with-cache': with_cache_api,
     'with-expired-cache': expired_cache_api,
+    'with-html-response-cache': expired_cache_html_response,
 }
 
 
-class TestCaching(IsolatedAsyncioTestCase):
+class TestInMemoryCaching(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         app = Panther(__name__, configs=__name__, urls=urls)
@@ -84,3 +91,18 @@ class TestCaching(IsolatedAsyncioTestCase):
         # After 5 seconds we should have a new response
         assert check_two_dicts(res1.data, res3.data) is False
 
+
+    async def test_with_cache_content_type(self):
+        # First Request
+        res1 = await self.client.get('with-html-response-cache')
+        assert res1.status_code == 200
+
+        # Second Request
+        res2 = await self.client.get('with-html-response-cache')
+        assert res2.status_code == 200
+
+        # Response should be cached
+        assert res1.data == res2.data
+
+        # Check Content-Type
+        assert res1.headers['Content-Type'] == res2.headers['Content-Type']

@@ -71,7 +71,7 @@ class TestAuthentication(IsolatedAsyncioTestCase):
     async def test_user_auth_required_without_auth_class(self):
         auth_config = config.AUTHENTICATION
         config.AUTHENTICATION = None
-        with self.assertLogs(level='CRITICAL') as captured:
+        with self.assertLogs(level='ERROR') as captured:
             res = await self.client.get('auth-required')
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == '"AUTHENTICATION" has not been set in configs'
@@ -163,8 +163,10 @@ class TestAuthentication(IsolatedAsyncioTestCase):
 
         expected_response = {
             'username': 'Username',
-            'password': 'Password'
+            'password': 'Password',
+            'last_login': None
         }
         assert res.status_code == 200
         res.data.pop('id')
+        res.data.pop('date_created')
         assert check_two_dicts(res.data, expected_response)

@@ -270,7 +270,7 @@ class TestWebsocket(TestCase):
 
     def test_with_auth_not_defined(self):
         ws = WebsocketClient(app=self.app)
-        with self.assertLogs(level='CRITICAL') as captured:
+        with self.assertLogs(level='ERROR') as captured:
             responses = ws.connect('with-auth?authorization=Bearer token')
 
         assert len(captured.records) == 1
