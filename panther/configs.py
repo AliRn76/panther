@@ -6,10 +6,8 @@ from pathlib import Path
 from typing import Callable
 
 import jinja2
-from pydantic._internal._model_construction import ModelMetaclass
-
+from pydantic import BaseModel as PydanticBaseModel
 from panther.throttling import Throttling
-
 
 class JWTConfig:
     def __init__(
@@ -55,9 +53,9 @@ class Config:
     SECRET_KEY: bytes | None
     HTTP_MIDDLEWARES: list[tuple]
     WS_MIDDLEWARES: list[tuple]
-    USER_MODEL: ModelMetaclass | None
-    AUTHENTICATION: ModelMetaclass | None
-    WS_AUTHENTICATION: ModelMetaclass | None
+    USER_MODEL: type[PydanticBaseModel] | None # type: type[panther.db.Model]
+    AUTHENTICATION: type[PydanticBaseModel] | None
+    WS_AUTHENTICATION: type[PydanticBaseModel] | None
     JWT_CONFIG: JWTConfig | None
     MODELS: list[dict]
     FLAT_URLS: dict

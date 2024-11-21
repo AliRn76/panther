@@ -41,7 +41,7 @@ class Cookie:
         only when a request is made with the https: scheme (except on localhost)
     httponly: [Optional] Forbids JavaScript from accessing the cookie,
         for example, through the `Document.cookie` property.
-    samesite: [Optional] Controls whether or not a cookie is sent with cross-site requests,
+    samesite: [Optional] Controls whether a cookie is sent with cross-site requests or not,
         `lax` is the default behavior if not specified.
     expires: [Deprecated] In HTTP version 1.1, `expires` was deprecated and replaced with the easier-to-use `max-age`
     """

@@ -1,7 +1,7 @@
 import contextlib
 import os
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 from pydantic import Field, WrapValidator, PlainSerializer, BaseModel as PydanticBaseModel
 
@@ -49,9 +49,12 @@ class Model(PydanticBaseModel, Query):
 
 
 class BaseUser(Model):
+    username: str
     password: str = Field('', max_length=64)
     last_login: datetime | None = None
     date_created: datetime | None = Field(default_factory=timezone_now)
+
+    USERNAME_FIELD: ClassVar = 'username'
 
     async def update_last_login(self) -> None:
         await self.update(last_login=timezone_now())
