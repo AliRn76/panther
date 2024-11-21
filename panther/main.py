@@ -215,6 +215,7 @@ class Panther:
     def _handle_exceptions(cls, e: APIError, /) -> Response:
         return Response(
             data=e.detail if isinstance(e.detail, dict) else {'detail': e.detail},
+            headers=e.headers,
             status_code=e.status_code,
         )
 
