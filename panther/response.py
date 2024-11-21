@@ -298,3 +298,20 @@ class TemplateResponse(HTMLResponse):
             headers=headers,
             status_code=status_code,
         )
+
+
+class RedirectResponse(Response):
+    def __init__(
+        self,
+        url: str,
+        headers: dict | None = None,
+        status_code: int = status.HTTP_307_TEMPORARY_REDIRECT,
+        set_cookies: list[Cookie] | None = None
+    ):
+        headers = headers or {}
+        headers['Location'] = url
+        super().__init__(
+            headers=headers,
+            status_code=status_code,
+            set_cookies=set_cookies,
+        )

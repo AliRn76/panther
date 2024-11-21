@@ -36,15 +36,16 @@ class API:
     def __init__(
         self,
         *,
+        methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
         input_model: type[ModelSerializer] | type[BaseModel] | None = None,
         output_model: type[ModelSerializer] | type[BaseModel] | None = None,
         auth: bool = False,
         permissions: list | None = None,
         throttling: Throttling | None = None,
         cache: bool = False,
-        cache_exp_time: timedelta | int | None = None,
-        methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
+            cache_exp_time: timedelta | int | None = None,
     ):
+        self.methods = methods
         self.input_model = input_model
         self.output_model = output_model
         self.auth = auth
@@ -52,7 +53,6 @@ class API:
         self.throttling = throttling
         self.cache = cache
         self.cache_exp_time = cache_exp_time # or config.DEFAULT_CACHE_EXP
-        self.methods = methods
         self.request: Request | None = None
 
     def __call__(self, func):
