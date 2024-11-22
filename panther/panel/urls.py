@@ -1,4 +1,4 @@
-from panther.panel.views import home_page_view, table_view, LoginView
+from panther.panel.views import home_page_view, TableView, CreateView, LoginView
 
 urls = {
     # '': models_api,
@@ -6,6 +6,7 @@ urls = {
     # '<index>/<document_id>/': single_document_api,
     # 'health': healthcheck_api,
     '': home_page_view,
-    '<index>/': table_view,
+    '<index>/': TableView,
+    '<index>/create/': CreateView,
     'login/': LoginView,
 }
