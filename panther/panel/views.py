@@ -47,20 +47,32 @@ def home_page_view():
     return TemplateResponse(path='home.html', context={'tables': get_models()})
 
 
-# @API(methods=['GET'], permissions=[AdminPanelPermission])
-@API(methods=['GET'])
-async def table_view(index: int):
-    model = config.MODELS[index]
-    if data := await model.find():
-        data = data
-    else:
-        data = []
+class TableView(GenericAPI):
+    # permissions = [AdminPanelPermission]
 
-    return TemplateResponse(
-        path='table.html',
-        context={
-            'fields': clean_model_schema(model.schema()),
-            'tables': get_models(),
-            'records': Response.prepare_data(data),
-        }
-    )
+    async def get(self, index: int):
+        model = config.MODELS[index]
+        if data := await model.find():
+            data = data
+        else:
+            data = []
+
+        return TemplateResponse(
+            path='table.html',
+            context={
+                'fields': clean_model_schema(model.schema()),
+                'tables': get_models(),
+                'records': Response.prepare_data(data),
+            }
+        )
+
+class CreateView(GenericAPI):
+    async def get(self, index: int):
+        model = config.MODELS[index]
+        return TemplateResponse(
+            path='create.html',
+            context={
+                'fields': clean_model_schema(model.schema()),
+                'tables': get_models(),
+            }
+        )
