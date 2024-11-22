@@ -3,7 +3,7 @@ from panther.app import API, GenericAPI
 from panther.configs import config
 from panther.db.models import BaseUser
 from panther.exceptions import RedirectAPIError, AuthenticationAPIError
-from panther.panel.utils import get_model_fields, get_models
+from panther.panel.utils import get_models, clean_model_schema
 from panther.permissions import BasePermission
 from panther.request import Request
 from panther.response import TemplateResponse, Response, Cookie, RedirectResponse
@@ -22,13 +22,12 @@ class LoginView(GenericAPI):
         return TemplateResponse(path='login.html')
 
     async def post(self, request: Request):
-        # # COMMENTED FOR DEVELOPMENT
-        # user: BaseUser = await config.USER_MODEL.find_one({config.USER_MODEL.USERNAME_FIELD: request.data['username']})
-        # if user is None:
-        #     raise AuthenticationAPIError
-        #
-        # if user.check_password(new_password=request.data['password']) is False:
-        #     return AuthenticationAPIError
+        user: BaseUser = await config.USER_MODEL.find_one({config.USER_MODEL.USERNAME_FIELD: request.data['username']})
+        if user is None:
+            raise AuthenticationAPIError
+
+        if user.check_password(new_password=request.data['password']) is False:
+            return AuthenticationAPIError
 
         return RedirectResponse(
             url=request.query_params.get('redirect_to', '..'),
@@ -48,7 +47,8 @@ def home_page_view():
     return TemplateResponse(path='home.html', context={'tables': get_models()})
 
 
-@API(methods=['GET'], permissions=[AdminPanelPermission])
+# @API(methods=['GET'], permissions=[AdminPanelPermission])
+@API(methods=['GET'])
 async def table_view(index: int):
     model = config.MODELS[index]
     if data := await model.find():
@@ -59,8 +59,7 @@ async def table_view(index: int):
     return TemplateResponse(
         path='table.html',
         context={
-            'table': model.__name__,
-            'fields': get_model_fields(model),
+            'fields': clean_model_schema(model.schema()),
             'tables': get_models(),
             'records': Response.prepare_data(data),
         }

@@ -21,8 +21,14 @@ class Book(BaseModel):
 
 
 
+class Person(BaseModel):
+    age: int
+    real_name: str
+
+
 class Author(Model):
     name: str
+    person: Person | None = None
     books: list[Book]
     is_male: bool | None
 
@@ -36,16 +42,7 @@ async def generate_data():
             is_male=False,
         )
 
-class CookieAuthentication(BaseAuthentication):
 
-    @classmethod
-    async def authentication(cls, request: Request | Websocket):
-        if 'cookie' in request.headers:
-            return True
-        raise cls.exception('Cookie Not Found')
-
-
-AUTHENTICATION = 'admin_panel.CookieAuthentication'
 DATABASE = {
     'engine': {
         'class': 'panther.db.connections.PantherDBConnection',
