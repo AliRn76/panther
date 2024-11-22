@@ -6,6 +6,8 @@ from panther.app import API
 from panther.request import Request
 from panther.response import Response
 from panther.throttling import Throttling
+from panther.openapi.urls import urls as openapi_urls
+
 
 InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
 
@@ -37,6 +39,7 @@ MIDDLEWARES = [TestMiddleware]
 url_routing = {
     '': hello_world,
     'info': info,
+    'swagger': openapi_urls
 }
 
 app = Panther(__name__, configs=__name__, urls=url_routing)
