@@ -1,20 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login Form</title>
-</head>
-<body>
-    <h2>Login Form</h2>
-    <form action="" method="POST">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br><br>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br><br>
-
-        <button type="submit">Login</button>
-    </form>
-</body>
+  <body
+    class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4"
+  >
+    <div
+      class="bg-gray-800 p-6 rounded-lg shadow-md w-full max-w-sm border border-gray-700"
+    >
+      <h2 class="text-xl font-semibold mb-6 text-center">Login</h2>
+      <form action="" method="POST" class="space-y-4">
+        <!-- Username Field -->
+        <div>
+          <label for="username" class="block text-sm font-medium mb-2"
+            >Username:</label
+          >
+          <input
+            type="text"
+            id="username"
+            name="username"
+            required
+            class="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
+        <!-- Password Field -->
+        <div>
+          <label for="password" class="block text-sm font-medium mb-2"
+            >Password:</label
+          >
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            class="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold transition-colors"
+        >
+          Login
+        </button>
+      </form>
+    </div>
+  </body>
 </html>
