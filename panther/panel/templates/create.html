@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Table Record</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-2xl font-semibold mb-6">Create New Record</h1>
+
+      <form id="createForm" class="space-y-4 bg-gray-800 p-6 rounded-lg">
+        <div id="dynamicInputs" class="space-y-4">
+          <!-- Inputs will be dynamically generated here -->
+        </div>
+        <button
+          type="submit"
+          class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg"
+        >
+          Submit
+        </button>
+      </form>
+    </div>
+
+    <script>
+      const fields = JSON.parse("{{fields|tojson|safe}}");
+      const fieldsArray = Object.entries(fields).map(([name, type]) => ({
+        name,
+        type,
+      }));
+
+      const dynamicInputsContainer = document.getElementById("dynamicInputs");
+
+      // Function to generate inputs dynamically
+      function generateInputs() {
+        fieldsArray.forEach(({ name, type }) => {
+          let inputField;
+
+          switch (type) {
+            case "text":
+            case "string":
+              inputField = `
+                            <label class="block">
+                                <span class="text-sm font-medium">${name}</span>
+                                <input type="text" name="${name}" class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" />
+                            </label>
+                        `;
+              break;
+
+            case "number":
+              inputField = `
+                            <label class="block">
+                                <span class="text-sm font-medium">${name}</span>
+                                <input type="number" name="${name}" class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" />
+                            </label>
+                        `;
+              break;
+
+            case "boolean":
+              inputField = `
+                            <label class="flex items-center space-x-3">
+                                <input type="checkbox" name="${name}" class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded" />
+                                <span class="text-sm font-medium">${name}</span>
+                            </label>
+                        `;
+              break;
+
+            case "file":
+              inputField = `
+                            <label class="block">
+                                <span class="text-sm font-medium">${name}</span>
+                                <input type="file" name="${name}" class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" />
+                            </label>
+                        `;
+              break;
+
+            default:
+              inputField = `
+                            <label class="block">
+                                <span class="text-sm font-medium">${name}</span>
+                                <input type="text" name="${name}" class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" />
+                            </label>
+                        `;
+              break;
+          }
+
+          dynamicInputsContainer.innerHTML += inputField;
+        });
+      }
+
+      // Generate inputs on page load
+      generateInputs();
+
+      // Form submission logic
+      document.getElementById("createForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const record = {};
+
+        formData.forEach((value, key) => {
+          record[key] = value;
+        });
+
+        console.log("New Record:", record);
+
+      });
+    </script>
+  </body>
+</html>
