@@ -94,7 +94,14 @@ def load_templates_dir(_configs: dict, /) -> None:
     if config.TEMPLATES_DIR == '.':
         config.TEMPLATES_DIR = config.BASE_DIR
 
-    config.JINJA_ENVIRONMENT = jinja2.Environment(loader=jinja2.FileSystemLoader(config.TEMPLATES_DIR))
+    config.JINJA_ENVIRONMENT = jinja2.Environment(
+        loader=jinja2.ChoiceLoader(
+            loaders=(
+                jinja2.FileSystemLoader(searchpath=config.TEMPLATES_DIR),
+                jinja2.PackageLoader(package_name='panther', package_path='openapi/templates/')
+            )
+        )
+    )
 
 
 def load_database(_configs: dict, /) -> None:
