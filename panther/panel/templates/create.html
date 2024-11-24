@@ -1,1 +1,131 @@
-<html>Hi</html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Table Record</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-2xl font-semibold mb-6">Create New Record</h1>
+
+      <form id="createForm" class="space-y-4 bg-gray-800 p-6 rounded-lg">
+        <div id="dynamicInputs" class="space-y-4">
+          <!-- Inputs will be dynamically generated here -->
+        </div>
+        <button
+          type="submit"
+          class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg"
+        >
+          Submit
+        </button>
+      </form>
+    </div>
+
+    <script>
+      // Example fields object
+      const fields = [
+        { title: 'Id', type: ['string', 'null'], required: false },
+        { title: 'Books', type: ['array'], required: true },
+        { title: 'Is Male', type: ['boolean', 'null'], required: true },
+        { title: 'Name', type: ['string'], required: true },
+        { title: 'Person', type: ['$Person', 'null'], required: false },
+      ];
+
+      const dynamicInputsContainer = document.getElementById('dynamicInputs');
+
+      function generateInputs() {
+        fields.forEach(({ title, type, required }) => {
+          let inputField;
+
+          if (Array.isArray(type)) {
+            if (type.includes('boolean')) {
+              inputField = `
+                <label class="flex items-center space-x-3">
+                  <input type="checkbox" name="${title}" title="${title}" ${
+                required ? 'required' : ''
+              } class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded" />
+                  <span class="text-sm font-medium">${title}</span>
+                </label>
+              `;
+            } else if (type.includes('array')) {
+              inputField = `
+                <label class="block">
+                  <span class="text-sm font-medium">${title}</span>
+                  <textarea name="${title}" title="${title}" ${
+                required ? 'required' : ''
+              } class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" placeholder='Enter items separated by commas'></textarea>
+                </label>
+              `;
+            } else if (type.includes('string') || type.includes('null')) {
+              inputField = `
+                <label class="block">
+                  <span class="text-sm font-medium">${title}</span>
+                  <input type="text" name="${title}" title="${title}" ${
+                required ? 'required' : ''
+              } class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" placeholder="${
+                required ? 'Required' : 'Optional'
+              }" />
+                </label>
+              `;
+            }
+          } else {
+            inputField = `
+              <label class="block">
+                <span class="text-sm font-medium">${title}</span>
+                <input type="text" name="${title}" title="${title}" ${
+              required ? 'required' : ''
+            } class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" />
+              </label>
+            `;
+          }
+
+          dynamicInputsContainer.innerHTML += inputField;
+        });
+      }
+
+      generateInputs();
+
+      const form = document.getElementById('createForm');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        fields.forEach(({ title, type }) => {
+          if (type.includes('boolean')) {
+            data[title] = formData.has(title);
+          }
+          if (type.includes('array')) {
+            data[title] =
+              data[title]?.split(',').map((item) => item.trim()) || [];
+          }
+        });
+
+        console.log('Submitted data:', data);
+
+        try {
+          const response = await fetch('/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+
+          if (response.ok) {
+            alert('Record created successfully!');
+            form.reset();
+          } else {
+            const error = await response.json();
+            alert(`Error: ${error.message || 'Something went wrong.'}`);
+          }
+        } catch (error) {
+          console.error('Submission failed:', error);
+          alert('Submission failed. Please try again.');
+        }
+      });
+    </script>
+  </body>
+</html>
