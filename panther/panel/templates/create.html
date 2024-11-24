@@ -25,89 +25,107 @@
     </div>
 
     <script>
-      const fields = JSON.parse("{{fields|tojson|safe}}");
-      const fieldsArray = Object.entries(fields).map(([name, type]) => ({
-        name,
-        type,
-      }));
+      // Example fields object
+      const fields = [
+        { title: 'Id', type: ['string', 'null'], required: false },
+        { title: 'Books', type: ['array'], required: true },
+        { title: 'Is Male', type: ['boolean', 'null'], required: true },
+        { title: 'Name', type: ['string'], required: true },
+        { title: 'Person', type: ['$Person', 'null'], required: false },
+      ];
 
-      const dynamicInputsContainer = document.getElementById("dynamicInputs");
+      const dynamicInputsContainer = document.getElementById('dynamicInputs');
 
-      // Function to generate inputs dynamically
       function generateInputs() {
-        fieldsArray.forEach(({ name, type }) => {
+        fields.forEach(({ title, type, required }) => {
           let inputField;
 
-          switch (type) {
-            case "text":
-            case "string":
+          if (Array.isArray(type)) {
+            if (type.includes('boolean')) {
               inputField = `
-                            <label class="block">
-                                <span class="text-sm font-medium">${name}</span>
-                                <input type="text" name="${name}" class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" />
-                            </label>
-                        `;
-              break;
-
-            case "number":
+                <label class="flex items-center space-x-3">
+                  <input type="checkbox" name="${title}" title="${title}" ${
+                required ? 'required' : ''
+              } class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded" />
+                  <span class="text-sm font-medium">${title}</span>
+                </label>
+              `;
+            } else if (type.includes('array')) {
               inputField = `
-                            <label class="block">
-                                <span class="text-sm font-medium">${name}</span>
-                                <input type="number" name="${name}" class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" />
-                            </label>
-                        `;
-              break;
-
-            case "boolean":
+                <label class="block">
+                  <span class="text-sm font-medium">${title}</span>
+                  <textarea name="${title}" title="${title}" ${
+                required ? 'required' : ''
+              } class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" placeholder='Enter items separated by commas'></textarea>
+                </label>
+              `;
+            } else if (type.includes('string') || type.includes('null')) {
               inputField = `
-                            <label class="flex items-center space-x-3">
-                                <input type="checkbox" name="${name}" class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded" />
-                                <span class="text-sm font-medium">${name}</span>
-                            </label>
-                        `;
-              break;
-
-            case "file":
-              inputField = `
-                            <label class="block">
-                                <span class="text-sm font-medium">${name}</span>
-                                <input type="file" name="${name}" class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" />
-                            </label>
-                        `;
-              break;
-
-            default:
-              inputField = `
-                            <label class="block">
-                                <span class="text-sm font-medium">${name}</span>
-                                <input type="text" name="${name}" class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" />
-                            </label>
-                        `;
-              break;
+                <label class="block">
+                  <span class="text-sm font-medium">${title}</span>
+                  <input type="text" name="${title}" title="${title}" ${
+                required ? 'required' : ''
+              } class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" placeholder="${
+                required ? 'Required' : 'Optional'
+              }" />
+                </label>
+              `;
+            }
+          } else {
+            inputField = `
+              <label class="block">
+                <span class="text-sm font-medium">${title}</span>
+                <input type="text" name="${title}" title="${title}" ${
+              required ? 'required' : ''
+            } class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300" />
+              </label>
+            `;
           }
 
           dynamicInputsContainer.innerHTML += inputField;
         });
       }
 
-      // Generate inputs on page load
       generateInputs();
 
-      // Form submission logic
-      document.getElementById("createForm").addEventListener("submit", (e) => {
+      const form = document.getElementById('createForm');
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const formData = new FormData(e.target);
-        const record = {};
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
 
-        formData.forEach((value, key) => {
-          record[key] = value;
+        fields.forEach(({ title, type }) => {
+          if (type.includes('boolean')) {
+            data[title] = formData.has(title);
+          }
+          if (type.includes('array')) {
+            data[title] =
+              data[title]?.split(',').map((item) => item.trim()) || [];
+          }
         });
 
-        console.log("New Record:", record);
+        console.log('Submitted data:', data);
 
+        try {
+          const response = await fetch('/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+
+          if (response.ok) {
+            alert('Record created successfully!');
+            form.reset();
+          } else {
+            const error = await response.json();
+            alert(`Error: ${error.message || 'Something went wrong.'}`);
+          }
+        } catch (error) {
+          console.error('Submission failed:', error);
+          alert('Submission failed. Please try again.');
+        }
       });
     </script>
   </body>
 </html>
-<html>Hi</html>
