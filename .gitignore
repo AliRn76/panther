@@ -10,3 +10,4 @@ build/
 .ruff_cache/
 docs/site/*
 *coverage*
+.prettierrc
