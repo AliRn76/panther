@@ -25,19 +25,18 @@
     </div>
 
     <script>
-      // Example fields object
-      const fields = [
-        { title: 'Id', type: ['string', 'null'], required: false },
-        { title: 'Books', type: ['array'], required: true },
-        { title: 'Is Male', type: ['boolean', 'null'], required: true },
-        { title: 'Name', type: ['string'], required: true },
-        { title: 'Person', type: ['$Person', 'null'], required: false },
-      ];
+      const fields = JSON.parse('{{fields|tojson|safe}}');
+      const fieldsObject = fields.fields;
+      const fieldsArray = Object.entries(fieldsObject).map(([key, value]) => ({
+        title: value.title || key,
+        type: value.type || [],
+        required: value.required || false,
+      }));
 
       const dynamicInputsContainer = document.getElementById('dynamicInputs');
 
       function generateInputs() {
-        fields.forEach(({ title, type, required }) => {
+        fieldsArray.forEach(({ title, type, required }) => {
           let inputField;
 
           if (Array.isArray(type)) {
