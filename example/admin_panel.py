@@ -17,8 +17,8 @@ cookie: http.cookies.BaseCookie[str] = http.cookies.SimpleCookie()
 class Book(BaseModel):
     title: str
     pages_count: int
-    readers: list[Person]
-    co_owner: Person
+    readers: list[Person] | None = None
+    co_owner: Person | None = None
 
 
 class Parent(BaseModel):
