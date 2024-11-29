@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import http.cookies
 import string
 import random
@@ -5,11 +7,8 @@ from pydantic import BaseModel
 
 from panther import Panther
 from panther.app import API
-from panther.base_websocket import Websocket
 from panther.db import Model
 from panther.panel.urls import urls as admin_url
-from panther.authentications import BaseAuthentication
-from panther.request import Request
 
 
 cookie: http.cookies.BaseCookie[str] = http.cookies.SimpleCookie()
@@ -18,12 +17,22 @@ cookie: http.cookies.BaseCookie[str] = http.cookies.SimpleCookie()
 class Book(BaseModel):
     title: str
     pages_count: int
+    readers: list[Person]
+    co_owner: Person
 
 
+class Parent(BaseModel):
+    name: str
+    age: str
+    has_child: bool
 
 class Person(BaseModel):
     age: int
     real_name: str
+    parent: Parent
+    is_alive: bool
+    friends: list[Person]
+
 
 
 class Author(Model):
