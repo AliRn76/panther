@@ -11,3 +11,4 @@ build/
 docs/site/*
 *coverage*
 .prettierrc
+.vscode
