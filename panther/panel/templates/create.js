@@ -1,4 +1,5 @@
 const schema = JSON.parse('{{fields|tojson|safe}}');
+console.log(schema);
 
 function toggleObjectVisibility(checkbox, contentId) {
   const content = document.getElementById(contentId);
@@ -12,70 +13,176 @@ function toggleObjectVisibility(checkbox, contentId) {
 }
 
 function createObjectInputs(objectSchema, container, prefix = '') {
+  if (!objectSchema || !objectSchema.fields) return;
+
   Object.entries(objectSchema.fields).forEach(([fieldName, field]) => {
     const fullFieldName = prefix ? `${prefix}.${fieldName}` : fieldName;
 
+    // Check if it's an array type
     if (field.type.includes('array')) {
-      // Array handling remains the same
-      const itemType = field.items.replace('$', '');
-      const arrayContainer = createArrayField(
-        fieldName,
-        itemType,
-        container
-      );
-    } else if (field.type.some((t) => t.startsWith('$'))) {
-      // Handle object type (either nullable or required)
+      // If items is specified, use it
+      if (field.items) {
+        const itemType = field.items.replace('$', '');
+        createArrayField(fieldName, itemType, container, fullFieldName, field);
+      } else {
+        // Handle array without items specification (simple types)
+        createSimpleArrayField(fieldName, container, fullFieldName, field);
+      }
+    } else if (
+      Array.isArray(field.type) &&
+      field.type.some((t) => t.startsWith('$'))
+    ) {
       const objectType = field.type
         .find((t) => t.startsWith('$'))
         .replace('$', '');
-      const isNullable = field.type.includes('null');
-
-      const objectWrapper = document.createElement('div');
-      objectWrapper.className = 'space-y-4';
-
-      // Only add the toggle if it's nullable
-      if (isNullable) {
-        const toggleId = `${fullFieldName}_toggle`;
-        const contentId = `${fullFieldName}_content`;
-
-        const toggle = document.createElement('label');
-        toggle.className = 'flex items-center space-x-3 mb-2';
-        toggle.innerHTML = `
-      <input type="checkbox" id="${toggleId}"
-             class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded"
-             ${!field.required ? '' : 'checked disabled'}
-             onchange="toggleObjectVisibility(this, '${contentId}')">
-      <span class="text-sm font-medium">Include ${field.title || fieldName
-          }</span>
-    `;
-        objectWrapper.appendChild(toggle);
-      }
-
-      // Create the object container
-      const objectContainer = document.createElement('div');
-      objectContainer.id = `${fullFieldName}_content`;
-      objectContainer.className =
-        'border border-gray-700 p-4 rounded-lg space-y-4';
-
-      // If nullable and not required, start hidden
-      if (isNullable && !field.required) {
-        objectContainer.classList.add('hidden');
-      }
-
-      objectContainer.innerHTML = `<h3 class="text-lg font-medium">${field.title || fieldName
-        }</h3>`;
-
-      // Create the nested object inputs
-      const nestedSchema = schema.$[objectType];
-      createObjectInputs(nestedSchema, objectContainer, fullFieldName);
-
-      objectWrapper.appendChild(objectContainer);
-      container.appendChild(objectWrapper);
+      createNestedObjectField(
+        fieldName,
+        objectType,
+        field,
+        container,
+        fullFieldName
+      );
     } else {
-      // Basic input handling remains the same
       createBasicInput(fieldName, field, container, fullFieldName);
     }
   });
+}
+
+function toggleArrayVisibility(checkbox, contentId) {
+  const content = document.getElementById(contentId);
+  if (content) {
+    content.classList.toggle('hidden', !checkbox.checked);
+  }
+}
+
+function createSimpleArrayField(fieldName, container, fullFieldName, field) {
+  const arrayContainer = document.createElement('div');
+  arrayContainer.className = 'border border-gray-400 p-4 rounded-lg space-y-2';
+
+  const spreadsheetId = `${fullFieldName}-container`;
+
+  const header = document.createElement('div');
+  header.className = 'flex items-center justify-between mb-4';
+  header.innerHTML = `
+    <h3 class="text-lg font-medium">${field.title || fieldName}</h3>
+    ${
+      field.type.includes('null')
+        ? `
+      <label class="flex items-center space-x-3">
+        <input type="checkbox" 
+               id="${fullFieldName}_toggle"
+               class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded"
+               ${!field.required ? '' : 'checked disabled'}
+               onchange="toggleArrayVisibility(this, '${spreadsheetId}')">
+        <span class="text-sm font-medium">Include ${
+          field.title || fieldName
+        }</span>
+      </label>
+    `
+        : ''
+    }
+  `;
+
+  const content = document.createElement('div');
+  content.innerHTML = `
+    <div class="flex justify-between items-center mb-4">
+      <button type="button" 
+              class="bg-green-600 px-3 py-1 rounded text-sm"
+              onclick="addSimpleArrayRow('${fullFieldName}', '${spreadsheetId}')">
+        Add Item
+      </button>
+    </div>
+    <div id="${spreadsheetId}" class="array-items space-y-4">
+    </div>
+  `;
+
+  if (field.type.includes('null') && !field.required) {
+    content.classList.add('hidden');
+  }
+
+  arrayContainer.appendChild(header);
+  arrayContainer.appendChild(content);
+  container.appendChild(arrayContainer);
+}
+
+function addSimpleArrayRow(arrayName, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error('Invalid container');
+    return;
+  }
+
+  const rowIndex = container.children.length;
+  const rowContainer = document.createElement('div');
+  rowContainer.className = 'flex items-center space-x-4';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.name = `${arrayName}[${rowIndex}]`;
+  input.className =
+    'flex-grow bg-gray-700 border border-gray-600 rounded px-3 py-2';
+
+  const deleteButton = document.createElement('button');
+  deleteButton.className = 'bg-red-600 px-3 py-1 rounded text-sm';
+  deleteButton.textContent = 'Delete';
+  deleteButton.onclick = () => rowContainer.remove();
+
+  rowContainer.appendChild(input);
+  rowContainer.appendChild(deleteButton);
+  container.appendChild(rowContainer);
+}
+function createNestedObjectField(
+  fieldName,
+  objectType,
+  field,
+  container,
+  fullFieldName
+) {
+  const objectWrapper = document.createElement('div');
+  objectWrapper.className = 'space-y-4 border border-gray-400 p-4 rounded-lg';
+
+  // Check if the objectType exists in schema.$
+  if (!schema.$ || !schema.$[objectType]) {
+    console.error(`Schema type ${objectType} not found`);
+    return;
+  }
+
+  const header = document.createElement('div');
+  header.className = 'flex items-center justify-between mb-4';
+  header.innerHTML = `
+    <h3 class="text-lg font-medium">${field.title || fieldName}</h3>
+    ${
+      field.type.includes('null')
+        ? `
+      <label class="flex items-center space-x-3">
+        <input type="checkbox" 
+               id="${fullFieldName}_toggle"
+               class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded"
+               ${!field.required ? '' : 'checked disabled'}
+               onchange="toggleObjectVisibility(this, '${fullFieldName}_content')">
+        <span class="text-sm font-medium">Include ${
+          field.title || fieldName
+        }</span>
+      </label>
+    `
+        : ''
+    }
+  `;
+
+  const contentContainer = document.createElement('div');
+  contentContainer.id = `${fullFieldName}_content`;
+  contentContainer.className = 'space-y-4';
+
+  if (field.type.includes('null') && !field.required) {
+    contentContainer.classList.add('hidden');
+  }
+
+  const nestedSchema = schema.$[objectType];
+  createObjectInputs(nestedSchema, contentContainer, fullFieldName);
+
+  objectWrapper.appendChild(header);
+  objectWrapper.appendChild(contentContainer);
+  container.appendChild(objectWrapper);
 }
 
 function createBasicInput(fieldName, field, container, fullFieldName) {
@@ -89,27 +196,31 @@ function createBasicInput(fieldName, field, container, fullFieldName) {
                     <input type="checkbox" name="${fullFieldName}"
                            ${field.required ? 'required' : ''}
                            class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded">
-                    <span class="text-sm font-medium">${field.title || fieldName
-      }</span>
+                    <span class="text-sm font-medium">${
+                      field.title || fieldName
+                    }</span>
                 </label>
             `;
   } else if (field.type.includes('string')) {
     inputHTML = `
                 <label class="block">
-                    <span class="text-sm font-medium">${field.title || fieldName}</span>
+                    <span class="text-sm font-medium">${
+                      field.title || fieldName
+                    }</span>
                     <input type="text" name="${fullFieldName}"
                            ${field.required ? 'required' : ''}
-                           class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300">
+                           class="w-full mt-1 p-2 bg-slate-900 rounded text-gray-300">
                 </label>
             `;
   } else if (field.type.includes('integer')) {
     inputHTML = `
                 <label class="block">
-                    <span class="text-sm font-medium">${field.title || fieldName
-      }</span>
+                    <span class="text-sm font-medium">${
+                      field.title || fieldName
+                    }</span>
                     <input type="number" name="${fullFieldName}"
                            ${field.required ? 'required' : ''}
-                           class="w-full mt-1 p-2 bg-gray-700 rounded text-gray-300">
+                           class="w-full mt-1 p-2 bg-slate-900 rounded text-gray-300">
                 </label>
             `;
   }
@@ -118,117 +229,60 @@ function createBasicInput(fieldName, field, container, fullFieldName) {
   container.appendChild(inputWrapper);
 }
 
-function createArrayField(fieldName, itemType, container) {
+function createArrayField(fieldName, itemType, container, fullFieldName) {
   const arrayContainer = document.createElement('div');
-  arrayContainer.className =
-    'border border-gray-700 p-4 rounded-lg space-y-4';
+  arrayContainer.className = 'border border-gray-700 p-4 rounded-lg space-y-4';
 
-  const arrayHeader = document.createElement('div');
-  arrayHeader.className = 'flex justify-between items-center mb-4';
+  const spreadsheetId = `${fullFieldName}-container`;
 
-  // Create a container for the spreadsheet with a unique ID
-  const spreadsheetId = `${fieldName}-container`;
+  // Make sure itemType exists in schema.$
+  if (!schema.$ || !schema.$[itemType]) {
+    console.error(`Schema type ${itemType} not found`);
+    return;
+  }
 
-  arrayHeader.innerHTML = `
-<h3 class="text-lg font-medium">${fieldName}</h3>
-<button type="button" class="bg-green-600 px-3 py-1 rounded text-sm"
-        onclick="addArrayRow('${fieldName}', '${itemType}', '${spreadsheetId}')">
-  Add Row
-</button>
-`;
+  arrayContainer.innerHTML = `
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-medium">${fieldName}</h3>
+      <button type="button" 
+              class="bg-green-600 px-3 py-1 rounded text-sm"
+              onclick="addArrayRow('${fullFieldName}', '${itemType}', '${spreadsheetId}')">
+        Add Item
+      </button>
+    </div>
+    <div id="${spreadsheetId}" class="array-items space-y-4"></div>
+  `;
 
-  const spreadsheet = document.createElement('div');
-  spreadsheet.className = 'array-container flex  gap-4 overflow-auto 	py-2';
-  spreadsheet.id = spreadsheetId;
-
-  const headerRow = document.createElement('div');
-  headerRow.className =
-    'flex flex-col gap-4 py-2';
-
-  const itemSchema = schema.$[itemType];
-  const columns = Object.entries(itemSchema.fields);
-
-
-  columns.forEach(([_, field]) => {
-    const headerCell = document.createElement('div');
-    headerCell.className = 'font-medium text-sm bg-gray-600 p-2 rounded min-w-24';
-    headerCell.textContent = field.title || field.name;
-    headerRow.appendChild(headerCell);
-  });
-
-  headerRow.appendChild(document.createElement('div'));
-
-  spreadsheet.appendChild(headerRow);
-  arrayContainer.appendChild(arrayHeader);
-  arrayContainer.appendChild(spreadsheet);
   container.appendChild(arrayContainer);
-
-  return spreadsheet;
 }
 
 function addArrayRow(arrayName, itemType, containerId) {
   const container = document.getElementById(containerId);
-  if (!container) return;
+  if (!container || !schema.$ || !schema.$[itemType]) {
+    console.error('Invalid container or schema type');
+    return;
+  }
 
   const itemSchema = schema.$[itemType];
-  const columns = Object.entries(itemSchema.fields);
+  const rowIndex = container.children.length;
 
-  const row = document.createElement('div');
-  row.className = 'flex flex-col gap-4 py-2	';
+  const rowContainer = document.createElement('div');
+  rowContainer.className =
+    'flex  gap-2 items-start space-x-4 py-2 pl-2 pr-1 bg-gray-700/50 rounded-lg';
 
+  const itemContent = document.createElement('div');
+  itemContent.className = 'flex-grow flex flex-col gap-8 w-full';
 
-  const rowIndex = container.children.length - 1;
+  createObjectInputs(itemSchema, itemContent, `${arrayName}[${rowIndex}]`);
 
-  columns.forEach(([fieldName, field]) => {
-    const cell = document.createElement('div');
+  const deleteButton = document.createElement('button');
+  deleteButton.className = 'bg-red-600 m-1 p-1 min-w-8 min-h-8 rounded text-sm';
+  deleteButton.textContent = 'X';
+  deleteButton.onclick = () => rowContainer.remove();
 
-    if (field.type.includes('boolean')) {
-      cell.innerHTML = `
-    <input type="checkbox"
-           name="${arrayName}[${rowIndex}].${fieldName}"
-           class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded"
-           ${field.required ? 'required' : ''}>
-  `;
-    } else if (field.type.includes('string')) {
-      cell.innerHTML = `
-    <input type="text"
-           name="${arrayName}[${rowIndex}].${fieldName}"
-           class="w-full bg-gray-700 rounded text-gray-300 text-md p-2 min-w-64 "
-           ${field.required ? 'required' : ''}>
-  `;
-    } else if (field.type.includes('integer')) {
-      cell.innerHTML = `
-    <input type="number"
-           name="${arrayName}[${rowIndex}].${fieldName}"
-           class="w-full bg-gray-700 rounded text-gray-300 text-md p-2  min-w-64"
-           ${field.required ? 'required' : ''}>
-  `;
-    } else if (field.type.some((t) => t.startsWith('$'))) {
-      const objectType = field.type
-        .find((t) => t.startsWith('$'))
-        .replace('$', '');
-      cell.innerHTML = `
-    <button type="button"
-            class="w-full bg-blue-600 px-2 py-1 rounded text-sm"
-            onclick="openObjectModal('${arrayName}[${rowIndex}].${fieldName}', '${objectType}')">
-      Edit
-    </button>
-  `;
-    }
-
-    row.appendChild(cell);
-  });
-
-  const deleteCell = document.createElement('div');
-  deleteCell.className = 'w-20'; // Width for action column
-  deleteCell.innerHTML = `
-    <button type="button"
-        class="bg-red-600 px-2 py-1 rounded text-sm"
-        onclick="this.closest('.flex').remove()">
-      Delete
-    </button>`;
-  row.appendChild(deleteCell);
-  container.appendChild(row);
+  rowContainer.appendChild(itemContent);
+  rowContainer.appendChild(deleteButton);
+  container.appendChild(rowContainer);
 }
 
 function openObjectModal(fieldName, objectType) {
@@ -264,31 +318,34 @@ function openObjectModal(fieldName, objectType) {
 const dynamicInputs = document.getElementById('dynamicInputs');
 
 createObjectInputs(schema, dynamicInputs);
-document
-  .getElementById('createForm')
-  .addEventListener('submit', async (e) => {
-    e.preventDefault();
 
-    const formData = new FormData(e.target);
-    const data = {};
+document.getElementById('createForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  const data = {};
 
-    for (let [key, value] of formData.entries()) {
-      if (key.includes('[')) {
-        // Handle array fields
-        const [arrayName, index, field] = key
-          .match(/([^\[]+)\[(\d+)\]\.(.+)/)
-          .slice(1);
-        if (!data[arrayName]) data[arrayName] = [];
-        if (!data[arrayName][index]) data[arrayName][index] = {};
-        data[arrayName][index][field] = value;
-      } else if (key.includes('.')) {
-        const [objectName, field] = key.split('.');
-        if (!data[objectName]) data[objectName] = {};
-        data[objectName][field] = value;
+  for (let [key, value] of formData.entries()) {
+    const parts = key.split(/[\[\].]/).filter(Boolean);
+    let current = data;
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (i === parts.length - 1) {
+        // Convert values to appropriate types
+        if (value === 'on') value = true;
+        if (value === 'off') value = false;
+        if (!isNaN(value) && value !== '') value = Number(value);
+        current[part] = value;
       } else {
-        data[key] = value;
+        if (/^\d+$/.test(parts[i + 1])) {
+          current[part] = current[part] || [];
+        } else {
+          current[part] = current[part] || {};
+        }
+        current = current[part];
       }
     }
+  }
 
-    console.log('Submitted data:', data);
-  });
+  console.log('Submitted data:', data);
+});
