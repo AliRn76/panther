@@ -13,7 +13,6 @@ else:
 
 import orjson as json
 from pydantic import BaseModel
-from jinja2 import Environment, FileSystemLoader
 
 from panther import status
 from panther.configs import config

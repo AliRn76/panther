@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from panther.middlewares.base import HTTPMiddleware
 from panther import Panther, status, version
 from panther.app import API
 from panther.request import Request
@@ -13,6 +14,13 @@ InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
 async def hello_world():
     return {'detail': 'Hello World'}
 
+class TestMiddleware(HTTPMiddleware):
+    async def before(self, request: Request):
+        return request
+
+    async def after(self, response: Response):
+        return response
+
 
 @API(cache=True, throttling=InfoThrottling)
 async def info(request: Request):
@@ -23,6 +31,8 @@ async def info(request: Request):
     }
     return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 
+
+MIDDLEWARES = [(TestMiddleware, {})]
 
 url_routing = {
     '': hello_world,

@@ -295,7 +295,7 @@ class TestLoadConfigs(TestCase):
                 MIDDLEWARES = []
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': fake.module should have 2 part: (path, kwargs)"
+        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': fake.module is not a valid middleware path"
 
     def test_middlewares_too_many_args(self):
         global MIDDLEWARES

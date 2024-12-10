@@ -154,22 +154,26 @@ def load_middlewares(_configs: dict, /) -> None:
     # Collect Middlewares
     for middleware in _configs.get('MIDDLEWARES') or []:
         if not isinstance(middleware, list | tuple):
-            raise _exception_handler(field='MIDDLEWARES', error=f'{middleware} should have 2 part: (path, kwargs)')
+            path_or_type = middleware
+            data = {}
 
-        if len(middleware) == 1:
-            path = middleware[0]
+        elif len(middleware) == 1:
+            path_or_type = middleware[0]
             data = {}
 
         elif len(middleware) > 2:
             raise _exception_handler(field='MIDDLEWARES', error=f'{middleware} too many arguments')
 
         else:
-            path, data = middleware
+            path_or_type, data = middleware
 
-        try:
-            middleware_class = import_class(path)
-        except (AttributeError, ModuleNotFoundError):
-            raise _exception_handler(field='MIDDLEWARES', error=f'{path} is not a valid middleware path')
+        if callable(path_or_type):
+            middleware_class = path_or_type
+        else:
+            try:
+                middleware_class = import_class(path_or_type)
+            except (AttributeError, ModuleNotFoundError):
+                raise _exception_handler(field='MIDDLEWARES', error=f'{path_or_type} is not a valid middleware path')
 
         if issubclass(middleware_class, BaseMiddleware) is False:
             raise _exception_handler(field='MIDDLEWARES', error='is not a sub class of BaseMiddleware')
