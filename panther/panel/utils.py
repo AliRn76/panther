@@ -10,6 +10,49 @@ def _ref_name(ref: str) -> str:
 
 
 def clean_model_schema(schema: dict) -> dict:
+    """
+    Example:
+        {
+        'title': 'Author',
+        '$': {
+            'Book': {
+                'title': 'Book',
+                'fields': {
+                    'title': {'title': 'Title', 'type': ['string'], 'required': True},
+                    'pages_count': {'title': 'Pages Count', 'type': ['integer'], 'required': True},
+                    'readers': {'title': 'Readers', 'type': ['array', 'null'], 'items': '$Person', 'default': None, 'required': False},
+                    'co_owner': {'type': ['$Person', 'null'], 'default': None, 'required': False}
+                }
+            },
+            'Parent': {
+                'title': 'Parent',
+                'fields': {
+                    'name': {'title': 'Name', 'type': ['string'], 'required': True},
+                    'age': {'title': 'Age', 'type': ['string'], 'required': True},
+                    'has_child': {'title': 'Has Child', 'type': ['boolean'], 'required': True}
+                }
+            },
+            'Person': {
+                'title': 'Person',
+                'fields': {
+                    'age': {'title': 'Age', 'type': ['integer'], 'required': True},
+                    'real_name': {'title': 'Real Name', 'type': ['string'], 'required': True},
+                    'parent': {'type': '$Parent', 'required': True},
+                    'is_alive': {'title': 'Is Alive', 'type': ['boolean'], 'required': True},
+                    'friends': {'title': 'Friends', 'type': ['array'], 'items': '$Person', 'required': True}
+                }
+            }
+        },
+        'fields': {
+            '_id': {'title': ' Id', 'type': ['string', 'null'], 'default': None, 'required': False},
+            'name': {'title': 'Name', 'type': ['string'], 'required': True},
+            'person': {'type': ['$Person', 'null'], 'default': None, 'required': False},
+            'books': {'title': 'Books', 'type': ['array'], 'items': '$Book', 'required': True},
+            'is_male': {'title': 'Is Male', 'type': ['boolean', 'null'], 'required': True}
+        }
+    }
+    """
+
     result = defaultdict(dict)
     result['title'] = schema['title']
     if '$defs' in schema:
@@ -20,10 +63,18 @@ def clean_model_schema(schema: dict) -> dict:
         result['fields'][k] = {}
         if 'title' in v:
             result['fields'][k]['title'] = v['title']
+
         if 'type' in v:
             result['fields'][k]['type'] = [v['type']]
-        elif 'anyOf' in v:
+
+        if 'anyOf' in v:
             result['fields'][k]['type'] = [i['type'] if 'type' in i else _ref_name(i['$ref']) for i in v['anyOf']]
+            if 'array' in result['fields'][k]['type']:
+                # One of them was array, so add the `items` field
+                for t in v['anyOf']:
+                    if 'items' in t:
+                        result['fields'][k]['items'] = _ref_name(t['items']['$ref'])
+
         if 'default' in v:
             result['fields'][k]['default'] = v['default']
 
@@ -34,7 +85,9 @@ def clean_model_schema(schema: dict) -> dict:
             result['fields'][k]['items'] = _ref_name(v['items']['$ref'])
 
         result['fields'][k]['required'] = k in schema['required']
-    return result
+
+    # Cast it to have a more clear stdout
+    return dict(result)
 
 
 # TODO: Remove this
