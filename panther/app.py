@@ -45,7 +45,7 @@ class API:
         throttling: Throttling | None = None,
         cache: bool = False,
         cache_exp_time: timedelta | int | None = None,
-            middlewares: list[BaseMiddleware] | None = None,
+        middlewares: list[BaseMiddleware] | None = None,
     ):
         self.methods = methods
         self.input_model = input_model

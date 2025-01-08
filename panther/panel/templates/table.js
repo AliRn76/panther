@@ -174,7 +174,7 @@ function selectTable(element) {
   const index = element.dataset.index;
   // Only update URL if it's different from current
   if (index !== getCurrentTableIndex().toString()) {
-    window.location.href = `/admin/${index}`;
+    window.location.href = `/admin/${index}/`;
   }
 }
 
