@@ -7,7 +7,7 @@ function getCurrentTableIndex() {
 function selectTable(element) {
   const index = element.dataset.index;
   // Always trigger a page reload even if it's the same index
-  window.location.href = `/admin/${index}`;
+  window.location.href = `/admin/${index}/`;
 }
 
 function setActiveTableFromUrl() {

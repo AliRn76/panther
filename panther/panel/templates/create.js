@@ -347,5 +347,22 @@ document.getElementById('createForm').addEventListener('submit', async (e) => {
     }
   }
 
-  console.log('Submitted data:', data);
+  try {
+    const response = await fetch('./', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('Success:', result);
+    } else {
+      console.error('Error:', response.status, response.statusText);
+    }
+  } catch (error) {
+    console.error('Fetch error:', error);
+  }
 });

@@ -18,7 +18,9 @@ class AdminPanelPermission(BasePermission):
 
 
 class LoginView(GenericAPI):
-    def get(self):
+    def get(self, request: Request):
+        if not request.path.endswith('/'):
+            return RedirectResponse(request.path + '/')
         return TemplateResponse(path='login.html')
 
     async def post(self, request: Request):
@@ -50,7 +52,9 @@ def home_page_view():
 class TableView(GenericAPI):
     # permissions = [AdminPanelPermission]
 
-    async def get(self, index: int):
+    async def get(self,  request: Request, index: int):
+        if not request.path.endswith('/'):
+            return RedirectResponse(request.path + '/')
         model = config.MODELS[index]
         if data := await model.find():
             data = data
@@ -67,7 +71,9 @@ class TableView(GenericAPI):
         )
 
 class CreateView(GenericAPI):
-    async def get(self, index: int):
+    async def get(self, request: Request, index: int):
+        if not request.path.endswith('/'):
+            return RedirectResponse(request.path + '/')
         model = config.MODELS[index]
         return TemplateResponse(
             path='create.html',
@@ -76,3 +82,8 @@ class CreateView(GenericAPI):
                 'tables': get_models(),
             }
         )
+
+    async def post(self, request: Request, index: int):
+        model = config.MODELS[index]
+        validated_data = API.validate_input(model=model, request=request)
+        return await model.insert_one(validated_data)
