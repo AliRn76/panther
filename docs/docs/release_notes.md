@@ -1,6 +1,7 @@
 ### 5.0.0
 - Change `path` arg to `name` in `TemplateResponse()`
 - Change `new_password` arg to `password` in `BaseUser.check_password()`
+- New Style of Middleware declaration [[Doc]](https://...)
 
 ### 4.3.6
 - Support middleware class in MIDDLEWARES
