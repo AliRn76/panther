@@ -1,4 +1,5 @@
-### 5.0.5
+### 5.0.0
+- Change `path` arg to `name` in `TemplateResponse()`
 - Change `new_password` arg to `password` in `BaseUser.check_password()`
 
 ### 4.3.6
