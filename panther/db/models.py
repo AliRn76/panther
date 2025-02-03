@@ -75,10 +75,10 @@ class BaseUser(Model):
 
         self.password = f'{salt.hex()}{derived_key}'
 
-    def check_password(self, new_password: str) -> bool:
+    def check_password(self, password: str) -> bool:
         size = URANDOM_SIZE * 2
         salt = self.password[:size]
         stored_hash = self.password[size:]
-        derived_key = scrypt(password=new_password, salt=bytes.fromhex(salt), digest=True)
+        derived_key = scrypt(password=password, salt=bytes.fromhex(salt), digest=True)
 
         return derived_key == stored_hash

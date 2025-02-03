@@ -1,5 +1,8 @@
+### 5.0.5
+- Change `new_password` arg to `password` in `BaseUser.check_password()`
+
 ### 4.3.6
--Support middleware class in MIDDLEWARES
+- Support middleware class in MIDDLEWARES
 
 ### 4.3.4
 - Cache Response Headers
