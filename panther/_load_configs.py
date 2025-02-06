@@ -281,6 +281,9 @@ def load_websocket_connections():
 def check_endpoints_inheritance():
     """Should be after `load_urls()`"""
     for _, endpoint in config.FLAT_URLS.items():
+        if endpoint == {}:
+            continue
+
         if isinstance(endpoint, types.FunctionType):
             check_function_type_endpoint(endpoint=endpoint)
         else:

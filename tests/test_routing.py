@@ -7,6 +7,7 @@ from panther.routings import (
     finalize_urls,
     find_endpoint,
     flatten_urls,
+    ENDPOINT_NOT_FOUND,
 )
 
 
@@ -17,7 +18,7 @@ class TestRoutingFunctions(TestCase):
         config.URLS = {}
 
     # Collecting
-    def test_collect_ellipsis_urls(self):
+    def test_flatten_urls_ellipsis_endpoints(self):
         urls1 = {
             'user/': {
                 '<user_id>/': ...,
@@ -43,7 +44,7 @@ class TestRoutingFunctions(TestCase):
         else:
             assert False
 
-    def test_collect_None_urls(self):
+    def test_flatten_urls_none_endpoints(self):
         urls1 = {
             'user/': {
                 'list/': None,
@@ -69,7 +70,7 @@ class TestRoutingFunctions(TestCase):
         else:
             assert False
 
-    def test_collect_invalid_urls(self):
+    def test_flatten_urls_invalid_url(self):
         def temp_func(): pass
 
         urls1 = {
@@ -97,7 +98,7 @@ class TestRoutingFunctions(TestCase):
         else:
             assert False
 
-    def test_collect_empty_url(self):
+    def test_flatten_urls_empty_url(self):
         def temp_func(): pass
 
         urls = {
@@ -111,7 +112,7 @@ class TestRoutingFunctions(TestCase):
         }
         assert collected_urls == expected_result
 
-    def test_collect_empty_url_nested(self):
+    def test_flatten_urls_nested_empty_urls(self):
         def temp_func(): pass
 
         urls = {
@@ -139,7 +140,7 @@ class TestRoutingFunctions(TestCase):
         }
         assert collected_urls == expected_result
 
-    def test_collect_root_url(self):
+    def test_flatten_urls_slash_url(self):
         def temp_func(): pass
 
         urls = {
@@ -153,7 +154,7 @@ class TestRoutingFunctions(TestCase):
         }
         assert collected_urls == expected_result
 
-    def test_collect_root_url_nested(self):
+    def test_flatten_urls_nested_slash_urls(self):
         def temp_func(): pass
 
         urls = {
@@ -181,7 +182,7 @@ class TestRoutingFunctions(TestCase):
         }
         assert collected_urls == expected_result
 
-    def test_collect_simple_urls(self):
+    def test_flatten_urls_simple_urls(self):
         def temp_func(): pass
 
         urls = {
@@ -199,7 +200,7 @@ class TestRoutingFunctions(TestCase):
         }
         assert collected_urls == expected_result
 
-    def test_collect_simple_nested_urls(self):
+    def test_flatten_urls_simple_nested_urls(self):
         def temp_func(): pass
 
         urls = {
@@ -219,7 +220,7 @@ class TestRoutingFunctions(TestCase):
         }
         assert collected_urls == expected_result
 
-    def test_collect_simple_nested_urls_without_slash_at_end(self):
+    def test_flatten_urls_simple_nested_urls_without_slash_at_end(self):
         def temp_func(): pass
 
         urls = {
@@ -239,7 +240,7 @@ class TestRoutingFunctions(TestCase):
         }
         assert collected_urls == expected_result
 
-    def test_collect_complex_nested_urls(self):
+    def test_flatten_urls_complex_nested_urls(self):
         def temp_func(): pass
 
         urls = {
@@ -282,6 +283,7 @@ class TestRoutingFunctions(TestCase):
             'admin/v1/users/list/not-registered/': temp_func,
             'admin/v1/users/detail/registered/': temp_func,
             'admin/v1/users/detail/not-registered/': temp_func,
+            'admin/v2/': {},
         }
         assert collected_urls == expected_result
 
@@ -502,6 +504,7 @@ class TestRoutingFunctions(TestCase):
                         },
                     },
                 },
+                'v2': {}
             },
         }
         assert finalized_urls == expected_result
@@ -994,3 +997,107 @@ class TestRoutingFunctions(TestCase):
 
         assert path_variables['user_id'] == str(_user_id)
         assert path_variables['id'] == str(_id)
+
+    # Complete test ready for benchmarking
+    def test_find_endpoint_complete(self):
+        def _(): pass
+        def _3(): pass
+        def _1(): pass
+        def _4(): pass
+        def _159(): pass
+        def _16(): pass
+        def _1710(): pass
+        def _18(): pass
+        def _19(): pass
+        def _211(): pass
+        def _2121516(): pass
+        def _2141718(): pass
+        def _220(): pass
+        def _22122(): pass
+
+        from panther.configs import config
+
+        config.URLS = {
+            '': _,
+            '0': {
+                '21': {}
+            },
+            '1': {
+                '': _1,
+                '<5>': {
+                    '<9>': _159
+                },
+                '6': _16,
+                '7': {
+                    '10': _1710
+                },
+                '<8>': _18,
+            },
+            '<2>': {
+                '11': _211,
+                '12': {
+                    '15': {
+                        '16': _2121516
+                    }
+                },
+                '<14>': {
+                    '<17>': {
+                        '<18>': _2141718
+                    }
+                },
+                '19': {
+                    '': _19
+                },
+                '<20>': _220,
+                '21': {
+                    '<22>': {
+                        '': _22122
+                    }
+                }
+            },
+            '3': _3,
+            '<4>': _4,
+        }
+
+        test_cases = {
+            '': (_, ''),
+            '0': ENDPOINT_NOT_FOUND,
+            '0/21': ENDPOINT_NOT_FOUND,
+            '3': (_3, '3'),
+            '_4': (_4, '<4>'),
+            '1': (_1, '1'),
+            '1/_5/_9': (_159, '1/<5>/<9>'),
+            '1/6': (_16, '1/6'),
+            '1/7/10': (_1710, '1/7/10'),
+            '1/7': ENDPOINT_NOT_FOUND,
+            '1/_8': (_18, '1/<8>'),
+            '_2/11': (_211, '<2>/11'),
+            '_2/12/15/16': (_2121516, '<2>/12/15/16'),
+            '_2/_14/_17/_18': (_2141718, '<2>/<14>/<17>/<18>'),
+            '_2/19': (_19, '<2>/19'),
+            '_2/_20': (_220, '<2>/<20>'),
+            '_2/21/_22': (_22122, '<2>/21/<22>'),
+            # # #
+            '/': (_, ''),
+            '/0/': ENDPOINT_NOT_FOUND,
+            '/0/21/': ENDPOINT_NOT_FOUND,
+            '/3/': (_3, '3'),
+            '/_4/': (_4, '<4>'),
+            '/1/': (_1, '1'),
+            '/1/_5/_9/': (_159, '1/<5>/<9>'),
+            '/1/6/': (_16, '1/6'),
+            '/1/7/10/': (_1710, '1/7/10'),
+            '/1/7/': ENDPOINT_NOT_FOUND,
+            '/1/_8/': (_18, '1/<8>'),
+            '/_2/11/': (_211, '<2>/11'),
+            '/_2/12/15/16/': (_2121516, '<2>/12/15/16'),
+            '/_2/_14/_17/_18/': (_2141718, '<2>/<14>/<17>/<18>'),
+            '/_2/_14/_17/': ENDPOINT_NOT_FOUND,
+            '/_2/19/': (_19, '<2>/19'),
+            '/_2/_20/': (_220, '<2>/<20>'),
+            '/_2/21/_22/': (_22122, '<2>/21/<22>'),
+        }
+
+        for test_url, expected in test_cases.items():
+            actual = find_endpoint(path=test_url)
+            assert actual == expected
