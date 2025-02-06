@@ -38,7 +38,10 @@ def load_env(env_file: str | Path, /) -> dict[str, str]:
                 key, value = striped_line.split('=', 1)
                 key = key.strip()
                 value = value.strip().strip('"\'')
-                variables[key] = value
+                if (boolean_value := value.lower()) in ['true', 'false']:
+                    variables[key] = bool(boolean_value == 'true')
+                else:
+                    variables[key] = value
 
                 # Load them as system environment variable
                 os.environ[key] = value
@@ -123,5 +126,4 @@ class ULID:
 
 
 def timezone_now():
-    tz = pytz.timezone(config.TIMEZONE)
-    return datetime.now(tz=tz)
+    return datetime.now(tz=pytz.timezone(config.TIMEZONE))

@@ -37,7 +37,7 @@ DB_PORT = "{self.db_port}"
         """)
 
         variables = load_env(self.file_path)
-        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['IS_ACTIVE'] == self.is_active
         assert variables['DB_HOST'] == self.db_host
         assert variables['DB_PORT'] == str(self.db_port)
 
@@ -49,7 +49,7 @@ DB_PORT = '{self.db_port}'
                 """)
 
         variables = load_env(self.file_path)
-        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['IS_ACTIVE'] == self.is_active
         assert variables['DB_HOST'] == self.db_host
         assert variables['DB_PORT'] == str(self.db_port)
 
@@ -62,7 +62,7 @@ DB_PORT = {self.db_port}
                     """)
 
         variables = load_env(self.file_path)
-        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['IS_ACTIVE'] == self.is_active
         assert variables['DB_HOST'] == self.db_host
         assert variables['DB_PORT'] == str(self.db_port)
 
@@ -74,7 +74,7 @@ DB_PORT={self.db_port}
                     """)
 
         variables = load_env(self.file_path)
-        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['IS_ACTIVE'] == self.is_active
         assert variables['DB_HOST'] == self.db_host
         assert variables['DB_PORT'] == str(self.db_port)
 
@@ -86,7 +86,7 @@ DB_PORT={self.db_port}
                     """)
 
         variables = load_env(self.file_path)
-        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['IS_ACTIVE'] == self.is_active
         assert variables['DB_HOST'] == self.db_host
         assert variables['DB_PORT'] == str(self.db_port)
 
