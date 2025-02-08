@@ -2,6 +2,7 @@ from unittest import IsolatedAsyncioTestCase, TestCase
 
 from panther import Panther
 from panther.app import API
+from panther.configs import config
 from panther.middlewares import BaseMiddleware
 from panther.middlewares.base import HTTPMiddleware, WebsocketMiddleware
 from panther.request import Request
@@ -62,6 +63,7 @@ class MyWSMiddleware1(WebsocketMiddleware):
     async def after(self, response: GenericWebsocket):
         return response
 
+
 class MyWSMiddleware2(WebsocketMiddleware):
     async def before(self, request: GenericWebsocket):
         request.middlewares = getattr(request, 'middlewares', []) + ['MyWSMiddleware2']
@@ -69,6 +71,7 @@ class MyWSMiddleware2(WebsocketMiddleware):
 
     async def after(self, response: GenericWebsocket):
         return response
+
 
 class MyBaseMiddleware(BaseMiddleware):
     async def before(self, request: Request | GenericWebsocket):
@@ -124,6 +127,7 @@ async def handle_private_middlewares(request: Request):
         states = request.middlewares + states
     return states
 
+
 class WebsocketHandleMiddlewares(GenericWebsocket):
     async def connect(self):
         await self.accept()
@@ -132,7 +136,6 @@ class WebsocketHandleMiddlewares(GenericWebsocket):
             states = self.middlewares + states
         await self.send(states)
         await self.close()
-
 
 
 urls = {
@@ -251,7 +254,12 @@ class TestMiddleware(IsolatedAsyncioTestCase):
         ]
         MIDDLEWARES = []
 
+
 class TestWebsocketMiddleware(TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        config.HAS_WS = True  # Required for `pytest` (`unittest` is fine)
+
     def test_websocket_middleware(self):
         global MIDDLEWARES
         MIDDLEWARES = [MyWSMiddleware1, MyWSMiddleware2]
