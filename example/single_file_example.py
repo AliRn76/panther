@@ -32,7 +32,7 @@ async def info(request: Request):
     return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 
 
-MIDDLEWARES = [(TestMiddleware, {})]
+MIDDLEWARES = [TestMiddleware]
 
 url_routing = {
     '': hello_world,

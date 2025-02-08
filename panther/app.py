@@ -22,6 +22,7 @@ from panther.exceptions import (
     ThrottlingAPIError,
     BadRequestAPIError
 )
+from panther.middlewares import BaseMiddleware
 from panther.request import Request
 from panther.response import Response
 from panther.serializer import ModelSerializer
@@ -44,6 +45,7 @@ class API:
         cache: bool = False,
         cache_exp_time: timedelta | int | None = None,
         methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
+        middlewares: list[BaseMiddleware] | None = None,
     ):
         self.input_model = input_model
         self.output_model = output_model
@@ -53,12 +55,17 @@ class API:
         self.cache = cache
         self.cache_exp_time = cache_exp_time # or config.DEFAULT_CACHE_EXP
         self.methods = methods
+        self.middlewares: list[BaseMiddleware] | None = middlewares
         self.request: Request | None = None
 
     def __call__(self, func):
         @functools.wraps(func)
         async def wrapper(request: Request) -> Response:
             self.request = request
+
+            middlewares = [m() for m in self.middlewares or []]
+            for middleware in middlewares:
+                request = await middleware.before(request=request)
 
             # 0. Preflight
             if self.request.method == 'OPTIONS':
@@ -78,7 +85,7 @@ class API:
             await self.handle_throttling()
 
             # 5. Validate Input
-            if self.request.method in ['POST', 'PUT', 'PATCH']:
+            if self.request.method in {'POST', 'PUT', 'PATCH'}:
                 self.handle_input_validation()
 
             # 6. Get Cached Response
@@ -110,6 +117,10 @@ class API:
             # 11. Warning CacheExpTime
             if self.cache_exp_time and self.cache is False:
                 logger.warning('"cache_exp_time" won\'t work while "cache" is False')
+
+            middlewares.reverse()
+            for middleware in middlewares:
+                response = await middleware.after(response=response)
 
             return response
 
@@ -173,6 +184,7 @@ class GenericAPI:
     throttling: Throttling | None = None
     cache: bool = False
     cache_exp_time: timedelta | int | None = None
+    middlewares: list[BaseMiddleware] | None = None
 
     async def get(self, *args, **kwargs):
         raise MethodNotAllowedAPIError
@@ -220,4 +232,5 @@ class GenericAPI:
             throttling=self.throttling,
             cache=self.cache,
             cache_exp_time=self.cache_exp_time,
+            middlewares=self.middlewares,
         )(func)(request=request)

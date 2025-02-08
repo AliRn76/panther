@@ -6,10 +6,10 @@ from panther.websocket import GenericWebsocket
 class BaseMiddleware:
     """Used in both http & ws requests"""
     async def before(self, request: Request | GenericWebsocket):
-        raise NotImplementedError
+        return request
 
     async def after(self, response: Response | GenericWebsocket):
-        raise NotImplementedError
+        return response
 
 
 class HTTPMiddleware(BaseMiddleware):

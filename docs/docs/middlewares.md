@@ -5,10 +5,48 @@
 > <b>Default:</b> `[]`
 
 
-## Structure of middlewares
-`MIDDLEWARES` itself is a `list` of `tuples` which each `tuple` is like below:
+## Definition
+### Global
 
-(`Dotted Address of The Middleware Class`, `kwargs as dict`)
+`MIDDLEWARES` is a `list` of middlewares address or their class itself, like below:
+
+```python
+class Middleware:
+    pass
+
+MIDDLEWARES = [
+    'core.middlewares.MyMiddleware', 
+    Middleware,  # Mostly used in single-file projects
+]
+```
+
+### Per API
+
+`Middlewares` can be assigned to `APIs` directly too,
+
+
+```python
+from panther.app import API, GenericAPI
+
+class Middleware:
+    pass
+
+# Class-Based
+class MyAPI(GenericAPI):
+    middlewares = [Middleware]
+
+# Function-Based
+@API(middlewares=[Middleware])
+def my_api():
+    pass
+```
+
+### Middlewares Priority
+
+1. (`Global Middlewares`)`.before()`
+2. (`PerAPI Middlewares`)`.before()`
+3. (`PerAPI Middlewares`)`.after()`
+4. (`Global Middlewares`)`.after()`
 
 
 ## Custom Middleware
@@ -34,69 +72,47 @@
     from panther.middlewares.base import BaseMiddleware
     ```
 
-  - Then you can write your custom `before()` and `after()` methods
-
+  - Then you can write your own `before()` and `after()` methods
   - The `methods` should be `async`
   - `before()` should have `request` parameter
   - `after()` should have `response` parameter
   - overwriting the `before()` and `after()` are optional
-  - The `methods` can get `kwargs` from their `__init__`
 
-### Custom HTTP Middleware Example
-- **core/middlewares.py**
-    ```python
-    from panther.middlewares.base import HTTPMiddleware
-    from panther.request import Request
-    from panther.response import Response
+### HTTP Middleware Example
 
-
-    class CustomMiddleware(HTTPMiddleware):
-
-        def __init__(self, something):
-            self.something = something
-
-        async def before(self, request: Request) -> Request:
-            print('Before Endpoint', self.something)
-            return request
-
-        async def after(self, response: Response) -> Response:
-            print('After Endpoint', self.something)
-            return response
-    ```
-
-- **core/configs.py**
-    ```python
-    MIDDLEWARES = [
-          ('core.middlewares.CustomMiddleware', {'something': 'hello-world'}),
-    ]
-    ```
-  
-### Custom HTTP + Websocket Middleware Example
-- **core/middlewares.py**
-    ```python
-    from panther.middlewares.base import BaseMiddleware
-    from panther.request import Request
-    from panther.response import Response
-    from panther.websocket import GenericWebsocket 
+```python
+from panther.middlewares.base import HTTPMiddleware
+from panther.request import Request
+from panther.response import Response
 
 
-    class SayHiMiddleware(BaseMiddleware):
+class CustomMiddleware(HTTPMiddleware):
+    async def before(self, request: Request) -> Request:
+        print('Before Endpoint')
+        return request
 
-        def __init__(self, name):
-            self.name = name
+    async def after(self, response: Response) -> Response:
+        print('After Endpoint')
+        return response
+```
 
-        async def before(self, request: Request | GenericWebsocket) -> Request | GenericWebsocket:
-            print('Hello ', self.name)
-            return request
+### (HTTP + Websocket) Middleware Example
 
-        async def after(self, response: Response | GenericWebsocket) -> Response | GenericWebsocket:
-            print('Goodbye ', self.name)
-            return response
-    ```
+```python
+from datetime import datetime
+from panther.middlewares.base import BaseMiddleware
+from panther.request import Request
+from panther.response import Response
+from panther.websocket import GenericWebsocket 
 
-- **core/configs.py**
-    ```python
-    MIDDLEWARES = [
-          ('core.middlewares.SayHiMiddleware', {'name': 'Ali Rn'}),
-    ]
-    ```
+
+class TimerMiddleware(BaseMiddleware):
+    async def before(self, request: Request | GenericWebsocket) -> Request | GenericWebsocket:
+        self.start_time = datetime.now()
+        return request
+
+    async def after(self, response: Response | GenericWebsocket) -> Response | GenericWebsocket:
+        result = datetime.now() - self.start_time
+        print(f'Request takes {result.total_seconds()} seconds')
+        return response
+```

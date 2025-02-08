@@ -12,6 +12,7 @@ from app.serializers import (
 )
 from core.permissions import UserPermission
 
+from core.middlewares import PrivateMiddleware
 from panther import status
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
@@ -250,3 +251,10 @@ class PaginationAPI(ListAPI):
 
     async def objects(self, request: Request, **kwargs) -> Cursor | PantherDBCursor:
         return await User.find()
+
+
+@API(middlewares=[PrivateMiddleware])
+async def detect_middlewares(request: Request):
+    return request.middlewares
+
+
