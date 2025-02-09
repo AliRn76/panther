@@ -21,14 +21,14 @@ class LoginView(GenericAPI):
     def get(self, request: Request):
         if not request.path.endswith('/'):
             return RedirectResponse(request.path + '/')
-        return TemplateResponse(path='login.html')
+        return TemplateResponse(name='login.html')
 
     async def post(self, request: Request):
         user: BaseUser = await config.USER_MODEL.find_one({config.USER_MODEL.USERNAME_FIELD: request.data['username']})
         if user is None:
             raise AuthenticationAPIError
 
-        if user.check_password(new_password=request.data['password']) is False:
+        if user.check_password(password=request.data['password']) is False:
             return AuthenticationAPIError
 
         return RedirectResponse(
@@ -46,7 +46,7 @@ class LoginView(GenericAPI):
 
 @API(methods=['GET'])
 def home_page_view():
-    return TemplateResponse(path='home.html', context={'tables': get_models()})
+    return TemplateResponse(name='home.html', context={'tables': get_models()})
 
 
 class TableView(GenericAPI):
@@ -62,7 +62,7 @@ class TableView(GenericAPI):
             data = []
 
         return TemplateResponse(
-            path='table.html',
+            name='table.html',
             context={
                 'fields': clean_model_schema(model.schema()),
                 'tables': get_models(),
@@ -76,7 +76,7 @@ class CreateView(GenericAPI):
             return RedirectResponse(request.path + '/')
         model = config.MODELS[index]
         return TemplateResponse(
-            path='create.html',
+            name='create.html',
             context={
                 'fields': clean_model_schema(model.schema()),
                 'tables': get_models(),
