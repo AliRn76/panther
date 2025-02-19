@@ -238,7 +238,7 @@ class TemplateResponse(HTMLResponse):
     ):
         """
         :param source: should be a string
-        :param name: should be name of template file
+        :param name: should be the name of template file
         :param context: should be dict of items
         :param headers: should be dict of headers
         :param status_code: should be int

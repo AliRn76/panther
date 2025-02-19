@@ -16,52 +16,43 @@ class OpenAPI(GenericAPI):
         for url, method in config.FLAT_URLS.items():
             if url == '':
                 url = '/'
+            paths[url] = {}
             if not isinstance(method, types.FunctionType):
                 if method.post is not GenericAPI.post:
-                    paths[url] = {
-                        'post': {
-                            'responses': {
-                                '200': {
-                                    'content': {
-                                        'application/json': {
-                                            'schema': {
-                                                "properties": {
-                                                    "message": {
-                                                        "type": "string"
-                                                    }
-                                                }
-                                                # method.output_model.schema()['properties']
-                                            }
-                                        }
+                    paths[url]['post'] = {}
+                elif method.get is not GenericAPI.get:
+                    paths[url]['get'] = {
+                        # TODO: 'responses': method.output_model.status_code,
+                        'responses': {
+                            '200': {
+                                'content': {
+                                    'application/json': {
+                                        'schema': method.output_model.schema() if method.output_model else {}
                                     }
                                 }
                             }
                         }
                     }
-                elif method.get is not GenericAPI.get:
-                    paths[url] = {
-                        'get': {}
-                    }
                 elif method.put is not GenericAPI.put:
-                    paths[url] = {
-                        'put': {}
-                    }
+                    paths[url]['put'] = {}
                 elif method.patch is not GenericAPI.patch:
-                    paths[url] = {
-                        'patch': {}
-                    }
+                    paths[url]['patch'] = {}
                 elif method.delete is not GenericAPI.delete:
-                    paths[url] = {
-                        'delete': {}
-                    }
+                    paths[url]['delete'] = {}
             else:
-                paths[url] = {
-                    'post': {},
-                    'get': {},
-                    'put': {},
-                    'patch': {},
-                    'delete': {},
-                }
+                methods = method.api_config['methods']
+
+                if methods is None or 'POST' in methods:
+                    paths[url]['post'] = {}
+                if methods is None or 'GET' in methods:
+                    paths[url]['get'] = {}
+                if methods is None or 'PUT' in methods:
+                    paths[url]['put'] = {}
+                if methods is None or 'patch' in methods:
+                    paths[url]['patch'] = {}
+                if methods is None or 'delete' in methods:
+                    paths[url]['delete'] = {}
+
         print(f'{paths=}')
         openapi_content = {
             'openapi': '3.0.0',
@@ -108,4 +99,4 @@ class OpenAPI(GenericAPI):
             }
         }
 
-        return TemplateResponse(path='openapi.html', context={'openapi_content': openapi_content})
+        return TemplateResponse(name='openapi.html', context={'openapi_content': openapi_content})

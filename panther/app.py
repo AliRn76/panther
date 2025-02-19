@@ -54,7 +54,7 @@ class API:
         self.throttling = throttling
         self.cache = cache
         self.cache_exp_time = cache_exp_time # or config.DEFAULT_CACHE_EXP
-        self.methods = methods
+        self.methods = {m.upper() for m in methods} if methods else None
         self.middlewares: list[BaseMiddleware] | None = middlewares
         self.request: Request | None = None
 
@@ -124,6 +124,14 @@ class API:
 
             return response
 
+        # Store attributes on the function
+        wrapper.api_config = {
+            'input_model': self.input_model,
+            'output_model': self.output_model,
+            'auth': self.auth,
+            'permissions': self.permissions,
+            'methods': self.methods,
+        }
         return wrapper
 
     async def handle_authentication(self) -> None:
