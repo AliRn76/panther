@@ -20,6 +20,7 @@ INSTALL_REQUIRES = [
     'uvicorn~=0.27.1',
     'pytz~=2024.1',
     'Jinja2~=3.1',
+    'faker',  # Temporary
 ]
 if sys.version_info <= (3, 12):
     INSTALL_REQUIRES.append('httptools~=0.6.1')

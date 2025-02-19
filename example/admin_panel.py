@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import http.cookies
-import string
 import random
+
+from faker.proxy import Faker
 from pydantic import BaseModel
 
 from panther import Panther
@@ -10,45 +10,48 @@ from panther.app import API
 from panther.db import Model
 from panther.panel.urls import urls as admin_url
 
+f = Faker()
 
-cookie: http.cookies.BaseCookie[str] = http.cookies.SimpleCookie()
+
+class Person(BaseModel):
+    real_name: str | None = None
+    age: int | None = None
+    is_alive: bool | None = None
 
 
 class Book(BaseModel):
     title: str
     pages_count: int
     readers: list[Person] | None = None
-    co_owner: Person | None = None
-
-
-class Parent(BaseModel):
-    name: str
-    age: str
-    has_child: bool
-
-class Person(BaseModel):
-    age: int
-    real_name: str
-    parent: Parent
-    is_alive: bool
-    friends: list[Person]
-
 
 
 class Author(Model):
     name: str
+    age: int
+    is_male: bool
     person: Person | None = None
-    books: list[Book]
-    is_male: bool | None
+    books: list[Book] | None = None
 
 
 @API()
 async def generate_data():
-    for _ in range(10):
+    for i in range(10):
         await Author.insert_one(
-            name=''.join(random.choices(string.ascii_lowercase, k=10)),
-            books=[Book(title='Book1', pages_count=10).model_dump(), Book(title='Book1', pages_count=10).model_dump()],
-            is_male=False,
+            name=f.name(),
+            age=random.randint(10, 99),
+            is_male=random.getrandbits(1),
+            person=Person(
+                real_name=f.name(),
+                is_alive=random.getrandbits(1),
+                age=random.randint(10, 99)
+            ).model_dump() if i % 2 else None,
+            books=[
+                Book(title='Book1', pages_count=10, readers=[Person(
+                    real_name=f.name(),
+                    is_alive=random.getrandbits(1),
+                    age=random.randint(10, 99)
+                ).model_dump()]).model_dump(), Book(title='Book1', pages_count=10).model_dump()
+            ] if i % 2 else None,
         )
 
 
