@@ -6,6 +6,76 @@ from panther.response import TemplateResponse
 
 
 class OpenAPI(GenericAPI):
+    @classmethod
+    def get_content(cls, method):
+        return {
+            'responses': {
+                # TODO: 'responses': method.output_model.status_code,
+                '200': {
+                    'content': {
+                        'application/json': {
+                            'schema': method.output_model.schema() if method.output_model else {}
+                        }
+                    }
+                }
+            }
+        }
+    @classmethod
+    def post_content(cls, method):
+        return {
+            'responses': {
+                # TODO: 'responses': method.output_model.status_code,
+                '200': {
+                    'content': {
+                        'application/json': {
+                            'schema': method.output_model.schema() if method.output_model else {}
+                        }
+                    }
+                }
+            }
+        }
+    @classmethod
+    def put_content(cls, method):
+        return {
+            'responses': {
+                # TODO: 'responses': method.output_model.status_code,
+                '200': {
+                    'content': {
+                        'application/json': {
+                            'schema': method.output_model.schema() if method.output_model else {}
+                        }
+                    }
+                }
+            }
+        }
+    @classmethod
+    def patch_content(cls, method):
+        return {
+            'responses': {
+                # TODO: 'responses': method.output_model.status_code,
+                '200': {
+                    'content': {
+                        'application/json': {
+                            'schema': method.output_model.schema() if method.output_model else {}
+                        }
+                    }
+                }
+            }
+        }
+    @classmethod
+    def delete_content(cls, method):
+        return {
+            'responses': {
+                # TODO: 'responses': method.output_model.status_code,
+                '204': {
+                    'content': {
+                        'application/json': {
+                            'schema': method.output_model.schema() if method.output_model else {}
+                        }
+                    }
+                }
+            }
+        }
     def get(self):
         paths = {}
         # TODO: Separate them with their modules
@@ -19,39 +89,28 @@ class OpenAPI(GenericAPI):
             paths[url] = {}
             if not isinstance(method, types.FunctionType):
                 if method.post is not GenericAPI.post:
-                    paths[url]['post'] = {}
+                    paths[url]['post'] = self.post_content(method)
                 elif method.get is not GenericAPI.get:
-                    paths[url]['get'] = {
-                        # TODO: 'responses': method.output_model.status_code,
-                        'responses': {
-                            '200': {
-                                'content': {
-                                    'application/json': {
-                                        'schema': method.output_model.schema() if method.output_model else {}
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    paths[url]['get'] = self.get_content(method)
                 elif method.put is not GenericAPI.put:
-                    paths[url]['put'] = {}
+                    paths[url]['put'] = self.put_content(method)
                 elif method.patch is not GenericAPI.patch:
-                    paths[url]['patch'] = {}
+                    paths[url]['patch'] = self.patch_content(method)
                 elif method.delete is not GenericAPI.delete:
-                    paths[url]['delete'] = {}
+                    paths[url]['delete'] = self.delete_content(method)
             else:
                 methods = method.api_config['methods']
 
                 if methods is None or 'POST' in methods:
-                    paths[url]['post'] = {}
+                    paths[url]['post'] = self.post_content(method)
                 if methods is None or 'GET' in methods:
-                    paths[url]['get'] = {}
+                    paths[url]['get'] = self.get_content(method)
                 if methods is None or 'PUT' in methods:
-                    paths[url]['put'] = {}
+                    paths[url]['put'] = self.put_content(method)
                 if methods is None or 'patch' in methods:
-                    paths[url]['patch'] = {}
+                    paths[url]['patch'] = self.patch_content(method)
                 if methods is None or 'delete' in methods:
-                    paths[url]['delete'] = {}
+                    paths[url]['delete'] = self.delete_content(method)
 
         print(f'{paths=}')
         openapi_content = {
