@@ -1,8 +1,7 @@
 import timeit
 from typing import Callable
 
-from panther_core import initialize_routing, find_endpoint as rust_find_endpoint
-
+import panther_core
 
 def t1():
     pass
@@ -61,12 +60,12 @@ URLS = {
         '3': t7
     },
     'admins': t8,
-    '<admin_id>': t9,
+    # '<admin_id>': t9,
     '<lang_id>': {
         '1': t10,
     },
 }
-RUST_URLS = initialize_routing(URLS)
+RUST_URLS = panther_core.parse_urls(URLS)
 
 
 ENDPOINT_NOT_FOUND = (None, '')
@@ -141,18 +140,18 @@ def test_python():
     print(f'{x=}')
 
 
-def test_rust():
+# def test_rust():
     # 1.9080995116382837e-05 --> 'users/'        --> debug
     # 3.5492994356900454e-05 --> 'users/1/age'   --> debug
     # 0.0000035179982660338283 --> 'users/1/age'   --> release
-    rust_find_endpoint(RUST_URLS, PATH)
+    # rust_find_endpoint(RUST_URLS, PATH)
 
 
-def test_bench():
-    p_bench = timeit.Timer(test_python).repeat(repeat=100000, number=1)
-    r_bench = timeit.Timer(test_rust).repeat(repeat=100000, number=1)
-    print(f"Python Min: {min(p_bench)}, Sum: {sum(p_bench)}")
-    print(f"Rust Min: {min(r_bench)}, Sum: {sum(r_bench)}")
+# def test_bench():
+#     p_bench = timeit.Timer(test_python).repeat(repeat=100000, number=1)
+#     r_bench = timeit.Timer(test_rust).repeat(repeat=100000, number=1)
+#     print(f"Python Min: {min(p_bench)}, Sum: {sum(p_bench)}")
+#     print(f"Rust Min: {min(r_bench)}, Sum: {sum(r_bench)}")
 
 
 PATH = '/users/5/name'
@@ -179,12 +178,18 @@ def test_results():
         py_endpoint_name = getattr(python_result[0], '__name__', '  ')
         print(f'python={py_endpoint_name}(), {python_result[1]}')
 
-        rust_result = rust_find_endpoint(RUST_URLS, path)
-        rust_endpoint_name = getattr(rust_result[0], '__name__', '  ')
-        print(f'rust  ={rust_endpoint_name}(), {rust_result[1]}\n')
-        results.append(python_result == rust_result)
+        # rust_result = rust_find_endpoint(RUST_URLS, path)
+        # rust_endpoint_name = getattr(rust_result[0], '__name__', '  ')
+        # print(f'rust  ={rust_endpoint_name}(), {rust_result[1]}\n')
+        # results.append(python_result == rust_result)
 
     return results
 
 
-print('Result: ', all(test_results()))
+# print('Result: ', all(test_results()))
+# panther_core.print(RUST_URLS)
+
+# methods = [method for method in dir(RUST_URLS) if not method.startswith('__')]
+# print(methods)
+new_res = panther_core.get(RUST_URLS, "/users/2/detail")
+print(new_res)

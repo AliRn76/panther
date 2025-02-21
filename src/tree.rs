@@ -1,11 +1,13 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::collections::hash_map::Iter as HashMapIter;
+
 
 #[derive(Clone, Debug)]
 pub struct Tree<K, V> {
     pub value: V,
-    subtrees: HashMap<K, Tree<K, V>>,
+    pub subtrees: HashMap<K, Arc<Tree<K, V>>>,
 }
 
 impl<K, V> Tree<K, V> {
@@ -25,19 +27,19 @@ impl<K, V> Tree<K, V>
     where
         K: Eq + core::hash::Hash,
 {
-    pub fn entry(&mut self, key: K) -> Entry<'_, K, Tree<K, V>> {
+    pub fn entry(&mut self, key: K) -> Entry<'_, K, Arc<Tree<K, V>>> {
         self.subtrees.entry(key)
     }
 
-    pub fn get<Q>(&self, key: &Q) -> Option<&Tree<K, V>>
+    pub fn get<Q>(&self, key: &Q) -> Option<Arc<Tree<K, V>>>
         where
             K: core::borrow::Borrow<Q>,
             Q: ?Sized + Eq + core::hash::Hash,
     {
-        self.subtrees.get(key)
+        self.subtrees.get(key).cloned()
     }
 
-    pub fn get_mut<Q>(&mut self, key: &Q) -> Option<&mut Tree<K, V>>
+    pub fn get_mut<Q>(&mut self, key: &Q) -> Option<&mut Arc<Tree<K, V>>>
         where
             K: core::borrow::Borrow<Q>,
             Q: ?Sized + Eq + core::hash::Hash,
@@ -54,15 +56,16 @@ impl<K, Q, V> core::ops::Index<&Q> for Tree<K, V>
     type Output = Tree<K, V>;
 
     fn index(&self, key: &Q) -> &Tree<K, V> {
-        self.subtrees.index(key)
+        &self.subtrees.index(key)
     }
 }
 
 pub struct TreeIter<'a, K, V> {
     next_value: Option<(Vec<&'a K>, &'a V)>,
-    tree_stack: Vec<HashMapIter<'a, K, Tree<K, V>>>,
+    tree_stack: Vec<HashMapIter<'a, K, Arc<Tree<K, V>>>>,
     key_stack: Vec<&'a K>,
 }
+
 
 impl<'a, K, V> TreeIter<'a, K, V> {
     pub fn new(tree: &'a Tree<K, V>) -> Self {
