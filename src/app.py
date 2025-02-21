@@ -60,12 +60,12 @@ URLS = {
         '3': t7
     },
     'admins': t8,
-    '<admin_id>': t9,
+    # '<admin_id>': t9,
     '<lang_id>': {
         '1': t10,
     },
 }
-RUST_URLS = panther_core.Urls(URLS)
+RUST_URLS = panther_core.parse_urls(URLS)
 
 
 ENDPOINT_NOT_FOUND = (None, '')
@@ -187,5 +187,9 @@ def test_results():
 
 
 # print('Result: ', all(test_results()))
-RUST_URLS.print()
-print(RUST_URLS)
+# panther_core.print(RUST_URLS)
+
+# methods = [method for method in dir(RUST_URLS) if not method.startswith('__')]
+# print(methods)
+new_res = panther_core.get(RUST_URLS, "/users/2/detail")
+print(new_res)

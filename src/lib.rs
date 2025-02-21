@@ -9,6 +9,7 @@ use std::collections::{HashMap, VecDeque};
 use crate::tree::Tree;
 
 mod tree;
+mod a4lib;
 
 #[derive(Debug, Clone, PartialEq, Eq, core::hash::Hash)]
 enum Routing {
@@ -17,7 +18,7 @@ enum Routing {
 }
 
 #[derive(Debug, Clone)]
-#[pyclass(module = "routing")]
+#[pyclass(module = "routing1")]
 pub struct Urls {
     urls: TreeRef,
 }
@@ -26,7 +27,6 @@ type TreeRef = Arc<Tree<Routing, Option<Py<PyAny>>>>;
 
 #[pymethods]
 impl Urls {
-
     #[new]
     fn parse_urls_dict(urls: &PyDict) -> PyResult<Self> {
         let mut vq = VecDeque::new();
@@ -36,6 +36,7 @@ impl Urls {
             key: Routing,
             obj: Option<Py<PyAny>>,
         };
+
 
         fn create(dict: &PyDict, vq: &mut VecDeque<Rout>) {
             for (k, v) in dict.into_iter() {
@@ -70,6 +71,7 @@ impl Urls {
             }
         }
         create(urls, &mut vq);
+        println!("{:?}",vq);
         let mut tree = Tree::new(None);
         let mut map = HashMap::new();
         for r in vq.iter() {
@@ -131,6 +133,9 @@ fn push_path(mut path: String, part: String) -> String {
 
 #[pymodule]
 fn panther_core(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<a4lib::Url>()?;
+    m.add_function(wrap_pyfunction!(a4lib::parse_urls, m)?)?;
+    m.add_function(wrap_pyfunction!(a4lib::get, m)?)?;
     m.add_class::<Urls>()?;
 
     Ok(())
