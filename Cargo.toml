@@ -1,0 +1,12 @@
+[package]
+name = "panther_core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "panther_core"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "0.20.2"
+rand = "0.8.5"

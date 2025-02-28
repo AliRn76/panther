@@ -10,3 +10,6 @@ build/
 .ruff_cache/
 docs/site/*
 *coverage*
+
+target/
+Cargo.lock
