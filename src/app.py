@@ -1,6 +1,6 @@
 import timeit
 
-from panther_core import initialize_routing, find_endpoint as rust_find_endpoint
+import panther_core
 
 from example import test_cases
 from panther.configs import config
@@ -15,8 +15,9 @@ def test_python():
 
 
 def test_rust():
+    endpoints = panther_core.parse_urls(config.URLS)
     for test_url, expected in test_cases.items():
-        actual = rust_find_endpoint(path=test_url)
+        actual = panther_core.get(endpoints, path=test_url)
         assert actual == expected, f'{actual} != {expected}'
 
 
