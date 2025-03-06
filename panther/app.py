@@ -23,6 +23,8 @@ from panther.exceptions import (
     BadRequestAPIError
 )
 from panther.middlewares import BaseMiddleware
+from panther.openapi import OutputSchema
+from panther.permissions import BasePermission
 from panther.request import Request
 from panther.response import Response
 from panther.serializer import ModelSerializer
@@ -34,13 +36,28 @@ logger = logging.getLogger('panther')
 
 
 class API:
+    """
+    input_model: The `request.data` will be validated with this attribute, It will raise an
+        `panther.exceptions.BadRequestAPIError` or put the validated data in the `request.validated_data`.
+    output_schema: This attribute only used in creation of OpenAPI scheme which is available in `panther.openapi.urls`
+        You may want to add its `url` to your urls.
+    auth: It will authenticate the user with header of its request or raise an
+        `panther.exceptions.AuthenticationAPIError`.
+    permissions: List of permissions that will be called sequentially after authentication to authorize the user.
+    throttling: It will limit the users' request on a specific (time-bucket, path)
+    cache: Response of the request will be cached.
+    cache_exp_time: Specify the expiry time of the cache. (default is `config.DEFAULT_CACHE_EXP`)
+    methods: Specify the allowed methods.
+    middlewares: These middlewares have inner priority than global middlewares.
+    """
+
     def __init__(
         self,
         *,
         input_model: type[ModelSerializer] | type[BaseModel] | None = None,
-        output_model: type[ModelSerializer] | type[BaseModel] | None = None,
+        output_schema: OutputSchema | None = None,
         auth: bool = False,
-        permissions: list | None = None,
+        permissions: list[BasePermission] | None = None,
         throttling: Throttling | None = None,
         cache: bool = False,
         cache_exp_time: timedelta | int | None = None,
@@ -48,12 +65,12 @@ class API:
         middlewares: list[BaseMiddleware] | None = None,
     ):
         self.input_model = input_model
-        self.output_model = output_model
+        self.output_schema = output_schema
         self.auth = auth
         self.permissions = permissions or []
         self.throttling = throttling
         self.cache = cache
-        self.cache_exp_time = cache_exp_time # or config.DEFAULT_CACHE_EXP
+        self.cache_exp_time = cache_exp_time
         self.methods = {m.upper() for m in methods} if methods else None
         self.middlewares: list[BaseMiddleware] | None = middlewares
         self.request: Request | None = None
@@ -105,8 +122,8 @@ class API:
             # 9. Clean Response
             if not isinstance(response, Response):
                 response = Response(data=response)
-            if self.output_model and response.data:
-                response.data = await response.apply_output_model(output_model=self.output_model)
+            if self.output_schema and response.data:
+                response.data = await response.apply_output_model(output_model=self.output_schema.model)
             if response.pagination:
                 response.data = await response.pagination.template(response.data)
 
@@ -124,14 +141,12 @@ class API:
 
             return response
 
-        # Store attributes on the function
-        wrapper.api_config = {
-            'input_model': self.input_model,
-            'output_model': self.output_model,
-            'auth': self.auth,
-            'permissions': self.permissions,
-            'methods': self.methods,
-        }
+        # Store attributes on the function, so have the same behaviour as class-based (useful in `openapi.view.OpenAPI`)
+        wrapper.auth = self.auth
+        wrapper.methods = self.methods
+        wrapper.permissions = self.permissions
+        wrapper.input_model = self.input_model
+        wrapper.output_schema = self.output_schema
         return wrapper
 
     async def handle_authentication(self) -> None:
@@ -185,8 +200,11 @@ class API:
 
 
 class GenericAPI:
+    """
+    Check out the documentation of `panther.app.API()`.
+    """
     input_model: type[ModelSerializer] | type[BaseModel] | None = None
-    output_model: type[ModelSerializer] | type[BaseModel] | None = None
+    output_schema: OutputSchema | None = None
     auth: bool = False
     permissions: list | None = None
     throttling: Throttling | None = None

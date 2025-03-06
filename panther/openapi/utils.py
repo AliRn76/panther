@@ -1,28 +1,18 @@
-"""
-openapi: 3.0.0
-info:
-  title: {{ project_name }}
-paths:
-  /example:
-    get:
-      summary: Example endpoint
-      responses:
-        '200':
-          description: A successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-components:
-  schemas:
-    ExampleSchema:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-"""
+import pydantic
+
+from panther import status
+from panther.serializer import ModelSerializer
+
+
+class EmptyResponseModel(pydantic.BaseModel):
+    pass
+
+
+class OutputSchema:
+    def __init__(
+            self,
+            model: type[ModelSerializer] | type[pydantic.BaseModel] = EmptyResponseModel,
+            status_code: int = status.HTTP_200_OK,
+    ):
+        self.model = model
+        self.status_code = status_code

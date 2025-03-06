@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from panther import Panther, status, version
 from panther.app import API, GenericAPI
 from panther.middlewares.base import HTTPMiddleware
+from panther.openapi import OutputSchema
 from panther.openapi.urls import urls as openapi_urls
 from panther.request import Request
 from panther.response import Response
@@ -26,8 +27,13 @@ class TestMiddleware(HTTPMiddleware):
         return response
 
 
-@API(cache=True, throttling=InfoThrottling, methods=['GET'])
+class UserSerializer(BaseModel):
+    name: str = "hi"
+
+
+@API(cache=True, throttling=InfoThrottling, input_model=UserSerializer, methods=['GET', 'POST'])
 async def info(request: Request):
+    """Hi from info"""
     data = {
         'panther_version': version(),
         'datetime_now': datetime.now().isoformat(),
@@ -36,12 +42,9 @@ async def info(request: Request):
     return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 
 
-class UserSerializer(BaseModel):
-    name: str
-
-
 class UserAPI(GenericAPI):
-    output_model = UserSerializer
+    """Hi from UserAPI"""
+    output_schema = OutputSchema(model=UserSerializer, status_code=status.HTTP_205_RESET_CONTENT)
 
     def get(self, *args, **kwargs):
         return
