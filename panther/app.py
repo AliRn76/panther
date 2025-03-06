@@ -209,12 +209,6 @@ class GenericAPI:
     async def delete(self, *args, **kwargs):
         raise MethodNotAllowedAPIError
 
-    async def get_input_model(self, request: Request) -> type[ModelSerializer] | type[BaseModel] | None:
-        return None
-
-    async def get_output_model(self, request: Request) -> type[ModelSerializer] | type[BaseModel] | None:
-        return None
-
     async def call_method(self, request: Request):
         match request.method:
             case 'GET':
@@ -233,8 +227,8 @@ class GenericAPI:
                 raise MethodNotAllowedAPIError
 
         return await API(
-            input_model=self.input_model or await self.get_input_model(request=request),
-            output_model=self.output_model or await self.get_output_model(request=request),
+            input_model=self.input_model,
+            output_schema=self.output_schema,
             auth=self.auth,
             permissions=self.permissions,
             throttling=self.throttling,
