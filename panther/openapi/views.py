@@ -2,20 +2,34 @@ import types
 
 from panther.app import GenericAPI
 from panther.configs import config
+from panther.openapi.utils import ParseEndpoint
 from panther.response import TemplateResponse
 
 
 class OpenAPI(GenericAPI):
     @classmethod
     def get_content(cls, endpoint, method):
-        responses = {}
+        parsed = ParseEndpoint(endpoint=endpoint, method=method)
+
         if endpoint.output_schema:
+            status_code = endpoint.output_schema.status_code
+            schema = endpoint.output_schema.model.schema()
+        else:
+            status_code = parsed.status_code
+            schema = {
+                'properties': {
+                    k: {'default': v} for k, v in parsed.data.items()
+                }
+            }
+
+        responses = {}
+        if schema:
             responses = {
                 'responses': {
-                    endpoint.output_schema.status_code: {
+                    status_code: {
                         'content': {
                             'application/json': {
-                                'schema': endpoint.output_schema.model.schema() if endpoint.output_schema.model else {}
+                                'schema': schema
                             }
                         }
                     }
@@ -33,10 +47,12 @@ class OpenAPI(GenericAPI):
                     }
                 }
             }
+
         content = {
-            'summary': endpoint.__doc__,
-            'tags': ['.'.join(endpoint.__module__.rsplit('.')[:-1]) or endpoint.__module__],
-        } | responses | request_body
+                      'title': parsed.title,
+                      'summary': endpoint.__doc__,
+                      'tags': ['.'.join(endpoint.__module__.rsplit('.')[:-1]) or endpoint.__module__],
+                  } | responses | request_body
         return {method: content}
 
     def get(self):

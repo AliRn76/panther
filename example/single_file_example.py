@@ -47,16 +47,20 @@ class UserAPI(GenericAPI):
     output_schema = OutputSchema(model=UserSerializer, status_code=status.HTTP_205_RESET_CONTENT)
 
     def get(self, *args, **kwargs):
-        return
+        return Response({'name': 'ali'}, status.HTTP_202_ACCEPTED)
 
     def post(self, *args, **kwargs):
-        return
+        return Response({'name': 'akbar'}, status_code=201)
 
-    def patch(self, *args, **kwargs):
-        return
+    async def patch(self, *args, **kwargs):
+        data = {'name': 'akbar'}
+        status_code = status.HTTP_302_FOUND
+        return Response(data=data, status_code=status_code)
 
     def delete(self, *args, **kwargs):
-        return
+        data = {'name': 'akbar'}
+        status_code = 200
+        return Response(data=data, status_code=status_code)
 
 
 MIDDLEWARES = [TestMiddleware]
