@@ -31,7 +31,7 @@ class UserSerializer(BaseModel):
     name: str = "hi"
 
 
-@API(cache=True, throttling=InfoThrottling, input_model=UserSerializer, methods=['GET', 'POST'])
+@API(cache=True, throttling=InfoThrottling, input_model=UserSerializer, methods=['GET', 'POST', 'delete'])
 async def info(request: Request):
     """Hi from info"""
     data = {
@@ -41,12 +41,21 @@ async def info(request: Request):
     }
     return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 
-
 class UserAPI(GenericAPI):
     """Hi from UserAPI"""
+    input_model = UserSerializer
     output_schema = OutputSchema(model=UserSerializer, status_code=status.HTTP_205_RESET_CONTENT)
 
     def get(self, *args, **kwargs):
+        return
+
+    def post(self, *args, **kwargs):
+        return
+
+    def patch(self, *args, **kwargs):
+        return
+
+    def delete(self, *args, **kwargs):
         return
 
 
