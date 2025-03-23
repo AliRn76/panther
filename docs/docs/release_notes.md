@@ -2,7 +2,9 @@
 - Support Different `Middlewares` Per API
 - Change `path` arg to `name` in `TemplateResponse()`
 - Change `new_password` arg to `password` in `BaseUser.check_password()`
-- New Style of Middleware declaration [[Doc]](https://...)
+- New Style of Middleware declaration [[Documentation]](https://pantherpy.github.io/middlewares)
+- Deprecated:
+  - `output_model` in `API` and `GenericAPI`
 
 ### 4.3.6
 - Support middleware class in MIDDLEWARES

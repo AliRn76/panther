@@ -1,5 +1,7 @@
 import functools
 import logging
+import traceback
+import typing
 from datetime import timedelta
 from typing import Literal
 
@@ -22,6 +24,7 @@ from panther.exceptions import (
     ThrottlingAPIError,
     BadRequestAPIError
 )
+from panther.exceptions import PantherError
 from panther.middlewares import BaseMiddleware
 from panther.openapi import OutputSchema
 from panther.permissions import BasePermission
@@ -55,6 +58,7 @@ class API:
         self,
         *,
         input_model: type[ModelSerializer] | type[BaseModel] | None = None,
+        output_model: type[BaseModel] | None = None,
         output_schema: OutputSchema | None = None,
         auth: bool = False,
         permissions: list[BasePermission] | None = None,
@@ -74,6 +78,14 @@ class API:
         self.methods = {m.upper() for m in methods} if methods else None
         self.middlewares: list[BaseMiddleware] | None = middlewares
         self.request: Request | None = None
+        if output_model:
+            deprecation_message = (
+                    traceback.format_stack(limit=2)[0] +
+                    '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
+                    '\nPlease update your code to use the new approach. More info: '
+                    'https://pantherpy.github.io/open_api/'
+            )
+            raise PantherError(deprecation_message)
 
     def __call__(self, func):
         @functools.wraps(func)
@@ -199,7 +211,28 @@ class API:
             raise JSONDecodeAPIError
 
 
-class GenericAPI:
+class MetaGenericAPI(type):
+    def __new__(
+            cls,
+            cls_name: str,
+            bases: tuple[type[typing.Any], ...],
+            namespace: dict[str, typing.Any],
+            **kwargs
+    ):
+        if cls_name == 'GenericAPI':
+            return super().__new__(cls, cls_name, bases, namespace)
+        if 'output_model' in namespace:
+            deprecation_message = (
+                    traceback.format_stack(limit=2)[0] +
+                    '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
+                    '\nPlease update your code to use the new approach. More info: '
+                    'https://pantherpy.github.io/open_api/'
+            )
+            raise PantherError(deprecation_message)
+        return super().__new__(cls, cls_name, bases, namespace)
+
+
+class GenericAPI(metaclass=MetaGenericAPI):
     """
     Check out the documentation of `panther.app.API()`.
     """
