@@ -17,6 +17,9 @@ theme:
       toggle:
         icon: 'material/lightbulb-outline'
         name: 'Switch to light mode'
+  features:
+    - content.code.copy
+    - content.code.annotate
   icon:
     repo: fontawesome/brands/github
 
@@ -30,7 +33,11 @@ nav:
       - Function Base: 'function_first_crud.md'
       - Class Base: 'class_first_crud.md'
       - Generic: 'generic_crud.md'
+  - First Crud: 'first_crud.md'
   - Database: 'database.md'
+  - Model: 'model.md'
+  - API: 'api.md'
+  - Pagination: 'pagination.md'
   - Panther ODM: 'panther_odm.md'
   - Configs: 'configs.md'
   - Redis: 'redis.md'
@@ -51,7 +58,10 @@ nav:
   - Release Notes: 'release_notes.md'
 
 markdown_extensions:
+  - admonition
+  - pymdownx.details
   - pymdownx.superfences
+  - pymdownx.snippets
   - pymdownx.tabbed:
       alternate_style: true
   - toc:
