@@ -47,6 +47,7 @@ nav:
   - Single-File: 'single_file.md'
   - Monitoring: 'monitoring.md'
   - Log Queries: 'log_queries.md'
+  - Open API (Swagger): 'open_api.md'
   - Release Notes: 'release_notes.md'
 
 markdown_extensions:

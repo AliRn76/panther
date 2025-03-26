@@ -113,7 +113,7 @@ class Panther:
         # Collect Path Variables
         connection.collect_path_variables(found_path=found_path)
 
-        middlewares = [middleware(**data) for middleware, data in config.WS_MIDDLEWARES]
+        middlewares = [middleware() for middleware in config.WS_MIDDLEWARES]
 
         # Call Middlewares .before()
         await self._run_ws_middlewares_before_listen(connection=connection, middlewares=middlewares)
@@ -168,7 +168,7 @@ class Panther:
         # Collect Path Variables
         request.collect_path_variables(found_path=found_path)
 
-        middlewares = [middleware(**data) for middleware, data in config.HTTP_MIDDLEWARES]
+        middlewares = [middleware() for middleware in config.HTTP_MIDDLEWARES]
         try:  # They Both(middleware.before() & _endpoint()) Have The Same Exception (APIError)
             # Call Middlewares .before()
             for middleware in middlewares:

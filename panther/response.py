@@ -33,15 +33,15 @@ class Response:
     def __init__(
         self,
         data: ResponseDataTypes = None,
-        headers: dict | None = None,
         status_code: int = status.HTTP_200_OK,
+        headers: dict | None = None,
         pagination: Pagination | None = None,
     ):
         """
         :param data: should be an instance of ResponseDataTypes
-        :param headers: should be dict of headers
         :param status_code: should be int
-        :param pagination: instance of Pagination or None
+        :param headers: should be dict of headers
+        :param pagination: an instance of Pagination or None
             The `pagination.template()` method will be used
         """
         self.headers = headers or {}
@@ -231,20 +231,20 @@ class TemplateResponse(HTMLResponse):
     def __init__(
         self,
         source: str | LiteralString | NoneType = None,
-        path: str | NoneType = None,
+        name: str | NoneType = None,
         context: dict | NoneType = None,
         headers: dict | NoneType = None,
         status_code: int = status.HTTP_200_OK,
     ):
         """
         :param source: should be a string
-        :param path: should be path of template file
+        :param name: should be the name of template file
         :param context: should be dict of items
         :param headers: should be dict of headers
         :param status_code: should be int
         """
-        if path:
-            template = config.JINJA_ENVIRONMENT.get_template(name=path)
+        if name:
+            template = config.JINJA_ENVIRONMENT.get_template(name=name)
         else:
             template = config.JINJA_ENVIRONMENT.from_string(source=source)
         super().__init__(

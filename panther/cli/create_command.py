@@ -90,6 +90,7 @@ class CreateProject:
                 'field': 'log_queries',
                 'message': 'Do You Want To Log Queries',
                 'is_boolean': True,
+                'condition': "self.database != '2'"
             },
             {
                 'field': 'auto_reformat',
