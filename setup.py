@@ -28,7 +28,7 @@ EXTRAS_REQUIRE = {
     'full': [
         'redis==5.2.1',
         'motor~=3.7.0',
-        'bpython~=0.24',
+        'ipython~=9.0.2',
         'python-jose~=3.4.0',
         'ruff~=0.11.2',
         'websockets~=15.0.1',
