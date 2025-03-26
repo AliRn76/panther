@@ -15,29 +15,29 @@ with open('README.md', encoding='utf-8') as file:
 
 INSTALL_REQUIRES = [
     'pantherdb~=2.1.1',
-    'pydantic~=2.8.2',
-    'rich~=13.7.1',
-    'uvicorn~=0.27.1',
-    'pytz~=2024.1',
+    'pydantic~=2.10.6',
+    'rich~=13.9.4',
+    'uvicorn~=0.34.0',
+    'pytz~=2025.2',
     'Jinja2~=3.1',
 ]
 if sys.version_info <= (3, 12):
-    INSTALL_REQUIRES.append('httptools~=0.6.1')
+    INSTALL_REQUIRES.append('httptools~=0.6.4')
 
 EXTRAS_REQUIRE = {
     'full': [
-        'redis==5.0.1',
-        'motor~=3.5.0',
+        'redis==5.2.1',
+        'motor~=3.7.0',
         'bpython~=0.24',
-        'python-jose~=3.3.0',
-        'ruff~=0.1.9',
-        'websockets~=12.0',
-        'cryptography~=42.0.8',
-        'watchfiles~=0.21.0',
+        'python-jose~=3.4.0',
+        'ruff~=0.11.2',
+        'websockets~=15.0.1',
+        'cryptography~=44.0.2',
+        'watchfiles~=1.0.4',
     ],
     'dev': [
-        'ruff~=0.1.9',
-        'pytest~=8.3.3'
+        'ruff~=0.11.2',
+        'pytest~=8.3.5'
     ]
 }
 
