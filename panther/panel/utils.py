@@ -84,7 +84,7 @@ def clean_model_schema(schema: dict) -> dict:
         if 'items' in v:  # For array
             result['fields'][k]['items'] = _ref_name(v['items']['$ref'])
 
-        result['fields'][k]['required'] = k in schema['required']
+        result['fields'][k]['required'] = k in schema.get('required', [])
 
     # Cast it to have a more clear stdout
     return dict(result)

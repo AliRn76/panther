@@ -86,6 +86,7 @@ class CreateView(GenericAPI):
     async def post(self, request: Request, index: int):
         model = config.MODELS[index]
         validated_data = API.validate_input(model=model, request=request)
+        print(f'{validated_data=}')
         return await model.insert_one(validated_data)
 
 class DetailView(GenericAPI):
