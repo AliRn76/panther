@@ -57,7 +57,7 @@ class Config:
     AUTHENTICATION: type[PydanticBaseModel] | None
     WS_AUTHENTICATION: type[PydanticBaseModel] | None
     JWT_CONFIG: JWTConfig | None
-    MODELS: list[dict]
+    MODELS: list[type[PydanticBaseModel]]  # type: type[panther.db.Model]
     FLAT_URLS: dict
     URLS: dict
     WEBSOCKET_CONNECTIONS: typing.Callable | None
