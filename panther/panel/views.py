@@ -90,7 +90,6 @@ class CreateView(GenericAPI):
         print(f'{validated_data=}')
         return await model.insert_one(validated_data.model_dump())
 
-
 class DetailView(GenericAPI):
     async def get(self, request: Request, index: int, document_id: str):
         if not request.path.endswith('/'):
