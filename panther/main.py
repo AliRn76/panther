@@ -168,22 +168,12 @@ class Panther:
         # Collect Path Variables
         request.collect_path_variables(found_path=found_path)
 
-        middlewares = [middleware() for middleware in config.HTTP_MIDDLEWARES]
-        try:  # They Both(middleware.before() & _endpoint()) Have The Same Exception (APIError)
-            # Call Middlewares .before()
-            for middleware in middlewares:
-                request = await middleware.before(request=request)
-                if request is None:
-                    logger.critical(
-                        f'Make sure to return the `request` at the end of `{middleware.__class__.__name__}.before()`')
-                    return await self._raise(send, monitoring=monitoring)
-
+        try:
             # Prepare the method
             if not isinstance(endpoint, types.FunctionType):
                 endpoint = endpoint().call_method
-
             # Call Endpoint
-            response = await endpoint(request=request)
+            response = await endpoint(request=request, middlewares=config.HTTP_MIDDLEWARES)
 
         except APIError as e:
             response = self._handle_exceptions(e)
@@ -193,18 +183,6 @@ class Panther:
             exception = traceback_message(exception=e)
             logger.error(exception)
             return await self._raise(send, monitoring=monitoring)
-
-        # Call Middlewares .after()
-        middlewares.reverse()
-        for middleware in middlewares:
-            try:
-                response = await middleware.after(response=response)
-                if response is None:
-                    logger.critical(
-                        f'Make sure to return the `response` at the end of `{middleware.__class__.__name__}.after()`')
-                    return await self._raise(send, monitoring=monitoring)
-            except APIError as e:  # noqa: PERF203
-                response = self._handle_exceptions(e)
 
         await response.send(send, receive, monitoring=monitoring)
 
