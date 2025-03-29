@@ -87,4 +87,17 @@ class CreateView(GenericAPI):
         model = config.MODELS[index]
         validated_data = API.validate_input(model=model, request=request)
         print(f'{validated_data=}')
-        return await model.insert_one(validated_data.model_dump())
+        return await model.insert_one(validated_data)
+
+class DetailView(GenericAPI):
+    async def get(self, request: Request, index: int, document_id: str):
+        if not request.path.endswith('/'):
+            return RedirectResponse(request.path + '/')
+        model = config.MODELS[index]
+        return TemplateResponse(
+            name='detail.html',
+            context={
+                'fields': clean_model_schema(model.schema()),
+                'data': (await model.first(id=document_id)).model_dump()
+            }
+        )
