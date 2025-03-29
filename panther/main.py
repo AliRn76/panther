@@ -6,8 +6,6 @@ from collections.abc import Callable
 from logging.config import dictConfig
 from pathlib import Path
 
-import orjson as json
-
 import panther.logging
 from panther import status
 from panther._load_configs import *
@@ -15,7 +13,7 @@ from panther._utils import traceback_message, reformat_code
 from panther.cli.utils import print_info
 from panther.configs import config
 from panther.events import Event
-from panther.exceptions import APIError, PantherError
+from panther.exceptions import APIError, PantherError, NotFoundAPIError
 from panther.monitoring import Monitoring
 from panther.request import Request
 from panther.response import Response
@@ -149,57 +147,53 @@ class Panther:
                         f'Make sure to return the `response` at the end of `{middleware.__class__.__name__}.after()`')
                     break
 
-    async def handle_http(self, scope: dict, receive: Callable, send: Callable) -> None:
-        # Monitoring
-        monitoring = Monitoring()
-
-        request = Request(scope=scope, receive=receive, send=send)
-
-        await monitoring.before(request=request)
-
-        # Read Request Payload
-        await request.read_body()
-
+    @classmethod
+    async def handle_http_endpoint(cls, request: Request) -> Response:
         # Find Endpoint
         endpoint, found_path = find_endpoint(path=request.path)
         if endpoint is None:
-            return await self._raise(send, monitoring=monitoring, status_code=status.HTTP_404_NOT_FOUND)
+            raise NotFoundAPIError
 
         # Collect Path Variables
         request.collect_path_variables(found_path=found_path)
 
+        # Prepare the method
+        if not isinstance(endpoint, types.FunctionType):
+            endpoint = endpoint().call_method
+        # Call Endpoint
+        return await endpoint(request=request)
+
+    async def handle_http(self, scope: dict, receive: Callable, send: Callable) -> None:
+        # Create `Request` and its body
+        request = Request(scope=scope, receive=receive, send=send)
+        await request.read_body()
+
+        # Create Middlewares chain
+        chained_func = self.handle_http_endpoint
+        for middleware in reversed(config.HTTP_MIDDLEWARES):
+            chained_func = middleware(dispatch=chained_func)
+
+        # Call Middlewares & Endpoint
         try:
-            # Prepare the method
-            if not isinstance(endpoint, types.FunctionType):
-                endpoint = endpoint().call_method
-            # Call Endpoint
-            response = await endpoint(request=request, middlewares=config.HTTP_MIDDLEWARES)
+            response = await chained_func(request=request)
 
+        # Handle `APIError` Exceptions
         except APIError as e:
-            response = self._handle_exceptions(e)
+            response = Response(
+                data=e.detail if isinstance(e.detail, dict) else {'detail': e.detail},
+                status_code=e.status_code,
+            )
 
-        except Exception as e:  # noqa: BLE001
-            # All unhandled exceptions are caught here
-            exception = traceback_message(exception=e)
-            logger.error(exception)
-            return await self._raise(send, monitoring=monitoring)
+        # Handle Unknown Exceptions
+        except Exception as e:  # noqa: BLE001 - Blind Exception
+            logger.error(traceback_message(exception=e))
+            response = Response(
+                data={'detail': 'Internal Server Error'},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-        await response.send(send, receive, monitoring=monitoring)
+        # Return Response
+        await response.send(send, receive)
 
     def __del__(self):
         Event.run_shutdowns()
-
-    @classmethod
-    def _handle_exceptions(cls, e: APIError, /) -> Response:
-        return Response(
-            data=e.detail if isinstance(e.detail, dict) else {'detail': e.detail},
-            status_code=e.status_code,
-        )
-
-    @classmethod
-    async def _raise(cls, send, *, monitoring, status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR):
-        headers = [[b'Content-Type', b'application/json']]
-        body = json.dumps({'detail': status.status_text[status_code]})
-        await monitoring.after(status_code)
-        await send({'type': 'http.response.start', 'status': status_code, 'headers': headers})
-        await send({'type': 'http.response.body', 'body': body, 'more_body': False})

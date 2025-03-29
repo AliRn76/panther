@@ -19,7 +19,6 @@ from panther.configs import config
 from panther._utils import to_async_generator
 from panther.db.cursor import Cursor
 from pantherdb import Cursor as PantherDBCursor
-from panther.monitoring import Monitoring
 from panther.pagination import Pagination
 
 ResponseDataTypes = list | tuple | set | Cursor | PantherDBCursor | dict | int | float | str | bool | bytes | NoneType | Type[BaseModel]
@@ -143,10 +142,9 @@ class Response:
     async def send_body(self, send, receive, /):
         await send({'type': 'http.response.body', 'body': self.body, 'more_body': False})
 
-    async def send(self, send, receive, /, monitoring: Monitoring):
+    async def send(self, send, receive, /):
         await self.send_headers(send)
         await self.send_body(send, receive)
-        await monitoring.after(self.status_code)
 
     def __str__(self):
         if len(data := str(self.data)) > 30:

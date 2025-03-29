@@ -92,15 +92,11 @@ class API:
         self.func = func
 
         @functools.wraps(func)
-        async def wrapper(request: Request, middlewares: list[BaseMiddleware]) -> Response:
+        async def wrapper(request: Request) -> Response:
             chained_func = self.handle_endpoint
-
             if self.middlewares:
                 for middleware in reversed(self.middlewares):
                     chained_func = middleware(chained_func)
-            for middleware in reversed(middlewares):
-                chained_func = middleware(chained_func)
-
             return await chained_func(request=request)
 
         # Store attributes on the function, so have the same behaviour as class-based (useful in `openapi.view.OpenAPI`)
@@ -111,7 +107,7 @@ class API:
         wrapper.output_schema = self.output_schema
         return wrapper
 
-    async def handle_endpoint(self, request: Request):
+    async def handle_endpoint(self, request: Request) -> Response:
         self.request = request
 
         # 0. Preflight
@@ -266,7 +262,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
     async def delete(self, *args, **kwargs):
         raise MethodNotAllowedAPIError
 
-    async def call_method(self, request: Request, middlewares: list[BaseMiddleware]):
+    async def call_method(self, request: Request):
         match request.method:
             case 'GET':
                 func = self.get
@@ -292,4 +288,4 @@ class GenericAPI(metaclass=MetaGenericAPI):
             cache=self.cache,
             cache_exp_time=self.cache_exp_time,
             middlewares=self.middlewares,
-        )(func)(request=request, middlewares=middlewares)
+        )(func)(request=request)
