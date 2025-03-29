@@ -262,7 +262,6 @@ function createBasicInput(fieldName, field, container, fullFieldName) {
   const requiredText = field.required
     ? `<span class="text-red-500 text-sm ml-2">* Required</span>`
     : "";
-
   if (field.type.includes("boolean")) {
     inputHTML = `
         <label class="flex items-center space-x-3">
@@ -586,3 +585,31 @@ document.getElementById("deleteButton").addEventListener("click", async () => {
     showToast("Error", "An unexpected error occurred. Please try again.", "error");
   }
 });
+
+// Toast function
+function showToast(title, message, type) {
+  const toastContainer =
+    document.getElementById("toastContainer") || createToastContainer();
+  const toast = document.createElement("div");
+  toast.className = `toast ${
+    type === "success" ? "border-green-600" : "border-red-600"
+  } p-4 mb-4 rounded shadow-lg bg-gray-900 text-gray-100 border-l-4 p-4 rounded-lg shadow-md animate-fadeIn`;
+  toast.innerHTML = `
+    <strong class="block text-lg">${title}</strong>
+    <span class="block text-sm">${message}</span>
+  `;
+  toastContainer.appendChild(toast);
+
+  // Automatically remove the toast after 5 seconds
+  setTimeout(() => {
+    toast.remove();
+  }, 5000);
+}
+
+function createToastContainer() {
+  const container = document.createElement("div");
+  container.id = "toastContainer";
+  container.className = "fixed top-4 right-4 z-50 space-y-4";
+  document.body.appendChild(container);
+  return container;
+}

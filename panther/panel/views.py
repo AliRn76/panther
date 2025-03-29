@@ -52,7 +52,7 @@ def home_page_view():
 class TableView(GenericAPI):
     # permissions = [AdminPanelPermission]
 
-    async def get(self,  request: Request, index: int):
+    async def get(self, request: Request, index: int):
         if not request.path.endswith('/'):
             return RedirectResponse(request.path + '/')
         model = config.MODELS[index]
@@ -69,6 +69,7 @@ class TableView(GenericAPI):
                 'records': Response.prepare_data(data),
             }
         )
+
 
 class CreateView(GenericAPI):
     async def get(self, request: Request, index: int):
@@ -87,7 +88,7 @@ class CreateView(GenericAPI):
         model = config.MODELS[index]
         validated_data = API.validate_input(model=model, request=request)
         print(f'{validated_data=}')
-        return await model.insert_one(validated_data)
+        return await model.insert_one(validated_data.model_dump())
 
 class DetailView(GenericAPI):
     async def get(self, request: Request, index: int, document_id: str):

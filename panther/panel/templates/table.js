@@ -190,6 +190,8 @@ function renderTable() {
     // Render pagination controls
     renderPaginationControls(records.length);
   }
+
+  renderTable();
 }
 
 function renderPaginationControls(totalRows) {
