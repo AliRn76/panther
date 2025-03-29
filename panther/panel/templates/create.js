@@ -395,10 +395,43 @@ const dynamicInputs = document.getElementById("dynamicInputs");
 
 createObjectInputs(schema, dynamicInputs);
 
-document.getElementById("createForm").addEventListener("submit", async (e) => {
+// Check if the page is in update mode
+if (typeof isUpdate !== "undefined" && isUpdate) {
+  // Populate the form with existing data for update mode
+  populateFormWithExistingData(existingData);
+} else {
+  console.log("Create mode: No existing data to populate.");
+}
+
+// Function to populate the form with existing data
+function populateFormWithExistingData(data) {
+  const dynamicInputs = document.getElementById("dynamicInputs");
+  if (!dynamicInputs) return;
+
+  // Iterate over the existing data and pre-fill the inputs
+  Object.entries(data).forEach(([key, value]) => {
+    // Find the input field by its name attribute
+    const input = dynamicInputs.querySelector(`[name="${key}"]`);
+    if (input) {
+      if (input.type === "checkbox") {
+        input.checked = Boolean(value);
+      } else {
+        input.value = value !== null ? value : ""; // Set the value or leave it empty
+      }
+    }
+  });
+
+  // Special case for the `_id` field if it doesn't match the key in the data
+  const idInput = dynamicInputs.querySelector(`[name="_id"]`);
+  if (idInput && data.id) {
+    idInput.value = data.id; // Map the `id` field to the `_id` input
+  }
+}
+
+// Modify the form submission logic to handle both create and update
+document.getElementById(isUpdate ? "updateForm" : "createForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const formData = new FormData(e.target);
-  const data = {};
 
   for (let [key, value] of formData.entries()) {
     const parts = key.split(/[\[\].]/).filter(Boolean);
@@ -457,8 +490,9 @@ document.getElementById("createForm").addEventListener("submit", async (e) => {
   });
 
   try {
-    const response = await fetch("./", {
-      method: "POST",
+    console.log("Data being sent:", data); // Debugging log
+    const response = await fetch(isUpdate ? `/detail  /${data.id}` : "./", {
+      method: isUpdate ? "PUT" : "POST",
       headers: {
         "Content-Type": "application/json",
       },
@@ -470,7 +504,7 @@ document.getElementById("createForm").addEventListener("submit", async (e) => {
       console.log("Success:", result);
       showToast(
         "Success",
-        "Your data has been submitted successfully!",
+        `Your data has been ${isUpdate ? "updated" : "submitted"} successfully!`,
         "success"
       );
     } else {
@@ -515,3 +549,40 @@ function createToastContainer() {
   document.body.appendChild(container);
   return container;
 }
+
+document.getElementById("deleteButton").addEventListener("click", async () => {
+  if (!data.id) {
+    console.error("No ID found for deletion.");
+    showToast("Error", "No ID found for deletion.", "error");
+    return;
+  }
+
+  const confirmDelete = confirm("Are you sure you want to delete this record?");
+  if (!confirmDelete) return;
+
+  try {
+    const response = await fetch(`/${data.id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (response.ok) {
+      console.log("Record deleted successfully.");
+      showToast("Success", "Record deleted successfully!", "success");
+
+      // Optionally redirect or refresh the page
+      setTimeout(() => {
+        window.location.href = "/"; // Redirect to the homepage or another page
+      }, 2000);
+    } else {
+      const errorText = await response.text();
+      console.error("Error:", response.status, response.statusText);
+      showToast("Error", `Error ${response.status}: ${errorText}`, "error");
+    }
+  } catch (error) {
+    console.error("Fetch error:", error);
+    showToast("Error", "An unexpected error occurred. Please try again.", "error");
+  }
+});

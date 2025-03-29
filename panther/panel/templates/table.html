@@ -1,6 +1,4 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="flex items-start gap-4">
   <aside class="w-64 bg-gray-800 p-4 border-gray-700 shrink-0 rounded">
     <h2 class="text-lg font-semibold mb-4">Available Tables</h2>
@@ -26,12 +24,12 @@
         <td class="record-data hidden">{{record}}</td>
       </tr>
       {% endfor %}
-
     </tbody>
-    <tfoot id="paginationControls" class="mt-4 flex-grow flex mx-[100%] gap-4 justify-center w-full"></tfoot>
-
+    <tfoot
+      id="paginationControls"
+      class="my-4 flex-grow flex mx-[100%] gap-4 justify-center w-full min-w-80"
+    ></tfoot>
   </table>
-
 </div>
 <style>
   details[open] summary svg {
@@ -47,4 +45,3 @@
 </script>
 
 {% endblock %}
-

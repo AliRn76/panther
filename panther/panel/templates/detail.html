@@ -1,19 +1,42 @@
-<body class="bg-gray-800 text-gray-300">
-  <div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-8">
-      <h1 class="text-2xl font-bold">Record Details</h1>
-      <button
-        onclick="window.history.back()"
-        class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
-      >
-        Back to List
-      </button>
-    </div>
-
-    <div id="recordDetails" class="bg-gray-900 rounded-lg p-6 shadow-lg">
-      <div class="text-center text-gray-400">{{data}}</div>
-    </div>
+{% extends "base.html" %} {% block content %}
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-2xl font-bold">Update Record</h1>
+    <button
+      onclick="window.history.back()"
+      class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
+    >
+      Back to List
+    </button>
   </div>
 
-  <script></script>
-</body>
+  <div
+    id="dynamicInputs"
+    class="bg-gray-700 rounded-lg p-6 shadow-lg space-y-4"
+  ></div>
+
+  <form id="updateForm" class="mt-6">
+    <button
+      type="submit"
+      class="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700 text-white"
+    >
+      Update
+    </button>
+    <button
+      type="button"
+      id="deleteButton"
+      class="px-6 py-2 bg-red-600 rounded hover:bg-red-700 text-white"
+    >
+      Delete
+    </button>
+  </form>
+</div>
+
+<script>
+  const data = JSON.parse(`{{data|tojson|safe}}`);
+      const isUpdate = true;
+
+      const existingData = data;
+      {% include "create.js" %}
+</script>
+{% endblock %}

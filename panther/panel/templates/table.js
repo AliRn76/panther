@@ -165,6 +165,23 @@ function renderTable() {
           )
           .join("");
         row.style.display = ""; // Show the row
+
+        // Make the row clickable
+        row.style.cursor = "pointer";
+        row.addEventListener("click", () => {
+          if (record.id) {
+            // Get the current URL
+            const currentUrl = window.location.href;
+
+            // Append the record ID to the current URL
+            const newUrl = `${currentUrl.replace(/\/$/, "")}/${record.id}`;
+
+            // Redirect to the new URL
+            window.location.href = newUrl;
+          } else {
+            console.error("Record does not have an ID:", record);
+          }
+        });
       } else {
         row.style.display = "none"; // Hide unused rows
       }
