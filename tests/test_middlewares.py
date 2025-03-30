@@ -16,90 +16,78 @@ class EmptyBaseMiddleware(BaseMiddleware):
 
 
 class MyMiddleware(HTTPMiddleware):
-    async def before(self, request: Request):
+    async def __call__(self, request: Request):
         request.middlewares = getattr(request, 'middlewares', []) + ['MyMiddleware']
-        return request
-
-    async def after(self, response: Response):
+        response = await self.dispatch(request=request)
         response.data = response.data + ['MyMiddleware']
         return response
 
 
 class BeforeMiddleware1(HTTPMiddleware):
-    async def before(self, request: Request):
+    async def __call__(self, request: Request):
         request.middlewares = getattr(request, 'middlewares', []) + ['BeforeMiddleware1']
-        return request
+        return await self.dispatch(request=request)
 
 
 class BeforeMiddleware2(HTTPMiddleware):
-    async def before(self, request: Request):
+    async def __call__(self, request: Request):
         request.middlewares = getattr(request, 'middlewares', []) + ['BeforeMiddleware2']
-        return request
+        return await self.dispatch(request=request)
 
 
 class AfterMiddleware1(HTTPMiddleware):
-    async def after(self, response: Response):
+    async def __call__(self, request: Request):
+        response = await self.dispatch(request=request)
         response.data = response.data + ['AfterMiddleware1']
         return response
 
 
 class AfterMiddleware2(HTTPMiddleware):
-    async def after(self, response: Response):
+    async def __call__(self, request: Request):
+        response = await self.dispatch(request=request)
         response.data = response.data + ['AfterMiddleware2']
         return response
 
 
 class AfterMiddleware3(HTTPMiddleware):
-    async def after(self, response: Response):
+    async def __call__(self, request: Request):
+        response = await self.dispatch(request=request)
         response.data = response.data + ['AfterMiddleware3']
         return response
 
 
 class MyWSMiddleware1(WebsocketMiddleware):
-    async def before(self, request: GenericWebsocket):
+    async def __call__(self, request: Request):
         request.middlewares = getattr(request, 'middlewares', []) + ['MyWSMiddleware1']
-        return request
-
-    async def after(self, response: GenericWebsocket):
-        return response
-
+        return await self.dispatch(request=request)
 
 class MyWSMiddleware2(WebsocketMiddleware):
-    async def before(self, request: GenericWebsocket):
+    async def __call__(self, request: Request):
         request.middlewares = getattr(request, 'middlewares', []) + ['MyWSMiddleware2']
-        return request
+        return await self.dispatch(request=request)
 
-    async def after(self, response: GenericWebsocket):
-        return response
 
 
 class MyBaseMiddleware(BaseMiddleware):
-    async def before(self, request: Request | GenericWebsocket):
+    async def __call__(self, request: Request):
         request.middlewares = getattr(request, 'middlewares', []) + ['MyBaseMiddleware']
-        return request
-
-    async def after(self, response: Response | GenericWebsocket):
-        if isinstance(response, Response):
-            response.data = response.data + ['MyBaseMiddleware']
+        response = await self.dispatch(request=request)
+        response.data = response.data + ['MyBaseMiddleware']
         return response
 
 
 class PrivateMiddleware1(BaseMiddleware):
-    async def before(self, request: Request | GenericWebsocket):
+    async def __call__(self, request: Request):
         request.middlewares = getattr(request, 'middlewares', []) + ['PrivateMiddleware1']
-        return request
-
-    async def after(self, response: Response):
+        response = await self.dispatch(request=request)
         response.data = response.data + ['PrivateMiddleware1']
         return response
 
 
 class PrivateMiddleware2(BaseMiddleware):
-    async def before(self, request: Request | GenericWebsocket):
+    async def __call__(self, request: Request):
         request.middlewares = getattr(request, 'middlewares', []) + ['PrivateMiddleware2']
-        return request
-
-    async def after(self, response: Response):
+        response = await self.dispatch(request=request)
         response.data = response.data + ['PrivateMiddleware2']
         return response
 

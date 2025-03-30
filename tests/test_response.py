@@ -485,4 +485,4 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
         assert res.headers['Access-Control-Allow-Origin'] == '*'
-        assert res.headers['Content-Length'] == 34
+        assert res.headers['Content-Length'] == '34'
