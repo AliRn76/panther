@@ -9,7 +9,7 @@ class DatabaseError(Exception):
     pass
 
 
-class APIError(Exception):
+class BaseError(Exception):
     detail: str | dict | list = 'Internal Server Error'
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
 
@@ -20,6 +20,16 @@ class APIError(Exception):
     ):
         self.detail = detail or self.detail
         self.status_code = status_code or self.status_code
+
+
+class APIError(BaseError):
+    detail: str | dict | list = 'Internal Server Error'
+    status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
+class WebsocketError(Exception):
+    detail: str | dict | list = 'Internal Error'
+    status_code: int = status.WS_1011_INTERNAL_ERROR
 
 
 class BadRequestAPIError(APIError):

@@ -108,7 +108,7 @@ class WebsocketConnections(Singleton):
         else:
             self.pubsub.publish(publish_data)
 
-    async def listen(self, connection: Websocket) -> None:
+    async def listen(self, connection: Websocket):
         # 1. Authentication
         if not connection.is_rejected:
             await self.handle_authentication(connection=connection)
@@ -139,6 +139,8 @@ class WebsocketConnections(Singleton):
         # 6. Listen Connection
         await self.listen_connection(connection=connection)
 
+        return connection
+
     async def listen_connection(self, connection: Websocket):
         while True:
             response = await connection.asgi_receive()
@@ -163,18 +165,18 @@ class WebsocketConnections(Singleton):
         self.connections[connection.connection_id] = connection
 
         # Logs
-        await connection.monitoring.after('Accepted')
+        # await connection.monitoring.after('Accepted')
         connection.log(f'Accepted {connection.connection_id}')
 
     async def connection_closed(self, connection: Websocket, from_server: bool = False) -> None:
         if connection.is_connected:
             del self.connections[connection.connection_id]
-            await connection.monitoring.after('Closed')
+            # await connection.monitoring.after('Closed')
             connection.log(f'Closed {connection.connection_id}')
             connection._connection_id = ''
 
         elif connection.is_rejected is False and from_server is True:
-            await connection.monitoring.after('Rejected')
+            # await connection.monitoring.after('Rejected')
             connection.log('Rejected')
             connection._is_rejected = True
 
@@ -224,7 +226,6 @@ class Websocket(BaseRequest):
     permissions: list = []
     _connection_id: str = ''
     _is_rejected: bool = False
-    _monitoring: Monitoring
 
     def __init_subclass__(cls, **kwargs):
         if cls.__module__ != 'panther.websocket':
@@ -273,10 +274,6 @@ class Websocket(BaseRequest):
     @property
     def is_rejected(self) -> bool:
         return self._is_rejected
-
-    @property
-    def monitoring(self) -> Monitoring:
-        return self._monitoring
 
     def log(self, message: str):
         logger.debug(f'WS {self.path} --> {message}')

@@ -2,17 +2,12 @@ from unittest import IsolatedAsyncioTestCase, TestCase
 
 from panther import Panther
 from panther.app import API
+from panther.base_websocket import Websocket
 from panther.configs import config
-from panther.middlewares import BaseMiddleware
 from panther.middlewares.base import HTTPMiddleware, WebsocketMiddleware
 from panther.request import Request
-from panther.response import Response
 from panther.test import APIClient, WebsocketClient
 from panther.websocket import GenericWebsocket
-
-
-class EmptyBaseMiddleware(BaseMiddleware):
-    pass
 
 
 class MyMiddleware(HTTPMiddleware):
@@ -57,26 +52,17 @@ class AfterMiddleware3(HTTPMiddleware):
 
 
 class MyWSMiddleware1(WebsocketMiddleware):
-    async def __call__(self, request: Request):
-        request.middlewares = getattr(request, 'middlewares', []) + ['MyWSMiddleware1']
-        return await self.dispatch(request=request)
+    async def __call__(self, connection: Websocket):
+        connection.middlewares = getattr(connection, 'middlewares', []) + ['MyWSMiddleware1']
+        return await self.dispatch(connection=connection)
 
 class MyWSMiddleware2(WebsocketMiddleware):
-    async def __call__(self, request: Request):
-        request.middlewares = getattr(request, 'middlewares', []) + ['MyWSMiddleware2']
-        return await self.dispatch(request=request)
+    async def __call__(self, connection: Websocket):
+        connection.middlewares = getattr(connection, 'middlewares', []) + ['MyWSMiddleware2']
+        return await self.dispatch(connection=connection)
 
 
-
-class MyBaseMiddleware(BaseMiddleware):
-    async def __call__(self, request: Request):
-        request.middlewares = getattr(request, 'middlewares', []) + ['MyBaseMiddleware']
-        response = await self.dispatch(request=request)
-        response.data = response.data + ['MyBaseMiddleware']
-        return response
-
-
-class PrivateMiddleware1(BaseMiddleware):
+class PrivateMiddleware1(HTTPMiddleware):
     async def __call__(self, request: Request):
         request.middlewares = getattr(request, 'middlewares', []) + ['PrivateMiddleware1']
         response = await self.dispatch(request=request)
@@ -84,7 +70,7 @@ class PrivateMiddleware1(BaseMiddleware):
         return response
 
 
-class PrivateMiddleware2(BaseMiddleware):
+class PrivateMiddleware2(HTTPMiddleware):
     async def __call__(self, request: Request):
         request.middlewares = getattr(request, 'middlewares', []) + ['PrivateMiddleware2']
         response = await self.dispatch(request=request)
@@ -135,17 +121,6 @@ urls = {
 
 
 class TestMiddleware(IsolatedAsyncioTestCase):
-    async def test_empty_base_middleware(self):
-        global MIDDLEWARES
-        MIDDLEWARES = [EmptyBaseMiddleware]
-        app = Panther(__name__, configs=__name__, urls=urls)
-        client = APIClient(app=app)
-
-        response = await client.get('')
-        assert response.status_code == 200
-        assert response.data == ['FunctionCall']
-        MIDDLEWARES = []
-
     async def test_before_base_middleware(self):
         global MIDDLEWARES
         MIDDLEWARES = [BeforeMiddleware1]
@@ -215,7 +190,6 @@ class TestMiddleware(IsolatedAsyncioTestCase):
             MyWSMiddleware1,
             AfterMiddleware1,
             AfterMiddleware2,
-            MyBaseMiddleware,
             MyMiddleware,
         ]
         app = Panther(__name__, configs=__name__, urls=urls)
@@ -226,7 +200,6 @@ class TestMiddleware(IsolatedAsyncioTestCase):
             'BeforeMiddleware2',
             'MyMiddleware',
             'BeforeMiddleware1',
-            'MyBaseMiddleware',
             'MyMiddleware',
             'PrivateMiddleware1',
             'PrivateMiddleware2',
@@ -234,7 +207,6 @@ class TestMiddleware(IsolatedAsyncioTestCase):
             'PrivateMiddleware2',
             'PrivateMiddleware1',
             'MyMiddleware',
-            'MyBaseMiddleware',
             'AfterMiddleware2',
             'AfterMiddleware1',
             'MyMiddleware',
@@ -286,7 +258,7 @@ class TestWebsocketMiddleware(TestCase):
 
     def test_base_middleware(self):
         global MIDDLEWARES
-        MIDDLEWARES = [MyWSMiddleware1, MyBaseMiddleware, MyWSMiddleware2]
+        MIDDLEWARES = [MyWSMiddleware1, MyWSMiddleware2]
         app = Panther(__name__, configs=__name__, urls=urls)
         ws = WebsocketClient(app=app)
         responses = ws.connect('websocket')
@@ -295,7 +267,7 @@ class TestWebsocketMiddleware(TestCase):
         assert responses[0]['headers'] == {}
 
         assert responses[1]['type'] == 'websocket.send'
-        assert responses[1]['text'] == '["MyWSMiddleware1","MyBaseMiddleware","MyWSMiddleware2","WebsocketConnect"]'
+        assert responses[1]['text'] == '["MyWSMiddleware1","MyWSMiddleware2","WebsocketConnect"]'
 
         assert responses[2]['type'] == 'websocket.close'
         assert responses[2]['code'] == 1000

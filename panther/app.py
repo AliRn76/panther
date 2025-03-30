@@ -25,7 +25,7 @@ from panther.exceptions import (
     BadRequestAPIError
 )
 from panther.exceptions import PantherError
-from panther.middlewares import BaseMiddleware
+from panther.middlewares import HTTPMiddleware
 from panther.openapi import OutputSchema
 from panther.permissions import BasePermission
 from panther.request import Request
@@ -67,7 +67,7 @@ class API:
         cache: bool = False,
         cache_exp_time: timedelta | int | None = None,
         methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
-        middlewares: list[BaseMiddleware] | None = None,
+        middlewares: list[HTTPMiddleware] | None = None,
     ):
         self.input_model = input_model
         self.output_schema = output_schema
@@ -77,7 +77,7 @@ class API:
         self.cache = cache
         self.cache_exp_time = cache_exp_time
         self.methods = {m.upper() for m in methods} if methods else None
-        self.middlewares: list[BaseMiddleware] | None = middlewares
+        self.middlewares: list[HTTPMiddleware] | None = middlewares
         self.request: Request | None = None
         if output_model:
             deprecation_message = (
@@ -245,7 +245,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
     throttling: Throttling | None = None
     cache: bool = False
     cache_exp_time: timedelta | int | None = None
-    middlewares: list[BaseMiddleware] | None = None
+    middlewares: list[HTTPMiddleware] | None = None
 
     async def get(self, *args, **kwargs):
         raise MethodNotAllowedAPIError
