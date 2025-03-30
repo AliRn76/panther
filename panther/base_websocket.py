@@ -218,7 +218,7 @@ class WebsocketConnections(Singleton):
 class Websocket(BaseRequest):
     auth: bool = False
     permissions: list = []
-    state: str = 'Pending'
+    state: str = 'Connected'
     _connection_id: str = ''
     _is_rejected: bool = False
 
@@ -271,6 +271,7 @@ class Websocket(BaseRequest):
         return self._is_rejected
 
     def change_state(self, state: Literal['Accepted', 'Closed', 'Rejected'], message: str = ''):
+        self.state = state
         if message:
             message = f' | {message}'
         if self.is_connected:

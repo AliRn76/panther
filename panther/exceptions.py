@@ -62,6 +62,11 @@ class JSONDecodeAPIError(APIError):
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
+class UpgradeRequiredError(APIError):
+    detail = 'This service requires use of the WebSocket protocol.'
+    status_code = status.HTTP_426_UPGRADE_REQUIRED
+
+
 class ThrottlingAPIError(APIError):
     detail = 'Too Many Request'
     status_code = status.HTTP_429_TOO_MANY_REQUESTS

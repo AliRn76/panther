@@ -55,7 +55,7 @@ help_message = f"""{logo}
 {h}       - panther monitor                                  {h}
 {h}           Show the monitor :)                            {h}
 {h}                                                          {h}
-{h}       - panther version                                  {h}
+{h}       - panther version | --version                      {h}
 {h}           Print the current version of Panther           {h}
 {h}                                                          {h}
 {h}       - panther h | help | --help | -h                   {h}

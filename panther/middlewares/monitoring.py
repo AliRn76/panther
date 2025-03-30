@@ -22,9 +22,10 @@ class MonitoringMiddleware(HTTPMiddleware):
 
         response_time = perf_counter() - start_time  # Seconds
         logger.info(f'{method} | {request.path} | {request.client} | {response_time} | {response.status_code}')
-
+        return response
 
 class WebsocketMonitoringMiddleware(WebsocketMiddleware):
+    ConnectedConnectionTime = ' - '
     """
     Create Log Message Like Below:
     date_time | WS | path | ip:port | connection_time(seconds) | status
@@ -33,8 +34,9 @@ class WebsocketMonitoringMiddleware(WebsocketMiddleware):
     async def __call__(self, connection: Websocket):
         start_time = perf_counter()
 
-        logger.info(f'WS | {connection.path} | {connection.client} | -  | {connection.state}')
+        logger.info(f'WS | {connection.path} | {connection.client} |{self.ConnectedConnectionTime}| {connection.state}')
         connection = await self.dispatch(connection=connection)
 
         connection_time = perf_counter() - start_time  # Seconds
         logger.info(f'WS | {connection.path} | {connection.client} | {connection_time} | {connection.state}')
+        return connection

@@ -9,11 +9,12 @@ import panther.logging
 from panther import status
 from panther._load_configs import *
 from panther._utils import traceback_message, reformat_code
+from panther.app import GenericAPI
 from panther.base_websocket import Websocket
 from panther.cli.utils import print_info
 from panther.configs import config
 from panther.events import Event
-from panther.exceptions import APIError, PantherError, NotFoundAPIError, BaseError
+from panther.exceptions import APIError, PantherError, NotFoundAPIError, BaseError, UpgradeRequiredError
 from panther.request import Request
 from panther.response import Response
 from panther.routings import find_endpoint
@@ -92,10 +93,7 @@ class Panther:
 
         # Check Endpoint Type
         if not issubclass(endpoint, GenericWebsocket):
-            logger.critical(
-                f'This class is not Websocket, you have to inherit from `panther.app.GenericWebsocket` '
-                f'instead of `panther.app.GenericAPI` on the `{endpoint.__name__}()`'
-            )
+            logger.warning(f'{endpoint.__name__}() class is not a Websocket class.')
             await connection.close()
             return connection
 
@@ -141,6 +139,9 @@ class Panther:
 
         # Prepare the method
         if not isinstance(endpoint, types.FunctionType):
+            if not issubclass(endpoint, GenericAPI):
+                raise UpgradeRequiredError
+
             endpoint = endpoint().call_method
         # Call Endpoint
         return await endpoint(request=request)
@@ -158,14 +159,18 @@ class Panther:
         # Call Middlewares & Endpoint
         try:
             response = await chained_func(request=request)
-
+            if response is None:
+                logger.error('You forgot to return `response` on the `Middlewares.__call__()`')
+                response = Response(
+                    data={'detail': 'Internal Server Error'},
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
         # Handle `APIError` Exceptions
         except APIError as e:
             response = Response(
                 data=e.detail if isinstance(e.detail, dict) else {'detail': e.detail},
                 status_code=e.status_code,
             )
-
         # Handle Unknown Exceptions
         except Exception as e:  # noqa: BLE001 - Blind Exception
             logger.error(traceback_message(exception=e))
