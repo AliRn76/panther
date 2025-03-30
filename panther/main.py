@@ -13,7 +13,7 @@ from panther.base_websocket import Websocket
 from panther.cli.utils import print_info
 from panther.configs import config
 from panther.events import Event
-from panther.exceptions import APIError, PantherError, NotFoundAPIError, WebsocketError
+from panther.exceptions import APIError, PantherError, NotFoundAPIError, BaseError
 from panther.request import Request
 from panther.response import Response
 from panther.routings import find_endpoint
@@ -121,7 +121,7 @@ class Panther:
         # Call Middlewares & Endpoint
         try:
             connection = await chained_func(connection=connection)
-        except WebsocketError as e:
+        except BaseError as e:
             connection.log(e.detail)
             await connection.close()
         except Exception as e:

@@ -27,7 +27,7 @@ class APIError(BaseError):
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
-class WebsocketError(Exception):
+class WebsocketError(BaseError):
     detail: str | dict | list = 'Internal Error'
     status_code: int = status.WS_1011_INTERNAL_ERROR
 
