@@ -24,11 +24,6 @@ class BaseError(Exception):
         self.headers = headers
 
 
-class RedirectAPIError(APIError):
-    def __init__(self, url: str, status_code: int = status.HTTP_302_FOUND):
-        super().__init__(headers={'Location': url}, status_code=status_code)
-
-
 class APIError(BaseError):
     detail: str | dict | list = 'Internal Server Error'
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -37,6 +32,11 @@ class APIError(BaseError):
 class WebsocketError(BaseError):
     detail: str | dict | list = 'Internal Error'
     status_code: int = status.WS_1011_INTERNAL_ERROR
+
+
+class RedirectAPIError(APIError):
+    def __init__(self, url: str, status_code: int = status.HTTP_302_FOUND):
+        super().__init__(headers={'Location': url}, status_code=status_code)
 
 
 class BadRequestAPIError(APIError):
