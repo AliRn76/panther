@@ -66,7 +66,7 @@ class BaseUser(Model):
     async def logout(self) -> dict:
         return await config.AUTHENTICATION.logout(self._auth_token)
 
-    def set_password(self, password: str):
+    async def set_password(self, password: str):
         """
         URANDOM_SIZE = 16 char -->
             salt = 16 bytes
@@ -76,7 +76,8 @@ class BaseUser(Model):
         salt = os.urandom(URANDOM_SIZE)
         derived_key = scrypt(password=password, salt=salt, digest=True)
 
-        self.password = f'{salt.hex()}{derived_key}'
+        hashed_password = f'{salt.hex()}{derived_key}'
+        await self.update(password=hashed_password)
 
     def check_password(self, password: str) -> bool:
         size = URANDOM_SIZE * 2

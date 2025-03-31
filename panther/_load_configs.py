@@ -16,7 +16,7 @@ from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.exceptions import PantherError
 from panther.middlewares.base import WebsocketMiddleware, HTTPMiddleware
-from panther.panel.urls import urls as panel_urls
+from panther.panel.views import HomeView
 from panther.routings import finalize_urls, flatten_urls
 
 __all__ = (
@@ -36,8 +36,8 @@ __all__ = (
     'load_auto_reformat',
     'load_background_tasks',
     'load_default_cache_exp',
-    'load_authentication_class',
     'load_urls',
+    'load_authentication_class',
     'load_websocket_connections',
     'check_endpoints_inheritance',
 )
@@ -212,32 +212,6 @@ def load_default_cache_exp(_configs: dict, /) -> None:
         config.DEFAULT_CACHE_EXP = default_cache_exp
 
 
-def load_authentication_class(_configs: dict, /) -> None:
-    """Should be after `load_secret_key()`"""
-    if authentication := _configs.get('AUTHENTICATION'):
-        config.AUTHENTICATION = import_class(authentication)
-
-    if ws_authentication := _configs.get('WS_AUTHENTICATION'):
-        config.WS_AUTHENTICATION = import_class(ws_authentication)
-
-    load_jwt_config(_configs)
-
-
-def load_jwt_config(_configs: dict, /) -> None:
-    """Only Collect JWT Config If Authentication Is JWTAuthentication"""
-    auth_is_jwt = (
-            getattr(config.AUTHENTICATION, '__name__', None) == 'JWTAuthentication' or
-            getattr(config.WS_AUTHENTICATION, '__name__', None) == 'QueryParamJWTAuthentication'
-    )
-    jwt = _configs.get('JWTConfig', {})
-    if auth_is_jwt or jwt:
-        if 'key' not in jwt:
-            if config.SECRET_KEY is None:
-                raise _exception_handler(field='JWTConfig', error='`JWTConfig.key` or `SECRET_KEY` is required.')
-            jwt['key'] = config.SECRET_KEY.decode()
-        config.JWT_CONFIG = JWTConfig(**jwt)
-
-
 def load_urls(_configs: dict, /, urls: dict | None) -> None:
     """
     Return tuple of all urls (as a flat dict) and (as a nested dict)
@@ -269,7 +243,34 @@ def load_urls(_configs: dict, /, urls: dict | None) -> None:
 
     config.FLAT_URLS = flatten_urls(urls)
     config.URLS = finalize_urls(config.FLAT_URLS)
-    config.URLS['_panel'] = finalize_urls(flatten_urls(panel_urls))
+
+
+def load_authentication_class(_configs: dict, /) -> None:
+    """Should be after `load_secret_key()` and `load_urls()`"""
+    if authentication := _configs.get('AUTHENTICATION'):
+        config.AUTHENTICATION = import_class(authentication)
+
+    if ws_authentication := _configs.get('WS_AUTHENTICATION'):
+        config.WS_AUTHENTICATION = import_class(ws_authentication)
+
+    load_jwt_config(_configs)
+
+
+def load_jwt_config(_configs: dict, /) -> None:
+    """Only Collect JWT Config If Authentication Is JWTAuthentication"""
+    auth_is_jwt = (
+            getattr(config.AUTHENTICATION, '__name__', None) == 'JWTAuthentication' or
+            getattr(config.WS_AUTHENTICATION, '__name__', None) == 'QueryParamJWTAuthentication'
+    )
+    jwt = _configs.get('JWTConfig', {})
+
+    using_panel_views = HomeView in config.FLAT_URLS.values()
+    if auth_is_jwt or using_panel_views:
+        if 'key' not in jwt:
+            if config.SECRET_KEY is None:
+                raise _exception_handler(field='JWTConfig', error='`JWTConfig.key` or `SECRET_KEY` is required.')
+            jwt['key'] = config.SECRET_KEY.decode()
+        config.JWT_CONFIG = JWTConfig(**jwt)
 
 
 def load_websocket_connections():
@@ -297,8 +298,10 @@ def check_endpoints_inheritance():
         else:
             check_class_type_endpoint(endpoint=endpoint)
 
+
 def _exception_handler(field: str, error: str | Exception) -> PantherError:
     return PantherError(f"Invalid '{field}': {error}")
+
 
 def _deprecated_warning(field: str, message: str):
     return logger.warning(f"DEPRECATED '{field}': {message}")

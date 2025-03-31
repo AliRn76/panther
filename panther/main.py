@@ -61,8 +61,8 @@ class Panther:
         load_auto_reformat(self._configs_module)
         load_background_tasks(self._configs_module)
         load_default_cache_exp(self._configs_module)
-        load_authentication_class(self._configs_module)
         load_urls(self._configs_module, urls=self._urls)
+        load_authentication_class(self._configs_module)
         load_websocket_connections()
 
         check_endpoints_inheritance()

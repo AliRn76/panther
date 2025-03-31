@@ -60,5 +60,5 @@ DATABASE = {
         'class': 'panther.db.connections.PantherDBConnection',
     }
 }
-
+SECRET_KEY = 'ok'
 app = Panther(__name__, configs=__name__, urls={'admin': admin_url, 'generate': generate_data})

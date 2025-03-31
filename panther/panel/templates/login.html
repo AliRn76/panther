@@ -2,15 +2,19 @@
 
 {% block content %}
   <div class="flex items-center justify-center min-h-screen">
-
     <div class="bg-gray-800 p-6 rounded-lg shadow-md w-full max-w-sm border border-gray-700">
       <h2 class="text-xl font-semibold mb-6 text-center">Login</h2>
+
+      {% if error %}
+        <div class="mb-4 p-3 text-sm text-red-600 bg-red-100 border border-red-400 rounded-lg">
+          {{ error }}
+        </div>
+      {% endif %}
+
       <form action="" method="POST" class="space-y-4">
         <!-- Username Field -->
         <div>
-          <label for="username" class="block text-sm font-medium mb-2"
-            >Username:</label
-          >
+          <label for="username" class="block text-sm font-medium mb-2">Username:</label>
           <input
             type="text"
             id="username"
@@ -21,9 +25,7 @@
         </div>
         <!-- Password Field -->
         <div>
-          <label for="password" class="block text-sm font-medium mb-2"
-            >Password:</label
-          >
+          <label for="password" class="block text-sm font-medium mb-2">Password:</label>
           <input
             type="password"
             id="password"
@@ -41,7 +43,5 @@
         </button>
       </form>
     </div>
-</div>
-
+  </div>
 {% endblock %}
-

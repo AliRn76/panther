@@ -81,6 +81,7 @@ class Response:
         self.initial_data = data
         self.data = self.prepare_data(data=data)
         self.status_code = self.check_status_code(status_code=status_code)
+        self.cookies = None
         if set_cookies:
             c = cookies.SimpleCookie()
             for cookie in set_cookies:
@@ -93,7 +94,7 @@ class Response:
                     c[cookie.key]['domain'] = cookie.domain
                 if cookie.max_age is not None:
                     c[cookie.key]['max-age'] = cookie.max_age
-            headers['Set-Cookie'] = c.output(header='')
+            self.cookies = [(b'Set-Cookie', cookie.OutputString().encode()) for cookie in c.values()]
         self.headers = headers
 
     @property
@@ -114,8 +115,11 @@ class Response:
         } | self._headers
 
     @property
-    def bytes_headers(self) -> list[list[bytes]]:
-        return [[k.encode(), str(v).encode()] for k, v in (self.headers or {}).items()]
+    def bytes_headers(self) -> list[tuple[bytes]]:
+        result = [(k.encode(), str(v).encode()) for k, v in (self.headers or {}).items()]
+        if self.cookies:
+            result.extend(self.cookies)
+        return result
 
     @headers.setter
     def headers(self, headers: dict):

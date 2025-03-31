@@ -1,60 +1,87 @@
+import logging
+
 from panther import status
 from panther.app import API, GenericAPI
+from panther.authentications import JWTAuthentication, CookieJWTAuthentication
 from panther.configs import config
 from panther.db.models import BaseUser
 from panther.exceptions import RedirectAPIError, AuthenticationAPIError
+from panther.panel.middlewares import RedirectToSlashMiddleware
 from panther.panel.utils import get_models, clean_model_schema
 from panther.permissions import BasePermission
 from panther.request import Request
 from panther.response import TemplateResponse, Response, Cookie, RedirectResponse
 
+logger = logging.getLogger('panther')
+
 
 class AdminPanelPermission(BasePermission):
     @classmethod
     async def authorization(cls, request: Request) -> bool:
-        if 'cookie' in request.headers:
+        try:  # We don't want to set AUTHENTICATION class, so we have to permission class
+            await CookieJWTAuthentication.authentication(request=request)
             return True
-        raise RedirectAPIError(url=f'login?redirect_to={request.path}')
+        except AuthenticationAPIError:
+            raise RedirectAPIError(url=f'login?redirect_to={request.path}')
 
 
 class LoginView(GenericAPI):
+    middlewares = [RedirectToSlashMiddleware]
+
     def get(self, request: Request):
-        if not request.path.endswith('/'):
-            return RedirectResponse(request.path + '/')
         return TemplateResponse(name='login.html')
 
     async def post(self, request: Request):
+        await config.USER_MODEL.delete_many()
+        u, _ = await config.USER_MODEL.find_one_or_insert(username='ali')
+        await u.set_password('1234')  # TODO: This is for test, delete it later.
+
         user: BaseUser = await config.USER_MODEL.find_one({config.USER_MODEL.USERNAME_FIELD: request.data['username']})
         if user is None:
-            raise AuthenticationAPIError
-
+            logger.debug('User not found.')
+            return TemplateResponse(
+                name='login.html',
+                status_code=status.HTTP_400_BAD_REQUEST,
+                context={'error': 'Authentication Error'},
+            )
         if user.check_password(password=request.data['password']) is False:
-            return AuthenticationAPIError
-
+            logger.debug('Password is incorrect.')
+            return TemplateResponse(
+                name='login.html',
+                status_code=status.HTTP_400_BAD_REQUEST,
+                context={'error': 'Authentication Error'},
+            )
+        tokens = JWTAuthentication.login(user.id)
         return RedirectResponse(
             url=request.query_params.get('redirect_to', '..'),
             status_code=status.HTTP_302_FOUND,
             set_cookies=[
                 Cookie(
                     key='access_token',
-                    value=config.AUTHENTICATION.encode_jwt(str(self.id)),
+                    value=tokens['access_token'],
                     max_age=config.JWT_CONFIG.life_time
+                ),
+                Cookie(
+                    key='refresh_token',
+                    value=tokens['refresh_token'],
+                    max_age=config.JWT_CONFIG.refresh_life_time
                 )
             ]
         )
 
 
-@API(methods=['GET'])
-def home_page_view():
-    return TemplateResponse(name='home.html', context={'tables': get_models()})
+class HomeView(GenericAPI):
+    permissions = [AdminPanelPermission]
+
+    def get(self):
+        return TemplateResponse(name='home.html', context={'tables': get_models()})
 
 
 class TableView(GenericAPI):
-    # permissions = [AdminPanelPermission]
+    permissions = [AdminPanelPermission]
+    middlewares = [RedirectToSlashMiddleware]
 
     async def get(self, request: Request, index: int):
-        if not request.path.endswith('/'):
-            return RedirectResponse(request.path + '/')
         model = config.MODELS[index]
         if data := await model.find():
             data = data
@@ -72,9 +99,10 @@ class TableView(GenericAPI):
 
 
 class CreateView(GenericAPI):
+    permissions = [AdminPanelPermission]
+    middlewares = [RedirectToSlashMiddleware]
+
     async def get(self, request: Request, index: int):
-        if not request.path.endswith('/'):
-            return RedirectResponse(request.path + '/')
         model = config.MODELS[index]
         return TemplateResponse(
             name='create.html',
@@ -87,13 +115,14 @@ class CreateView(GenericAPI):
     async def post(self, request: Request, index: int):
         model = config.MODELS[index]
         validated_data = API.validate_input(model=model, request=request)
-        print(f'{validated_data=}')
         return await model.insert_one(validated_data.model_dump())
 
+
 class DetailView(GenericAPI):
+    permissions = [AdminPanelPermission]
+    middlewares = [RedirectToSlashMiddleware]
+
     async def get(self, request: Request, index: int, document_id: str):
-        if not request.path.endswith('/'):
-            return RedirectResponse(request.path + '/')
         model = config.MODELS[index]
         return TemplateResponse(
             name='detail.html',

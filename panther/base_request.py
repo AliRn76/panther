@@ -54,6 +54,23 @@ class Headers:
     def __dict__(self):
         return self.__headers
 
+    def get_cookies(self) -> dict:
+        """
+        request.headers.cookie:
+            'csrftoken=aaa; sessionid=bbb; access_token=ccc; refresh_token=ddd'
+
+        request.headers.get_cookies():
+            {
+                'csrftoken': 'aaa',
+                'sessionid': 'bbb',
+                'access_token': 'ccc',
+                'refresh_token': 'ddd',
+            }
+        """
+        if self.cookie:
+            return {k.strip(): v for k, v in (c.split('=', maxsplit=1) for c in self.cookie.split(';'))}
+        return {}
+
 
 class Address:
     def __init__(self, ip, port):
