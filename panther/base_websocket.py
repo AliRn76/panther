@@ -10,8 +10,7 @@ from panther import status
 from panther.base_request import BaseRequest
 from panther.configs import config
 from panther.db.connections import redis
-from panther.exceptions import AuthenticationAPIError, InvalidPathVariableAPIError
-from panther.monitoring import Monitoring
+from panther.exceptions import InvalidPathVariableAPIError, BaseError
 from panther.utils import Singleton, ULID
 
 if TYPE_CHECKING:
@@ -108,7 +107,7 @@ class WebsocketConnections(Singleton):
         else:
             self.pubsub.publish(publish_data)
 
-    async def listen(self, connection: Websocket) -> None:
+    async def listen(self, connection: Websocket):
         # 1. Authentication
         if not connection.is_rejected:
             await self.handle_authentication(connection=connection)
@@ -125,7 +124,7 @@ class WebsocketConnections(Singleton):
         try:
             kwargs = connection.clean_parameters(connection.connect)
         except InvalidPathVariableAPIError as e:
-            connection.log(e.detail)
+            connection.change_state(state='Rejected', message=e.detail)
             return await connection.close()
 
         # 4. Connect To Endpoint
@@ -139,6 +138,8 @@ class WebsocketConnections(Singleton):
         # 6. Listen Connection
         await self.listen_connection(connection=connection)
 
+        return connection
+
     async def listen_connection(self, connection: Websocket):
         while True:
             response = await connection.asgi_receive()
@@ -146,7 +147,7 @@ class WebsocketConnections(Singleton):
                 continue
 
             if response['type'] == 'websocket.disconnect':
-                # Connect has to be closed by the client
+                # Connection has to be closed by the client.
                 await self.connection_closed(connection=connection)
                 break
 
@@ -161,21 +162,16 @@ class WebsocketConnections(Singleton):
 
         # Save Connection
         self.connections[connection.connection_id] = connection
-
-        # Logs
-        await connection.monitoring.after('Accepted')
-        connection.log(f'Accepted {connection.connection_id}')
+        connection.change_state(state='Accepted')
 
     async def connection_closed(self, connection: Websocket, from_server: bool = False) -> None:
         if connection.is_connected:
             del self.connections[connection.connection_id]
-            await connection.monitoring.after('Closed')
-            connection.log(f'Closed {connection.connection_id}')
+            connection.change_state(state='Closed')
             connection._connection_id = ''
 
         elif connection.is_rejected is False and from_server is True:
-            await connection.monitoring.after('Rejected')
-            connection.log('Rejected')
+            connection.change_state(state='Rejected')
             connection._is_rejected = True
 
     async def start(self):
@@ -203,8 +199,8 @@ class WebsocketConnections(Singleton):
             else:
                 try:
                     connection.user = await config.WS_AUTHENTICATION.authentication(connection)
-                except AuthenticationAPIError as e:
-                    connection.log(e.detail)
+                except BaseError as e:
+                    connection.change_state(state='Rejected', message=e.detail)
                     await connection.close()
 
     @classmethod
@@ -215,16 +211,16 @@ class WebsocketConnections(Singleton):
                 logger.critical(f'{perm.__name__}.authorization should be "classmethod"')
                 await connection.close()
             elif await perm.authorization(connection) is False:
-                connection.log('Permission Denied')
+                connection.change_state(state='Rejected', message='Permission Denied')
                 await connection.close()
 
 
 class Websocket(BaseRequest):
     auth: bool = False
     permissions: list = []
+    state: str = 'Connected'
     _connection_id: str = ''
     _is_rejected: bool = False
-    _monitoring: Monitoring
 
     def __init_subclass__(cls, **kwargs):
         if cls.__module__ != 'panther.websocket':
@@ -274,9 +270,10 @@ class Websocket(BaseRequest):
     def is_rejected(self) -> bool:
         return self._is_rejected
 
-    @property
-    def monitoring(self) -> Monitoring:
-        return self._monitoring
-
-    def log(self, message: str):
-        logger.debug(f'WS {self.path} --> {message}')
+    def change_state(self, state: Literal['Accepted', 'Closed', 'Rejected'], message: str = ''):
+        self.state = state
+        if message:
+            message = f' | {message}'
+        if self.is_connected:
+            message = f' | {self.connection_id}{message}'
+        logger.debug(f'WS {self.path} --> {state}{message}')

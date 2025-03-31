@@ -16,7 +16,7 @@ async def request_path(request: Request):
 
 @API()
 async def request_client(request: Request):
-    return request.client
+    return request.client.__dict__
 
 
 @API()
@@ -180,7 +180,7 @@ class TestRequest(IsolatedAsyncioTestCase):
     async def test_client(self):
         res = await self.client.get('client/')
         assert res.status_code == 200
-        assert res.data == ['127.0.0.1', 8585]
+        assert res.data == {'ip': '127.0.0.1', 'port': 8585}
 
     async def test_query_params(self):
         res = await self.client.get(

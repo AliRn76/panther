@@ -94,7 +94,14 @@ def load_templates_dir(_configs: dict, /) -> None:
     if config.TEMPLATES_DIR == '.':
         config.TEMPLATES_DIR = config.BASE_DIR
 
-    config.JINJA_ENVIRONMENT = jinja2.Environment(loader=jinja2.FileSystemLoader(config.TEMPLATES_DIR))
+    config.JINJA_ENVIRONMENT = jinja2.Environment(
+        loader=jinja2.ChoiceLoader(
+            loaders=(
+                jinja2.FileSystemLoader(searchpath=config.TEMPLATES_DIR),
+                jinja2.PackageLoader(package_name='panther', package_path='openapi/templates/')
+            )
+        )
+    )
 
 
 def load_database(_configs: dict, /) -> None:
@@ -147,42 +154,42 @@ def load_log_queries(_configs: dict, /) -> None:
 
 
 def load_middlewares(_configs: dict, /) -> None:
-    from panther.middlewares import BaseMiddleware
-
     middlewares = {'http': [], 'ws': []}
 
     # Collect Middlewares
     for middleware in _configs.get('MIDDLEWARES') or []:
-        if not isinstance(middleware, list | tuple):
-            path_or_type = middleware
-            data = {}
+        # This block is for Backward Compatibility
+        if isinstance(middleware, list | tuple):
+            if len(middleware) == 1:
+                middleware = middleware[0]
+            elif len(middleware) == 2:
+                _deprecated_warning(
+                    field='MIDDLEWARES',
+                    message='`data` does not supported in middlewares anymore, as your data is static you may want '
+                            'to pass them to your middleware with config variables'
+                )
+                middleware = middleware[0]
+            else:
+                raise _exception_handler(
+                    field='MIDDLEWARES', error=f'{middleware} should be dotted path or type of a middleware class')
 
-        elif len(middleware) == 1:
-            path_or_type = middleware[0]
-            data = {}
-
-        elif len(middleware) > 2:
-            raise _exception_handler(field='MIDDLEWARES', error=f'{middleware} too many arguments')
-
-        else:
-            path_or_type, data = middleware
-
-        if callable(path_or_type):
-            middleware_class = path_or_type
-        else:
+        # `middleware` can be type or path of a class
+        if not callable(middleware):
             try:
-                middleware_class = import_class(path_or_type)
+                middleware = import_class(middleware)
             except (AttributeError, ModuleNotFoundError):
-                raise _exception_handler(field='MIDDLEWARES', error=f'{path_or_type} is not a valid middleware path')
+                raise _exception_handler(
+                    field='MIDDLEWARES', error=f'{middleware} is not a valid middleware path or type')
 
-        if issubclass(middleware_class, BaseMiddleware) is False:
-            raise _exception_handler(field='MIDDLEWARES', error='is not a sub class of BaseMiddleware')
-
-        if middleware_class.__bases__[0] in (BaseMiddleware, HTTPMiddleware):
-            middlewares['http'].append((middleware_class, data))
-
-        if middleware_class.__bases__[0] in (BaseMiddleware, WebsocketMiddleware):
-            middlewares['ws'].append((middleware_class, data))
+        if issubclass(middleware, HTTPMiddleware):
+            middlewares['http'].append(middleware)
+        elif issubclass(middleware, WebsocketMiddleware):
+            middlewares['ws'].append(middleware)
+        else:
+            raise _exception_handler(
+                field='MIDDLEWARES',
+                error='is not a sub class of `HTTPMiddleware` or `WebsocketMiddleware`'
+            )
 
     config.HTTP_MIDDLEWARES = middlewares['http']
     config.WS_MIDDLEWARES = middlewares['ws']
@@ -281,11 +288,16 @@ def load_websocket_connections():
 def check_endpoints_inheritance():
     """Should be after `load_urls()`"""
     for _, endpoint in config.FLAT_URLS.items():
+        if endpoint == {}:
+            continue
+
         if isinstance(endpoint, types.FunctionType):
             check_function_type_endpoint(endpoint=endpoint)
         else:
             check_class_type_endpoint(endpoint=endpoint)
 
-
 def _exception_handler(field: str, error: str | Exception) -> PantherError:
     return PantherError(f"Invalid '{field}': {error}")
+
+def _deprecated_warning(field: str, message: str):
+    return logger.warning(f"DEPRECATED '{field}': {message}")
