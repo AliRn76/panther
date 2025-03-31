@@ -1,1 +1,1 @@
-from panther.middlewares.base import BaseMiddleware, HTTPMiddleware, WebsocketMiddleware  # noqa: F401
+from panther.middlewares.base import HTTPMiddleware, WebsocketMiddleware  # noqa: F401

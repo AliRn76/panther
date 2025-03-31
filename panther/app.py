@@ -3,7 +3,7 @@ import logging
 import traceback
 import typing
 from datetime import timedelta
-from typing import Literal
+from typing import Literal, Callable
 
 from orjson import JSONDecodeError
 from pydantic import ValidationError, BaseModel
@@ -25,7 +25,7 @@ from panther.exceptions import (
     BadRequestAPIError
 )
 from panther.exceptions import PantherError
-from panther.middlewares import BaseMiddleware
+from panther.middlewares import HTTPMiddleware
 from panther.openapi import OutputSchema
 from panther.permissions import BasePermission
 from panther.request import Request
@@ -53,6 +53,7 @@ class API:
     methods: Specify the allowed methods.
     middlewares: These middlewares have inner priority than global middlewares.
     """
+    func: Callable
 
     def __init__(
         self,
@@ -66,7 +67,7 @@ class API:
         cache: bool = False,
         cache_exp_time: timedelta | int | None = None,
         methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
-        middlewares: list[BaseMiddleware] | None = None,
+        middlewares: list[HTTPMiddleware] | None = None,
     ):
         self.input_model = input_model
         self.output_schema = output_schema
@@ -76,7 +77,7 @@ class API:
         self.cache = cache
         self.cache_exp_time = cache_exp_time
         self.methods = {m.upper() for m in methods} if methods else None
-        self.middlewares: list[BaseMiddleware] | None = middlewares
+        self.middlewares: list[HTTPMiddleware] | None = middlewares
         self.request: Request | None = None
         if output_model:
             deprecation_message = (
@@ -88,70 +89,15 @@ class API:
             raise PantherError(deprecation_message)
 
     def __call__(self, func):
+        self.func = func
+
         @functools.wraps(func)
         async def wrapper(request: Request) -> Response:
-            self.request = request
-
-            middlewares = [m() for m in self.middlewares or []]
-            for middleware in middlewares:
-                request = await middleware.before(request=request)
-
-            # 0. Preflight
-            if self.request.method == 'OPTIONS':
-                return self.options()
-
-            # 1. Check Method
-            if self.methods and self.request.method not in self.methods:
-                raise MethodNotAllowedAPIError
-
-            # 2. Authentication
-            await self.handle_authentication()
-
-            # 3. Permissions
-            await self.handle_permission()
-
-            # 4. Throttling
-            await self.handle_throttling()
-
-            # 5. Validate Input
-            if self.request.method in {'POST', 'PUT', 'PATCH'}:
-                self.handle_input_validation()
-
-            # 6. Get Cached Response
-            if self.cache and self.request.method == 'GET':
-                if cached := await get_response_from_cache(request=self.request, cache_exp_time=self.cache_exp_time):
-                    return Response(data=cached.data, headers=cached.headers, status_code=cached.status_code)
-
-            # 7. Put PathVariables and Request(If User Wants It) In kwargs
-            kwargs = self.request.clean_parameters(func)
-
-            # 8. Call Endpoint
-            if is_function_async(func):
-                response = await func(**kwargs)
-            else:
-                response = func(**kwargs)
-
-            # 9. Clean Response
-            if not isinstance(response, Response):
-                response = Response(data=response)
-            if self.output_schema and response.data:
-                response.data = await response.apply_output_model(output_model=self.output_schema.model)
-            if response.pagination:
-                response.data = await response.pagination.template(response.data)
-
-            # 10. Set New Response To Cache
-            if self.cache and self.request.method == 'GET':
-                await set_response_in_cache(request=self.request, response=response, cache_exp_time=self.cache_exp_time)
-
-            # 11. Warning CacheExpTime
-            if self.cache_exp_time and self.cache is False:
-                logger.warning('"cache_exp_time" won\'t work while "cache" is False')
-
-            middlewares.reverse()
-            for middleware in middlewares:
-                response = await middleware.after(response=response)
-
-            return response
+            chained_func = self.handle_endpoint
+            if self.middlewares:
+                for middleware in reversed(self.middlewares):
+                    chained_func = middleware(chained_func)
+            return await chained_func(request=request)
 
         # Store attributes on the function, so have the same behaviour as class-based (useful in `openapi.view.OpenAPI`)
         wrapper.auth = self.auth
@@ -160,6 +106,62 @@ class API:
         wrapper.input_model = self.input_model
         wrapper.output_schema = self.output_schema
         return wrapper
+
+    async def handle_endpoint(self, request: Request) -> Response:
+        self.request = request
+
+        # 0. Preflight
+        if self.request.method == 'OPTIONS':
+            return self.options()
+
+        # 1. Check Method
+        if self.methods and self.request.method not in self.methods:
+            raise MethodNotAllowedAPIError
+
+        # 2. Authentication
+        await self.handle_authentication()
+
+        # 3. Permissions
+        await self.handle_permission()
+
+        # 4. Throttling
+        await self.handle_throttling()
+
+        # 5. Validate Input
+        if self.request.method in {'POST', 'PUT', 'PATCH'}:
+            self.handle_input_validation()
+
+        # 6. Get Cached Response
+        if self.cache and self.request.method == 'GET':
+            if cached := await get_response_from_cache(request=self.request, cache_exp_time=self.cache_exp_time):
+                return Response(data=cached.data, headers=cached.headers, status_code=cached.status_code)
+
+        # 7. Put PathVariables and Request(If User Wants It) In kwargs
+        kwargs = self.request.clean_parameters(self.func)
+
+        # 8. Call Endpoint
+        if is_function_async(self.func):
+            response = await self.func(**kwargs)
+        else:
+            response = self.func(**kwargs)
+
+        # 9. Clean Response
+        if not isinstance(response, Response):
+            response = Response(data=response)
+        if self.output_schema and response.data:
+            response.data = await response.apply_output_model(output_model=self.output_schema.model)
+        if response.pagination:
+            response.data = await response.pagination.template(response.data)
+
+        # 10. Set New Response To Cache
+        if self.cache and self.request.method == 'GET':
+            await set_response_in_cache(request=self.request, response=response, cache_exp_time=self.cache_exp_time)
+
+        # 11. Warning CacheExpTime
+        if self.cache_exp_time and self.cache is False:
+            logger.warning('"cache_exp_time" won\'t work while "cache" is False')
+
+        return response
 
     async def handle_authentication(self) -> None:
         if self.auth:
@@ -243,7 +245,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
     throttling: Throttling | None = None
     cache: bool = False
     cache_exp_time: timedelta | int | None = None
-    middlewares: list[BaseMiddleware] | None = None
+    middlewares: list[HTTPMiddleware] | None = None
 
     async def get(self, *args, **kwargs):
         raise MethodNotAllowedAPIError

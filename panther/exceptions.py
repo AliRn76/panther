@@ -9,7 +9,7 @@ class DatabaseError(Exception):
     pass
 
 
-class APIError(Exception):
+class BaseError(Exception):
     detail: str | dict | list = 'Internal Server Error'
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
 
@@ -20,6 +20,16 @@ class APIError(Exception):
     ):
         self.detail = detail or self.detail
         self.status_code = status_code or self.status_code
+
+
+class APIError(BaseError):
+    detail: str | dict | list = 'Internal Server Error'
+    status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
+class WebsocketError(BaseError):
+    detail: str | dict | list = 'Internal Error'
+    status_code: int = status.WS_1011_INTERNAL_ERROR
 
 
 class BadRequestAPIError(APIError):
@@ -50,6 +60,11 @@ class MethodNotAllowedAPIError(APIError):
 class JSONDecodeAPIError(APIError):
     detail = 'JSON Decode Error'
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+class UpgradeRequiredError(APIError):
+    detail = 'This service requires use of the WebSocket protocol.'
+    status_code = status.HTTP_426_UPGRADE_REQUIRED
 
 
 class ThrottlingAPIError(APIError):

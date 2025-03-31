@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from panther import Panther
 from panther.configs import config
-from panther.middlewares import BaseMiddleware
+from panther.middlewares import HTTPMiddleware
 from panther.utils import generate_secret_key, generate_hash_value_from_string, load_env, round_datetime
 
 
@@ -347,7 +347,7 @@ class TestLoadConfigs(TestCase):
                 MIDDLEWARES = []
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': is not a sub class of BaseMiddleware"
+        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': is not a sub class of `HTTPMiddleware` or `WebsocketMiddleware`"
 
     def test_jwt_auth_without_secret_key(self):
         global AUTHENTICATION
@@ -437,7 +437,7 @@ class InvalidWebsocket:
     pass
 
 
-class CorrectTestMiddleware(BaseMiddleware):
+class CorrectTestMiddleware(HTTPMiddleware):
     pass
 
 
