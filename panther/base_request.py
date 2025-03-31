@@ -1,4 +1,3 @@
-from collections import namedtuple
 from collections.abc import Callable
 from urllib.parse import parse_qsl
 
@@ -56,7 +55,13 @@ class Headers:
         return self.__headers
 
 
-Address = namedtuple('Address', ['ip', 'port'])
+class Address:
+    def __init__(self, ip, port):
+        self.ip = ip
+        self.port = port
+
+    def __str__(self):
+        return f'{self.ip}:{self.port}'
 
 
 class BaseRequest:

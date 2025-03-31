@@ -1,7 +1,9 @@
 import functools
 import logging
+import traceback
+import typing
 from datetime import timedelta
-from typing import Literal
+from typing import Literal, Callable
 
 from orjson import JSONDecodeError
 from pydantic import ValidationError, BaseModel
@@ -22,7 +24,10 @@ from panther.exceptions import (
     ThrottlingAPIError,
     BadRequestAPIError
 )
-from panther.middlewares import BaseMiddleware
+from panther.exceptions import PantherError
+from panther.middlewares import HTTPMiddleware
+from panther.openapi import OutputSchema
+from panther.permissions import BasePermission
 from panther.request import Request
 from panther.response import Response
 from panther.serializer import ModelSerializer
@@ -34,97 +39,129 @@ logger = logging.getLogger('panther')
 
 
 class API:
+    """
+    input_model: The `request.data` will be validated with this attribute, It will raise an
+        `panther.exceptions.BadRequestAPIError` or put the validated data in the `request.validated_data`.
+    output_schema: This attribute only used in creation of OpenAPI scheme which is available in `panther.openapi.urls`
+        You may want to add its `url` to your urls.
+    auth: It will authenticate the user with header of its request or raise an
+        `panther.exceptions.AuthenticationAPIError`.
+    permissions: List of permissions that will be called sequentially after authentication to authorize the user.
+    throttling: It will limit the users' request on a specific (time-bucket, path)
+    cache: Response of the request will be cached.
+    cache_exp_time: Specify the expiry time of the cache. (default is `config.DEFAULT_CACHE_EXP`)
+    methods: Specify the allowed methods.
+    middlewares: These middlewares have inner priority than global middlewares.
+    """
+    func: Callable
+
     def __init__(
         self,
         *,
         methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
         input_model: type[ModelSerializer] | type[BaseModel] | None = None,
-        output_model: type[ModelSerializer] | type[BaseModel] | None = None,
+        output_model: type[BaseModel] | None = None,
+        output_schema: OutputSchema | None = None,
         auth: bool = False,
-        permissions: list | None = None,
+        permissions: list[BasePermission] | None = None,
         throttling: Throttling | None = None,
         cache: bool = False,
         cache_exp_time: timedelta | int | None = None,
-        middlewares: list[BaseMiddleware] | None = None,
+        middlewares: list[HTTPMiddleware] | None = None,
     ):
-        self.methods = methods
+        self.methods = {m.upper() for m in methods} if methods else None
         self.input_model = input_model
-        self.output_model = output_model
+        self.output_schema = output_schema
         self.auth = auth
         self.permissions = permissions or []
         self.throttling = throttling
         self.cache = cache
-        self.cache_exp_time = cache_exp_time # or config.DEFAULT_CACHE_EXP
-        self.middlewares: list[BaseMiddleware] | None = middlewares
+        self.cache_exp_time = cache_exp_time
+        self.middlewares: list[HTTPMiddleware] | None = middlewares
         self.request: Request | None = None
+        if output_model:
+            deprecation_message = (
+                    traceback.format_stack(limit=2)[0] +
+                    '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
+                    '\nPlease update your code to use the new approach. More info: '
+                    'https://pantherpy.github.io/open_api/'
+            )
+            raise PantherError(deprecation_message)
 
     def __call__(self, func):
+        self.func = func
+
         @functools.wraps(func)
         async def wrapper(request: Request) -> Response:
-            self.request = request
+            chained_func = self.handle_endpoint
+            if self.middlewares:
+                for middleware in reversed(self.middlewares):
+                    chained_func = middleware(chained_func)
+            return await chained_func(request=request)
 
-            middlewares = [m() for m in self.middlewares or []]
-            for middleware in middlewares:
-                request = await middleware.before(request=request)
-
-            # 0. Preflight
-            if self.request.method == 'OPTIONS':
-                return self.options()
-
-            # 1. Check Method
-            if self.methods and self.request.method not in self.methods:
-                raise MethodNotAllowedAPIError
-
-            # 2. Authentication
-            await self.handle_authentication()
-
-            # 3. Permissions
-            await self.handle_permission()
-
-            # 4. Throttling
-            await self.handle_throttling()
-
-            # 5. Validate Input
-            if self.request.method in {'POST', 'PUT', 'PATCH'}:
-                self.handle_input_validation()
-
-            # 6. Get Cached Response
-            if self.cache and self.request.method == 'GET':
-                if cached := await get_response_from_cache(request=self.request, cache_exp_time=self.cache_exp_time):
-                    return Response(data=cached.data, headers=cached.headers, status_code=cached.status_code)
-
-            # 7. Put PathVariables and Request(If User Wants It) In kwargs
-            kwargs = self.request.clean_parameters(func)
-
-            # 8. Call Endpoint
-            if is_function_async(func):
-                response = await func(**kwargs)
-            else:
-                response = func(**kwargs)
-
-            # 9. Clean Response
-            if not isinstance(response, Response):
-                response = Response(data=response)
-            if self.output_model and response.data:
-                response.data = await response.apply_output_model(output_model=self.output_model)
-            if response.pagination:
-                response.data = await response.pagination.template(response.data)
-
-            # 10. Set New Response To Cache
-            if self.cache and self.request.method == 'GET':
-                await set_response_in_cache(request=self.request, response=response, cache_exp_time=self.cache_exp_time)
-
-            # 11. Warning CacheExpTime
-            if self.cache_exp_time and self.cache is False:
-                logger.warning('"cache_exp_time" won\'t work while "cache" is False')
-
-            middlewares.reverse()
-            for middleware in middlewares:
-                response = await middleware.after(response=response)
-
-            return response
-
+        # Store attributes on the function, so have the same behaviour as class-based (useful in `openapi.view.OpenAPI`)
+        wrapper.auth = self.auth
+        wrapper.methods = self.methods
+        wrapper.permissions = self.permissions
+        wrapper.input_model = self.input_model
+        wrapper.output_schema = self.output_schema
         return wrapper
+
+    async def handle_endpoint(self, request: Request) -> Response:
+        self.request = request
+
+        # 0. Preflight
+        if self.request.method == 'OPTIONS':
+            return self.options()
+
+        # 1. Check Method
+        if self.methods and self.request.method not in self.methods:
+            raise MethodNotAllowedAPIError
+
+        # 2. Authentication
+        await self.handle_authentication()
+
+        # 3. Permissions
+        await self.handle_permission()
+
+        # 4. Throttling
+        await self.handle_throttling()
+
+        # 5. Validate Input
+        if self.request.method in {'POST', 'PUT', 'PATCH'}:
+            self.handle_input_validation()
+
+        # 6. Get Cached Response
+        if self.cache and self.request.method == 'GET':
+            if cached := await get_response_from_cache(request=self.request, cache_exp_time=self.cache_exp_time):
+                return Response(data=cached.data, headers=cached.headers, status_code=cached.status_code)
+
+        # 7. Put PathVariables and Request(If User Wants It) In kwargs
+        kwargs = self.request.clean_parameters(self.func)
+
+        # 8. Call Endpoint
+        if is_function_async(self.func):
+            response = await self.func(**kwargs)
+        else:
+            response = self.func(**kwargs)
+
+        # 9. Clean Response
+        if not isinstance(response, Response):
+            response = Response(data=response)
+        if self.output_schema and response.data:
+            response.data = await response.apply_output_model(output_model=self.output_schema.model)
+        if response.pagination:
+            response.data = await response.pagination.template(response.data)
+
+        # 10. Set New Response To Cache
+        if self.cache and self.request.method == 'GET':
+            await set_response_in_cache(request=self.request, response=response, cache_exp_time=self.cache_exp_time)
+
+        # 11. Warning CacheExpTime
+        if self.cache_exp_time and self.cache is False:
+            logger.warning('"cache_exp_time" won\'t work while "cache" is False')
+
+        return response
 
     async def handle_authentication(self) -> None:
         if self.auth:
@@ -176,15 +213,39 @@ class API:
             raise JSONDecodeAPIError
 
 
-class GenericAPI:
+class MetaGenericAPI(type):
+    def __new__(
+            cls,
+            cls_name: str,
+            bases: tuple[type[typing.Any], ...],
+            namespace: dict[str, typing.Any],
+            **kwargs
+    ):
+        if cls_name == 'GenericAPI':
+            return super().__new__(cls, cls_name, bases, namespace)
+        if 'output_model' in namespace:
+            deprecation_message = (
+                    traceback.format_stack(limit=2)[0] +
+                    '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
+                    '\nPlease update your code to use the new approach. More info: '
+                    'https://pantherpy.github.io/open_api/'
+            )
+            raise PantherError(deprecation_message)
+        return super().__new__(cls, cls_name, bases, namespace)
+
+
+class GenericAPI(metaclass=MetaGenericAPI):
+    """
+    Check out the documentation of `panther.app.API()`.
+    """
     input_model: type[ModelSerializer] | type[BaseModel] | None = None
-    output_model: type[ModelSerializer] | type[BaseModel] | None = None
+    output_schema: OutputSchema | None = None
     auth: bool = False
     permissions: list | None = None
     throttling: Throttling | None = None
     cache: bool = False
     cache_exp_time: timedelta | int | None = None
-    middlewares: list[BaseMiddleware] | None = None
+    middlewares: list[HTTPMiddleware] | None = None
 
     async def get(self, *args, **kwargs):
         raise MethodNotAllowedAPIError
@@ -200,12 +261,6 @@ class GenericAPI:
 
     async def delete(self, *args, **kwargs):
         raise MethodNotAllowedAPIError
-
-    async def get_input_model(self, request: Request) -> type[ModelSerializer] | type[BaseModel] | None:
-        return None
-
-    async def get_output_model(self, request: Request) -> type[ModelSerializer] | type[BaseModel] | None:
-        return None
 
     async def call_method(self, request: Request):
         match request.method:
@@ -225,8 +280,8 @@ class GenericAPI:
                 raise MethodNotAllowedAPIError
 
         return await API(
-            input_model=self.input_model or await self.get_input_model(request=request),
-            output_model=self.output_model or await self.get_output_model(request=request),
+            input_model=self.input_model,
+            output_schema=self.output_schema,
             auth=self.auth,
             permissions=self.permissions,
             throttling=self.throttling,

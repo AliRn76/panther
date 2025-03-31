@@ -51,8 +51,8 @@ class Config:
     DEFAULT_CACHE_EXP: timedelta | None
     THROTTLING: Throttling | None
     SECRET_KEY: bytes | None
-    HTTP_MIDDLEWARES: list[tuple]
-    WS_MIDDLEWARES: list[tuple]
+    HTTP_MIDDLEWARES: list
+    WS_MIDDLEWARES: list
     USER_MODEL: type[PydanticBaseModel] | None # type: type[panther.db.Model]
     AUTHENTICATION: type[PydanticBaseModel] | None
     WS_AUTHENTICATION: type[PydanticBaseModel] | None

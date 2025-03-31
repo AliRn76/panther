@@ -98,7 +98,8 @@ def load_templates_dir(_configs: dict, /) -> None:
         loader=jinja2.ChoiceLoader(
             loaders=(
                 jinja2.FileSystemLoader(searchpath=config.TEMPLATES_DIR),
-                jinja2.PackageLoader(package_name='panther', package_path= 'panel/templates/')
+                jinja2.PackageLoader(package_name='panther', package_path='panel/templates/'),
+                jinja2.PackageLoader(package_name='panther', package_path='openapi/templates/'),
             )
         )
     )
@@ -154,8 +155,6 @@ def load_log_queries(_configs: dict, /) -> None:
 
 
 def load_middlewares(_configs: dict, /) -> None:
-    from panther.middlewares import BaseMiddleware
-
     middlewares = {'http': [], 'ws': []}
 
     # Collect Middlewares
@@ -183,14 +182,15 @@ def load_middlewares(_configs: dict, /) -> None:
                 raise _exception_handler(
                     field='MIDDLEWARES', error=f'{middleware} is not a valid middleware path or type')
 
-        if issubclass(middleware, BaseMiddleware) is False:
-            raise _exception_handler(field='MIDDLEWARES', error='is not a sub class of BaseMiddleware')
-
-        if middleware.__bases__[0] in (BaseMiddleware, HTTPMiddleware):
+        if issubclass(middleware, HTTPMiddleware):
             middlewares['http'].append(middleware)
-
-        if middleware.__bases__[0] in (BaseMiddleware, WebsocketMiddleware):
+        elif issubclass(middleware, WebsocketMiddleware):
             middlewares['ws'].append(middleware)
+        else:
+            raise _exception_handler(
+                field='MIDDLEWARES',
+                error='is not a sub class of `HTTPMiddleware` or `WebsocketMiddleware`'
+            )
 
     config.HTTP_MIDDLEWARES = middlewares['http']
     config.WS_MIDDLEWARES = middlewares['ws']

@@ -10,17 +10,18 @@ from app.serializers import (
     UserOutputSerializer,
     UserUpdateSerializer,
 )
-from core.permissions import UserPermission
-
 from core.middlewares import PrivateMiddleware
+from core.permissions import UserPermission
+from pantherdb import Cursor as PantherDBCursor
+
 from panther import status
 from panther.app import API, GenericAPI
 from panther.authentications import JWTAuthentication
 from panther.background_tasks import BackgroundTask, background_tasks
-from pantherdb import Cursor as PantherDBCursor
 from panther.db.connections import redis
 from panther.db.cursor import Cursor
 from panther.generics import ListAPI
+from panther.openapi.utils import OutputSchema
 from panther.pagination import Pagination
 from panther.request import Request
 from panther.response import HTMLResponse, Response, StreamingResponse, TemplateResponse
@@ -31,6 +32,8 @@ logger = logging.getLogger('panther')
 
 
 class ReturnNone(GenericAPI):
+    output_model = UserOutputSerializer
+
     async def get(self, request: Request):
         return None
 
@@ -83,7 +86,7 @@ async def res_request_data(request: Request):
     return Response(data=request.validated_data, status_code=204)
 
 
-@API(input_model=UserInputSerializer, output_model=UserOutputSerializer)
+@API(input_model=UserInputSerializer, output_schema=OutputSchema(model=UserOutputSerializer))
 async def res_request_data_with_output_model(request: Request):
     return Response(data=request.validated_data)
 
@@ -256,5 +259,3 @@ class PaginationAPI(ListAPI):
 @API(middlewares=[PrivateMiddleware])
 async def detect_middlewares(request: Request):
     return request.middlewares
-
-

@@ -20,7 +20,6 @@ from panther.configs import config
 from panther._utils import to_async_generator
 from panther.db.cursor import Cursor
 from pantherdb import Cursor as PantherDBCursor
-from panther.monitoring import Monitoring
 from panther.pagination import Pagination
 
 ResponseDataTypes = list | tuple | set | Cursor | PantherDBCursor | dict | int | float | str | bool | bytes | NoneType | Type[BaseModel]
@@ -61,16 +60,16 @@ class Response:
     def __init__(
         self,
         data: ResponseDataTypes = None,
-        headers: dict | None = None,
         status_code: int = status.HTTP_200_OK,
+        headers: dict | None = None,
         pagination: Pagination | None = None,
         set_cookies: list[Cookie] | None = None
     ):
         """
         :param data: should be an instance of ResponseDataTypes
-        :param headers: should be dict of headers
         :param status_code: should be int
-        :param pagination: instance of Pagination or None
+        :param headers: should be dict of headers
+        :param pagination: an instance of Pagination or None
             The `pagination.template()` method will be used
         :param set_cookies: list of cookies you want to set on the client
             Set the `max_age` to `0` if you want to delete a cookie
@@ -189,10 +188,9 @@ class Response:
     async def send_body(self, send, receive, /):
         await send({'type': 'http.response.body', 'body': self.body, 'more_body': False})
 
-    async def send(self, send, receive, /, monitoring: Monitoring):
+    async def send(self, send, receive, /):
         await self.send_headers(send)
         await self.send_body(send, receive)
-        await monitoring.after(self.status_code)
 
     def __str__(self):
         if len(data := str(self.data)) > 30:
@@ -284,7 +282,7 @@ class TemplateResponse(HTMLResponse):
     ):
         """
         :param source: should be a string
-        :param name: should be name of template file
+        :param name: should be the name of template file
         :param context: should be dict of items
         :param headers: should be dict of headers
         :param status_code: should be int

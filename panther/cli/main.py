@@ -1,40 +1,32 @@
-import os
+import logging
 import sys
 
 from panther import version as panther_version
 from panther.cli.create_command import create
 from panther.cli.monitor_command import monitor
 from panther.cli.run_command import run
-from panther.cli.utils import cli_error, cli_info, cli_warning, print_help_message
+from panther.cli.utils import cli_error, print_help_message
+
+logger = logging.getLogger('panther')
 
 
-def shell(args: list) -> None:
+def shell(args) -> None:
     if len(args) == 0:
-        cli_info('You may want to use "bpython" or "ipython" for better interactive shell')
-        os.system('python')
+        return cli_error(
+            'Not Enough Arguments, Give me a file path that contains `Panther()` app.\n'
+            '       * Make sure to run `panther shell` in the same directory as that file!\n'
+            '       * Example: `panther shell main.py`'
+        )
     elif len(args) != 1:
         return cli_error('Too Many Arguments.')
-    shell_type = args[0].lower()
-    if shell_type not in ['ipython', 'bpython']:
-        return cli_error(f'"{shell_type}" Is Not Supported.')
 
-    # Bpython
-    if shell_type == 'bpython':
-        try:
-            import bpython
-            os.system('bpython')
-        except ImportError as e:
-            cli_warning(e, 'Hint: "pip install bpython"')
-            os.system('python')
+    package = args[0].removesuffix('.py')
+    try:
+        from IPython import start_ipython
 
-    # Ipython
-    elif shell_type == 'ipython':
-        try:
-            import IPython
-            os.system('ipython')
-        except ImportError as e:
-            cli_warning(e, 'Hint: "pip install ipython"')
-            os.system('python')
+        start_ipython(('--gui', 'asyncio', '-c', f'"import {package}"', '-i'))
+    except ImportError:
+        logger.error('Make sure `ipython` is installed -> Hint: `pip install ipython`')
 
 
 def version() -> None:
@@ -54,7 +46,7 @@ def start() -> None:
             shell(args)
         case 'monitor':
             monitor()
-        case 'version':
+        case 'version' | '--version':
             version()
         case _:
             cli_error('Invalid Arguments.')

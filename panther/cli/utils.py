@@ -48,13 +48,14 @@ help_message = f"""{logo}
 {h}       - panther run [--reload | --help]                  {h}
 {h}           Run your project with uvicorn                  {h}
 {h}                                                          {h}
-{h}       - panther shell [ bpython | ipython ]              {h}
+{h}       - panther shell <application file path>            {h}
 {h}           Run interactive python shell                   {h}
+{h}           * Example: `panther shell main.py`             {h}
 {h}                                                          {h}
 {h}       - panther monitor                                  {h}
 {h}           Show the monitor :)                            {h}
 {h}                                                          {h}
-{h}       - panther version                                  {h}
+{h}       - panther version | --version                      {h}
 {h}           Print the current version of Panther           {h}
 {h}                                                          {h}
 {h}       - panther h | help | --help | -h                   {h}
