@@ -122,7 +122,7 @@ class DetailView(GenericAPI):
     permissions = [AdminPanelPermission]
     middlewares = [RedirectToSlashMiddleware]
 
-    async def get(self, request: Request, index: int, document_id: str):
+    async def get(self, index: int, document_id: str):
         model = config.MODELS[index]
         return TemplateResponse(
             name='detail.html',
@@ -131,3 +131,13 @@ class DetailView(GenericAPI):
                 'data': (await model.first(id=document_id)).model_dump()
             }
         )
+
+    async def put(self, request: Request, index: int, document_id: str):
+        model = config.MODELS[index]
+        validated_data = API.validate_input(model=model, request=request)
+        return await model.update_one({'id': document_id}, validated_data.model_dump())
+
+    async def delete(self, index: int, document_id: str):
+        model = config.MODELS[index]
+        await model.delete_one(id=document_id)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)

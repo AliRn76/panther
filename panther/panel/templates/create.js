@@ -118,8 +118,7 @@ function addSimpleArrayRow(arrayName, containerId) {
   const input = document.createElement("input");
   input.type = "text";
   input.name = `${arrayName}[${rowIndex}]`;
-  input.className =
-    "flex-grow bg-gray-700 border border-gray-600 rounded px-3 py-2";
+  input.className = "flex-grow bg-gray-700 border border-gray-600 rounded px-3 py-2";
 
   const deleteButton = document.createElement("button");
   deleteButton.className = "bg-red-600 px-3 py-1 rounded text-sm";
@@ -490,7 +489,7 @@ document.getElementById(isUpdate ? "updateForm" : "createForm").addEventListener
 
   try {
     console.log("Data being sent:", data); // Debugging log
-    const response = await fetch(isUpdate ? `/detail  /${data.id}` : "./", {
+    const response = await fetch(window.location.pathname, {
       method: isUpdate ? "PUT" : "POST",
       headers: {
         "Content-Type": "application/json",
@@ -560,7 +559,7 @@ document.getElementById("deleteButton").addEventListener("click", async () => {
   if (!confirmDelete) return;
 
   try {
-    const response = await fetch(`/${data.id}`, {
+    const response = await fetch(window.location.pathname, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
