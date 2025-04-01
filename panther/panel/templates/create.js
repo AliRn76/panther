@@ -118,7 +118,8 @@ function addSimpleArrayRow(arrayName, containerId) {
   const input = document.createElement("input");
   input.type = "text";
   input.name = `${arrayName}[${rowIndex}]`;
-  input.className = "flex-grow bg-gray-700 border border-gray-600 rounded px-3 py-2";
+  input.className =
+    "flex-grow bg-gray-700 border border-gray-600 rounded px-3 py-2";
 
   const deleteButton = document.createElement("button");
   deleteButton.className = "bg-red-600 px-3 py-1 rounded text-sm";
@@ -422,103 +423,149 @@ function populateFormWithExistingData(data) {
   // Special case for the `_id` field if it doesn't match the key in the data
   const idInput = dynamicInputs.querySelector(`[name="_id"]`);
   if (idInput && data.id) {
-    idInput.value = data.id; // Map the `id` field to the `_id` input
+    idInput.value = data.id;
+    idInput.setAttribute("readonly", true);
+    idInput.setAttribute("disabled", true);
   }
 }
+document
+  .getElementById(isUpdate ? "updateForm" : "createForm")
+  .addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-// Modify the form submission logic to handle both create and update
-document.getElementById(isUpdate ? "updateForm" : "createForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const formData = new FormData(e.target);
+    // Create an object to hold our updated data
+    const updatedData = {};
 
-  for (let [key, value] of formData.entries()) {
-    const parts = key.split(/[\[\].]/).filter(Boolean);
-    let current = data;
+    // Extract the current form values
+    const formData = new FormData(e.target);
 
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      if (i === parts.length - 1) {
-        // Handle boolean values
-        if (value === "true" || value === "false") {
-          value = value === "true"; // Convert string to boolean
-        }
+    // Debug log
+    console.log("Form data entries:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`FormData Key: ${key}, Value: ${value}`);
+    }
 
-        // Convert numeric strings to numbers
-        else if (!isNaN(value) && value !== "") {
-          value = Number(value);
-        }
+    // Process each form field
+    for (let [key, value] of formData.entries()) {
+      // Skip disabled fields (they won't be included in FormData anyway)
+      const field = e.target.querySelector(`[name="${key}"]`);
+      if (field && field.disabled) continue;
 
-        current[part] = value;
-      } else {
-        if (/^\d+$/.test(parts[i + 1])) {
-          current[part] = current[part] || [];
+      // Parse the key to handle nested structures
+      const parts = key.split(/[\[\].]/).filter(Boolean);
+
+      // Start at the root of our data object
+      let current = updatedData;
+
+      // Build the nested structure
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+
+        if (i === parts.length - 1) {
+          // We're at the leaf node, set the actual value
+
+          // Handle boolean values from checkboxes
+          if (field && field.type === "checkbox") {
+            value = field.checked;
+          }
+          // Convert string "true"/"false" to boolean
+          else if (value === "true" || value === "false") {
+            value = value === "true";
+          }
+          // Convert numeric strings to numbers
+          else if (!isNaN(value) && value !== "") {
+            value = Number(value);
+          }
+
+          // Set the value in our data structure
+          current[part] = value;
         } else {
-          current[part] = current[part] || {};
+          // We're building the nested structure
+
+          // Check if the next part is a number (array index)
+          if (/^\d+$/.test(parts[i + 1])) {
+            // Create array if it doesn't exist
+            current[part] = current[part] || [];
+          } else {
+            // Create object if it doesn't exist
+            current[part] = current[part] || {};
+          }
+
+          // Move deeper into the structure
+          current = current[part];
         }
-        current = current[part];
       }
     }
-  }
 
-  // Explicitly set unchecked checkboxes to false for all boolean fields
-  const allCheckboxes = e.target.querySelectorAll('input[type="checkbox"]');
-  allCheckboxes.forEach((checkbox) => {
-    const name = checkbox.name;
-    const parts = name.split(/[\[\].]/).filter(Boolean);
-    let current = data;
+    // Process unchecked checkboxes (they don't appear in FormData)
+    const allCheckboxes = e.target.querySelectorAll('input[type="checkbox"]');
+    allCheckboxes.forEach((checkbox) => {
+      if (checkbox.disabled) return; // Skip disabled checkboxes
 
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      if (i === parts.length - 1) {
-        // Make sure checkbox values are always boolean
-        if (!(part in current)) {
-          current[part] = false;
-        } else if (typeof current[part] === "string") {
-          current[part] = current[part] === "true";
+      const name = checkbox.name;
+      const parts = name.split(/[\[\].]/).filter(Boolean);
+
+      // Check if this checkbox's value is already in updatedData
+      // If not, it means it was unchecked
+      let current = updatedData;
+      let exists = true;
+
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (!current[parts[i]]) {
+          exists = false;
+          break;
         }
-      } else {
-        if (/^\d+$/.test(parts[i + 1])) {
-          current[part] = current[part] || [];
-        } else {
-          current[part] = current[part] || {};
-        }
-        current = current[part];
+        current = current[parts[i]];
       }
-    }
-  });
 
-  try {
-    console.log("Data being sent:", data); // Debugging log
-    const response = await fetch(window.location.pathname, {
-      method: isUpdate ? "PUT" : "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
+      const lastPart = parts[parts.length - 1];
+      if (exists && !(lastPart in current)) {
+        current[lastPart] = false;
+      }
     });
 
-    if (response.ok) {
-      const result = await response.json();
-      console.log("Success:", result);
-      showToast(
-        "Success",
-        `Your data has been ${isUpdate ? "updated" : "submitted"} successfully!`,
-        "success"
-      );
-    } else {
-      const errorText = await response.text();
-      console.error("Error:", response.status, response.statusText);
-      showToast("Error", `Error ${response.status}: ${errorText}`, "error");
+    // Copy over the ID field to ensure it's included
+    if (isUpdate && data && data.id) {
+      updatedData.id = data.id;
     }
-  } catch (error) {
-    console.error("Fetch error:", error);
-    showToast(
-      "Error",
-      "An unexpected error occurred. Please try again.",
-      "error"
-    );
-  }
-});
+
+    // Debugging
+    console.log("Data being sent:", updatedData);
+
+    // The rest of your code remains the same
+    try {
+      const response = await fetch(window.location.pathname, {
+        method: isUpdate ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Success:", result);
+        showToast(
+          "Success",
+          `Your data has been ${
+            isUpdate ? "updated" : "submitted"
+          } successfully!`,
+          "success"
+        );
+      } else {
+        const errorText = await response.text();
+        console.error("Error:", response.status, response.statusText);
+        showToast("Error", `Error ${response.status}: ${errorText}`, "error");
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      showToast(
+        "Error",
+        "An unexpected error occurred. Please try again.",
+        "error"
+      );
+    }
+  });
 
 // Toast function
 function showToast(title, message, type) {
@@ -569,10 +616,15 @@ document.getElementById("deleteButton").addEventListener("click", async () => {
     if (response.ok) {
       console.log("Record deleted successfully.");
       showToast("Success", "Record deleted successfully!", "success");
+      const currentUrl = window.location.pathname;
+      const urlParts = currentUrl.split("/").filter((part) => part !== "");
+      urlParts.pop();
+      const redirectUrl = "/" + urlParts.join("/") + "/";
 
-      // Optionally redirect or refresh the page
+      console.log("Redirecting to:", redirectUrl);
+
       setTimeout(() => {
-        window.location.href = "/"; // Redirect to the homepage or another page
+        window.location.href = redirectUrl;
       }, 2000);
     } else {
       const errorText = await response.text();
@@ -581,7 +633,11 @@ document.getElementById("deleteButton").addEventListener("click", async () => {
     }
   } catch (error) {
     console.error("Fetch error:", error);
-    showToast("Error", "An unexpected error occurred. Please try again.", "error");
+    showToast(
+      "Error",
+      "An unexpected error occurred. Please try again.",
+      "error"
+    );
   }
 });
 
@@ -611,4 +667,452 @@ function createToastContainer() {
   container.className = "fixed top-4 right-4 z-50 space-y-4";
   document.body.appendChild(container);
   return container;
+}
+// Form Update Real-Time Logger and Debugger
+
+// Create a logging container
+function createLogContainer() {
+  const existingContainer = document.getElementById("formDataLogger");
+  if (existingContainer) return existingContainer;
+
+  const logContainer = document.createElement("div");
+  logContainer.id = "formDataLogger";
+  logContainer.className =
+    "fixed bottom-4 right-4 w-96 max-h-96 bg-gray-800 border border-gray-600 rounded-lg shadow-lg p-3 overflow-y-auto z-50";
+  logContainer.style.maxHeight = "400px";
+
+  logContainer.innerHTML = `
+    <div class="flex justify-between items-center mb-2 pb-2 border-b border-gray-600">
+      <h3 class="text-sm font-bold text-white">Form Data Logger</h3>
+      <div class="flex gap-2">
+        <button id="captureFormState" class="text-xs bg-blue-600 px-2 py-1 rounded hover:bg-blue-700">Capture State</button>
+        <button id="clearLogBtn" class="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600">Clear</button>
+        <button id="toggleLogBtn" class="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600">Hide</button>
+      </div>
+    </div>
+    <div id="logEntries" class="space-y-2 text-xs"></div>
+  `;
+
+  document.body.appendChild(logContainer);
+
+  // Add button event listeners
+  document.getElementById("clearLogBtn").addEventListener("click", () => {
+    document.getElementById("logEntries").innerHTML = "";
+  });
+
+  document.getElementById("toggleLogBtn").addEventListener("click", (e) => {
+    const logEntries = document.getElementById("logEntries");
+    if (logEntries.style.display === "none") {
+      logEntries.style.display = "block";
+      e.target.textContent = "Hide";
+    } else {
+      logEntries.style.display = "none";
+      e.target.textContent = "Show";
+    }
+  });
+
+  document.getElementById("captureFormState").addEventListener("click", () => {
+    const currentState = captureFormState();
+    logMessage("Form State Snapshot", currentState, "snapshot");
+    console.log("Current Form State:", currentState);
+  });
+
+  return logContainer;
+}
+
+// Capture current form state (all fields)
+function captureFormState() {
+  const form = document.getElementById(isUpdate ? "updateForm" : "createForm");
+  if (!form) return null;
+
+  const formState = {};
+
+  // Get all input elements
+  const inputs = form.querySelectorAll("input, select, textarea");
+  inputs.forEach((input) => {
+    if (!input.name) return;
+
+    // Skip disabled inputs if we want to capture only enabled fields
+    // if (input.disabled) return;
+
+    if (input.type === "checkbox") {
+      formState[input.name] = input.checked;
+    } else {
+      formState[input.name] = input.value;
+    }
+  });
+
+  // Process the form data into a nested structure
+  const structuredData = {};
+
+  Object.entries(formState).forEach(([key, value]) => {
+    // Parse the key to handle nested structures
+    const parts = key.split(/[\[\].]/).filter(Boolean);
+
+    // Start at the root of our data object
+    let current = structuredData;
+
+    // Build the nested structure
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+
+      if (i === parts.length - 1) {
+        // We're at the leaf node, set the actual value
+
+        // Handle special value conversions
+        if (typeof value === "string") {
+          if (value === "true" || value === "false") {
+            value = value === "true";
+          } else if (!isNaN(value) && value !== "") {
+            value = Number(value);
+          }
+        }
+
+        // Set the value in our data structure
+        current[part] = value;
+      } else {
+        // We're building the nested structure
+
+        // Check if the next part is a number (array index)
+        if (/^\d+$/.test(parts[i + 1])) {
+          // Create array if it doesn't exist
+          current[part] = current[part] || [];
+        } else {
+          // Create object if it doesn't exist
+          current[part] = current[part] || {};
+        }
+
+        // Move deeper into the structure
+        current = current[part];
+      }
+    }
+  });
+
+  return structuredData;
+}
+
+// Log a message to the log container
+function logMessage(title, data, type = "info") {
+  const logEntries = document.getElementById("logEntries");
+  if (!logEntries) return;
+
+  const timestamp = new Date().toLocaleTimeString();
+  const logEntry = document.createElement("div");
+
+  // Different styling based on type
+  if (type === "error") {
+    logEntry.className = "p-2 rounded bg-red-900/50 border-l-4 border-red-600";
+  } else if (type === "warning") {
+    logEntry.className =
+      "p-2 rounded bg-yellow-900/50 border-l-4 border-yellow-600";
+  } else if (type === "success") {
+    logEntry.className =
+      "p-2 rounded bg-green-900/50 border-l-4 border-green-600";
+  } else if (type === "snapshot") {
+    logEntry.className =
+      "p-2 rounded bg-blue-900/50 border-l-4 border-blue-600";
+  } else {
+    logEntry.className = "p-2 rounded bg-gray-800 border border-gray-700";
+  }
+
+  // Format data object to string
+  let dataHtml = "";
+  if (data === null || data === undefined) {
+    dataHtml = '<span class="text-gray-400">null or undefined</span>';
+  } else if (typeof data === "object") {
+    try {
+      const jsonStr = JSON.stringify(data, null, 2);
+      if (jsonStr === "{}") {
+        dataHtml = '<span class="text-orange-400">Empty object {}</span>';
+      } else {
+        dataHtml = `<pre class="text-xs mt-1 p-2 bg-gray-900 rounded overflow-x-auto">${escapeHtml(
+          jsonStr
+        )}</pre>`;
+      }
+    } catch (e) {
+      dataHtml = `<span class="text-red-400">Error stringifying: ${e.message}</span>`;
+    }
+  } else {
+    dataHtml = `<span>${escapeHtml(String(data))}</span>`;
+  }
+
+  logEntry.innerHTML = `
+    <div class="flex justify-between">
+      <span class="font-medium text-white">${escapeHtml(title)}</span>
+      <span class="text-gray-400 text-xs">${timestamp}</span>
+    </div>
+    <div class="mt-1">${dataHtml}</div>
+  `;
+
+  logEntries.prepend(logEntry);
+
+  // Limit the number of log entries
+  const maxEntries = 50;
+  while (logEntries.children.length > maxEntries) {
+    logEntries.removeChild(logEntries.lastChild);
+  }
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// Monitor form element changes
+function attachFormMonitors() {
+  const form = document.getElementById(isUpdate ? "updateForm" : "createForm");
+  if (!form) {
+    logMessage(
+      "Form not found",
+      `Could not find form with ID: ${isUpdate ? "updateForm" : "createForm"}`,
+      "error"
+    );
+    return;
+  }
+
+  // Monitor input changes
+  form.addEventListener("input", (e) => {
+    if (!e.target.name) return;
+
+    const fieldName = e.target.name;
+    const newValue =
+      e.target.type === "checkbox" ? e.target.checked : e.target.value;
+
+    logMessage(`Field Changed: ${fieldName}`, { value: newValue }, "info");
+  });
+
+  // Monitor checkbox toggles
+  form.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+    if (checkbox.id && checkbox.id.includes("_toggle")) {
+      checkbox.addEventListener("change", () => {
+        const targetId = checkbox.id.replace("_toggle", "_content");
+        logMessage(`Toggle Section: ${targetId}`, {
+          checked: checkbox.checked,
+          visible: checkbox.checked,
+        });
+      });
+    }
+  });
+
+  // Intercept form submission
+  const originalSubmit = form.onsubmit;
+  form.onsubmit = async function (e) {
+    e.preventDefault();
+
+    logMessage(
+      "Form Submission Started",
+      {
+        time: new Date().toISOString(),
+        isUpdate: isUpdate || false,
+      },
+      "info"
+    );
+
+    // Capture and log the complete form state
+    const formState = captureFormState();
+    logMessage(
+      "Form Submission Data",
+      formState,
+      formState && Object.keys(formState).length ? "success" : "warning"
+    );
+
+    // Collect FormData entries for debugging
+    const formData = new FormData(form);
+    const formDataEntries = {};
+    for (let [key, value] of formData.entries()) {
+      formDataEntries[key] = value;
+    }
+
+    logMessage("Raw FormData Entries", formDataEntries);
+
+    // Check for empty submission
+    if (!formState || Object.keys(formState).length === 0) {
+      logMessage(
+        "Empty Form Submission",
+        "The form data is empty! Check for form field naming issues.",
+        "error"
+      );
+    }
+
+    // Call the original submit handler if it exists
+    if (originalSubmit) {
+      return originalSubmit.call(this, e);
+    }
+  };
+
+  // Override the existing updateData function if it exists
+  if (typeof window.updateData === "function") {
+    const originalUpdateData = window.updateData;
+    window.updateData = function (data) {
+      logMessage("updateData Called", data, "info");
+      return originalUpdateData.apply(this, arguments);
+    };
+  }
+
+  // Override the populateFormWithExistingData function
+  if (typeof window.populateFormWithExistingData === "function") {
+    const originalPopulate = window.populateFormWithExistingData;
+    window.populateFormWithExistingData = function (data) {
+      logMessage("Populating Form with Data", data, data ? "info" : "warning");
+
+      if (!data || Object.keys(data).length === 0) {
+        logMessage(
+          "Empty Data for Form Population",
+          "This might explain missing form values",
+          "warning"
+        );
+      }
+
+      // Call original function
+      const result = originalPopulate.apply(this, arguments);
+
+      // Capture the form state after population
+      setTimeout(() => {
+        const formState = captureFormState();
+        logMessage("Form State After Population", formState, "snapshot");
+
+        // Check if fields are disabled when they shouldn't be
+        const disabledInputs = form.querySelectorAll(
+          "input:disabled, select:disabled, textarea:disabled"
+        );
+        if (disabledInputs.length > 0) {
+          const disabledFields = Array.from(disabledInputs)
+            .map((el) => el.name)
+            .filter(Boolean);
+          if (disabledFields.length > 0) {
+            logMessage("Found Disabled Fields", disabledFields, "warning");
+          }
+        }
+      }, 100);
+
+      return result;
+    };
+  }
+
+  // Debug the fetch call
+  const originalFetch = window.fetch;
+  window.fetch = function (...args) {
+    const [url, options] = args;
+
+    if (
+      options &&
+      options.method &&
+      (options.method === "POST" || options.method === "PUT")
+    ) {
+      logMessage(
+        `Fetch Request (${options.method})`,
+        {
+          url: url,
+          method: options.method,
+          bodyData: options.body ? JSON.parse(options.body) : null,
+        },
+        "info"
+      );
+    }
+
+    const fetchPromise = originalFetch.apply(this, args);
+
+    fetchPromise
+      .then((response) => {
+        if (!response.ok) {
+          logMessage(
+            "Fetch Error",
+            {
+              status: response.status,
+              statusText: response.statusText,
+            },
+            "error"
+          );
+        } else {
+          logMessage(
+            "Fetch Success",
+            {
+              status: response.status,
+            },
+            "success"
+          );
+        }
+      })
+      .catch((error) => {
+        logMessage(
+          "Fetch Failed",
+          {
+            error: error.message,
+          },
+          "error"
+        );
+      });
+
+    return fetchPromise;
+  };
+}
+
+// Initialize the logger
+function initFormLogger() {
+  createLogContainer();
+  attachFormMonitors();
+
+  // Log initial system state
+  logMessage(
+    "Form Logger Initialized",
+    {
+      url: window.location.href,
+      isUpdate: typeof isUpdate !== "undefined" ? isUpdate : false,
+      time: new Date().toISOString(),
+    },
+    "info"
+  );
+
+  // Check if existingData is available
+  if (typeof existingData !== "undefined") {
+    logMessage(
+      "Existing Data Found",
+      existingData,
+      existingData ? "info" : "warning"
+    );
+  } else {
+    logMessage("No Existing Data", "existingData is not defined", "warning");
+  }
+
+  // Log initial schema
+  if (typeof schema !== "undefined") {
+    logMessage("Schema Structure", {
+      hasFields: schema.fields ? true : false,
+      nestedTypes: schema.$ ? Object.keys(schema.$) : [],
+    });
+  }
+
+  // Check form action is correctly set
+  setTimeout(() => {
+    const form = document.getElementById(
+      isUpdate ? "updateForm" : "createForm"
+    );
+    if (form) {
+      logMessage("Form Configuration", {
+        action: form.action || window.location.pathname,
+        method: form.method || "POST/PUT via JS",
+        id: form.id,
+        containsInputs:
+          form.querySelectorAll("input, select, textarea").length > 0,
+      });
+    }
+  }, 500);
+}
+
+// Run on page load
+document.addEventListener("DOMContentLoaded", function () {
+  setTimeout(initFormLogger, 100); // Slight delay to ensure page is fully loaded
+});
+
+// For immediate execution if the page is already loaded
+if (
+  document.readyState === "complete" ||
+  document.readyState === "interactive"
+) {
+  setTimeout(initFormLogger, 100);
 }

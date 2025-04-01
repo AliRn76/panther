@@ -19,6 +19,15 @@ function getDataType(value) {
   return typeof value;
 }
 
+let allRecords = [];
+
+function initializeRecords() {
+  if (allRecords.length === 0) {
+    allRecords = Array.from(document.querySelectorAll(".record-data")).map(
+      (item) => JSON.parse(pythonToJSON(item.textContent.trim()))
+    );
+  }
+}
 function formatValue(value, type) {
   if (value === null) return '<span class="text-gray-400">null</span>';
 
@@ -116,11 +125,12 @@ let currentPage = 1;
 const rowsPerPage = 10; // Number of rows per page
 
 function renderTable() {
+  // Initialize records if not already done
+  initializeRecords();
+
   const thead = document.getElementById("tableHead");
-  const records = Array.from(document.querySelectorAll(".record-data")).map(
-    (item) => JSON.parse(pythonToJSON(item.textContent.trim()))
-  );
-  console.log("Table Data:", records);
+  // Use the global records array instead of re-parsing
+  const records = allRecords;
 
   if (records.length > 0) {
     const firstRecord = records[0];
@@ -128,7 +138,6 @@ function renderTable() {
       key,
       type: getDataType(value),
     }));
-
     // Render table headers
     thead.innerHTML = `
       <tr>
@@ -190,8 +199,6 @@ function renderTable() {
     // Render pagination controls
     renderPaginationControls(records.length);
   }
-
-  renderTable();
 }
 
 function renderPaginationControls(totalRows) {
@@ -217,8 +224,7 @@ function renderPaginationControls(totalRows) {
 }
 
 function changePage(direction) {
-  const records = Array.from(document.querySelectorAll(".record-data"));
-  const totalPages = Math.ceil(records.length / rowsPerPage);
+  const totalPages = Math.ceil(allRecords.length / rowsPerPage);
 
   if (direction === "prev" && currentPage > 1) {
     currentPage--;
@@ -228,9 +234,6 @@ function changePage(direction) {
 
   renderTable();
 }
-
-// Initialize table rendering
-renderTable();
 
 function getCurrentTableIndex() {
   const path = window.location.pathname;
@@ -264,5 +267,7 @@ function setActiveTableFromUrl() {
 
 // Initialize based on URL
 document.addEventListener("DOMContentLoaded", () => {
+  initializeRecords();
+  renderTable();
   setActiveTableFromUrl();
 });
