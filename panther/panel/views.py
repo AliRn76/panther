@@ -18,7 +18,7 @@ logger = logging.getLogger('panther')
 class AdminPanelPermission(BasePermission):
     @classmethod
     async def authorization(cls, request: Request) -> bool:
-        try:  # We don't want to set AUTHENTICATION class, so we have to permission class
+        try:  # We don't want to set AUTHENTICATION class, so we have to use permission classes
             await CookieJWTAuthentication.authentication(request=request)
             return True
         except AuthenticationAPIError:
@@ -124,11 +124,12 @@ class DetailView(GenericAPI):
 
     async def get(self, index: int, document_id: str):
         model = config.MODELS[index]
+        obj = await model.find_one_or_raise(id=document_id)
         return TemplateResponse(
             name='detail.html',
             context={
                 'fields': clean_model_schema(model.schema()),
-                'data': (await model.first(id=document_id)).model_dump()
+                'data': obj.model_dump()
             }
         )
 
