@@ -10,33 +10,35 @@
     </button>
   </div>
 
-  <div
-    id="dynamicInputs"
-    class="bg-gray-700 rounded-lg p-6 shadow-lg space-y-4"
-  ></div>
-
   <form id="updateForm" class="mt-6">
-    <button
-      type="submit"
-      class="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700 text-white"
-    >
-      Update
-    </button>
-    <button
-      type="button"
-      id="deleteButton"
-      class="px-6 py-2 bg-red-600 rounded hover:bg-red-700 text-white"
-    >
-      Delete
-    </button>
+    <div
+      id="dynamicInputs"
+      class="bg-gray-700 rounded-lg p-6 shadow-lg space-y-4"
+    ></div>
+    <div class="flex justify-start mt-6 space-x-4">
+      <button
+        type="submit"
+        class="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700 text-white"
+      >
+        Update
+      </button>
+      <button
+        type="button"
+        id="deleteButton"
+        class="px-6 py-2 bg-red-600 rounded hover:bg-red-700 text-white"
+      >
+        Delete
+      </button>
+    </div>
   </form>
 </div>
 
 <script>
   const data = JSON.parse(`{{data|tojson|safe}}`);
-      const isUpdate = true;
+  console.log("Data passed to the form:", data); // Debugging log
+  const isUpdate = true;
 
-      const existingData = data;
-      {% include "create.js" %}
+  const existingData = data;
+  {% include "create.js" %}
 </script>
 {% endblock %}
