@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 import asyncio
-import orjson as json
+import logging
 from multiprocessing.managers import SyncManager
 from typing import TYPE_CHECKING, Literal
 
-import logging
+import orjson as json
+import ulid
+
 from panther import status
 from panther.base_request import BaseRequest
 from panther.configs import config
 from panther.db.connections import redis
 from panther.exceptions import InvalidPathVariableAPIError, BaseError
-from panther.utils import Singleton, ULID
+from panther.utils import Singleton
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis
@@ -158,7 +160,7 @@ class WebsocketConnections(Singleton):
 
     async def connection_accepted(self, connection: Websocket) -> None:
         # Generate ConnectionID
-        connection._connection_id = ULID.new()
+        connection._connection_id = ulid.new()
 
         # Save Connection
         self.connections[connection.connection_id] = connection
