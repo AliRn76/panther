@@ -51,6 +51,12 @@ function toggleArrayVisibility(checkbox, contentId) {
   const content = document.getElementById(contentId);
   if (content) {
     content.classList.toggle("hidden", !checkbox.checked);
+    
+    // Also enable/disable inputs
+    const inputs = content.querySelectorAll("input, select, textarea");
+    inputs.forEach((input) => {
+      input.disabled = !checkbox.checked;
+    });
   }
 }
 
@@ -404,30 +410,139 @@ if (typeof isUpdate !== "undefined" && isUpdate) {
 
 // Function to populate the form with existing data
 function populateFormWithExistingData(data) {
-  const dynamicInputs = document.getElementById("dynamicInputs");
-  if (!dynamicInputs) return;
-
-  // Iterate over the existing data and pre-fill the inputs
+  console.log("Populating form with data:", data);
+  
+  // Handle simple fields first
   Object.entries(data).forEach(([key, value]) => {
-    // Find the input field by its name attribute
-    const input = dynamicInputs.querySelector(`[name="${key}"]`);
+    const input = document.querySelector(`[name="${key}"]`);
     if (input) {
       if (input.type === "checkbox") {
         input.checked = Boolean(value);
       } else {
-        input.value = value !== null ? value : ""; // Set the value or leave it empty
+        input.value = value !== null ? value : "";
       }
     }
   });
-
-  // Special case for the `_id` field if it doesn't match the key in the data
-  const idInput = dynamicInputs.querySelector(`[name="_id"]`);
+  
+  // Special case for the `_id` field
+  const idInput = document.querySelector(`[name="_id"]`);
   if (idInput && data.id) {
     idInput.value = data.id;
     idInput.setAttribute("readonly", true);
     idInput.setAttribute("disabled", true);
   }
+  
+  // Handle nested objects and arrays
+  populateNestedData(data);
 }
+
+function populateNestedData(data, prefix = "") {
+  Object.entries(data).forEach(([key, value]) => {
+    const fullPath = prefix ? `${prefix}.${key}` : key;
+    
+    // Handle arrays
+    if (Array.isArray(value)) {
+      // Find the array container
+      const containerID = `${fullPath}-container`;
+      const container = document.getElementById(containerID);
+      
+      if (container) {
+        // Ensure toggle is checked for this array if it exists
+        const toggle = document.getElementById(`${fullPath}_toggle`);
+        if (toggle) {
+          toggle.checked = true;
+          toggleArrayVisibility(toggle, containerID);
+        }
+        
+        // Clear any existing items
+        container.innerHTML = '';
+        
+        // Recreate each array item
+        value.forEach((item, index) => {
+          if (typeof item === 'object' && item !== null) {
+            // Complex object in array
+            const itemType = determineItemType(item);
+            if (itemType) {
+              addArrayRow(fullPath, itemType, containerID);
+              
+              // After adding the row, populate its fields
+              // The new row should be the last child of the container
+              const newRow = container.lastElementChild;
+              if (newRow) {
+                // Find all inputs in this row and set their values
+                Object.entries(item).forEach(([itemKey, itemValue]) => {
+                  const itemPath = `${fullPath}[${index}].${itemKey}`;
+                  populateItemField(newRow, itemPath, itemValue);
+                });
+              }
+            }
+          } else {
+            // Simple value in array
+            addSimpleArrayRow(fullPath, containerID);
+            // Get the last added row and set its value
+            const rowInput = container.lastElementChild.querySelector('input');
+            if (rowInput) {
+              rowInput.value = item;
+            }
+          }
+        });
+      }
+    }
+    // Handle nested objects
+    else if (typeof value === 'object' && value !== null) {
+      // Find the content container for this object
+      const contentId = `${fullPath}_content`;
+      const content = document.getElementById(contentId);
+      
+      if (content) {
+        // Enable the toggle if it exists
+        const toggle = document.getElementById(`${fullPath}_toggle`);
+        if (toggle) {
+          toggle.checked = true;
+          // Manually enable all fields in this container
+          const inputs = content.querySelectorAll("input, select, textarea");
+          inputs.forEach(input => {
+            input.disabled = false;
+          });
+        }
+        
+        // Populate the fields in this object
+        Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+          const nestedPath = `${fullPath}.${nestedKey}`;
+          populateItemField(content, nestedPath, nestedValue);
+        });
+      }
+    }
+  });
+}
+
+function populateItemField(container, fieldPath, value) {
+  const input = container.querySelector(`[name="${fieldPath}"]`);
+  if (input) {
+    if (input.type === "checkbox") {
+      input.checked = Boolean(value);
+    } else {
+      input.value = value !== null ? value : "";
+    }
+  }
+}
+
+function determineItemType(item) {
+  // Try to match the item structure with schema definitions
+  for (const [typeName, typeSchema] of Object.entries(schema.$)) {
+    if (typeSchema && typeSchema.fields) {
+      const fieldNames = Object.keys(typeSchema.fields);
+      // If most of the item keys match the schema fields, assume it's this type
+      const matchingFields = fieldNames.filter(field => field in item);
+      if (matchingFields.length > 0 && matchingFields.length / fieldNames.length >= 0.5) {
+        return typeName;
+      }
+    }
+  }
+  return null;
+}
+
+
 document
   .getElementById(isUpdate ? "updateForm" : "createForm")
   .addEventListener("submit", async (e) => {
@@ -590,7 +705,7 @@ function showToast(title, message, type) {
 function createToastContainer() {
   const container = document.createElement("div");
   container.id = "toastContainer";
-  container.className = "fixed top-4 right-4 z-50 space-y-4";
+  container.className = "fixed top-4 left-4 z-50 space-y-4";
   document.body.appendChild(container);
   return container;
 }
@@ -641,33 +756,6 @@ document.getElementById("deleteButton").addEventListener("click", async () => {
   }
 });
 
-// Toast function
-function showToast(title, message, type) {
-  const toastContainer =
-    document.getElementById("toastContainer") || createToastContainer();
-  const toast = document.createElement("div");
-  toast.className = `toast ${
-    type === "success" ? "border-green-600" : "border-red-600"
-  } p-4 mb-4 rounded shadow-lg bg-gray-900 text-gray-100 border-l-4 p-4 rounded-lg shadow-md animate-fadeIn`;
-  toast.innerHTML = `
-    <strong class="block text-lg">${title}</strong>
-    <span class="block text-sm">${message}</span>
-  `;
-  toastContainer.appendChild(toast);
-
-  // Automatically remove the toast after 5 seconds
-  setTimeout(() => {
-    toast.remove();
-  }, 5000);
-}
-
-function createToastContainer() {
-  const container = document.createElement("div");
-  container.id = "toastContainer";
-  container.className = "fixed top-4 right-4 z-50 space-y-4";
-  document.body.appendChild(container);
-  return container;
-}
 // Form Update Real-Time Logger and Debugger
 
 // Create a logging container

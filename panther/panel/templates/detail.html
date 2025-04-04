@@ -3,7 +3,7 @@
   <div class="flex justify-between items-center mb-8">
     <h1 class="text-2xl font-bold">Update Record</h1>
     <button
-      onclick="window.history.back()"
+      onclick="redirectToTable()"
       class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
     >
       Back to List
@@ -37,8 +37,19 @@
   const data = JSON.parse(`{{data|tojson|safe}}`);
   console.log("Data passed to the form:", data); // Debugging log
   const isUpdate = true;
-
   const existingData = data;
+  function redirectToTable() {
+    const currentUrl = window.location.pathname;
+      const urlParts = currentUrl.split("/").filter((part) => part !== "");
+      urlParts.pop();
+      const redirectUrl = "/" + urlParts.join("/") + "/";
+
+      console.log("Redirecting to:", redirectUrl);
+
+      window.location.href = redirectUrl;
+
+  }
   {% include "create.js" %}
+
 </script>
 {% endblock %}
