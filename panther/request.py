@@ -1,5 +1,6 @@
 import logging
 from typing import Literal, Callable
+from urllib.parse import parse_qsl
 
 import orjson as json
 
@@ -26,6 +27,8 @@ class Request(BaseRequest):
             match (self.headers.content_type or '').split('; boundary='):
                 case ['' | 'application/json']:
                     self._data = json.loads(self.__body or b'{}')
+                case ['application/x-www-form-urlencoded']:
+                    self._data = {k.decode(): v.decode() for k, v in parse_qsl(self.__body)}
                 case ['multipart/form-data', boundary]:
                     self._data = read_multipart_form_data(boundary=boundary, body=self.__body)
                 case [unknown]:

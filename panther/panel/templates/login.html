@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="flex items-center justify-center min-h-screen">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-md w-full max-w-sm border border-gray-700">
+      <h2 class="text-xl font-semibold mb-6 text-center">Login</h2>
+
+      {% if error %}
+        <div class="mb-4 p-3 text-sm text-red-600 bg-red-100 border border-red-400 rounded-lg">
+          {{ error }}
+        </div>
+      {% endif %}
+
+      <form action="" method="POST" class="space-y-4">
+        <!-- Username Field -->
+        <div>
+          <label for="username" class="block text-sm font-medium mb-2">Username:</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            required
+            class="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
+        <!-- Password Field -->
+        <div>
+          <label for="password" class="block text-sm font-medium mb-2">Password:</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            class="w-full p-2 bg-gray-700 rounded-lg border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold transition-colors"
+        >
+          Login
+        </button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -84,7 +84,7 @@ class TestAuthentication(IsolatedAsyncioTestCase):
             res = await self.client.get('auth-required')
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'JWT Authentication Error: "Authorization is required"'
+        assert captured.records[0].getMessage() == 'JWTAuthentication Error: "Authorization is required"'
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
@@ -93,7 +93,7 @@ class TestAuthentication(IsolatedAsyncioTestCase):
             res = await self.client.get('auth-required', headers=self.SHORT_TOKEN)
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'JWT Authentication Error: "Authorization keyword is not valid"'
+        assert captured.records[0].getMessage() == 'JWTAuthentication Error: "Authorization keyword is not valid"'
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
@@ -102,7 +102,7 @@ class TestAuthentication(IsolatedAsyncioTestCase):
             res = await self.client.get('auth-required', headers=self.JUST_BEARER_TOKEN)
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'JWT Authentication Error: "Authorization should have 2 part"'
+        assert captured.records[0].getMessage() == 'JWTAuthentication Error: "Authorization should have 2 part"'
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
@@ -112,7 +112,7 @@ class TestAuthentication(IsolatedAsyncioTestCase):
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == (
-            'JWT Authentication Error: "\'latin-1\' codec can\'t encode characters in position 0-2: '
+            'JWTAuthentication Error: "\'latin-1\' codec can\'t encode characters in position 0-2: '
             'ordinal not in range(256)"'
         )
         assert res.status_code == 401
@@ -123,7 +123,7 @@ class TestAuthentication(IsolatedAsyncioTestCase):
             res = await self.client.get('auth-required', headers=self.NOT_ENOUGH_SEGMENT_TOKEN)
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'JWT Authentication Error: "Not enough segments"'
+        assert captured.records[0].getMessage() == 'JWTAuthentication Error: "Not enough segments"'
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
@@ -132,7 +132,7 @@ class TestAuthentication(IsolatedAsyncioTestCase):
             res = await self.client.get('auth-required', headers=self.BAD_SIGNATURE_TOKEN)
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'JWT Authentication Error: "Signature verification failed."'
+        assert captured.records[0].getMessage() == 'JWTAuthentication Error: "Signature verification failed."'
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
@@ -141,7 +141,7 @@ class TestAuthentication(IsolatedAsyncioTestCase):
             res = await self.client.get('auth-required', headers=self.TOKEN_WITHOUT_USER_ID)
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'JWT Authentication Error: "Payload does not have `user_id`"'
+        assert captured.records[0].getMessage() == 'JWTAuthentication Error: "Payload does not have `user_id`"'
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
@@ -150,7 +150,7 @@ class TestAuthentication(IsolatedAsyncioTestCase):
             res = await self.client.get('auth-required', headers=self.TOKEN)
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'JWT Authentication Error: "User not found"'
+        assert captured.records[0].getMessage() == 'JWTAuthentication Error: "User not found"'
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
