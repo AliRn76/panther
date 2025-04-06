@@ -8,7 +8,7 @@
 8. panther run --reload
 9. pip install ../ && panther run --reload
 
-Repeat number 9 on every change you going to make on panther 
+Repeat number 9 on every change you are going to make on panther 
 
 or make a change on `.venv/lib/python3.11/site-packages/panther` so you don't need to pip install the package again, 
 but make sure you moved the changes you made from `.venv/lib/python3.11/site-packages/panther` to the actual code

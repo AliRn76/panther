@@ -19,6 +19,8 @@ from panther.configs import config
 from panther._utils import to_async_generator
 from panther.db.cursor import Cursor
 from pantherdb import Cursor as PantherDBCursor
+
+from panther.db.mixins import SerializableModel
 from panther.monitoring import Monitoring
 from panther.pagination import Pagination
 
@@ -85,7 +87,7 @@ class Response:
         elif isinstance(data, dict):
             return {key: self.prepare_data(value) for key, value in data.items()}
 
-        elif issubclass(type(data), BaseModel):
+        elif issubclass(type(data), (BaseModel, SerializableModel)):
             return data.model_dump()
 
         elif isinstance(data, IterableDataTypes):
