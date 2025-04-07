@@ -195,7 +195,7 @@ class ModelSerializer(metaclass=MetaModelSerializer):
         https://pantherpy.github.io/serializer/#style-2-model-serializer
     Example:
         class PersonSerializer(ModelSerializer):
-            class Meta:
+            class Config:
                 model = Person
                 fields = '*'
                 exclude = ['created_date']  # Optional

@@ -1,0 +1,9 @@
+{% extends "base.html" %} {% block content %}
+<div class="flex gap-4">
+  {% include "sidebar.html" %}
+  <table class="w-full bg-gray-800 rounded overflow-hidden"></table>
+</div>
+<script>
+  {% include "home.js" %}
+</script>
+{% endblock %}
