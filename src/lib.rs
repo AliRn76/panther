@@ -4,8 +4,10 @@ use pyo3::prelude::*;
 use pyo3::PyResult;
 use pyo3::types::PyDict;
 use std::sync::OnceLock;
-use pyo3::prelude::*;
 use pyo3::exceptions::PyValueError;
+
+// Global static storage for parsed URL routes
+static GLOBAL_ROUTES: OnceLock<Url> = OnceLock::new();
 
 #[derive(Debug, Clone)]
 #[pyclass(module = "routing")]
@@ -34,7 +36,7 @@ impl Url {
                 // We expect the key to be a string.
                 let key: &str = key_obj.extract()?;
                 if key.is_empty() {
-                    // An empty key means this node’s handler.
+                    // An empty key means this node's handler.
                     url.handler = Some(value.into());
                 } else {
                     // Parse the child node: if value is a dict, parse recursively;
@@ -50,7 +52,7 @@ impl Url {
                     };
 
                     // If the key is a parameter (e.g. "<user_id>"), store it in `param`.
-                    if key.starts_with('<') && key.ends_with('>') {
+                    if is_param(key.to_string()) {
                         if url.inner.contains_key("param") {
                             return Err(PyValueError::new_err(
                                 "Multiple parameterized routes at the same level",
@@ -60,7 +62,6 @@ impl Url {
                         let param_name = key.trim_start_matches('<').trim_end_matches('>').to_string();
                         child.name = param_name;
                         url.inner.insert("param".to_string(), child);
-                        // url.param = Some((param_name, Box::new(child)));
                     } else {
                         // Otherwise, insert it as a static inner route.
                         url.inner.insert(key.to_string(), child);
@@ -68,62 +69,75 @@ impl Url {
                 }
             }
 
-            // println!("the url struct: {:?}", url);
             Ok(url)
         } else {
             // If the object is not a dictionary, treat it as a handler for a leaf node.
             url.handler = Some(obj.into());
-            // println!("the url struct: {:?}", url);
             Ok(url)
         }
     }
 
-    fn get(&self, endpoint: String) -> Option<(String, Option<Py<PyAny>>)> {
-        let parts: Vec<&str> = endpoint.split('/').filter(|s| !s.is_empty()).collect();
-        let mut inner: &HashMap<String, Url> = &self.inner;
-        let mut result = "".to_owned();
-        for part in parts.iter() {
-            let res = inner.get(*part);
-            match res {
-                Some(x) => {
-                    result += &("/".to_owned() + &x.name);
-                    if x.name == *parts.last().unwrap() {
-                        return Some((result, x.handler.clone()))
-                    }else{
-                        inner = &x.inner;
-                    }
-                },
-                None => {
-                    let resp = inner.get("param");
-                    match resp {
-                        Some(x) => {
-                            result += &("/".to_owned() + &x.name);
-                            if x.name == *parts.last().unwrap() {
-                                return Some((result, x.handler.clone()))
-                            }else{
-                                inner = &x.inner;
-                            }
-                        },
-                        None => {
-                            return None
-                        },
-                    }
-                },
-            }
+    fn resolve_path(&self, parts: &[&str], index: usize, path_params: &mut HashMap<String, String>) -> Option<(String, Option<Py<PyAny>>)> {
+        if index >= parts.len() {
+            // If we've reached the end of the path parts, return this node's handler
+            return if self.handler.is_some() {
+                Some((self.name.clone(), self.handler.clone()))
+            } else {
+                None
+            };
         }
+
+        let current_part = parts[index];
+        // First try for an exact match
+        if let Some(child) = self.inner.get(current_part) {
+            return child.resolve_path(parts, index + 1, path_params);
+        }
+
+        // Then try parameter match
+        if let Some(param_child) = self.inner.get("param") {
+            // Store the parameter value
+            path_params.insert(param_child.name.clone(), current_part.to_string());
+            return param_child.resolve_path(parts, index + 1, path_params);
+        }
+
+        None
+    }
+
+    pub fn get(&self, endpoint: String) -> Option<(String, Option<Py<PyAny>>, HashMap<String, String>)> {
+        let parts: Vec<&str> = endpoint.split('/').filter(|s| !s.is_empty()).collect();
+        // Collect path parameters during resolution
+        let mut path_params = HashMap::new();
+        if let Some((name, handler)) = self.resolve_path(&parts, 0, &mut path_params) {
+            Some((name, handler, path_params))
+        } else {
+            None
+        }
+    }
+}
+
+// Helper function to determine if a string is a parameter
+fn is_param(s: String) -> bool {
+    s.starts_with('<') && s.ends_with('>')
+}
+
+#[pyfunction]
+pub fn get(py: Python, endpoint: String) -> Option<(String, Option<Py<PyAny>>, HashMap<String, String>)> {
+    if let Some(url_router) = GLOBAL_ROUTES.get() {
+        url_router.get(endpoint)
+    } else {
         None
     }
 }
 
-#[pyfunction]
-pub fn get(py: Python, a: &Url, e: String) -> Option<(String, Option<Py<PyAny>>)> {
-    a.get(e)
-}
-// Example wrapper function that takes a PyAny and returns a Url (the root node).
+// Parse URLs and store in global static
 #[pyfunction]
 pub fn parse_urls(py: Python, obj: &PyAny) -> PyResult<Url> {
-    // We use an empty string for the root node name.
-    Url::from_pyany(py, obj, "".to_string())
+    let parsed = Url::from_pyany(py, obj, "".to_string())?;
+
+    // Store the parsed URLs in the global static
+    let _ = GLOBAL_ROUTES.set(parsed.clone());
+
+    Ok(parsed)
 }
 
 /// Module definition
@@ -133,13 +147,4 @@ fn panther_core(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(parse_urls, m)?)?;
     m.add_function(wrap_pyfunction!(get, m)?)?;
     Ok(())
-}
-
-fn is_param(s: String) -> bool {
-    if s.starts_with('<') && s.ends_with('>') {
-        // Some(s[1..s.len()-1].to_string())
-        true
-    }else{
-        false
-    }
 }

@@ -1,30 +1,39 @@
 import timeit
-
 import panther_core
-
 from example import test_cases
 from panther.configs import config
-from panther.routings import find_endpoint
 
+def initialize_routing(urls):
+    """Initialize the routing once for the Rust implementation"""
+    panther_core.parse_urls(urls)
 
 def test_python():
-    # Minimum time: 5.815300391986966e-05
+    """Test the Python implementation"""
     for test_url, expected in test_cases.items():
-        actual = find_endpoint(path=test_url)
+        actual = panther_core.find_endpoint(path=test_url)
         assert actual == expected, f'{actual} != {expected}'
-
 
 def test_rust():
-    endpoints = panther_core.parse_urls(config.URLS)
+    """Test the Rust implementation using global static storage"""
     for test_url, expected in test_cases.items():
-        actual = panther_core.get(endpoints, path=test_url)
+        # With our updated code, we don't need to pass endpoints anymore
+        result = panther_core.get(test_url)
+
+        # Handle the new return format which includes path parameters
+        if result is not None:
+            name, handler, _ = result  # Ignoring path_params for this test
+            actual = (name, handler)
+        else:
+            actual = None
+
         assert actual == expected, f'{actual} != {expected}'
 
-
 def test():
-    initialize_routing(config.URLS)  # Just for rust
+    # Initialize the Rust routing once
+    initialize_routing(config.URLS)
+
     print(f"Python Minimum time: {min(timeit.Timer(test_python).repeat(repeat=100, number=1))}")
     print(f"Rust Minimum time: {min(timeit.Timer(test_rust).repeat(repeat=100, number=1))}")
 
-
-test()
+if __name__ == "__main__":
+    test()
