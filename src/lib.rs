@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::rc::Rc;
 use pyo3::prelude::*;
 use pyo3::PyResult;
 use pyo3::types::PyDict;
@@ -21,8 +20,6 @@ pub struct Url {
 }
 
 impl Url {
-    /// Recursively parses a PyAny (expected to be a dict or a leaf handler)
-    /// into a Url node with the given name.
     fn from_pyany(py: Python, obj: &PyAny, name: String) -> PyResult<Self> {
         let mut url = Url {
             name,
@@ -30,17 +27,12 @@ impl Url {
             inner: HashMap::new(),
         };
 
-        // If the object is a dictionary, then process its items.
         if let Ok(dict) = obj.downcast::<PyDict>() {
             for (key_obj, value) in dict {
-                // We expect the key to be a string.
                 let key: &str = key_obj.extract()?;
                 if key.is_empty() {
-                    // An empty key means this node's handler.
                     url.handler = Some(value.into());
                 } else {
-                    // Parse the child node: if value is a dict, parse recursively;
-                    // otherwise, assume it is a leaf handler.
                     let mut child = if value.is_instance(py.get_type::<PyDict>())? {
                         Url::from_pyany(py, value, key.to_string())?
                     } else {
@@ -51,19 +43,16 @@ impl Url {
                         }
                     };
 
-                    // If the key is a parameter (e.g. "<user_id>"), store it in `param`.
                     if is_param(key.to_string()) {
                         if url.inner.contains_key("param") {
                             return Err(PyValueError::new_err(
                                 "Multiple parameterized routes at the same level",
                             ));
                         }
-                        // Remove the angle brackets for the parameter name.
                         let param_name = key.trim_start_matches('<').trim_end_matches('>').to_string();
                         child.name = param_name;
                         url.inner.insert("param".to_string(), child);
                     } else {
-                        // Otherwise, insert it as a static inner route.
                         url.inner.insert(key.to_string(), child);
                     }
                 }
@@ -71,7 +60,6 @@ impl Url {
 
             Ok(url)
         } else {
-            // If the object is not a dictionary, treat it as a handler for a leaf node.
             url.handler = Some(obj.into());
             Ok(url)
         }
@@ -115,13 +103,12 @@ impl Url {
     }
 }
 
-// Helper function to determine if a string is a parameter
 fn is_param(s: String) -> bool {
     s.starts_with('<') && s.ends_with('>')
 }
 
 #[pyfunction]
-pub fn get(py: Python, endpoint: String) -> Option<(String, Option<Py<PyAny>>, HashMap<String, String>)> {
+pub fn get(_py: Python, endpoint: String) -> Option<(String, Option<Py<PyAny>>, HashMap<String, String>)> {
     if let Some(url_router) = GLOBAL_ROUTES.get() {
         url_router.get(endpoint)
     } else {
@@ -129,12 +116,9 @@ pub fn get(py: Python, endpoint: String) -> Option<(String, Option<Py<PyAny>>, H
     }
 }
 
-// Parse URLs and store in global static
 #[pyfunction]
 pub fn parse_urls(py: Python, obj: &PyAny) -> PyResult<Url> {
     let parsed = Url::from_pyany(py, obj, "".to_string())?;
-
-    // Store the parsed URLs in the global static
     let _ = GLOBAL_ROUTES.set(parsed.clone());
 
     Ok(parsed)
@@ -142,8 +126,8 @@ pub fn parse_urls(py: Python, obj: &PyAny) -> PyResult<Url> {
 
 /// Module definition
 #[pymodule]
-fn panther_core(py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<Url>()?;
+fn panther_core(_py: Python, m: &PyModule) -> PyResult<()> {
+    // m.add_class::<Url>()?;
     m.add_function(wrap_pyfunction!(parse_urls, m)?)?;
     m.add_function(wrap_pyfunction!(get, m)?)?;
     Ok(())

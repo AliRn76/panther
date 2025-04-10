@@ -1,23 +1,24 @@
 import timeit
-import panther_core
+# import panther_core
+from panther_core import parse_urls, get
 from example import test_cases
 from panther.configs import config
 
 def initialize_routing(urls):
     """Initialize the routing once for the Rust implementation"""
-    panther_core.parse_urls(urls)
+    parse_urls(urls)
 
 def test_python():
     """Test the Python implementation"""
     for test_url, expected in test_cases.items():
-        actual = panther_core.find_endpoint(path=test_url)
+        actual = get(path=test_url)
         assert actual == expected, f'{actual} != {expected}'
 
 def test_rust():
     """Test the Rust implementation using global static storage"""
     for test_url, expected in test_cases.items():
         # With our updated code, we don't need to pass endpoints anymore
-        result = panther_core.get(test_url)
+        result = get(test_url)
 
         # Handle the new return format which includes path parameters
         if result is not None:
