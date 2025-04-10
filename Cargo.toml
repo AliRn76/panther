@@ -8,5 +8,5 @@ name = "panther_core"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = "0.20.2"
+pyo3 = {version = "0.20.2", features = ["extension-module"]}
 rand = "0.8.5"
