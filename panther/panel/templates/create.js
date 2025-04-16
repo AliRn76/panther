@@ -1,5 +1,4 @@
 const schema = JSON.parse(`{{fields|tojson|safe}}`);
-console.log(schema);
 function toggleObjectVisibility(checkbox, contentId) {
   const content = document.getElementById(contentId);
   content.classList.toggle("hidden", !checkbox.checked);
@@ -51,7 +50,7 @@ function toggleArrayVisibility(checkbox, contentId) {
   const content = document.getElementById(contentId);
   if (content) {
     content.classList.toggle("hidden", !checkbox.checked);
-    
+
     // Also enable/disable inputs
     const inputs = content.querySelectorAll("input, select, textarea");
     inputs.forEach((input) => {
@@ -130,13 +129,29 @@ function addSimpleArrayRow(arrayName, containerId) {
   const deleteButton = document.createElement("button");
   deleteButton.className = "bg-red-600 px-3 py-1 rounded text-sm";
   deleteButton.textContent = "Delete";
-  deleteButton.onclick = () => rowContainer.remove();
-
+  deleteButton.onclick = () => {
+    rowContainer.remove();
+    reindexArrayItems(containerId);
+  };
   rowContainer.appendChild(input);
   rowContainer.appendChild(deleteButton);
   container.appendChild(rowContainer);
 }
 
+function reindexArrayItems(containerId) {
+  const container = document.getElementById(containerId);
+  const items = container.children;
+
+  // Update the index for each remaining item
+  Array.from(items).forEach((item, newIndex) => {
+    const input = item.querySelector("input");
+    if (input) {
+      const oldName = input.name;
+      const baseName = oldName.split("[")[0];
+      input.name = `${baseName}[${newIndex}]`;
+    }
+  });
+}
 function createNestedObjectField(
   fieldName,
   objectType,
@@ -261,6 +276,27 @@ function createObjectInputs(objectSchema, container, prefix = "") {
 function createBasicInput(fieldName, field, container, fullFieldName) {
   const inputWrapper = document.createElement("div");
   inputWrapper.className = "space-y-2";
+  if (fieldName === "id" && typeof isUpdate === "undefined") {
+    return;
+  }
+
+  // Hide ID field in update mode
+  if (fieldName === "_id" && isUpdate) {
+    const inputWrapper = document.createElement("div");
+    inputWrapper.className = "space-y-2";
+    inputWrapper.style.display = "none"; // Hide the entire wrapper
+
+    inputWrapper.innerHTML = `
+      <label class="block">
+        <span class="text-sm font-medium">ID</span>
+        <input type="text" name="_id" readonly
+               class="w-full mt-1 p-2 bg-slate-900 rounded text-gray-300">
+      </label>
+    `;
+
+    container.appendChild(inputWrapper);
+    return;
+  }
 
   let inputHTML = "";
   const defaultValue =
@@ -349,7 +385,7 @@ function addArrayRow(arrayName, itemType, containerId) {
   const rowIndex = container.children.length;
   const rowContainer = document.createElement("div");
   rowContainer.className =
-    "flex  gap-2 items-start space-x-4 py-2 pl-2 pr-1 bg-gray-700/50 rounded-lg";
+    "flex  gap-2 items-start space-x-4 py-4 pl-3 border pr-2 bg-gray-800/80 border-gray-500 rounded-lg";
 
   const itemContent = document.createElement("div");
   itemContent.className = "flex-grow flex flex-col gap-8 w-full";
@@ -359,13 +395,28 @@ function addArrayRow(arrayName, itemType, containerId) {
   const deleteButton = document.createElement("button");
   deleteButton.className = "bg-red-600 m-1 p-1 min-w-8 min-h-8 rounded text-sm";
   deleteButton.textContent = "X";
-  deleteButton.onclick = () => rowContainer.remove();
-
+  deleteButton.onclick = () => {
+    rowContainer.remove();
+    reindexComplexArrayItems(containerId);
+  };
   rowContainer.appendChild(itemContent);
   rowContainer.appendChild(deleteButton);
   container.appendChild(rowContainer);
 }
+function reindexComplexArrayItems(containerId) {
+  const container = document.getElementById(containerId);
+  const items = container.children;
 
+  Array.from(items).forEach((item, newIndex) => {
+    const inputs = item.querySelectorAll("input, select, textarea");
+    inputs.forEach((input) => {
+      const oldName = input.name;
+      const fieldPart = oldName.split("]")[1]; // Get the part after the index
+      const baseName = oldName.split("[")[0];
+      input.name = `${baseName}[${newIndex}]${fieldPart || ""}`;
+    });
+  });
+}
 function openObjectModal(fieldName, objectType) {
   // Create modal for editing nested object
   const modal = document.createElement("div");
@@ -411,7 +462,7 @@ if (typeof isUpdate !== "undefined" && isUpdate) {
 // Function to populate the form with existing data
 function populateFormWithExistingData(data) {
   console.log("Populating form with data:", data);
-  
+
   // Handle simple fields first
   Object.entries(data).forEach(([key, value]) => {
     const input = document.querySelector(`[name="${key}"]`);
@@ -423,15 +474,30 @@ function populateFormWithExistingData(data) {
       }
     }
   });
-  
+
   // Special case for the `_id` field
+  // Find the ID input field
   const idInput = document.querySelector(`[name="_id"]`);
-  if (idInput && data.id) {
-    idInput.value = data.id;
+  if (idInput) {
+    // If we're in update mode and have an ID, set the value
+    if (data && data.id) {
+      idInput.value = data.id;
+    }
+
+    // Hide the input itself
+    idInput.style.display = "none";
+
+    // Also hide the parent container (which likely contains the label)
+    const parentContainer =
+      idInput.closest(".form-group") || idInput.parentElement;
+    if (parentContainer) {
+      parentContainer.style.display = "none";
+    }
+
+    // Keep the field in the form data by making it readonly but not disabled
     idInput.setAttribute("readonly", true);
-    idInput.setAttribute("disabled", true);
   }
-  
+
   // Handle nested objects and arrays
   populateNestedData(data);
 }
@@ -439,13 +505,13 @@ function populateFormWithExistingData(data) {
 function populateNestedData(data, prefix = "") {
   Object.entries(data).forEach(([key, value]) => {
     const fullPath = prefix ? `${prefix}.${key}` : key;
-    
+
     // Handle arrays
     if (Array.isArray(value)) {
       // Find the array container
       const containerID = `${fullPath}-container`;
       const container = document.getElementById(containerID);
-      
+
       if (container) {
         // Ensure toggle is checked for this array if it exists
         const toggle = document.getElementById(`${fullPath}_toggle`);
@@ -453,18 +519,18 @@ function populateNestedData(data, prefix = "") {
           toggle.checked = true;
           toggleArrayVisibility(toggle, containerID);
         }
-        
+
         // Clear any existing items
-        container.innerHTML = '';
-        
+        container.innerHTML = "";
+
         // Recreate each array item
         value.forEach((item, index) => {
-          if (typeof item === 'object' && item !== null) {
+          if (typeof item === "object" && item !== null) {
             // Complex object in array
             const itemType = determineItemType(item);
             if (itemType) {
               addArrayRow(fullPath, itemType, containerID);
-              
+
               // After adding the row, populate its fields
               // The new row should be the last child of the container
               const newRow = container.lastElementChild;
@@ -480,7 +546,7 @@ function populateNestedData(data, prefix = "") {
             // Simple value in array
             addSimpleArrayRow(fullPath, containerID);
             // Get the last added row and set its value
-            const rowInput = container.lastElementChild.querySelector('input');
+            const rowInput = container.lastElementChild.querySelector("input");
             if (rowInput) {
               rowInput.value = item;
             }
@@ -489,11 +555,11 @@ function populateNestedData(data, prefix = "") {
       }
     }
     // Handle nested objects
-    else if (typeof value === 'object' && value !== null) {
+    else if (typeof value === "object" && value !== null) {
       // Find the content container for this object
       const contentId = `${fullPath}_content`;
       const content = document.getElementById(contentId);
-      
+
       if (content) {
         // Enable the toggle if it exists
         const toggle = document.getElementById(`${fullPath}_toggle`);
@@ -501,11 +567,11 @@ function populateNestedData(data, prefix = "") {
           toggle.checked = true;
           // Manually enable all fields in this container
           const inputs = content.querySelectorAll("input, select, textarea");
-          inputs.forEach(input => {
+          inputs.forEach((input) => {
             input.disabled = false;
           });
         }
-        
+
         // Populate the fields in this object
         Object.entries(value).forEach(([nestedKey, nestedValue]) => {
           const nestedPath = `${fullPath}.${nestedKey}`;
@@ -533,15 +599,17 @@ function determineItemType(item) {
     if (typeSchema && typeSchema.fields) {
       const fieldNames = Object.keys(typeSchema.fields);
       // If most of the item keys match the schema fields, assume it's this type
-      const matchingFields = fieldNames.filter(field => field in item);
-      if (matchingFields.length > 0 && matchingFields.length / fieldNames.length >= 0.5) {
+      const matchingFields = fieldNames.filter((field) => field in item);
+      if (
+        matchingFields.length > 0 &&
+        matchingFields.length / fieldNames.length >= 0.5
+      ) {
         return typeName;
       }
     }
   }
   return null;
 }
-
 
 document
   .getElementById(isUpdate ? "updateForm" : "createForm")
@@ -644,10 +712,6 @@ document
       updatedData.id = data.id;
     }
 
-    // Debugging
-    console.log("Data being sent:", updatedData);
-
-    // The rest of your code remains the same
     try {
       const response = await fetch(window.location.pathname, {
         method: isUpdate ? "PUT" : "POST",
