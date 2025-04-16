@@ -8,11 +8,32 @@ const fieldsArray = Object.entries(fieldsObject).map(([key, value]) => ({
 
 console.log("Raw data:", JSON.stringify(fieldsArray, null, 2));
 function pythonToJSON(str) {
+  str = str.replace(/datetime\.datetime\(([^)]+)\)/g, (match, contents) => {
+    const parts = contents.split(",").map((part) => part.trim());
+    if (parts.length >= 6) {
+      return `"${parts[0]}-${parts[1].padStart(2, "0")}-${parts[2].padStart(
+        2,
+        "0"
+      )} ${parts[3].padStart(2, "0")}:${parts[4].padStart(
+        2,
+        "0"
+      )}:${parts[5].padStart(2, "0")}"`;
+    }
+    return '"Invalid datetime"';
+  });
+
+  str = str.replace(/tzinfo=\)/g, "tzinfo=None)");
   return str
     .replace(/'/g, '"')
     .replace(/False/g, "false")
     .replace(/True/g, "true")
     .replace(/None/g, "null");
+}
+function goToCreatePage() {
+  // Get the current URL without any trailing slash
+  const currentUrl = window.location.href.replace(/\/+$/, "");
+  // Navigate to the current URL + /create
+  window.location.href = `${currentUrl}/create`;
 }
 
 function getDataType(value) {
@@ -43,10 +64,9 @@ function initializeRecords() {
   }
 }
 
-
 function formatValue(value, type) {
   if (value === null) return '<span class="text-gray-400">null</span>';
-  
+
   switch (type) {
     case "array":
       return `
@@ -59,12 +79,16 @@ function formatValue(value, type) {
               </svg>
             </summary>
             <div class="px-4 py-2 border-t border-gray-600">
-              ${value.map((item, index) => `
+              ${value
+                .map(
+                  (item, index) => `
                 <div class="py-1 text-sm text-gray-300">
                   <span class="text-gray-400">[${index}]:</span>
                   ${formatValue(item, getDataType(item))}
                 </div>
-              `).join("")}
+              `
+                )
+                .join("")}
             </div>
           </details>
         </div>
@@ -83,12 +107,16 @@ function formatValue(value, type) {
               </svg>
             </summary>
             <div class="px-4 py-2 border-t border-gray-600">
-              ${Object.entries(value).map(([key, val]) => `
+              ${Object.entries(value)
+                .map(
+                  ([key, val]) => `
                 <div class="py-1 text-sm text-gray-300">
                   <span class="text-gray-400">${key}:</span>
                   ${formatValue(val, getDataType(val))}
                 </div>
-              `).join("")}
+              `
+                )
+                .join("")}
             </div>
           </details>
         </div>
@@ -103,7 +131,6 @@ function formatValue(value, type) {
       }">${String(value)}</span>`;
   }
 }
-
 
 function toggleDropdown(button) {
   const dropdown = button.nextElementSibling;
@@ -151,11 +178,15 @@ function renderTable() {
     // Render table headers
     thead.innerHTML = `
       <tr>
-        ${headers.map(field => `
+        ${headers
+          .map(
+            (field) => `
           <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
             ${field.key} (${field.type})
           </th>
-        `).join("")}
+        `
+          )
+          .join("")}
       </tr>
     `;
 
@@ -168,35 +199,40 @@ function renderTable() {
 
     // Get all row elements
     const rowElements = document.querySelectorAll(".record-row");
-    
+
     // Render table rows
     rowElements.forEach((row, index) => {
       const record = rowsForPage[index];
       if (record) {
-        row.innerHTML = headers.map(({ key }) => {
-          const cellValue = record[key];
-          const cellType = getDataType(cellValue);
-          
-          // If this is the ID cell, make it clickable
-          if (key === 'id') {
-            return `
+        row.innerHTML = headers
+          .map(({ key }) => {
+            const cellValue = record[key];
+            const cellType = getDataType(cellValue);
+
+            // If this is the ID cell, make it clickable
+            if (key === "id") {
+              return `
               <td class="px-6 py-4">
-                <a href="${window.location.href.replace(/\/$/, "")}/${cellValue}" 
+                <a href="${window.location.href.replace(
+                  /\/$/,
+                  ""
+                )}/${cellValue}" 
                    class="text-blue-400 hover:text-blue-300 hover:underline cursor-pointer">
                   ${formatValue(cellValue, cellType)}
                 </a>
               </td>
             `;
-          } else {
-            return `
+            } else {
+              return `
               <td class="px-6 py-4">
                 ${formatValue(cellValue, cellType)}
               </td>
             `;
-          }
-        }).join("");
+            }
+          })
+          .join("");
         row.style.display = ""; // Show the row
-        
+
         // Remove the row click event
         row.style.cursor = "default";
         row.onclick = null;
@@ -209,7 +245,6 @@ function renderTable() {
     renderPaginationControls(records.length);
   }
 }
-
 
 function renderPaginationControls(totalRows) {
   const paginationContainer = document.getElementById("paginationControls");
