@@ -2,11 +2,10 @@ const fields = JSON.parse(`{{fields|tojson|safe}}`);
 const fieldsObject = fields.fields;
 const fieldsArray = Object.entries(fieldsObject).map(([key, value]) => ({
   title: value.title || key,
-  type: value.type || [], // Default to an empty array if `type` is not defined
-  required: value.required || false, // Default to `false` if `required` is not defined
+  type: value.type || [], 
+  required: value.required || false, 
 }));
 
-console.log("Raw data:", JSON.stringify(fieldsArray, null, 2));
 function pythonToJSON(str) {
   str = str.replace(/datetime\.datetime\(([^)]+)\)/g, (match, contents) => {
     const parts = contents.split(",").map((part) => part.trim());
@@ -29,7 +28,11 @@ function pythonToJSON(str) {
     .replace(/True/g, "true")
     .replace(/None/g, "null");
 }
-function goToCreatePage() {
+function goToCreatePage(event) {
+  if (event) {
+    event.stopPropagation(); // Prevent triggering the parent's click event
+  }
+
   // Get the current URL without any trailing slash
   const currentUrl = window.location.href.replace(/\/+$/, "");
   // Navigate to the current URL + /create
@@ -43,7 +46,6 @@ function getDataType(value) {
 }
 
 let allRecords = [];
-
 function initializeRecords() {
   if (allRecords.length === 0) {
     try {
@@ -286,8 +288,20 @@ function getCurrentTableIndex() {
   return match ? parseInt(match[1]) : 0;
 }
 
-function selectTable(element) {
+function selectTable(element, event) {
   const index = element.dataset.index;
+  
+  // Hide all add buttons first
+  document.querySelectorAll('.add-record-btn').forEach(btn => {
+    btn.classList.add('hidden');
+  });
+  
+  // Show the add button for the clicked table
+  const addButton = element.querySelector('.add-record-btn');
+  if (addButton) {
+    addButton.classList.remove('hidden');
+  }
+  
   // Only update URL if it's different from current
   if (index !== getCurrentTableIndex().toString()) {
     window.location.href = `/admin/${index}`;
@@ -300,12 +314,23 @@ function setActiveTableFromUrl() {
   const tableItems = document.querySelectorAll(".table-item");
 
   tableItems.forEach((item) => {
-    item.classList.remove("bg-blue-600");
+    // Hide all add buttons first
+    const addButton = item.querySelector('.add-record-btn');
+    if (addButton) {
+      addButton.classList.add('hidden');
+    }
+    
+    item.classList.remove("bg-blue-800");
     item.classList.add("bg-gray-700");
 
     if (parseInt(item.dataset.index) === currentIndex) {
       item.classList.remove("bg-gray-700");
-      item.classList.add("bg-blue-600");
+      item.classList.add("bg-blue-800");
+      
+      // Show add button for the active table
+      if (addButton) {
+        addButton.classList.remove('hidden');
+      }
     }
   });
 }
