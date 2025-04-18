@@ -1,134 +1,134 @@
 use std::collections::HashMap;
+use once_cell::sync::OnceCell;
 use pyo3::prelude::*;
-use pyo3::PyResult;
 use pyo3::types::PyDict;
-use std::sync::OnceLock;
-use pyo3::exceptions::PyValueError;
 
-// Global static storage for parsed URL routes
-static GLOBAL_ROUTES: OnceLock<Url> = OnceLock::new();
+static GLOBAL_ROUTES: OnceCell<RouteNode> = OnceCell::new();
 
 #[derive(Debug, Clone)]
 #[pyclass(module = "routing")]
-pub struct Url {
+pub struct RouteNode {
     #[pyo3(get)]
-    pub name: String,
-    #[pyo3(get)]
-    pub handler: Option<Py<PyAny>>,
-    #[pyo3(get)]
-    pub inner: HashMap<String, Url>,
+    handler: Option<Py<PyAny>>,
+
+    static_children: HashMap<String, RouteNode>,
+    param_child: Option<(String, Box<RouteNode>)>,
 }
-
-impl Url {
-    fn from_pyany(py: Python, obj: &PyAny, name: String) -> PyResult<Self> {
-        let mut url = Url {
-            name,
+impl Default for RouteNode {      fn default() -> Self {          Self::new()      }  }
+impl RouteNode {
+    pub fn new() -> Self {
+        RouteNode {
             handler: None,
-            inner: HashMap::new(),
-        };
+            static_children: HashMap::new(),
+            param_child: None,
+        }
+    }
 
-        if let Ok(dict) = obj.downcast::<PyDict>() {
-            for (key_obj, value) in dict {
-                let key: &str = key_obj.extract()?;
-                if key.is_empty() {
-                    url.handler = Some(value.into());
-                } else {
-                    let mut child = if value.is_instance(py.get_type::<PyDict>())? {
-                        Url::from_pyany(py, value, key.to_string())?
-                    } else {
-                        Url {
-                            name: key.to_string(),
-                            handler: Some(value.into()),
-                            inner: HashMap::new(),
-                        }
-                    };
-
-                    if is_param(key.to_string()) {
-                        if url.inner.contains_key("param") {
-                            return Err(PyValueError::new_err(
-                                "Multiple parameterized routes at the same level",
-                            ));
-                        }
-                        let param_name = key.trim_start_matches('<').trim_end_matches('>').to_string();
-                        child.name = param_name;
-                        url.inner.insert("param".to_string(), child);
-                    } else {
-                        url.inner.insert(key.to_string(), child);
-                    }
+    pub fn add_route(&mut self, py: Python, path: &str, handler: Py<PyAny>) {
+        let segments: Vec<&str> = path
+            .trim_matches('/')
+            .split('/')
+            .filter(|s| !s.is_empty())
+            .collect();
+        let mut node = self;
+        for (i, &seg) in segments.iter().enumerate() {
+            let is_last = i + 1 == segments.len();
+            if seg.starts_with('<') && seg.ends_with('>') {
+                let name = seg[1..seg.len()-1].to_string();
+                let child = node.param_child.get_or_insert_with(|| {
+                    (name.clone(), Box::new(RouteNode::new()))
+                });
+                node = child.1.as_mut();
+                if is_last {
+                    node.handler = Some(handler.clone_ref(py));
+                }
+            } else {
+                let child = node
+                    .static_children
+                    .entry(seg.to_string())
+                    .or_insert_with(RouteNode::new);
+                node = child;
+                if is_last {
+                    node.handler = Some(handler.clone_ref(py));
                 }
             }
-
-            Ok(url)
-        } else {
-            url.handler = Some(obj.into());
-            Ok(url)
         }
     }
 
-    fn resolve_path(&self, parts: &[&str], index: usize, path_params: &mut HashMap<String, String>) -> Option<(String, Option<Py<PyAny>>)> {
-        if index >= parts.len() {
-            // If we've reached the end of the path parts, return this node's handler
-            return if self.handler.is_some() {
-                Some((self.name.clone(), self.handler.clone()))
+    pub fn from_pyany(py: Python, obj: &PyAny) -> PyResult<Self> {
+        let dict: &PyDict = obj.downcast::<PyDict>()
+            .map_err(|_| PyErr::new::<pyo3::exceptions::PyTypeError, _>(
+                "Expected a dict of {str: callable}"
+            ))?;
+        let mut root = RouteNode::new();
+        for (key, val) in dict.iter() {
+            let path: String = key.extract()?;
+            let handler: Py<PyAny> = val.into();
+            root.add_route(py, &path, handler);
+        }
+        Ok(root)
+    }
+
+    /// Try to match `path`. If matched, return (handler, pattern_string).
+    pub fn match_route_with_pattern(
+        &self,
+        path: &str,
+    ) -> Option<(Py<PyAny>, String)> {
+        let mut node = self;
+        let mut pattern_parts = Vec::new();
+
+        for seg in path.trim_matches('/').split('/') {
+            if let Some(child) = node.static_children.get(seg) {
+                pattern_parts.push(seg.to_string());
+                node = child;
+            } else if let Some((ref name, ref boxed)) = node.param_child {
+                pattern_parts.push(format!("<{}>", name));
+                node = boxed;
             } else {
-                None
-            };
+                return None;
+            }
         }
 
-        let current_part = parts[index];
-        // First try for an exact match
-        if let Some(child) = self.inner.get(current_part) {
-            return child.resolve_path(parts, index + 1, path_params);
-        }
-
-        // Then try parameter match
-        if let Some(param_child) = self.inner.get("param") {
-            // Store the parameter value
-            path_params.insert(param_child.name.clone(), current_part.to_string());
-            return param_child.resolve_path(parts, index + 1, path_params);
-        }
-
-        None
-    }
-
-    pub fn get(&self, endpoint: String) -> Option<(String, Option<Py<PyAny>>, HashMap<String, String>)> {
-        let parts: Vec<&str> = endpoint.split('/').filter(|s| !s.is_empty()).collect();
-        // Collect path parameters during resolution
-        let mut path_params = HashMap::new();
-        if let Some((name, handler)) = self.resolve_path(&parts, 0, &mut path_params) {
-            Some((name, handler, path_params))
-        } else {
-            None
-        }
+        node.handler.clone().map(|h| {
+            let pat = pattern_parts.join("/");
+            (h, pat)
+        })
     }
 }
 
-fn is_param(s: String) -> bool {
-    s.starts_with('<') && s.ends_with('>')
-}
-
+/// Parse the Python dict into the global router.
 #[pyfunction]
-pub fn get(_py: Python, endpoint: String) -> Option<(String, Option<Py<PyAny>>, HashMap<String, String>)> {
-    if let Some(url_router) = GLOBAL_ROUTES.get() {
-        url_router.get(endpoint)
-    } else {
-        None
-    }
-}
-
-#[pyfunction]
-pub fn parse_urls(py: Python, obj: &PyAny) -> PyResult<Url> {
-    let parsed = Url::from_pyany(py, obj, "".to_string())?;
-    let _ = GLOBAL_ROUTES.set(parsed.clone());
-
+pub fn parse(py: Python, obj: &PyAny) -> PyResult<RouteNode> {
+    let parsed = RouteNode::from_pyany(py, obj)?;
+    GLOBAL_ROUTES
+        .set(parsed.clone())
+        .map_err(|_| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            "GLOBAL_ROUTES was already initialized"
+        ))?;
     Ok(parsed)
 }
 
-/// Module definition
+#[pyfunction]
+pub fn get(py: Python, path: &str) -> PyResult<(Option<Py<PyAny>>, String)> {
+    let root = GLOBAL_ROUTES
+        .get()
+        .ok_or_else(|| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            "GLOBAL_ROUTES is not initialized"
+        ))?;
+
+    if let Some((handler, pattern)) = root.match_route_with_pattern(path) {
+        Ok((Some(handler.clone_ref(py)), pattern))
+    } else {
+        Ok((None, String::new()))
+    }
+}
+
+/// The Python module definition.
 #[pymodule]
-fn panther_core(_py: Python, m: &PyModule) -> PyResult<()> {
-    // m.add_class::<Url>()?;
-    m.add_function(wrap_pyfunction!(parse_urls, m)?)?;
+#[pyo3(name = "panther_core")]
+fn routing(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<RouteNode>()?;
+    m.add_function(wrap_pyfunction!(parse, m)?)?;
     m.add_function(wrap_pyfunction!(get, m)?)?;
     Ok(())
 }
