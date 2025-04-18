@@ -14,12 +14,14 @@ with open('README.md', encoding='utf-8') as file:
     DESCRIPTION = file.read()
 
 INSTALL_REQUIRES = [
-    'pantherdb~=2.1.1',
+    'pantherdb~=2.1.3',
+    'orjson~=3.9.15',
     'pydantic~=2.10.6',
     'rich~=13.9.4',
     'uvicorn~=0.34.0',
     'pytz~=2025.2',
     'Jinja2~=3.1',
+    'simple-ulid~=1.0.0',
 ]
 if sys.version_info <= (3, 12):
     INSTALL_REQUIRES.append('httptools~=0.6.4')
@@ -64,7 +66,7 @@ setup(
         'console_scripts': ['panther=panther.cli.main:start'],
     },
     package_data={
-        'panther': ['cli/*', 'openapi/templates/*'],
+        'panther': ['cli/*', 'panel/templates/*', 'openapi/templates/*'],
     },
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,

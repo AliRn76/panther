@@ -58,6 +58,7 @@ class API:
     def __init__(
         self,
         *,
+        methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
         input_model: type[ModelSerializer] | type[BaseModel] | None = None,
         output_model: type[BaseModel] | None = None,
         output_schema: OutputSchema | None = None,
@@ -66,9 +67,9 @@ class API:
         throttling: Throttling | None = None,
         cache: bool = False,
         cache_exp_time: timedelta | int | None = None,
-        methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
         middlewares: list[HTTPMiddleware] | None = None,
     ):
+        self.methods = {m.upper() for m in methods} if methods else None
         self.input_model = input_model
         self.output_schema = output_schema
         self.auth = auth
@@ -76,7 +77,6 @@ class API:
         self.throttling = throttling
         self.cache = cache
         self.cache_exp_time = cache_exp_time
-        self.methods = {m.upper() for m in methods} if methods else None
         self.middlewares: list[HTTPMiddleware] | None = middlewares
         self.request: Request | None = None
         if output_model:

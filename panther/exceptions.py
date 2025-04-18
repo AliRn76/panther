@@ -16,10 +16,12 @@ class BaseError(Exception):
     def __init__(
             self,
             detail: str | dict | list = None,
-            status_code: int = None
+            status_code: int = None,
+            headers: dict = None
     ):
         self.detail = detail or self.detail
         self.status_code = status_code or self.status_code
+        self.headers = headers
 
 
 class APIError(BaseError):
@@ -30,6 +32,11 @@ class APIError(BaseError):
 class WebsocketError(BaseError):
     detail: str | dict | list = 'Internal Error'
     status_code: int = status.WS_1011_INTERNAL_ERROR
+
+
+class RedirectAPIError(APIError):
+    def __init__(self, url: str, status_code: int = status.HTTP_302_FOUND):
+        super().__init__(headers={'Location': url}, status_code=status_code)
 
 
 class BadRequestAPIError(APIError):
