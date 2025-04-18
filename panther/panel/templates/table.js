@@ -28,11 +28,7 @@ function pythonToJSON(str) {
     .replace(/True/g, "true")
     .replace(/None/g, "null");
 }
-function goToCreatePage(event) {
-  if (event) {
-    event.stopPropagation(); // Prevent triggering the parent's click event
-  }
-
+function goToCreatePage() {
   // Get the current URL without any trailing slash
   const currentUrl = window.location.href.replace(/\/+$/, "");
   // Navigate to the current URL + /create
