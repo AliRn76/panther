@@ -32,10 +32,6 @@ class LoginView(GenericAPI):
         return TemplateResponse(name='login.html')
 
     async def post(self, request: Request):
-        await config.USER_MODEL.delete_many()
-        u, _ = await config.USER_MODEL.find_one_or_insert(username='ali')
-        await u.set_password('1234')  # TODO: This is for test, delete it later.
-
         user: BaseUser = await config.USER_MODEL.find_one({config.USER_MODEL.USERNAME_FIELD: request.data['username']})
         if user is None:
             logger.debug('User not found.')
@@ -115,7 +111,10 @@ class CreateView(GenericAPI):
     async def post(self, request: Request, index: int):
         model = config.MODELS[index]
         validated_data = API.validate_input(model=model, request=request)
-        return await model.insert_one(validated_data.model_dump())
+        instance = await model.insert_one(validated_data.model_dump())
+        if issubclass(model, BaseUser):
+            await instance.set_password(password=instance.password)
+        return instance
 
 
 class DetailView(GenericAPI):
