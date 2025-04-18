@@ -1,157 +1,134 @@
+use std::collections::HashMap;
+use once_cell::sync::OnceCell;
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyString};
+use pyo3::types::PyDict;
 
-use crate::tree::Tree;
+static GLOBAL_ROUTES: OnceCell<RouteNode> = OnceCell::new();
 
-mod tree;
+#[derive(Debug, Clone)]
+#[pyclass(module = "routing")]
+pub struct RouteNode {
+    #[pyo3(get)]
+    handler: Option<Py<PyAny>>,
 
-static mut URLS: Option<Tree<String, i32>> = None;
-
-
-fn parse_urls_dict(py_urls: &PyDict) -> Tree<String, i32> {
-    let mut urls: Tree<String, i32> = Tree::new(0);
-
-    for (key, value) in py_urls.iter() {
-        if value.is_exact_instance_of::<PyDict>() {
-            match value.downcast::<PyDict>() {
-                Ok(py_dict) => {
-                    urls.entry(key.to_string()).or_insert(parse_urls_dict(py_dict));
-                }
-                Err(_) => {}
-            }
-        } else {
-            match value.extract::<i32>() {
-                Ok(integer_value) => {
-                    urls.entry(key.to_string()).or_insert(Tree::new(integer_value));
-                }
-                Err(_) => {}
-            }
+    static_children: HashMap<String, RouteNode>,
+    param_child: Option<(String, Box<RouteNode>)>,
+}
+impl Default for RouteNode {      fn default() -> Self {          Self::new()      }  }
+impl RouteNode {
+    pub fn new() -> Self {
+        RouteNode {
+            handler: None,
+            static_children: HashMap::new(),
+            param_child: None,
         }
     }
-    return urls.clone();
-}
 
-#[pyfunction]
-fn initialize_routing(py_urls: &PyDict) {
-    let urls = parse_urls_dict(py_urls);
-    unsafe { URLS = Some(urls); }
-}
-
-fn clean_path(raw_path: String) -> String {
-    let mut path: String = String::new();
-    // Remove Query Params
-    for char in raw_path.chars() {
-        if char == '?' { break; }
-        path.push(char);
-    }
-    // Remove '/' suffix & prefix
-    path.trim_end_matches('/').trim_start_matches('/').to_string()
-}
-
-fn is_callable(value: i32) -> bool {
-    value != 0
-}
-
-fn is_subtree(value: i32) -> bool {
-    value == 0
-}
-
-fn push_path(mut path: String, part: String) -> String {
-    path.push_str(&part);
-    path.push('/');
-    path
-}
-
-
-fn finding(mut urls: Tree<String, i32>, path: String) -> (i32, String) {
-    let endpoint_not_found: (i32, String) = (-1, "".to_string());
-
-    let path: String = clean_path(path);
-    let parts: Vec<&str> = path.split('/').collect();
-    let parts_len: usize = parts.len();
-
-    let mut found_path = String::new();
-    for (i, part) in parts.iter().enumerate() {
-        let last_path: bool = (i + 1) == parts_len;
-
-        let borrowed_url = urls.clone();
-        match urls.get(*part) {
-            Some(found) => {
-                if last_path && is_callable(found.value) {
-                    found_path = push_path(found_path, part.to_string());
-                    return (found.value, found_path.to_string());
+    pub fn add_route(&mut self, py: Python, path: &str, handler: Py<PyAny>) {
+        let segments: Vec<&str> = path
+            .trim_matches('/')
+            .split('/')
+            .filter(|s| !s.is_empty())
+            .collect();
+        let mut node = self;
+        for (i, &seg) in segments.iter().enumerate() {
+            let is_last = i + 1 == segments.len();
+            if seg.starts_with('<') && seg.ends_with('>') {
+                let name = seg[1..seg.len()-1].to_string();
+                let child = node.param_child.get_or_insert_with(|| {
+                    (name.clone(), Box::new(RouteNode::new()))
+                });
+                node = child.1.as_mut();
+                if is_last {
+                    node.handler = Some(handler.clone_ref(py));
                 }
-                if is_subtree(found.value) {
-                    found_path = push_path(found_path, part.to_string());
-
-                    match found.get("") {
-                        Some(inner_found) => {
-                            if last_path && is_callable(inner_found.value) {
-                                return (inner_found.value, part.to_string());
-                            }
-                        }
-                        None => {}
-                    }
-                    urls = found.clone();
-                    continue;
-                }
-            }
-            None => {
-                for (key, _value) in borrowed_url
-                    .iter()
-                    .filter_map(|(p, q)| {
-                        if !p.is_empty() && p.get(0).unwrap().starts_with('<') {
-                            Some((p.get(0).unwrap().clone(), q))
-                        } else { None }
-                    })
-                {
-                    let found = urls.get(key).unwrap();
-
-                    if last_path {
-                        if is_callable(found.value) {
-                            found_path = push_path(found_path, key.to_string());
-                            return (found.value, found_path.to_string());
-                        }
-                        if is_subtree(found.value) {
-                            found_path = push_path(found_path, key.to_string());
-
-                            match found.get("") {
-                                Some(inner_found) => {
-                                    if last_path && is_callable(inner_found.value) {
-                                        return (inner_found.value, key.to_string());
-                                    }
-                                }
-                                None => {}
-                            }
-                            urls = found.clone();
-                            break;
-                        }
-                        return endpoint_not_found;
-                    } else if is_subtree(found.value) {
-                        urls = found.clone();
-                        found_path = push_path(found_path, key.to_string());
-                        break;
-                    } else {
-                        return endpoint_not_found;
-                    }
+            } else {
+                let child = node
+                    .static_children
+                    .entry(seg.to_string())
+                    .or_insert_with(RouteNode::new);
+                node = child;
+                if is_last {
+                    node.handler = Some(handler.clone_ref(py));
                 }
             }
         }
     }
 
-    return endpoint_not_found;
+    pub fn from_pyany(py: Python, obj: &PyAny) -> PyResult<Self> {
+        let dict: &PyDict = obj.downcast::<PyDict>()
+            .map_err(|_| PyErr::new::<pyo3::exceptions::PyTypeError, _>(
+                "Expected a dict of {str: callable}"
+            ))?;
+        let mut root = RouteNode::new();
+        for (key, val) in dict.iter() {
+            let path: String = key.extract()?;
+            let handler: Py<PyAny> = val.into();
+            root.add_route(py, &path, handler);
+        }
+        Ok(root)
+    }
+
+    /// Try to match `path`. If matched, return (handler, pattern_string).
+    pub fn match_route_with_pattern(
+        &self,
+        path: &str,
+    ) -> Option<(Py<PyAny>, String)> {
+        let mut node = self;
+        let mut pattern_parts = Vec::new();
+
+        for seg in path.trim_matches('/').split('/') {
+            if let Some(child) = node.static_children.get(seg) {
+                pattern_parts.push(seg.to_string());
+                node = child;
+            } else if let Some((ref name, ref boxed)) = node.param_child {
+                pattern_parts.push(format!("<{}>", name));
+                node = boxed;
+            } else {
+                return None;
+            }
+        }
+
+        node.handler.clone().map(|h| {
+            let pat = pattern_parts.join("/");
+            (h, pat)
+        })
+    }
+}
+
+/// Parse the Python dict into the global router.
+#[pyfunction]
+pub fn parse(py: Python, obj: &PyAny) -> PyResult<RouteNode> {
+    let parsed = RouteNode::from_pyany(py, obj)?;
+    GLOBAL_ROUTES
+        .set(parsed.clone())
+        .map_err(|_| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            "GLOBAL_ROUTES was already initialized"
+        ))?;
+    Ok(parsed)
 }
 
 #[pyfunction]
-fn find_endpoint(path: &PyString) -> i32 {
-    let (endpoint, _found_path) = finding(unsafe { URLS.clone() }.unwrap(), path.to_string());
-    endpoint
+pub fn get(py: Python, path: &str) -> PyResult<(Option<Py<PyAny>>, String)> {
+    let root = GLOBAL_ROUTES
+        .get()
+        .ok_or_else(|| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            "GLOBAL_ROUTES is not initialized"
+        ))?;
+
+    if let Some((handler, pattern)) = root.match_route_with_pattern(path) {
+        Ok((Some(handler.clone_ref(py)), pattern))
+    } else {
+        Ok((None, String::new()))
+    }
 }
 
+/// The Python module definition.
 #[pymodule]
-fn panther_core(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(find_endpoint, m)?)?;
-    m.add_function(wrap_pyfunction!(initialize_routing, m)?)?;
-
+#[pyo3(name = "panther_core")]
+fn routing(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<RouteNode>()?;
+    m.add_function(wrap_pyfunction!(parse, m)?)?;
+    m.add_function(wrap_pyfunction!(get, m)?)?;
     Ok(())
 }
