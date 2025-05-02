@@ -151,41 +151,6 @@ class Response:
             raise TypeError(error)
         return status_code
 
-    async def apply_output_model(self, output_model: Type[BaseModel]):
-        """This method is called in API.__call__"""
-
-        # Dict
-        if isinstance(self.data, dict):
-            # Apply `validation_alias` (id -> _id)
-            for field_name, field in output_model.model_fields.items():
-                if field.validation_alias and field_name in self.data:
-                    self.data[field.validation_alias] = self.data.pop(field_name)
-            output = output_model(**self.data)
-            if hasattr(output_model, 'prepare_response'):
-                return await output.prepare_response(instance=self.initial_data, data=output.model_dump())
-            return output.model_dump()
-
-        # Iterable
-        results = []
-        if isinstance(self.data, IterableDataTypes):
-            for i, d in enumerate(self.data):
-                # Apply `validation_alias` (id -> _id)
-                for field_name, field in output_model.model_fields.items():
-                    if field.validation_alias and field_name in d:
-                        d[field.validation_alias] = d.pop(field_name)
-
-                output = output_model(**d)
-                if hasattr(output_model, 'prepare_response'):
-                    result = await output.prepare_response(instance=self.initial_data[i], data=output.model_dump())
-                else:
-                    result = output.model_dump()
-                results.append(result)
-            return results
-
-        # Str | Bool | Bytes
-        msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'
-        raise TypeError(msg)
-
     async def send_headers(self, send, /):
         await send({'type': 'http.response.start', 'status': self.status_code, 'headers': self.bytes_headers})
 

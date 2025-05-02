@@ -11,7 +11,7 @@ class Pagination:
             'count': 10,
             'next': '?limit=10&skip=10',
             'previous': None,
-            results: [...]
+            'results': [...]
         }
     """
     DEFAULT_LIMIT = 20

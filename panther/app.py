@@ -148,8 +148,6 @@ class API:
         # 9. Clean Response
         if not isinstance(response, Response):
             response = Response(data=response)
-        if self.output_schema and response.data:
-            response.data = await response.apply_output_model(output_model=self.output_schema.model)
         if response.pagination:
             response.data = await response.pagination.template(response.data)
 
@@ -192,7 +190,7 @@ class API:
     @classmethod
     def options(cls):
         headers = {
-            'Access-Control-Allow-Methods': 'DELETE, GET, PATCH, POST, PUT, OPTIONS',
+            'Access-Control-Allow-Methods': 'DELETE, GET, PATCH, POST, PUT, OPTIONS, HEAD',
             'Access-Control-Allow-Headers': 'Accept, Authorization, User-Agent, Content-Type',
         }
         return Response(headers=headers)
