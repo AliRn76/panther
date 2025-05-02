@@ -18,6 +18,11 @@ def _flattening_urls(data: dict | Callable, url: str = ''):
         url = f'{url}/'
 
     if isinstance(data, dict):
+        if data == {}:
+            # User didn't define any endpoint,
+            #   So we just reserve this path so won't be used in path variables.
+            yield url.removeprefix('/'), {}
+
         for k, v in data.items():
             yield from _flattening_urls(v, f'{url}{k}')
     else:
@@ -144,8 +149,8 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
                 return found, '/'.join(found_path)
 
             # `found` is dict
-            if isinstance(found, dict) and (endpoint := found.get('')):
-                if callable(endpoint):
+            if isinstance(found, dict):
+                if (endpoint := found.get('')) and callable(endpoint):
                     found_path.append(part)
                     return endpoint, '/'.join(found_path)
                 else:

@@ -1,0 +1,55 @@
+{% extends "base.html" %} {% block content %}
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-2xl font-bold">Update Record</h1>
+    <button
+      onclick="redirectToTable()"
+      class="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700"
+    >
+      Back to List
+    </button>
+  </div>
+
+  <form id="updateForm" class="mt-6">
+    <div
+      id="dynamicInputs"
+      class="bg-gray-800 border-gray-400 rounded-lg p-6 shadow-lg space-y-4"
+    ></div>
+    <div class="flex justify-start mt-6 space-x-4">
+      <button
+        type="submit"
+        class="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700 text-white"
+      >
+        Update
+      </button>
+      <button
+        type="button"
+        id="deleteButton"
+        class="px-6 py-2 bg-red-600 rounded hover:bg-red-700 text-white"
+      >
+        Delete
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  const data = JSON.parse(`{{data|tojson|safe}}`);
+  console.log("Data passed to the form:", data); // Debugging log
+  const isUpdate = true;
+  const existingData = data;
+  function redirectToTable() {
+    const currentUrl = window.location.pathname;
+      const urlParts = currentUrl.split("/").filter((part) => part !== "");
+      urlParts.pop();
+      const redirectUrl = "/" + urlParts.join("/") + "/";
+
+      console.log("Redirecting to:", redirectUrl);
+
+      window.location.href = redirectUrl;
+
+  }
+  {% include "create.js" %}
+
+</script>
+{% endblock %}

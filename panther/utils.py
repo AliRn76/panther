@@ -38,7 +38,10 @@ def load_env(env_file: str | Path, /) -> dict[str, str]:
                 key, value = striped_line.split('=', 1)
                 key = key.strip()
                 value = value.strip().strip('"\'')
-                variables[key] = value
+                if (boolean_value := value.lower()) in ['true', 'false']:
+                    variables[key] = bool(boolean_value == 'true')
+                else:
+                    variables[key] = value
 
                 # Load them as system environment variable
                 os.environ[key] = value
@@ -101,27 +104,5 @@ def scrypt(password: str, salt: bytes, digest: bool = False) -> str | bytes:
     return derived_key
 
 
-class ULID:
-    """https://github.com/ulid/spec"""
-
-    crockford_base32_characters = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
-
-    @classmethod
-    def new(cls):
-        current_timestamp = int(datetime.now(timezone.utc).timestamp() * 1000)
-        epoch_bits = '{0:050b}'.format(current_timestamp)
-        random_bits = '{0:080b}'.format(secrets.randbits(80))
-        bits = epoch_bits + random_bits
-        return cls._generate(bits)
-
-    @classmethod
-    def _generate(cls, bits: str) -> str:
-        return ''.join(
-            cls.crockford_base32_characters[int(bits[i: i + 5], base=2)]
-            for i in range(0, 130, 5)
-        )
-
-
 def timezone_now():
-    tz = pytz.timezone(config.TIMEZONE)
-    return datetime.now(tz=tz)
+    return datetime.now(tz=pytz.timezone(config.TIMEZONE))

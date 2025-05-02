@@ -10,7 +10,6 @@ from typing import Any, Generator, Iterator, AsyncGenerator
 
 from panther.exceptions import PantherError
 from panther.file_handler import File
-from panther.websocket import GenericWebsocket
 
 logger = logging.getLogger('panther')
 
@@ -100,6 +99,7 @@ def check_function_type_endpoint(endpoint: types.FunctionType) -> Callable:
 
 def check_class_type_endpoint(endpoint: Callable) -> Callable:
     from panther.app import GenericAPI
+    from panther.websocket import GenericWebsocket
 
     if not issubclass(endpoint, (GenericAPI, GenericWebsocket)):
         raise PantherError(

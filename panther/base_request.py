@@ -1,4 +1,3 @@
-from collections import namedtuple
 from collections.abc import Callable
 from urllib.parse import parse_qsl
 
@@ -46,14 +45,40 @@ class Headers:
         items = ', '.join(f'{k}={v}' for k, v in self.__headers.items())
         return f'Headers({items})'
 
+    def __contains__(self, item):
+        return (item in self.__headers) or (item in self.__pythonic_headers)
+
     __repr__ = __str__
 
     @property
     def __dict__(self):
         return self.__headers
 
+    def get_cookies(self) -> dict:
+        """
+        request.headers.cookie:
+            'csrftoken=aaa; sessionid=bbb; access_token=ccc; refresh_token=ddd'
 
-Address = namedtuple('Address', ['ip', 'port'])
+        request.headers.get_cookies():
+            {
+                'csrftoken': 'aaa',
+                'sessionid': 'bbb',
+                'access_token': 'ccc',
+                'refresh_token': 'ddd',
+            }
+        """
+        if self.cookie:
+            return {k.strip(): v for k, v in (c.split('=', maxsplit=1) for c in self.cookie.split(';'))}
+        return {}
+
+
+class Address:
+    def __init__(self, ip, port):
+        self.ip = ip
+        self.port = port
+
+    def __str__(self):
+        return f'{self.ip}:{self.port}'
 
 
 class BaseRequest:
