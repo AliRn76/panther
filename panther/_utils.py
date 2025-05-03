@@ -49,7 +49,7 @@ def read_multipart_form_data(boundary: str, body: bytes) -> dict:
         if row in (b'', b'--'):
             continue
 
-        if match := re.match(pattern=field_pattern, string=row):
+        if match := re.match(pattern=field_pattern, string=row, flags=re.DOTALL):
             _, field_name, _, value = match.groups()
             data[field_name.decode('utf-8')] = value.decode('utf-8')
 
