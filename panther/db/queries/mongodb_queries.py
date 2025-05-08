@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+import types
 from sys import version_info
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, Any
 
+from typing import get_args, get_origin
+
+from pydantic import ValidationError, BaseModel
+from pymongo.results import InsertOneResult
+
+from panther.db import Model
 from panther.db.connections import db
 from panther.db.cursor import Cursor
 from panther.db.queries.base_queries import BaseQuery
 from panther.db.utils import prepare_id_for_query
+from panther.exceptions import DatabaseError
 
 try:
     from bson.codec_options import CodecOptions
@@ -38,7 +46,7 @@ class BaseMongoDBQuery(BaseQuery):
     @classmethod
     async def find_one(cls, _filter: dict | None = None, /, **kwargs) -> Self | None:
         if document := await db.session[cls.__name__].find_one(cls._merge(_filter, kwargs)):
-            return cls._create_model_instance(document=document)
+            return await cls._create_model_instance(document=document)
         return None
 
     @classmethod
@@ -48,14 +56,14 @@ class BaseMongoDBQuery(BaseQuery):
     @classmethod
     async def first(cls, _filter: dict | None = None, /, **kwargs) -> Self | None:
         cursor = await cls.find(_filter, **kwargs)
-        for result in cursor.sort('_id', 1).limit(-1):
+        async for result in cursor.sort('_id', 1).limit(-1):
             return result
         return None
 
     @classmethod
     async def last(cls, _filter: dict | None = None, /, **kwargs) -> Self | None:
         cursor = await cls.find(_filter, **kwargs)
-        for result in cursor.sort('_id', -1).limit(-1):
+        async for result in cursor.sort('_id', -1).limit(-1):
             return result
         return None
 
@@ -68,14 +76,40 @@ class BaseMongoDBQuery(BaseQuery):
     async def count(cls, _filter: dict | None = None, /, **kwargs) -> int:
         return await db.session[cls.__name__].count_documents(cls._merge(_filter, kwargs))
 
+    @classmethod
+    def clean_value(cls, field: str | None, value: Any) -> dict[str, Any] | list[Any]:
+        match value:
+            case None:
+                return None
+            case Model() as model:
+                if model.id is None:
+                    raise DatabaseError(f'Model instance{" in " + field if field else ""} has no ID.')
+                return model._id
+            case BaseModel() as model:
+                return {
+                    field_name: cls.clean_value(field=field_name, value=getattr(model, field_name))
+                    for field_name in model.model_fields
+                }
+            case dict() as d:
+                return {k: cls.clean_value(field=k, value=v) for k, v in d.items()}
+            case list() as l:
+                return [cls.clean_value(field=None, value=item) for item in l]
+            case _:
+                return value
+
     # # # # # Insert # # # # #
     @classmethod
     async def insert_one(cls, _document: dict | None = None, /, **kwargs) -> Self:
         document = cls._merge(_document, kwargs)
         cls._validate_data(data=document)
+        final_document = {
+            field: cls.clean_value(field=field, value=value)
+            for field, value in document.items()
+        }
+        result: InsertOneResult = await db.session[cls.__name__].insert_one(final_document)
+        final_document['_id'] = result.inserted_id
 
-        await db.session[cls.__name__].insert_one(document)
-        return cls._create_model_instance(document=document)
+        return await cls._create_model_instance(document=final_document)
 
     @classmethod
     async def insert_many(cls, documents: Iterable[dict]) -> list[Self]:
@@ -84,7 +118,7 @@ class BaseMongoDBQuery(BaseQuery):
             cls._validate_data(data=document)
 
         await db.session[cls.__name__].insert_many(documents)
-        return [cls._create_model_instance(document=document) for document in documents]
+        return [await cls._create_model_instance(document=document) for document in documents]
 
     # # # # # Delete # # # # #
     async def delete(self) -> None:

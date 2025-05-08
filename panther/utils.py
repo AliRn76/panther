@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import hashlib
 import logging
@@ -106,3 +107,12 @@ def scrypt(password: str, salt: bytes, digest: bool = False) -> str | bytes:
 
 def timezone_now():
     return datetime.now(tz=pytz.timezone(config.TIMEZONE))
+
+
+def run_coroutine(coroutine):
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop.run_until_complete(coroutine)
