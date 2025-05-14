@@ -32,7 +32,7 @@ logger = logging.getLogger('panther')
 
 
 class ReturnNone(GenericAPI):
-    output_model = UserOutputSerializer
+    output_schema = UserOutputSerializer
 
     async def get(self, request: Request):
         return None

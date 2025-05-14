@@ -241,6 +241,14 @@ class PlainTextResponse(Response):
 
 
 class TemplateResponse(HTMLResponse):
+    """
+    You may want to declare `TEMPLATES_DIR` in your configs
+
+    Example:
+        TEMPLATES_DIR = 'templates/'
+            or
+        TEMPLATES_DIR = '.'
+    """
     def __init__(
         self,
         source: str | LiteralString | NoneType = None,
@@ -251,7 +259,7 @@ class TemplateResponse(HTMLResponse):
     ):
         """
         :param source: should be a string
-        :param name: should be the name of template file
+        :param name: name of the template file (should be with its extension, e.g. index.html)
         :param context: should be dict of items
         :param headers: should be dict of headers
         :param status_code: should be int
