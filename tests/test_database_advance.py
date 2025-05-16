@@ -91,6 +91,66 @@ class _BaseDatabaseTestCase:
         assert author.our_book_detail.more_books[0][0] == book
         assert author.our_book_detail.more_books[0][1] == book
 
+    async def test_insert_many(self):
+        book = await Book.insert_one(name='my_test')
+        authors = await Author.insert_many(
+            [
+                {
+                    'name': 'ali',
+                    'books': [book],
+                    'books2': [book, book],
+                    'book': book,
+                    'book2': None,
+                    'book_detail': {'book1': book},
+                    'our_book_detail': BookDetail(detail='ok', book=book, more_books=[[book, book]])
+                },
+                {
+                    'name': 'ali',
+                    'books': [book],
+                    'books2': [book, book],
+                    'book': book,
+                    'book2': None,
+                    'book_detail': {'book1': book},
+                    'our_book_detail': BookDetail(detail='ok', book=book, more_books=[[book, book]])
+                }
+            ]
+        )
+
+        for author in authors:
+            assert isinstance(book, Book)
+            assert book.id
+            assert book.name == 'my_test'
+
+            assert author.name == 'ali'
+            assert isinstance(author.books, list)
+            assert len(author.books) == 1
+            assert author.books[0] == book
+            assert author.books[0]
+
+            assert isinstance(author.books2, list)
+            assert len(author.books2) == 2
+            assert author.books2[0] == book
+            assert author.books2[1] == book
+
+            assert isinstance(author.book, Book)
+            assert author.book == book
+
+            assert author.book2 is None
+
+            assert isinstance(author.book_detail, dict)
+            assert list(author.book_detail.keys()) == ['book1']
+            assert author.book_detail['book1'] == book.id  # Known Issue
+
+            assert isinstance(author.our_book_detail, BookDetail)
+            assert author.our_book_detail.detail == 'ok'
+            assert author.our_book_detail.book == book
+            assert isinstance(author.our_book_detail.more_books, list)
+            assert len(author.our_book_detail.more_books) == 1
+            assert isinstance(author.our_book_detail.more_books[0], list)
+            assert len(author.our_book_detail.more_books[0]) == 2
+            assert author.our_book_detail.more_books[0][0] == book
+            assert author.our_book_detail.more_books[0][1] == book
+
     async def test_find_one(self):
         book = await Book.insert_one(name='my_test')
         await Author.insert_one(

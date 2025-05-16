@@ -40,17 +40,21 @@ class _BaseDatabaseTestCase:
 
     async def test_insert_many(self):
         insert_count = random.randint(2, 10)
-        data = [
+        initial_books_data = [
             {'name': f.name(), 'author': f.name(), 'pages_count': random.randint(0, 10)}
             for _ in range(insert_count)
         ]
-        books = await Book.insert_many(data)
-        inserted_books = [
-            {'_id': book._id, 'name': book.name, 'author': book.author, 'pages_count': book.pages_count}
+        books = await Book.insert_many(initial_books_data)
+        actual_books = [
+            {'name': book.name, 'author': book.author, 'pages_count': book.pages_count}
             for book in books
         ]
-        assert len(books) == insert_count
-        assert data == inserted_books
+        expected_books = [
+            {'name': book['name'], 'author': book['author'], 'pages_count': book['pages_count']}
+            for book in initial_books_data
+        ]
+        assert len(actual_books) == len(expected_books)
+        assert actual_books == expected_books
 
     # # # FindOne
     async def test_find_one_not_found(self):

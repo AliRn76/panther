@@ -6,7 +6,7 @@ from sys import version_info
 from typing import get_args, get_origin, Iterable, Sequence, Any, Union
 
 from pydantic import BaseModel, ValidationError
-from pymongo.results import InsertOneResult
+from pymongo.results import InsertOneResult, InsertManyResult
 
 from panther.db.connections import db
 from panther.db.cursor import Cursor
@@ -225,19 +225,28 @@ class BaseMongoDBQuery(BaseQuery):
             field: cls.clean_value(field=field, value=value)
             for field, value in document.items()
         }
-        result: InsertOneResult = await db.session[cls.__name__].insert_one(final_document)
-        final_document['_id'] = result.inserted_id
-
-        return await cls._create_model_instance(document=final_document)
+        result = await cls._create_model_instance(document=final_document)
+        insert_one_result: InsertOneResult = await db.session[cls.__name__].insert_one(final_document)
+        result.id = insert_one_result.inserted_id
+        return result
 
     @classmethod
     async def insert_many(cls, documents: Iterable[dict]) -> list[Self]:
+        final_documents = []
+        results = []
         for document in documents:
             prepare_id_for_query(document, is_mongo=True)
             cls._validate_data(data=document)
-
-        await db.session[cls.__name__].insert_many(documents)
-        return [await cls._create_model_instance(document=document) for document in documents]
+            cleaned_document = {
+                field: cls.clean_value(field=field, value=value)
+                for field, value in document.items()
+            }
+            final_documents.append(cleaned_document)
+            results.append(await cls._create_model_instance(document=cleaned_document))
+        insert_many_result: InsertManyResult = await db.session[cls.__name__].insert_many(final_documents)
+        for obj, _id in zip(results, insert_many_result.inserted_ids):
+            obj.id = _id
+        return results
 
     # # # # # Delete # # # # #
     async def delete(self) -> None:
