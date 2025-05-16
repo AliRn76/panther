@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from sys import version_info
 
+from panther.utils import run_coroutine
+
 try:
     from pymongo.cursor import Cursor as _Cursor
 except ImportError:
@@ -31,13 +33,27 @@ class Cursor(_Cursor):
             self.cls = self.models[collection.name]
         super().__init__(collection, *args, **kwargs)
 
-    def next(self) -> Self:
-        return self.cls._create_model_instance(document=super().next())
+    def __aiter__(self) -> Self:
+        return self
 
-    __next__ = next
+    async def next(self) -> Self:
+        return await self.cls._create_model_instance(document=super().next())
+
+    async def __anext__(self) -> Self:
+        try:
+            return await self.cls._create_model_instance(document=super().next())
+        except StopIteration:
+            raise StopAsyncIteration
+
+    def __next__(self) -> Self:
+        try:
+            return run_coroutine(self.cls._create_model_instance(document=super().next()))
+        except StopIteration:
+            raise
+
 
     def __getitem__(self, index: int | slice) -> Cursor[Self] | Self:
-        result = super().__getitem__(index)
-        if isinstance(result, dict):
-            return self.cls._create_model_instance(document=result)
-        return result
+        document = super().__getitem__(index)
+        if isinstance(document, dict):
+            return run_coroutine(self.cls._create_model_instance(document=document))
+        return document

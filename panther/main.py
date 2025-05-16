@@ -73,7 +73,11 @@ class Panther:
             if message["type"] == 'lifespan.startup':
                 if config.HAS_WS:
                     await config.WEBSOCKET_CONNECTIONS.start()
-                await Event.run_startups()
+                try:
+                    await Event.run_startups()
+                except Exception as e:
+                    logger.error(e)
+                    raise e
             elif message["type"] == 'lifespan.shutdown':
                 # It's not happening :\, so handle the shutdowns in __del__ ...
                 pass

@@ -15,16 +15,17 @@ with contextlib.suppress(ImportError):
 
 
 def validate_object_id(value, handler):
-    if config.DATABASE.__class__.__name__ == 'MongoDBConnection':
-        if isinstance(value, bson.ObjectId):
-            return value
-        else:
-            try:
-                return bson.ObjectId(value)
-            except Exception as e:
-                msg = 'Invalid ObjectId'
-                raise ValueError(msg) from e
-    return str(value)
+    if config.DATABASE.__class__.__name__ != 'MongoDBConnection':
+        return str(value)
+
+    if isinstance(value, bson.ObjectId):
+        return value
+
+    try:
+        return bson.ObjectId(value)
+    except Exception as e:
+        msg = 'Invalid ObjectId'
+        raise ValueError(msg) from e
 
 
 ID = Annotated[str, WrapValidator(validate_object_id), PlainSerializer(lambda x: str(x), return_type=str)]
@@ -36,15 +37,17 @@ class Model(PydanticBaseModel, Query):
             return
         config.MODELS.append(cls)
 
-    id: ID | None = Field(None, validation_alias='_id')
+    id: ID | None = Field(None, validation_alias='_id', alias='_id')
 
     @property
     def _id(self):
         """
-        return
-            `str` for PantherDB
-            `ObjectId` for MongoDB
+        Returns the actual ID value:
+            - For MongoDB: returns ObjectId
+            - For PantherDB: returns str
         """
+        if config.DATABASE.__class__.__name__ == 'MongoDBConnection':
+            return bson.ObjectId(self.id)
         return self.id
 
 
