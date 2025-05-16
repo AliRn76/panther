@@ -3,9 +3,9 @@ import base64
 import hashlib
 import logging
 import os
-import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
+from threading import Thread
 from typing import ClassVar
 
 import pytz
@@ -111,8 +111,25 @@ def timezone_now():
 
 def run_coroutine(coroutine):
     try:
-        loop = asyncio.get_event_loop()
+        # Check if there's an event loop already running in this thread
+        asyncio.get_running_loop()
     except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop.run_until_complete(coroutine)
+        # No event loop is running in this thread — safe to use asyncio.run
+        return asyncio.run(coroutine)
+
+    # Since we cannot block a running event loop with run_until_complete,
+    # we execute the coroutine in a separate thread with its own event loop.
+    result = []
+
+    def run_in_thread():
+        new_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(new_loop)
+        try:
+            result.append(new_loop.run_until_complete(coroutine))
+        finally:
+            new_loop.close()
+
+    thread = Thread(target=run_in_thread)
+    thread.start()
+    thread.join()
+    return result[0]

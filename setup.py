@@ -14,7 +14,7 @@ with open('README.md', encoding='utf-8') as file:
     DESCRIPTION = file.read()
 
 INSTALL_REQUIRES = [
-    'pantherdb~=2.2.0',
+    'pantherdb~=2.2.2',
     'orjson~=3.9.15',
     'pydantic~=2.10.6',
     'rich~=13.9.4',
