@@ -47,7 +47,7 @@ class Model(PydanticBaseModel, Query):
             - For PantherDB: returns str
         """
         if config.DATABASE.__class__.__name__ == 'MongoDBConnection':
-            return bson.ObjectId(str(self.id))
+            return bson.ObjectId(self.id)
         return self.id
 
 
