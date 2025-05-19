@@ -14,12 +14,13 @@
 ---
 
 ## Why Choose Panther?
-
 - One of the **fastest Python frameworks** available
-- Simple **file-based** database ([PantherDB](https://pypi.org/project/pantherdb/))
+- Built-in **file-based** database ([PantherDB](https://pypi.org/project/pantherdb/))
 - Built-in document-oriented database **ODM** (Supports **MongoDB** & PantherDB)
-- Native **WebSocket** support
 - Built-in API **caching** system (Supports in-memory & **Redis**)
+- Built-in support of **OpenAPI** (swagger)
+- Built-in **Admin Panel**
+- Native **WebSocket** support
 - Integrated **authentication** classes
 - Built-in **permission** handling
 - Supports custom **background tasks**, **middlewares**, and **throttling**
@@ -34,7 +35,7 @@
   <img src="https://github.com/AliRn76/panther/raw/master/docs/docs/images/benchmark.png" alt="Benchmark" style="width: 800px">
 </p>
 
-[[TechEmpower Benchmark]](https://www.techempower.com/benchmarks/#l=zijzen-cn3)
+[[TechEmpower Benchmark]](https://www.techempower.com/benchmarks/#section=data-r23&l=zijzen-pa7&c=4)
 
 ---
 
@@ -73,7 +74,7 @@
      ```shell
      $ pip install panther
      ```
-   - Full installation (includes MongoDB, JWTAuth, Ruff, Redis, Websockets, Cryptography, bpython):
+   - Full installation (includes MongoDB, JWTAuth, Ruff, Redis, Websockets, Cryptography, IPython):
      ```shell
      $ pip install panther[full]
      ```
@@ -100,7 +101,7 @@ $ panther monitor
 
 ### Open a Python Shell
 ```shell
-$ panther shell
+$ panther shell main.py  # Replace main.py with your application file name
 ```
 
 ---
@@ -188,16 +189,3 @@ $ panther run --reload
 Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) and interact with WebSockets.
 
 > **Next Step: [First CRUD](https://pantherpy.github.io/function_first_crud)**
-
----
-
-## How Panther Works
-
-![Diagram](https://raw.githubusercontent.com/AliRn76/panther/master/docs/docs/images/diagram.png)
-
----
-
-## Roadmap
-
-![Roadmap](https://raw.githubusercontent.com/AliRn76/panther/master/docs/docs/images/roadmap.jpg)
-
