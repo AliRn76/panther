@@ -7,8 +7,6 @@ from panther.utils import load_env
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-MONITORING = True
-
 LOG_QUERIES = True
 
 # Load Env Variables
@@ -21,7 +19,7 @@ DB_PASSWORD = env['DB_PASSWORD']
 
 # # # More Info: https://pantherpy.github.io/middlewares/
 MIDDLEWARES = [
-
+    'panther.middlewares.monitoring.MonitoringMiddleware'
 ]
 """
 mongodb://[Username:Password(optional)]@HostName:Port/?aruguments

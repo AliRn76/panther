@@ -67,7 +67,7 @@ class Monitoring:
 
         # Check log file
         if not self.monitoring_log_file.exists():
-            return f'`{self.monitoring_log_file}` file not found. (Make sure `MONITORING` is `True` in `configs` and you have at least one record)'
+            return f'`{self.monitoring_log_file}` file not found. (Make sure `panther.middlewares.monitoring.MonitoringMiddleware` is in your `MIDDLEWARES`)'
 
         # Initialize Deque
         self.update_rows()

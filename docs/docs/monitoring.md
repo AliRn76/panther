@@ -1,8 +1,6 @@
-> <b>Variable:</b> `MONITORING` 
-> 
-> <b>Type:</b> `bool` 
-> 
-> <b>Default:</b> `False`
+#### Usage:
+
+You have to add `panther.middlewares.monitoring.MonitoringMiddleware` and `panther.middlewares.monitoring.WebsocketMonitoringMiddleware`(if you have websocket)  in to your `MIDDLEWARES`
 
 
 Panther log `perf_time` of every request if this variable is `True`

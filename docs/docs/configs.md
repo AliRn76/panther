@@ -3,19 +3,6 @@
 Panther collect all the configs from your `core/configs.py` or the module you passed directly to `Panther(configs=__name__)`
 
 
-### [MONITORING](https://pantherpy.github.io/monitoring)
-> <b>Type:</b> `bool` (<b>Default:</b> `False`)
- 
-It should be `True` if you want to use `panther monitor` command
-and watch the monitoring
-
-If `True`:
-
-- Log every request in `logs/monitoring.log`
-
-_Requires [watchfiles](https://watchfiles.helpmanual.io) package._
-
----
 ### [LOG_QUERIES](https://pantherpy.github.io/log_queries)
 > <b>Type:</b> `bool` (<b>Default:</b> `False`)
 

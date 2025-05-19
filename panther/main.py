@@ -52,7 +52,6 @@ class Panther:
         load_timezone(self._configs_module)
         load_database(self._configs_module)
         load_secret_key(self._configs_module)
-        load_monitoring(self._configs_module)
         load_throttling(self._configs_module)
         load_user_model(self._configs_module)
         load_log_queries(self._configs_module)

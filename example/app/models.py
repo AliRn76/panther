@@ -45,9 +45,9 @@ import types
 
 @Event.startup
 async def create_author():
-    # b1 = await Book.insert_one(name='test1')
-    # print(f'{b1=}')
-    b2 = Book(_id=ObjectId('6823ab43deda8ab1ee0394a6'), name='test1')
+    b2 = await Book.insert_one(name='test1')
+    print(f'{b2=}')
+    # b2 = Book(_id=ObjectId('6823ab43deda8ab1ee0394a6'), name='test1')
     # # try:
     # a1 = Author(name='ali', books=[b1.model_dump()])
     a1 = await Author.insert_one(

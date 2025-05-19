@@ -16,6 +16,7 @@ from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.exceptions import PantherError
 from panther.middlewares.base import WebsocketMiddleware, HTTPMiddleware
+from panther.middlewares.monitoring import MonitoringMiddleware, WebsocketMonitoringMiddleware
 from panther.panel.views import HomeView
 from panther.routings import finalize_urls, flatten_urls
 
@@ -27,7 +28,6 @@ __all__ = (
     'load_timezone',
     'load_database',
     'load_secret_key',
-    'load_monitoring',
     'load_throttling',
     'load_user_model',
     'load_log_queries',
@@ -134,11 +134,6 @@ def load_secret_key(_configs: dict, /) -> None:
         config.SECRET_KEY = secret_key.encode()
 
 
-def load_monitoring(_configs: dict, /) -> None:
-    if _configs.get('MONITORING'):
-        config.MONITORING = True
-
-
 def load_throttling(_configs: dict, /) -> None:
     if throttling := _configs.get('THROTTLING'):
         config.THROTTLING = throttling
@@ -181,6 +176,9 @@ def load_middlewares(_configs: dict, /) -> None:
             except (AttributeError, ModuleNotFoundError):
                 raise _exception_handler(
                     field='MIDDLEWARES', error=f'{middleware} is not a valid middleware path or type')
+
+        if issubclass(middleware, (MonitoringMiddleware, WebsocketMonitoringMiddleware)):
+            config.MONITORING = True
 
         if issubclass(middleware, HTTPMiddleware):
             middlewares['http'].append(middleware)

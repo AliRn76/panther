@@ -11,7 +11,10 @@ env = load_env(BASE_DIR / '.env')
 
 SECRET_KEY = env['SECRET_KEY']
 
-MONITORING = True
+MIDDLEWARES = [
+    'panther.middlewares.monitoring.MonitoringMiddleware'
+]
+
 LOG_QUERIES = True
 DATABASE = {
     'engine': {
