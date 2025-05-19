@@ -1,5 +1,6 @@
 from panther import Panther, status
 from panther.app import GenericAPI
+from panther.middlewares.monitoring import MonitoringMiddleware, WebsocketMonitoringMiddleware
 from panther.response import HTMLResponse, Response
 from panther.websocket import GenericWebsocket, close_websocket_connection, send_message_to_websocket
 
@@ -16,70 +17,20 @@ class FirstWebsocket(GenericWebsocket):
 class MainPage(GenericAPI):
     def get(self):
         template = """
-        <html lang="en">
-        <head>
-            <meta charSet="UTF-8"/>
-            <title>Simple WebSocket Example</title>
-        </head>
-        <body>
+        <input type="text" id="messageInput">
         <button id="sendButton">Send Message</button>
-        <input type="text" id="messageInput" placeholder="Type your message here"/>
         <ul id="messages"></ul>
         <script>
-            var socket;
-            
-            function connect() {
-                socket = new WebSocket('ws://127.0.0.1:8000/ws');
-            
-                // Connection opened
-                socket.addEventListener('open', function (event) {
-                    console.log('WebSocket is connected.');
-                    document.getElementById('connectButton').disabled = true;
-                    document.getElementById('sendButton').disabled = false;
-                });
-            
-                // Listen for messages
-                socket.addEventListener('message', function (event) {
-                    console.log('Message from server: ', event.data);
-                    var messages = document.getElementById('messages');
-                    var li = document.createElement('li');
-                    li.textContent = 'Server: ' + event.data;
-                    messages.appendChild(li);
-                });
-            
-                // Connection closed
-                socket.addEventListener('close', function (event) {
-                    console.log('WebSocket is closed.');
-                    document.getElementById('connectButton').disabled = false;
-                    document.getElementById('sendButton').disabled = true;
-                });
-            
-                // Connection error
-                socket.addEventListener('error', function (event) {
-                    console.log('WebSocket error: ', event);
-                });
-            }
-            
-            // Send a message to the server
+            var socket = new WebSocket('ws://127.0.0.1:8000/ws');
+            socket.addEventListener('message', function (event) {
+                var li = document.createElement('li');
+                document.getElementById('messages').appendChild(li).textContent = 'Server: ' + event.data;
+            });
             function sendMessage() {
-                var message = document.getElementById('messageInput').value;
-                if (message) {
-                    socket.send(message);
-                    console.log('Message sent: ', message);
-                    var messages = document.getElementById('messages');
-                    var li = document.createElement('li');
-                    li.textContent = 'Client: ' + message;
-                    messages.appendChild(li);
-                    document.getElementById('messageInput').value = '';
-                }
+                socket.send(document.getElementById('messageInput').value);
             }
-            
-            // Add event listeners to the buttons
-            document.getElementById('connectButton').addEventListener('click', connect);
             document.getElementById('sendButton').addEventListener('click', sendMessage);
         </script>
-        </body>
-        </html>
         """
         return HTMLResponse(template)
 
@@ -94,6 +45,7 @@ class AdminAPI(GenericAPI):
         return Response(status_code=status.HTTP_202_ACCEPTED)
 
 
+MIDDLEWARES = [MonitoringMiddleware, WebsocketMonitoringMiddleware]
 url_routing = {
     '': MainPage,
     'admin/<connection_id>/<disconnect>': AdminAPI,

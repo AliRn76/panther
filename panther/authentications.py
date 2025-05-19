@@ -29,9 +29,9 @@ class BaseAuthentication:
         msg = f'{cls.__name__}.authentication() is not implemented.'
         raise cls.exception(msg) from None
 
-    @staticmethod
-    def exception(message: str, /) -> type[AuthenticationAPIError]:
-        logger.error(f'Authentication Error: "{message}"')
+    @classmethod
+    def exception(cls, message: str | Exception, /) -> type[AuthenticationAPIError]:
+        logger.error(f'{cls.__name__} Error: "{message}"')
         return AuthenticationAPIError
 
 
@@ -151,16 +151,33 @@ class JWTAuthentication(BaseAuthentication):
         key = generate_hash_value_from_string(token)
         return bool(await redis.exists(key))
 
-    @staticmethod
-    def exception(message: str | JWTError | UnicodeEncodeError, /) -> type[AuthenticationAPIError]:
-        logger.error(f'JWT Authentication Error: "{message}"')
-        return AuthenticationAPIError
-
 
 class QueryParamJWTAuthentication(JWTAuthentication):
     @classmethod
     def get_authorization_header(cls, request: Request | Websocket) -> str:
         if auth := request.query_params.get('authorization'):
             return auth
-        msg = 'Authorization is required'
+        msg = '`authorization` query param not found.'
         raise cls.exception(msg) from None
+
+
+class CookieJWTAuthentication(JWTAuthentication):
+    @classmethod
+    def get_authorization_header(cls, request: Request | Websocket) -> str:
+        if token := request.headers.get_cookies().get('access_token'):
+            return token
+        msg = '`access_token` Cookie not found.'
+        raise cls.exception(msg) from None
+
+    @classmethod
+    async def authentication(cls, request: Request | Websocket) -> Model:
+        token = cls.get_authorization_header(request)
+
+        if redis.is_connected and await cls._check_in_cache(token=token):
+            msg = 'User logged out'
+            raise cls.exception(msg) from None
+
+        payload = cls.decode_jwt(token)
+        user = await cls.get_user(payload)
+        user._auth_token = token
+        return user

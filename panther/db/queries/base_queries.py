@@ -46,7 +46,7 @@ class BaseQuery:
                 raise DatabaseError(error)
 
     @classmethod
-    def _create_model_instance(cls, document: dict):
+    async def _create_model_instance(cls, document: dict):
         """Prevent getting errors from document insertion"""
         try:
             return cls(**document)

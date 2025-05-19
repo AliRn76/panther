@@ -15,6 +15,7 @@ from rich.table import Table
 
 from panther.cli.utils import import_error
 from panther.configs import config
+from panther.middlewares.monitoring import WebsocketMonitoringMiddleware
 
 with contextlib.suppress(ImportError):
     from watchfiles import watch
@@ -53,7 +54,7 @@ class Monitoring:
                 for line in f.readlines():
                     # line = date_time | method | path | ip:port | response_time(seconds) | status
                     columns = line.split('|')
-                    columns[4] = self._clean_response_time(float(columns[4]))
+                    columns[4] = self._clean_response_time(columns[4])
                     self.rows.append(columns)
                     live.update(self.generate_table())
 
@@ -66,7 +67,7 @@ class Monitoring:
 
         # Check log file
         if not self.monitoring_log_file.exists():
-            return f'`{self.monitoring_log_file}` file not found. (Make sure `MONITORING` is `True` in `configs` and you have at least one record)'
+            return f'`{self.monitoring_log_file}` file not found. (Make sure `panther.middlewares.monitoring.MonitoringMiddleware` is in your `MIDDLEWARES`)'
 
         # Initialize Deque
         self.update_rows()
@@ -104,14 +105,17 @@ class Monitoring:
         self.rows = deque(self.rows, maxlen=lines)
 
     @classmethod
-    def _clean_response_time(cls, response_time: int) -> str:
+    def _clean_response_time(cls, response_time: str) -> str:
+        if response_time == WebsocketMonitoringMiddleware.ConnectedConnectionTime:
+            return response_time
+        response_time = float(response_time)
         time_unit = ' s'
 
         if response_time < 0.01:
             response_time = response_time * 1_000
             time_unit = 'ms'
 
-        elif response_time >= 10:
+        elif response_time >= 60:
             response_time = response_time / 60
             time_unit = ' m'
 

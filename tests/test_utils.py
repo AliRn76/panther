@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from panther import Panther
 from panther.configs import config
-from panther.middlewares import BaseMiddleware
+from panther.middlewares import HTTPMiddleware
 from panther.utils import generate_secret_key, generate_hash_value_from_string, load_env, round_datetime
 
 
@@ -37,7 +37,7 @@ DB_PORT = "{self.db_port}"
         """)
 
         variables = load_env(self.file_path)
-        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['IS_ACTIVE'] == self.is_active
         assert variables['DB_HOST'] == self.db_host
         assert variables['DB_PORT'] == str(self.db_port)
 
@@ -49,7 +49,7 @@ DB_PORT = '{self.db_port}'
                 """)
 
         variables = load_env(self.file_path)
-        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['IS_ACTIVE'] == self.is_active
         assert variables['DB_HOST'] == self.db_host
         assert variables['DB_PORT'] == str(self.db_port)
 
@@ -62,7 +62,7 @@ DB_PORT = {self.db_port}
                     """)
 
         variables = load_env(self.file_path)
-        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['IS_ACTIVE'] == self.is_active
         assert variables['DB_HOST'] == self.db_host
         assert variables['DB_PORT'] == str(self.db_port)
 
@@ -74,7 +74,7 @@ DB_PORT={self.db_port}
                     """)
 
         variables = load_env(self.file_path)
-        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['IS_ACTIVE'] == self.is_active
         assert variables['DB_HOST'] == self.db_host
         assert variables['DB_PORT'] == str(self.db_port)
 
@@ -86,7 +86,7 @@ DB_PORT={self.db_port}
                     """)
 
         variables = load_env(self.file_path)
-        assert (variables['IS_ACTIVE'] == 'True') == self.is_active
+        assert variables['IS_ACTIVE'] == self.is_active
         assert variables['DB_HOST'] == self.db_host
         assert variables['DB_PORT'] == str(self.db_port)
 
@@ -267,7 +267,7 @@ class TestLoadConfigs(TestCase):
             ('fake.module', {})
         ]
 
-        with self.assertLogs(level='ERROR') as captured:
+        with self.assertLogs() as captured:
             try:
                 Panther(name=__name__, configs=__name__, urls={})
             except SystemExit:
@@ -277,8 +277,11 @@ class TestLoadConfigs(TestCase):
             finally:
                 MIDDLEWARES = []
 
-        assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': fake.module is not a valid middleware path"
+        assert len(captured.records) == 2
+        assert captured.records[0].levelname == 'WARNING'
+        assert captured.records[0].getMessage() == "DEPRECATED 'MIDDLEWARES': `data` does not supported in middlewares anymore, as your data is static you may want to pass them to your middleware with config variables"
+        assert captured.records[1].levelname == 'ERROR'
+        assert captured.records[1].getMessage() == "Invalid 'MIDDLEWARES': fake.module is not a valid middleware path or type"
 
     def test_middlewares_invalid_structure(self):
         global MIDDLEWARES
@@ -295,7 +298,7 @@ class TestLoadConfigs(TestCase):
                 MIDDLEWARES = []
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': fake.module is not a valid middleware path"
+        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': fake.module is not a valid middleware path or type"
 
     def test_middlewares_too_many_args(self):
         global MIDDLEWARES
@@ -314,7 +317,7 @@ class TestLoadConfigs(TestCase):
                 MIDDLEWARES = []
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': ('fake.module', 1, 2) too many arguments"
+        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': ('fake.module', 1, 2) should be dotted path or type of a middleware class"
 
     def test_middlewares_without_args(self):
         global MIDDLEWARES
@@ -344,7 +347,7 @@ class TestLoadConfigs(TestCase):
                 MIDDLEWARES = []
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': is not a sub class of BaseMiddleware"
+        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': is not a sub class of `HTTPMiddleware` or `WebsocketMiddleware`"
 
     def test_jwt_auth_without_secret_key(self):
         global AUTHENTICATION
@@ -434,7 +437,7 @@ class InvalidWebsocket:
     pass
 
 
-class CorrectTestMiddleware(BaseMiddleware):
+class CorrectTestMiddleware(HTTPMiddleware):
     pass
 
 

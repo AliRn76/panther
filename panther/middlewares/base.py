@@ -1,30 +1,26 @@
+import typing
+
+from panther.base_websocket import Websocket
 from panther.request import Request
 from panther.response import Response
 from panther.websocket import GenericWebsocket
 
 
-class BaseMiddleware:
-    """Used in both http & ws requests"""
-    async def before(self, request: Request | GenericWebsocket):
-        raise NotImplementedError
-
-    async def after(self, response: Response | GenericWebsocket):
-        raise NotImplementedError
-
-
-class HTTPMiddleware(BaseMiddleware):
+class HTTPMiddleware:
     """Used only in http requests"""
-    async def before(self, request: Request):
-        return request
 
-    async def after(self, response: Response):
-        return response
+    def __init__(self, dispatch: typing.Callable):
+        self.dispatch = dispatch
+
+    async def __call__(self, request: Request) -> Response:
+        return await self.dispatch(request=request)
 
 
-class WebsocketMiddleware(BaseMiddleware):
+class WebsocketMiddleware:
     """Used only in ws requests"""
-    async def before(self, request: GenericWebsocket):
-        return request
 
-    async def after(self, response: GenericWebsocket):
-        return response
+    def __init__(self, dispatch: typing.Callable):
+        self.dispatch = dispatch
+
+    async def __call__(self, connection: Websocket) -> GenericWebsocket:
+        return await self.dispatch(connection=connection)

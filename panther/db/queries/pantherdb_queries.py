@@ -25,7 +25,7 @@ class BasePantherDBQuery(BaseQuery):
     @classmethod
     async def find_one(cls, _filter: dict | None = None, /, **kwargs) -> Self | None:
         if document := db.session.collection(cls.__name__).find_one(**cls._merge(_filter, kwargs)):
-            return cls._create_model_instance(document=document)
+            return await cls._create_model_instance(document=document)
         return None
 
     @classmethod
@@ -38,13 +38,13 @@ class BasePantherDBQuery(BaseQuery):
     @classmethod
     async def first(cls, _filter: dict | None = None, /, **kwargs) -> Self | None:
         if document := db.session.collection(cls.__name__).first(**cls._merge(_filter, kwargs)):
-            return cls._create_model_instance(document=document)
+            return await cls._create_model_instance(document=document)
         return None
 
     @classmethod
     async def last(cls, _filter: dict | None = None, /, **kwargs) -> Self | None:
         if document := db.session.collection(cls.__name__).last(**cls._merge(_filter, kwargs)):
-            return cls._create_model_instance(document=document)
+            return await cls._create_model_instance(document=document)
         return None
 
     @classmethod
@@ -64,7 +64,7 @@ class BasePantherDBQuery(BaseQuery):
         cls._validate_data(data=_document)
 
         document = db.session.collection(cls.__name__).insert_one(**_document)
-        return cls._create_model_instance(document=document)
+        return await cls._create_model_instance(document=document)
 
     @classmethod
     async def insert_many(cls, documents: Iterable[dict]) -> list[Self]:
@@ -74,7 +74,7 @@ class BasePantherDBQuery(BaseQuery):
             cls._validate_data(data=document)
             inserted_document = db.session.collection(cls.__name__).insert_one(**document)
             document['_id'] = inserted_document['_id']
-            result.append(cls._create_model_instance(document=document))
+            result.append(await cls._create_model_instance(document=document))
         return result
 
     # # # # # Delete # # # # #

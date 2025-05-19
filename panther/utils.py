@@ -1,10 +1,11 @@
+import asyncio
 import base64
 import hashlib
 import logging
 import os
-import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
+from threading import Thread
 from typing import ClassVar
 
 import pytz
@@ -38,7 +39,10 @@ def load_env(env_file: str | Path, /) -> dict[str, str]:
                 key, value = striped_line.split('=', 1)
                 key = key.strip()
                 value = value.strip().strip('"\'')
-                variables[key] = value
+                if (boolean_value := value.lower()) in ['true', 'false']:
+                    variables[key] = bool(boolean_value == 'true')
+                else:
+                    variables[key] = value
 
                 # Load them as system environment variable
                 os.environ[key] = value
@@ -101,27 +105,31 @@ def scrypt(password: str, salt: bytes, digest: bool = False) -> str | bytes:
     return derived_key
 
 
-class ULID:
-    """https://github.com/ulid/spec"""
-
-    crockford_base32_characters = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
-
-    @classmethod
-    def new(cls):
-        current_timestamp = int(datetime.now(timezone.utc).timestamp() * 1000)
-        epoch_bits = '{0:050b}'.format(current_timestamp)
-        random_bits = '{0:080b}'.format(secrets.randbits(80))
-        bits = epoch_bits + random_bits
-        return cls._generate(bits)
-
-    @classmethod
-    def _generate(cls, bits: str) -> str:
-        return ''.join(
-            cls.crockford_base32_characters[int(bits[i: i + 5], base=2)]
-            for i in range(0, 130, 5)
-        )
-
-
 def timezone_now():
-    tz = pytz.timezone(config.TIMEZONE)
-    return datetime.now(tz=tz)
+    return datetime.now(tz=pytz.timezone(config.TIMEZONE))
+
+
+def run_coroutine(coroutine):
+    try:
+        # Check if there's an event loop already running in this thread
+        asyncio.get_running_loop()
+    except RuntimeError:
+        # No event loop is running in this thread — safe to use asyncio.run
+        return asyncio.run(coroutine)
+
+    # Since we cannot block a running event loop with run_until_complete,
+    # we execute the coroutine in a separate thread with its own event loop.
+    result = []
+
+    def run_in_thread():
+        new_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(new_loop)
+        try:
+            result.append(new_loop.run_until_complete(coroutine))
+        finally:
+            new_loop.close()
+
+    thread = Thread(target=run_in_thread)
+    thread.start()
+    thread.join()
+    return result[0]

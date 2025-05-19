@@ -1,7 +1,10 @@
 import asyncio
+import logging
 
 from panther._utils import is_function_async
 from panther.configs import config
+
+logger = logging.getLogger('panther')
 
 
 class Event:
@@ -24,10 +27,13 @@ class Event:
     @staticmethod
     async def run_startups():
         for func in config.STARTUPS:
-            if is_function_async(func):
-                await func()
-            else:
-                func()
+            try:
+                if is_function_async(func):
+                    await func()
+                else:
+                    func()
+            except Exception as e:
+                logger.error(f'{func.__name__}() startup event got error: {e}')
 
     @staticmethod
     def run_shutdowns():

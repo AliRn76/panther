@@ -131,7 +131,7 @@ urls = {
 class TestWebsocket(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        config.HAS_WS = True
+        config.HAS_WS = True  # Required for `pytest` (`unittest` is fine)
         cls.app = Panther(__name__, configs=__name__, urls=urls)
 
     def test_without_accept(self):
@@ -300,7 +300,7 @@ class TestWebsocket(TestCase):
             responses = ws.connect('with-auth', query_params={'authorization': f'Bearer {token}'})
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'JWT Authentication Error: "User not found"'
+        assert captured.records[0].getMessage() == 'QueryParamJWTAuthentication Error: "User not found"'
 
         assert responses[0]['type'] == 'websocket.close'
         assert responses[0]['code'] == 1000

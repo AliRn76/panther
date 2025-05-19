@@ -9,6 +9,9 @@ class GenericWebsocket(Websocket):
     auth: bool = False
     permissions: list = []
 
+    def __init__(self, parent):
+        self.__dict__ = parent.__dict__.copy()
+
     async def connect(self, **kwargs):
         """
         Check your conditions then `accept()` or `close()` the connection

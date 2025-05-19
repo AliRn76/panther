@@ -42,4 +42,5 @@ urls = {
     'logout/': logout_api,
     'stream/': stream_api,
     'pagination/': PaginationAPI,
+    'middleware': detect_middlewares,
 }

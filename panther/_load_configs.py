@@ -16,7 +16,8 @@ from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.exceptions import PantherError
 from panther.middlewares.base import WebsocketMiddleware, HTTPMiddleware
-from panther.panel.urls import urls as panel_urls
+from panther.middlewares.monitoring import MonitoringMiddleware, WebsocketMonitoringMiddleware
+from panther.panel.views import HomeView
 from panther.routings import finalize_urls, flatten_urls
 
 __all__ = (
@@ -27,7 +28,6 @@ __all__ = (
     'load_timezone',
     'load_database',
     'load_secret_key',
-    'load_monitoring',
     'load_throttling',
     'load_user_model',
     'load_log_queries',
@@ -36,8 +36,8 @@ __all__ = (
     'load_auto_reformat',
     'load_background_tasks',
     'load_default_cache_exp',
-    'load_authentication_class',
     'load_urls',
+    'load_authentication_class',
     'load_websocket_connections',
     'check_endpoints_inheritance',
 )
@@ -94,7 +94,15 @@ def load_templates_dir(_configs: dict, /) -> None:
     if config.TEMPLATES_DIR == '.':
         config.TEMPLATES_DIR = config.BASE_DIR
 
-    config.JINJA_ENVIRONMENT = jinja2.Environment(loader=jinja2.FileSystemLoader(config.TEMPLATES_DIR))
+    config.JINJA_ENVIRONMENT = jinja2.Environment(
+        loader=jinja2.ChoiceLoader(
+            loaders=(
+                jinja2.FileSystemLoader(searchpath=config.TEMPLATES_DIR),
+                jinja2.PackageLoader(package_name='panther', package_path='panel/templates/'),
+                jinja2.PackageLoader(package_name='panther', package_path='openapi/templates/'),
+            )
+        )
+    )
 
 
 def load_database(_configs: dict, /) -> None:
@@ -126,11 +134,6 @@ def load_secret_key(_configs: dict, /) -> None:
         config.SECRET_KEY = secret_key.encode()
 
 
-def load_monitoring(_configs: dict, /) -> None:
-    if _configs.get('MONITORING'):
-        config.MONITORING = True
-
-
 def load_throttling(_configs: dict, /) -> None:
     if throttling := _configs.get('THROTTLING'):
         config.THROTTLING = throttling
@@ -147,42 +150,45 @@ def load_log_queries(_configs: dict, /) -> None:
 
 
 def load_middlewares(_configs: dict, /) -> None:
-    from panther.middlewares import BaseMiddleware
-
     middlewares = {'http': [], 'ws': []}
 
     # Collect Middlewares
     for middleware in _configs.get('MIDDLEWARES') or []:
-        if not isinstance(middleware, list | tuple):
-            path_or_type = middleware
-            data = {}
+        # This block is for Backward Compatibility
+        if isinstance(middleware, list | tuple):
+            if len(middleware) == 1:
+                middleware = middleware[0]
+            elif len(middleware) == 2:
+                _deprecated_warning(
+                    field='MIDDLEWARES',
+                    message='`data` does not supported in middlewares anymore, as your data is static you may want '
+                            'to pass them to your middleware with config variables'
+                )
+                middleware = middleware[0]
+            else:
+                raise _exception_handler(
+                    field='MIDDLEWARES', error=f'{middleware} should be dotted path or type of a middleware class')
 
-        elif len(middleware) == 1:
-            path_or_type = middleware[0]
-            data = {}
-
-        elif len(middleware) > 2:
-            raise _exception_handler(field='MIDDLEWARES', error=f'{middleware} too many arguments')
-
-        else:
-            path_or_type, data = middleware
-
-        if callable(path_or_type):
-            middleware_class = path_or_type
-        else:
+        # `middleware` can be type or path of a class
+        if not callable(middleware):
             try:
-                middleware_class = import_class(path_or_type)
+                middleware = import_class(middleware)
             except (AttributeError, ModuleNotFoundError):
-                raise _exception_handler(field='MIDDLEWARES', error=f'{path_or_type} is not a valid middleware path')
+                raise _exception_handler(
+                    field='MIDDLEWARES', error=f'{middleware} is not a valid middleware path or type')
 
-        if issubclass(middleware_class, BaseMiddleware) is False:
-            raise _exception_handler(field='MIDDLEWARES', error='is not a sub class of BaseMiddleware')
+        if issubclass(middleware, (MonitoringMiddleware, WebsocketMonitoringMiddleware)):
+            config.MONITORING = True
 
-        if middleware_class.__bases__[0] in (BaseMiddleware, HTTPMiddleware):
-            middlewares['http'].append((middleware_class, data))
-
-        if middleware_class.__bases__[0] in (BaseMiddleware, WebsocketMiddleware):
-            middlewares['ws'].append((middleware_class, data))
+        if issubclass(middleware, HTTPMiddleware):
+            middlewares['http'].append(middleware)
+        elif issubclass(middleware, WebsocketMiddleware):
+            middlewares['ws'].append(middleware)
+        else:
+            raise _exception_handler(
+                field='MIDDLEWARES',
+                error='is not a sub class of `HTTPMiddleware` or `WebsocketMiddleware`'
+            )
 
     config.HTTP_MIDDLEWARES = middlewares['http']
     config.WS_MIDDLEWARES = middlewares['ws']
@@ -202,32 +208,6 @@ def load_background_tasks(_configs: dict, /) -> None:
 def load_default_cache_exp(_configs: dict, /) -> None:
     if default_cache_exp := _configs.get('DEFAULT_CACHE_EXP'):
         config.DEFAULT_CACHE_EXP = default_cache_exp
-
-
-def load_authentication_class(_configs: dict, /) -> None:
-    """Should be after `load_secret_key()`"""
-    if authentication := _configs.get('AUTHENTICATION'):
-        config.AUTHENTICATION = import_class(authentication)
-
-    if ws_authentication := _configs.get('WS_AUTHENTICATION'):
-        config.WS_AUTHENTICATION = import_class(ws_authentication)
-
-    load_jwt_config(_configs)
-
-
-def load_jwt_config(_configs: dict, /) -> None:
-    """Only Collect JWT Config If Authentication Is JWTAuthentication"""
-    auth_is_jwt = (
-            getattr(config.AUTHENTICATION, '__name__', None) == 'JWTAuthentication' or
-            getattr(config.WS_AUTHENTICATION, '__name__', None) == 'QueryParamJWTAuthentication'
-    )
-    jwt = _configs.get('JWTConfig', {})
-    if auth_is_jwt or jwt:
-        if 'key' not in jwt:
-            if config.SECRET_KEY is None:
-                raise _exception_handler(field='JWTConfig', error='`JWTConfig.key` or `SECRET_KEY` is required.')
-            jwt['key'] = config.SECRET_KEY.decode()
-        config.JWT_CONFIG = JWTConfig(**jwt)
 
 
 def load_urls(_configs: dict, /, urls: dict | None) -> None:
@@ -261,7 +241,34 @@ def load_urls(_configs: dict, /, urls: dict | None) -> None:
 
     config.FLAT_URLS = flatten_urls(urls)
     config.URLS = finalize_urls(config.FLAT_URLS)
-    config.URLS['_panel'] = finalize_urls(flatten_urls(panel_urls))
+
+
+def load_authentication_class(_configs: dict, /) -> None:
+    """Should be after `load_secret_key()` and `load_urls()`"""
+    if authentication := _configs.get('AUTHENTICATION'):
+        config.AUTHENTICATION = import_class(authentication)
+
+    if ws_authentication := _configs.get('WS_AUTHENTICATION'):
+        config.WS_AUTHENTICATION = import_class(ws_authentication)
+
+    load_jwt_config(_configs)
+
+
+def load_jwt_config(_configs: dict, /) -> None:
+    """Only Collect JWT Config If Authentication Is JWTAuthentication"""
+    auth_is_jwt = (
+            getattr(config.AUTHENTICATION, '__name__', None) == 'JWTAuthentication' or
+            getattr(config.WS_AUTHENTICATION, '__name__', None) == 'QueryParamJWTAuthentication'
+    )
+    jwt = _configs.get('JWTConfig', {})
+
+    using_panel_views = HomeView in config.FLAT_URLS.values()
+    if auth_is_jwt or using_panel_views:
+        if 'key' not in jwt:
+            if config.SECRET_KEY is None:
+                raise _exception_handler(field='JWTConfig', error='`JWTConfig.key` or `SECRET_KEY` is required.')
+            jwt['key'] = config.SECRET_KEY.decode()
+        config.JWT_CONFIG = JWTConfig(**jwt)
 
 
 def load_websocket_connections():
@@ -281,6 +288,9 @@ def load_websocket_connections():
 def check_endpoints_inheritance():
     """Should be after `load_urls()`"""
     for _, endpoint in config.FLAT_URLS.items():
+        if endpoint == {}:
+            continue
+
         if isinstance(endpoint, types.FunctionType):
             check_function_type_endpoint(endpoint=endpoint)
         else:
@@ -289,3 +299,7 @@ def check_endpoints_inheritance():
 
 def _exception_handler(field: str, error: str | Exception) -> PantherError:
     return PantherError(f"Invalid '{field}': {error}")
+
+
+def _deprecated_warning(field: str, message: str):
+    return logger.warning(f"DEPRECATED '{field}': {message}")

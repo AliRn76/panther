@@ -11,7 +11,10 @@ env = load_env(BASE_DIR / '.env')
 
 SECRET_KEY = env['SECRET_KEY']
 
-MONITORING = True
+MIDDLEWARES = [
+    'panther.middlewares.monitoring.MonitoringMiddleware'
+]
+
 LOG_QUERIES = True
 DATABASE = {
     'engine': {
@@ -32,6 +35,3 @@ USER_MODEL = 'app.models.User'
 DEFAULT_CACHE_EXP = timedelta(seconds=10)
 
 THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))
-
-STARTUP = 'core.events.startup'
-SHUTDOWN = 'core.events.shutdown'

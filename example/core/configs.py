@@ -7,8 +7,6 @@ from panther.utils import load_env
 BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
-MONITORING = True
-
 LOG_QUERIES = True
 
 # Load Env Variables
@@ -21,7 +19,7 @@ DB_PASSWORD = env['DB_PASSWORD']
 
 # # # More Info: https://pantherpy.github.io/middlewares/
 MIDDLEWARES = [
-
+    'panther.middlewares.monitoring.MonitoringMiddleware'
 ]
 """
 mongodb://[Username:Password(optional)]@HostName:Port/?aruguments
@@ -50,9 +48,10 @@ REDIS = {
 
 DATABASE = {
     'engine': {
-        # 'class': 'panther.db.connections.MongoDBConnection',
-        'class': 'panther.db.connections.PantherDBConnection',
-        # 'host': f'mongodb://{DB_HOST}:27017/{DB_NAME}'
+        'class': 'panther.db.connections.MongoDBConnection',
+        'host': f'mongodb://{DB_HOST}:27017/{DB_NAME}'
+
+        # 'class': 'panther.db.connections.PantherDBConnection',
     },
     # 'query': ...,
 }
@@ -66,18 +65,6 @@ DEFAULT_CACHE_EXP = timedelta(seconds=10)
 # THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))
 
 # TEMPLATES_DIR = 'templates'
-
-
-async def startup():
-    print('Starting Up')
-
-
-async def shutdown():
-    print('Shutting Down')
-
-
-STARTUP = 'core.configs.startup'
-SHUTDOWN = 'core.configs.shutdown'
 
 AUTO_REFORMAT = False
 

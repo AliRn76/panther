@@ -1,7 +1,7 @@
 import contextlib
 import os
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 from pydantic import Field, WrapValidator, PlainSerializer, BaseModel as PydanticBaseModel
 
@@ -15,16 +15,17 @@ with contextlib.suppress(ImportError):
 
 
 def validate_object_id(value, handler):
-    if config.DATABASE.__class__.__name__ == 'MongoDBConnection':
-        if isinstance(value, bson.ObjectId):
-            return value
-        else:
-            try:
-                return bson.ObjectId(value)
-            except Exception as e:
-                msg = 'Invalid ObjectId'
-                raise ValueError(msg) from e
-    return str(value)
+    if config.DATABASE.__class__.__name__ != 'MongoDBConnection':
+        return str(value)
+
+    if isinstance(value, bson.ObjectId):
+        return value
+
+    try:
+        return bson.ObjectId(value)
+    except Exception as e:
+        msg = 'Invalid ObjectId'
+        raise ValueError(msg) from e
 
 
 ID = Annotated[str, WrapValidator(validate_object_id), PlainSerializer(lambda x: str(x), return_type=str)]
@@ -36,22 +37,27 @@ class Model(PydanticBaseModel, Query):
             return
         config.MODELS.append(cls)
 
-    id: ID | None = Field(None, validation_alias='_id')
+    id: ID | None = Field(None, validation_alias='_id', alias='_id')
 
     @property
     def _id(self):
         """
-        return
-            `str` for PantherDB
-            `ObjectId` for MongoDB
+        Returns the actual ID value:
+            - For MongoDB: returns ObjectId
+            - For PantherDB: returns str
         """
+        if config.DATABASE.__class__.__name__ == 'MongoDBConnection':
+            return bson.ObjectId(self.id)
         return self.id
 
 
 class BaseUser(Model):
+    username: str
     password: str = Field('', max_length=64)
     last_login: datetime | None = None
     date_created: datetime | None = Field(default_factory=timezone_now)
+
+    USERNAME_FIELD: ClassVar = 'username'
 
     async def update_last_login(self) -> None:
         await self.update(last_login=timezone_now())
@@ -63,7 +69,7 @@ class BaseUser(Model):
     async def logout(self) -> dict:
         return await config.AUTHENTICATION.logout(self._auth_token)
 
-    def set_password(self, password: str):
+    async def set_password(self, password: str):
         """
         URANDOM_SIZE = 16 char -->
             salt = 16 bytes
@@ -73,12 +79,13 @@ class BaseUser(Model):
         salt = os.urandom(URANDOM_SIZE)
         derived_key = scrypt(password=password, salt=salt, digest=True)
 
-        self.password = f'{salt.hex()}{derived_key}'
+        hashed_password = f'{salt.hex()}{derived_key}'
+        await self.update(password=hashed_password)
 
-    def check_password(self, new_password: str) -> bool:
+    def check_password(self, password: str) -> bool:
         size = URANDOM_SIZE * 2
         salt = self.password[:size]
         stored_hash = self.password[size:]
-        derived_key = scrypt(password=new_password, salt=bytes.fromhex(salt), digest=True)
+        derived_key = scrypt(password=password, salt=bytes.fromhex(salt), digest=True)
 
         return derived_key == stored_hash

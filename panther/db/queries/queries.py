@@ -404,7 +404,7 @@ class Query(BaseQuery):
             >>> await user.save()
         """
         document = {
-            field: getattr(self, field).model_dump()
+            field: getattr(self, field).model_dump(by_alias=True)
             if issubclass(type(getattr(self, field)), BaseModel)
             else getattr(self, field)
             for field in self.model_fields.keys() if field != 'request'

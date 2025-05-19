@@ -146,7 +146,7 @@ class UpdateAPI(GenericAPI, ObjectRequired):
 
         await request.validated_data.update(
             instance=instance,
-            validated_data=request.validated_data.model_dump()
+            validated_data=request.validated_data.model_dump(by_alias=True)
         )
         return Response(data=instance, status_code=status.HTTP_200_OK)
 
@@ -156,7 +156,7 @@ class UpdateAPI(GenericAPI, ObjectRequired):
 
         await request.validated_data.partial_update(
             instance=instance,
-            validated_data=request.validated_data.model_dump(exclude_none=True)
+            validated_data=request.validated_data.model_dump(exclude_none=True, by_alias=True)
         )
         return Response(data=instance, status_code=status.HTTP_200_OK)
 
