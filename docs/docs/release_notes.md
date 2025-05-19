@@ -6,6 +6,9 @@
 - Deprecated:
   - `output_model` in `API` and `GenericAPI`
 
+### 4.3.7
+- Improve MultiPart-FormData Regex
+
 ### 4.3.6
 - Support middleware class in MIDDLEWARES
 

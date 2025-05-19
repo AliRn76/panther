@@ -53,17 +53,23 @@ async def complex_multipart_api(request: Request):
         }
     }
 
+@API()
+async def multipart_api(request: Request):
+    return request.data
+
 
 urls = {
     'flat_multipart': flat_multipart_api,
     'single_file_multipart': single_file_multipart_api,
     'several_file_multipart': several_file_multipart_api,
     'complex_multipart': complex_multipart_api,
+    'multiline_multipart': multipart_api,
 }
 
 
 class TestMultipart(IsolatedAsyncioTestCase):
-    CONTENT_TYPE = 'multipart/form-data; boundary=--------------------------201301649688174364392792'
+    CONTENT_TYPE_1 = 'multipart/form-data; boundary=--------------------------201301649688174364392792'
+    CONTENT_TYPE_2 = 'multipart/form-data; boundary=----geckoformboundaryc30219e1237602175b34337f41ace019'
     FLAT_PAYLOAD = (
             b'----------------------------201301649688174364392792\r\n'
             b'Content-Disposition: form-data; name="name"\r\n\r\n'
@@ -108,6 +114,18 @@ class TestMultipart(IsolatedAsyncioTestCase):
             b'25\r\n'
             b'----------------------------201301649688174364392792--\r\n'
         )
+    MULTI_LINE_PAYLOAD = (
+            b'------geckoformboundaryc30219e1237602175b34337f41ace019\r\n'
+            b'Content-Disposition: form-data; name="team"\r\n\r\n'
+            b'SRE\r\n'
+            b'------geckoformboundaryc30219e1237602175b34337f41ace019\r\n'
+            b'Content-Disposition: form-data; name="phone"\r\n\r\n'
+            b'09033333333\r\n'
+            b'------geckoformboundaryc30219e1237602175b34337f41ace019\r\n'
+            b'Content-Disposition: form-data; name="message"\r\n\r\n'
+            b'My\r\nName\r\nIs\r\nAli\r\n\r\n'
+            b'------geckoformboundaryc30219e1237602175b34337f41ace019--\r\n'
+        )
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -117,7 +135,7 @@ class TestMultipart(IsolatedAsyncioTestCase):
     async def test_flat_multipart(self):
         res = await self.client.post(
             'flat_multipart',
-            content_type=self.CONTENT_TYPE,
+            content_type=self.CONTENT_TYPE_1,
             payload=self.FLAT_PAYLOAD,
         )
         assert res.status_code == 200
@@ -126,7 +144,7 @@ class TestMultipart(IsolatedAsyncioTestCase):
     async def test_single_file_multipart(self):
         res = await self.client.post(
             'single_file_multipart',
-            content_type=self.CONTENT_TYPE,
+            content_type=self.CONTENT_TYPE_1,
             payload=self.SINGLE_FILE_PAYLOAD,
         )
 
@@ -140,7 +158,7 @@ class TestMultipart(IsolatedAsyncioTestCase):
     async def test_several_file_multipart(self):
         res = await self.client.post(
             'several_file_multipart',
-            content_type=self.CONTENT_TYPE,
+            content_type=self.CONTENT_TYPE_1,
             payload=self.SEVERAL_FILE_PAYLOAD,
         )
 
@@ -161,7 +179,7 @@ class TestMultipart(IsolatedAsyncioTestCase):
     async def test_complex_multipart(self):
         res = await self.client.post(
             'complex_multipart',
-            content_type=self.CONTENT_TYPE,
+            content_type=self.CONTENT_TYPE_1,
             payload=self.COMPLEX_PAYLOAD,
         )
 
@@ -180,3 +198,11 @@ class TestMultipart(IsolatedAsyncioTestCase):
                 'file': 'Hello World2\n',
             }
         }
+
+    async def test_multiline_multipart(self):
+        res = await self.client.post(
+            'multiline_multipart',
+            content_type=self.CONTENT_TYPE_2,
+            payload=self.MULTI_LINE_PAYLOAD,
+        )
+        assert res.data == {'team': 'SRE', 'phone': '09033333333', 'message': 'My\r\nName\r\nIs\r\nAli\r\n'}
