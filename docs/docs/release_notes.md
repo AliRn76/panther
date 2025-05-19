@@ -1,10 +1,22 @@
+# Panther Release Notes
+
 ### 5.0.0
+- Added Built-In `AdminPanel`
+- Added Built-In `OpenAPI`
+- Support `Set-Cookie` in Response
+- Support `application/x-www-form-urlencoded` Content Type
 - Support Different `Middlewares` Per API
-- Change `path` arg to `name` in `TemplateResponse()`
-- Change `new_password` arg to `password` in `BaseUser.check_password()`
-- New Style of Middleware declaration [[Documentation]](https://pantherpy.github.io/middlewares)
+- Optimized `ORM` with smarter `ObjectID` handling
+- Added `asyncio` support in `panther shell`
+- Added `RedirectResponse`
+- Added `Boolean` support in `load_env()`
+- Change `path` to `name` in `TemplateResponse()`
+- Change `new_password` to `password` in `BaseUser.check_password()`
 - Deprecated:
-  - `output_model` in `API` and `GenericAPI`
+  - Remove `MONITORING` and move its functionality as middleware in `panther.middelwares.monitoring.MonitoringMiddleware` 
+  - Pass args to Middlewares `__init__` 
+    - New Style of Middleware declaration [[Documentation]](https://pantherpy.github.io/middlewares)
+  - `output_model` in `API` and `GenericAPI` 
 
 ### 4.3.7
 - Improve MultiPart-FormData Regex
