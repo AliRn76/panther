@@ -51,70 +51,45 @@
 
 ## Installation
 
-1. **Create a Virtual Environment**
-
    ```shell
-   $ python3 -m venv .venv
+   $ pip install panther
    ```
-
-2. **Activate the Environment**
-
-   - **Linux & Mac**
-     ```shell
-     $ source .venv/bin/activate
-     ```
-   - **Windows**
-     ```shell
-     $ .\.venv\Scripts\activate
-     ```
-
-3. **Install Panther**
-
-   - Standard installation:
-     ```shell
-     $ pip install panther
-     ```
-   - Full installation (includes MongoDB, JWTAuth, Ruff, Redis, Websockets, Cryptography, IPython):
-     ```shell
-     $ pip install panther[full]
-     ```
 
 ---
 
 ## Getting Started
 
-### Create a New Project
-```shell
-$ panther create
-```
+### Quick Start Guide
 
-### Run the Project
-```shell
-$ panther run --reload
-```
-_Panther uses [Uvicorn](https://github.com/encode/uvicorn) as the default ASGI server, but you can also use [Granian](https://pypi.org/project/granian/), [Daphne](https://pypi.org/project/daphne/), or any ASGI-compatible server._
+1. **Create a new project directory**
+   ```shell
+   $ mkdir my_panther_app
+   $ cd my_panther_app
+   ```
 
-### Monitor API Requests
-```shell
-$ panther monitor
-```
+2. **Set up your environment**
+   ```shell
+   $ python3 -m venv .venv
+   $ source .venv/bin/activate  # On Windows: .\.venv\Scripts\activate
+   $ pip install panther
+   ```
 
-### Open a Python Shell
-```shell
-$ panther shell main.py  # Replace main.py with your application file name
-```
+3. **Create your first application**
+    
+    Create a `main.py` file with one of the examples below.
 
----
+### Basic API Example
 
-## API Example
-
-Create a `main.py` file:
+Here's a simple REST API endpoint that returns a "Hello World" message:
 
 ```python
 from datetime import datetime, timedelta
+
 from panther import status, Panther
 from panther.app import GenericAPI
+from panther.openapi.urls import urls as openapi_urls
 from panther.response import Response
+
 
 class FirstAPI(GenericAPI):
     # Enable caching for 10 seconds
@@ -122,25 +97,21 @@ class FirstAPI(GenericAPI):
     cache_exp_time = timedelta(seconds=10)
 
     def get(self):
-        date_time = datetime.now().isoformat()
-        data = {'detail': f'Hello World | {date_time}'}
+        current = datetime.now().isoformat()
+        data = {'detail': f'Hello World | {current}'}
         return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
 
-url_routing = {'': FirstAPI}
+
+url_routing = {
+    '': FirstAPI,
+    'swagger/': openapi_urls,  # Auto generated Swagger API documentation
+}
 app = Panther(__name__, configs=__name__, urls=url_routing)
 ```
 
-Run the project:
-```shell
-$ panther run --reload
-```
-Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser.
+### WebSocket Example
 
----
-
-## WebSocket Example
-
-Create a `main.py` file:
+Here's a simple WebSocket echo server that sends back any message it receives:
 
 ```python
 from panther import Panther
@@ -153,25 +124,16 @@ class EchoWebsocket(GenericWebsocket):
         await self.accept()
 
     async def receive(self, data: str | bytes):
-        # Echo message to client itself
         await self.send(data)
 
 class MainPage(GenericAPI):
     def get(self):
         template = """
-        <input type="text" id="messageInput">
-        <button id="sendButton">Send Message</button>
-        <ul id="messages"></ul>
+        <input id="msg"><button onclick="s.send(msg.value)">Send</button>
+        <ul id="log"></ul>
         <script>
-            var socket = new WebSocket('ws://127.0.0.1:8000/ws');
-            socket.addEventListener('message', function (event) {
-                var li = document.createElement('li');
-                document.getElementById('messages').appendChild(li).textContent = 'Server: ' + event.data;
-            });
-            function sendMessage() {
-                socket.send(document.getElementById('messageInput').value);
-            }
-            document.getElementById('sendButton').addEventListener('click', sendMessage);
+            const s = new WebSocket('ws://127.0.0.1:8000/ws');
+            s.onmessage = e => log.innerHTML += `<li>Server: ${e.data}</li>`;
         </script>
         """
         return HTMLResponse(template)
@@ -183,8 +145,15 @@ url_routing = {
 app = Panther(__name__, configs=__name__, urls=url_routing)
 ```
 
-Run the project:
-```shell
-$ panther run --reload
-```
-Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) and interact with WebSockets.
+### Running Your Application
+
+1. **Start the development server**
+   ```shell
+   $ panther run main:app --reload
+   ```
+   
+    > **Note:** Panther uses [Uvicorn](https://github.com/encode/uvicorn) as the default ASGI server, but you can also use [Granian](https://pypi.org/project/granian/), [Daphne](https://pypi.org/project/daphne/), or any ASGI-compatible server.
+
+2. **Test your application**
+    - For the _API_ example: Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) to see the "Hello World" response
+    - For the _WebSocket_ example: Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) and send a message. 
