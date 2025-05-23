@@ -1,4 +1,5 @@
 import re
+import types
 from collections import Counter
 from collections.abc import Callable, Mapping, MutableMapping
 from copy import deepcopy
@@ -41,7 +42,8 @@ def _is_url_endpoint_valid(url: str, endpoint: Callable):
         raise PantherError(f"URL Can't Point To None. ('{url}' -> None)")
     elif url and not re.match(r'^[a-zA-Z<>0-9_/-]+$', url):
         raise PantherError(f"URL Is Not Valid. --> '{url}'")
-
+    elif isinstance(endpoint, types.ModuleType):
+        raise PantherError(f"URL Can't Point To Module. --> '{url}'")
 
 def finalize_urls(urls: dict) -> dict:
     """Convert flat dict to nested"""
