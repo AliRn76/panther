@@ -138,7 +138,7 @@ Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser.
 
 ---
 
-## WebSocket Echo Example
+## WebSocket Example
 
 Create a `main.py` file:
 
@@ -148,11 +148,12 @@ from panther.app import GenericAPI
 from panther.response import HTMLResponse
 from panther.websocket import GenericWebsocket
 
-class FirstWebsocket(GenericWebsocket):
+class EchoWebsocket(GenericWebsocket):
     async def connect(self, **kwargs):
         await self.accept()
 
     async def receive(self, data: str | bytes):
+        # Echo message to client itself
         await self.send(data)
 
 class MainPage(GenericAPI):
@@ -177,7 +178,7 @@ class MainPage(GenericAPI):
 
 url_routing = {
     '': MainPage,
-    'ws': FirstWebsocket,
+    'ws': EchoWebsocket,
 }
 app = Panther(__name__, configs=__name__, urls=url_routing)
 ```
@@ -187,5 +188,3 @@ Run the project:
 $ panther run --reload
 ```
 Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) and interact with WebSockets.
-
-> **Next Step: [First CRUD](https://pantherpy.github.io/function_first_crud)**

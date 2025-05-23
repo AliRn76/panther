@@ -2,6 +2,10 @@ site_name: Panther
 site_description: Fast &  Friendly, Web Framework For Building Async APIs
 site_url: https://pantherpy.github.io
 
+repo_name: AliRn76/Panther
+repo_url: https://github.com/AliRn76/Panther
+edit_uri: edit/master/docs/
+
 theme:
   name: 'material'
   custom_dir: docs
@@ -19,14 +23,12 @@ theme:
         icon: 'material/lightbulb-outline'
         name: 'Switch to light mode'
   features:
+    - navigation.path
+    - navigation.footer
     - content.code.copy
     - content.code.annotate
   icon:
     repo: fontawesome/brands/github
-
-repo_name: AliRn76/Panther
-repo_url: https://github.com/AliRn76/Panther
-edit_uri: edit/master/docs/
 
 nav:
   - Introduction: 'index.md'
