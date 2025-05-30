@@ -2,7 +2,6 @@ import logging
 
 from panther import status
 from panther.app import API, GenericAPI
-from panther.authentications import JWTAuthentication, CookieJWTAuthentication
 from panther.configs import config
 from panther.db.models import BaseUser
 from panther.exceptions import RedirectAPIError, AuthenticationAPIError
@@ -18,6 +17,8 @@ logger = logging.getLogger('panther')
 class AdminPanelPermission(BasePermission):
     @classmethod
     async def authorization(cls, request: Request) -> bool:
+        from panther.authentications import CookieJWTAuthentication
+
         try:  # We don't want to set AUTHENTICATION class, so we have to use permission classes
             await CookieJWTAuthentication.authentication(request=request)
             return True
@@ -32,6 +33,8 @@ class LoginView(GenericAPI):
         return TemplateResponse(name='login.html')
 
     async def post(self, request: Request):
+        from panther.authentications import JWTAuthentication
+
         user: BaseUser = await config.USER_MODEL.find_one({config.USER_MODEL.USERNAME_FIELD: request.data['username']})
         if user is None:
             logger.debug('User not found.')
