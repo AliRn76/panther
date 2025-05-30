@@ -6,7 +6,6 @@ from sys import version_info
 from typing import get_args, get_origin, Iterable, Sequence, Any, Union
 
 from pydantic import BaseModel, ValidationError
-from pymongo.results import InsertOneResult, InsertManyResult
 
 from panther.db.connections import db
 from panther.db.cursor import Cursor
@@ -17,11 +16,14 @@ from panther.exceptions import DatabaseError
 
 try:
     from bson.codec_options import CodecOptions
+    from pymongo.results import InsertOneResult, InsertManyResult
 except ImportError:
-    # This 'CodecOptions' is not going to be used,
-    #   If user really wants to use it,
-    #   we are going to force him to install it in `panther.db.connections.MongoDBConnection.init`
+    # MongoDB-related libraries are not required by default.
+    # If the user intends to use MongoDB, they must install the required dependencies explicitly.
+    # This will be enforced in `panther.db.connections.MongoDBConnection.init`.
     CodecOptions = type('CodecOptions', (), {})
+    InsertOneResult = type('InsertOneResult', (), {})
+    InsertManyResult = type('InsertManyResult', (), {})
 
 if version_info >= (3, 11):
     from typing import Self

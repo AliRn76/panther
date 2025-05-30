@@ -26,6 +26,16 @@ logger = logging.getLogger('panther')
 
 class Panther:
     def __init__(self, name: str, configs: str | None = None, urls: dict | None = None):
+        """
+        Initialize a Panther application instance.
+
+        Args:
+            name: Typically set to `__name__`; used to determine the current directory of the application.
+            configs: The name of the module containing your configuration.
+                If the configuration is defined in the current file, you can also set this to `__name__`.
+            urls: A dictionary containing your URL routing.
+                If not provided, Panther will attempt to load `URLs` from the configs module.
+        """
         self._configs_module_name = configs
         self._urls = urls
 
