@@ -1,9 +1,11 @@
+import typing
 from collections.abc import Callable
 from urllib.parse import parse_qsl
 
-from panther.db import Model
 from panther.exceptions import InvalidPathVariableAPIError
 
+if typing.TYPE_CHECKING:
+    from panther.db import Model
 
 class Headers:
     accept: str

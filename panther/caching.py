@@ -7,7 +7,6 @@ import orjson as json
 from panther.db.connections import redis
 from panther.request import Request
 from panther.response import Response
-from panther.throttling import throttling_storage
 from panther.utils import generate_hash_value_from_string, round_datetime
 
 logger = logging.getLogger('panther')
@@ -27,11 +26,6 @@ def api_cache_key(request: Request, duration: timedelta | None = None) -> str:
 
     return key
 
-
-def throttling_cache_key(request: Request, duration: timedelta) -> str:
-    client = request.user and request.user.id or request.client.ip
-    time = round_datetime(datetime.now(), duration)
-    return f'{time}-{client}-{request.path}'
 
 
 async def get_response_from_cache(*, request: Request, duration: timedelta) -> CachedResponse | None:
@@ -74,35 +68,3 @@ async def set_response_in_cache(*, request: Request, response: Response, duratio
         caches[key] = (response.body, response.headers, response.status_code)
         logger.info('`cache` is not very accurate when `redis` is not connected.')
 
-
-async def get_throttling_from_cache(request: Request, duration: timedelta) -> int:
-    """
-    If redis.is_connected:
-        Get Cached Data From Redis
-    else:
-        Get Cached Data From Memory
-    """
-    key = throttling_cache_key(request=request, duration=duration)
-
-    if redis.is_connected:
-        data = (await redis.get(key) or b'0').decode()
-        return json.loads(data)
-
-    else:
-        return throttling_storage[key]
-
-
-async def increment_throttling_in_cache(request: Request, duration: timedelta) -> None:
-    """
-    If redis.is_connected:
-        Increment The Data In Redis
-    else:
-        Increment The Data In Memory
-    """
-    key = throttling_cache_key(request=request, duration=duration)
-
-    if redis.is_connected:
-        await redis.incrby(key, amount=1)
-
-    else:
-        throttling_storage[key] += 1

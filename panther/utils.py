@@ -53,7 +53,7 @@ def generate_secret_key() -> str:
     return base64.urlsafe_b64encode(os.urandom(32)).decode()
 
 
-def round_datetime(dt: datetime, delta: timedelta):
+def round_datetime(dt: datetime, delta: timedelta) -> datetime:
     """
     Example:
         >>> round_datetime(datetime(2024, 7, 15, 13, 22, 11, 562159), timedelta(days=2))

@@ -25,7 +25,7 @@ from panther.openapi.utils import OutputSchema
 from panther.pagination import Pagination
 from panther.request import Request
 from panther.response import HTMLResponse, Response, StreamingResponse, TemplateResponse
-from panther.throttling import Throttling
+from panther.throttling import Throttle
 from panther.websocket import close_websocket_connection, send_message_to_websocket
 
 logger = logging.getLogger('panther')
@@ -115,7 +115,7 @@ async def check_permission(request: Request):
     return Response(request.user)
 
 
-@API(throttling=Throttling(rate=5, duration=timedelta(minutes=1)))
+@API(throttling=Throttle(rate=5, duration=timedelta(minutes=1)))
 async def rate_limit():
     return Response(data=('car', 'home', 'phone', 'book'), status_code=202)
 

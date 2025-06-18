@@ -60,7 +60,7 @@ URLs = 'core.urls.urls'
 
 USER_MODEL = 'app.models.User'
 
-# THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))
+# THROTTLING = Throttle(rate=10, duration=timedelta(seconds=10))
 
 # TEMPLATES_DIR = 'templates'
 

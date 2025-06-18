@@ -12,8 +12,6 @@ from panther._utils import is_function_async
 from panther.caching import (
     get_response_from_cache,
     set_response_in_cache,
-    get_throttling_from_cache,
-    increment_throttling_in_cache
 )
 from panther.configs import config
 from panther.exceptions import (
@@ -21,7 +19,6 @@ from panther.exceptions import (
     AuthorizationAPIError,
     JSONDecodeAPIError,
     MethodNotAllowedAPIError,
-    ThrottlingAPIError,
     BadRequestAPIError
 )
 from panther.exceptions import PantherError
@@ -31,7 +28,7 @@ from panther.permissions import BasePermission
 from panther.request import Request
 from panther.response import Response
 from panther.serializer import ModelSerializer
-from panther.throttling import Throttling
+from panther.throttling import Throttle
 
 __all__ = ('API', 'GenericAPI')
 
@@ -47,7 +44,7 @@ class API:
     auth: It will authenticate the user with header of its request or raise an
         `panther.exceptions.AuthenticationAPIError`.
     permissions: List of permissions that will be called sequentially after authentication to authorize the user.
-    throttling: It will limit the users' request on a specific (time-bucket, path)
+    throttling: It will limit the users' request on a specific (time-window, path)
     cache: Specify the duration of the cache (Will be used only in GET requests).
     methods: Specify the allowed methods.
     middlewares: These middlewares have inner priority than global middlewares.
@@ -63,7 +60,7 @@ class API:
         output_schema: OutputSchema | None = None,
         auth: bool = False,
         permissions: list[BasePermission] | None = None,
-        throttling: Throttling | None = None,
+        throttling: Throttle | None = None,
         cache: timedelta | None = None,
         cache_exp_time: timedelta | None = None,
         middlewares: list[HTTPMiddleware] | None = None,
@@ -130,8 +127,9 @@ class API:
         # 3. Permissions
         await self.handle_permission()
 
-        # 4. Throttling
-        await self.handle_throttling()
+        # 4. Throttle
+        if throttling := self.throttling or config.THROTTLING:
+            await throttling.check_and_increment(request=self.request)
 
         # 5. Validate Input
         if self.request.method in {'POST', 'PUT', 'PATCH'}:
@@ -169,13 +167,6 @@ class API:
                 logger.critical('"AUTHENTICATION" has not been set in configs')
                 raise APIError
             self.request.user = await config.AUTHENTICATION.authentication(self.request)
-
-    async def handle_throttling(self) -> None:
-        if throttling := self.throttling or config.THROTTLING:
-            if await get_throttling_from_cache(self.request, duration=throttling.duration) + 1 > throttling.rate:
-                raise ThrottlingAPIError
-
-            await increment_throttling_in_cache(self.request, duration=throttling.duration)
 
     async def handle_permission(self) -> None:
         for perm in self.permissions:
@@ -242,7 +233,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
     output_schema: OutputSchema | None = None
     auth: bool = False
     permissions: list | None = None
-    throttling: Throttling | None = None
+    throttling: Throttle | None = None
     cache: timedelta | None = None
     middlewares: list[HTTPMiddleware] | None = None
 

@@ -15,6 +15,7 @@
 - Deprecated:
   - `DEFAULT_CACHE_EXP` in configs
   - Rename `cache_exp_time` to `cache` in `@API` and `GenricAPI`
+  - Rename `panther.throttling.Throttling` to `panther.throttling.Throttle`
   - Remove `MONITORING` and move its functionality as middleware in `panther.middelwares.monitoring.MonitoringMiddleware` 
   - Pass args to Middlewares `__init__` 
     - New Style of Middleware declaration [[Documentation]](https://pantherpy.github.io/middlewares)

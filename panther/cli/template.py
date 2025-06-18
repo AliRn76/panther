@@ -5,7 +5,7 @@ from panther.utils import generate_secret_key
 
 apis_py = """from datetime import datetime
 
-from app.throttling import InfoThrottling
+from app.throttling import InfoThrottle
 
 from panther import status, version
 from panther.app import API
@@ -19,7 +19,7 @@ async def hello_world_api():
     return {'detail': 'Hello World'}
 
 
-@API(cache=True, throttling=InfoThrottling)
+@API(cache=True, throttling=InfoThrottle)
 async def info_api(request: Request):
     data = {
         'panther_version': version(),
@@ -39,9 +39,9 @@ serializers_py = """from panther.serializer import ModelSerializer
 
 throttling_py = """from datetime import timedelta
 
-from panther.throttling import Throttling
+from panther.throttling import Throttle
 
-InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
+InfoThrottle = Throttle(rate=5, duration=timedelta(minutes=1))
 """
 
 app_urls_py = """from app.apis import hello_world_api, info_api
@@ -132,7 +132,7 @@ from panther import Panther, status, version
 from panther.app import API
 from panther.request import Request
 from panther.response import Response
-from panther.throttling import Throttling
+from panther.throttling import Throttle
 from panther.utils import load_env, timezone_now
 
 BASE_DIR = Path(__name__).resolve().parent
@@ -144,7 +144,7 @@ MIDDLEWARES = [
     {MONITORING}
 ]
 
-InfoThrottling = Throttling(rate=5, duration=timedelta(minutes=1))
+InfoThrottle = Throttle(rate=5, duration=timedelta(minutes=1))
 
 TIMEZONE = 'UTC'
 
@@ -154,7 +154,7 @@ async def hello_world_api():
     return {'detail': 'Hello World'}
 
 
-@API(cache=True, throttling=InfoThrottling)
+@API(cache=True, throttling=InfoThrottle)
 async def info_api(request: Request):
     data = {
         'panther_version': version(),

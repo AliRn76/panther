@@ -1,7 +1,7 @@
 from datetime import timedelta
 from pathlib import Path
 
-from panther.throttling import Throttling
+from panther.throttling import Throttle
 from panther.utils import load_env
 
 BASE_DIR = Path(__name__).resolve().parent
@@ -32,4 +32,4 @@ URLs = 'core.urls.url_routing'
 
 USER_MODEL = 'app.models.User'
 
-THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))
+THROTTLING = Throttle(rate=10, duration=timedelta(seconds=10))

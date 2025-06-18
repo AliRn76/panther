@@ -7,7 +7,6 @@ from typing import Callable
 
 import jinja2
 from pydantic import BaseModel as PydanticBaseModel
-from panther.throttling import Throttling
 
 class JWTConfig:
     def __init__(
@@ -48,7 +47,7 @@ class Config:
     BASE_DIR: Path
     MONITORING: bool
     LOG_QUERIES: bool
-    THROTTLING: Throttling | None
+    THROTTLING: None  # type: panther.throttling.Throttle
     SECRET_KEY: bytes | None
     HTTP_MIDDLEWARES: list
     WS_MIDDLEWARES: list
