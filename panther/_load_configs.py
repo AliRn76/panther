@@ -88,7 +88,7 @@ def load_timezone(_configs: dict, /) -> None:
 
 
 def load_templates_dir(_configs: dict, /) -> None:
-    if templates_dir := _configs.get('TEMPLATES_DIR'):
+    if templates_dir := _configs.get('TEMPLATES_DIR', '.'):
         config.TEMPLATES_DIR = templates_dir
 
     if config.TEMPLATES_DIR == '.':

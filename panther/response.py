@@ -2,8 +2,13 @@ import asyncio
 from dataclasses import dataclass
 from http import cookies
 from sys import version_info
+
+import jinja2
+import logging
 from types import NoneType
 from typing import Generator, AsyncGenerator, Any, Type, Literal
+
+from panther.exceptions import APIError
 
 if version_info >= (3, 11):
     from typing import LiteralString
@@ -25,6 +30,8 @@ from panther.pagination import Pagination
 ResponseDataTypes = list | tuple | set | Cursor | PantherDBCursor | dict | int | float | str | bool | bytes | NoneType | Type[BaseModel]
 IterableDataTypes = list | tuple | set | Cursor | PantherDBCursor
 StreamingDataTypes = Generator | AsyncGenerator
+
+logger = logging.getLogger('panther')
 
 
 @dataclass(slots=True)
@@ -242,13 +249,12 @@ class PlainTextResponse(Response):
 
 class TemplateResponse(HTMLResponse):
     """
-    You may want to declare `TEMPLATES_DIR` in your configs
+    You may want to declare `TEMPLATES_DIR` in your configs, default is '.'
 
     Example:
         TEMPLATES_DIR = 'templates/'
-            or
-        TEMPLATES_DIR = '.'
     """
+
     def __init__(
         self,
         source: str | LiteralString | NoneType = None,
@@ -265,7 +271,19 @@ class TemplateResponse(HTMLResponse):
         :param status_code: should be int
         """
         if name:
-            template = config.JINJA_ENVIRONMENT.get_template(name=name)
+            try:
+                template = config.JINJA_ENVIRONMENT.get_template(name=name)
+            except jinja2.exceptions.TemplateNotFound:
+                loaded_path = ' - '.join(
+                    ' - '.join(loader.searchpath) for loader in config.JINJA_ENVIRONMENT.loader.loaders
+                    if isinstance(loader, jinja2.loaders.FileSystemLoader)
+                )
+                error = (
+                    f'`{name}` Template Not Found.\n'
+                    f'* Make sure `TEMPLATES_DIR` in your configs is correct, Current is {loaded_path}'
+                )
+                logger.error(error)
+                raise APIError
         else:
             template = config.JINJA_ENVIRONMENT.from_string(source=source)
         super().__init__(
