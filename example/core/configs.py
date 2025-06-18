@@ -60,8 +60,6 @@ URLs = 'core.urls.urls'
 
 USER_MODEL = 'app.models.User'
 
-DEFAULT_CACHE_EXP = timedelta(seconds=10)
-
 # THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))
 
 # TEMPLATES_DIR = 'templates'

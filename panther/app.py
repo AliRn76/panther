@@ -48,8 +48,7 @@ class API:
         `panther.exceptions.AuthenticationAPIError`.
     permissions: List of permissions that will be called sequentially after authentication to authorize the user.
     throttling: It will limit the users' request on a specific (time-bucket, path)
-    cache: Response of the request will be cached.
-    cache_exp_time: Specify the expiry time of the cache. (default is `config.DEFAULT_CACHE_EXP`)
+    cache: Specify the duration of the cache (Will be used only in GET requests).
     methods: Specify the allowed methods.
     middlewares: These middlewares have inner priority than global middlewares.
     """
@@ -65,8 +64,8 @@ class API:
         auth: bool = False,
         permissions: list[BasePermission] | None = None,
         throttling: Throttling | None = None,
-        cache: bool = False,
-        cache_exp_time: timedelta | int | None = None,
+        cache: timedelta | None = None,
+        cache_exp_time: timedelta | None = None,
         middlewares: list[HTTPMiddleware] | None = None,
     ):
         self.methods = {m.upper() for m in methods} if methods else None
@@ -76,7 +75,6 @@ class API:
         self.permissions = permissions or []
         self.throttling = throttling
         self.cache = cache
-        self.cache_exp_time = cache_exp_time
         self.middlewares: list[HTTPMiddleware] | None = middlewares
         self.request: Request | None = None
         if output_model:
@@ -87,6 +85,14 @@ class API:
                     'https://pantherpy.github.io/open_api/'
             )
             raise PantherError(deprecation_message)
+        if cache_exp_time:
+            deprecation_message = (
+                    traceback.format_stack(limit=2)[0] +
+                    '\nThe `cache_exp_time` argument has been removed in Panther v5 and is no longer available.'
+                    '\nYou may want to use `cache` instead.'
+            )
+            raise PantherError(deprecation_message)
+        assert self.cache is None or isinstance(self.cache, timedelta)
 
     def __call__(self, func):
         self.func = func
@@ -133,7 +139,7 @@ class API:
 
         # 6. Get Cached Response
         if self.cache and self.request.method == 'GET':
-            if cached := await get_response_from_cache(request=self.request, cache_exp_time=self.cache_exp_time):
+            if cached := await get_response_from_cache(request=self.request, duration=self.cache):
                 return Response(data=cached.data, headers=cached.headers, status_code=cached.status_code)
 
         # 7. Put PathVariables and Request(If User Wants It) In kwargs
@@ -153,11 +159,7 @@ class API:
 
         # 10. Set New Response To Cache
         if self.cache and self.request.method == 'GET':
-            await set_response_in_cache(request=self.request, response=response, cache_exp_time=self.cache_exp_time)
-
-        # 11. Warning CacheExpTime
-        if self.cache_exp_time and self.cache is False:
-            logger.warning('"cache_exp_time" won\'t work while "cache" is False')
+            await set_response_in_cache(request=self.request, response=response, duration=self.cache)
 
         return response
 
@@ -241,8 +243,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
     auth: bool = False
     permissions: list | None = None
     throttling: Throttling | None = None
-    cache: bool = False
-    cache_exp_time: timedelta | int | None = None
+    cache: timedelta | None = None
     middlewares: list[HTTPMiddleware] | None = None
 
     async def get(self, *args, **kwargs):
@@ -284,6 +285,5 @@ class GenericAPI(metaclass=MetaGenericAPI):
             permissions=self.permissions,
             throttling=self.throttling,
             cache=self.cache,
-            cache_exp_time=self.cache_exp_time,
             middlewares=self.middlewares,
         )(func)(request=request)

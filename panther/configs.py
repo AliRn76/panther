@@ -48,7 +48,6 @@ class Config:
     BASE_DIR: Path
     MONITORING: bool
     LOG_QUERIES: bool
-    DEFAULT_CACHE_EXP: timedelta | None
     THROTTLING: Throttling | None
     SECRET_KEY: bytes | None
     HTTP_MIDDLEWARES: list
@@ -93,7 +92,6 @@ default_configs = {
     'BASE_DIR': Path(),
     'MONITORING': False,
     'LOG_QUERIES': False,
-    'DEFAULT_CACHE_EXP': None,
     'THROTTLING': None,
     'SECRET_KEY': None,
     'HTTP_MIDDLEWARES': [],

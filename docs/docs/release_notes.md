@@ -13,6 +13,8 @@
 - Change `path` to `name` in `TemplateResponse()`
 - Change `new_password` to `password` in `BaseUser.check_password()`
 - Deprecated:
+  - `DEFAULT_CACHE_EXP` in configs
+  - Rename `cache_exp_time` to `cache` in `@API` and `GenricAPI`
   - Remove `MONITORING` and move its functionality as middleware in `panther.middelwares.monitoring.MonitoringMiddleware` 
   - Pass args to Middlewares `__init__` 
     - New Style of Middleware declaration [[Documentation]](https://pantherpy.github.io/middlewares)

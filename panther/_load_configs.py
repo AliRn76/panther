@@ -35,7 +35,6 @@ __all__ = (
     'load_templates_dir',
     'load_auto_reformat',
     'load_background_tasks',
-    'load_default_cache_exp',
     'load_urls',
     'load_authentication_class',
     'load_websocket_connections',
@@ -203,11 +202,6 @@ def load_background_tasks(_configs: dict, /) -> None:
     if _configs.get('BACKGROUND_TASKS'):
         config.BACKGROUND_TASKS = True
         background_tasks.initialize()
-
-
-def load_default_cache_exp(_configs: dict, /) -> None:
-    if default_cache_exp := _configs.get('DEFAULT_CACHE_EXP'):
-        config.DEFAULT_CACHE_EXP = default_cache_exp
 
 
 def load_urls(_configs: dict, /, urls: dict | None) -> None:

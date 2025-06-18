@@ -7,7 +7,6 @@ from panther.configs import config
 from panther.db.models import BaseUser
 from panther.request import Request
 from panther.test import APIClient
-from tests._utils import check_two_dicts
 
 
 @API()
@@ -169,4 +168,4 @@ class TestAuthentication(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         res.data.pop('id')
         res.data.pop('date_created')
-        assert check_two_dicts(res.data, expected_response)
+        assert res.data == expected_response

@@ -32,7 +32,6 @@ class TestRun(TestCase):
         assert isinstance(config, Config)
         assert config.BASE_DIR == base_dir
         assert config.LOG_QUERIES is True
-        assert config.DEFAULT_CACHE_EXP == timedelta(seconds=10)
         assert config.THROTTLING.rate == 10
         assert config.THROTTLING.duration == timedelta(seconds=10)
         assert config.SECRET_KEY == secret_key.encode()

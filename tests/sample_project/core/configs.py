@@ -32,6 +32,4 @@ URLs = 'core.urls.url_routing'
 
 USER_MODEL = 'app.models.User'
 
-DEFAULT_CACHE_EXP = timedelta(seconds=10)
-
 THROTTLING = Throttling(rate=10, duration=timedelta(seconds=10))

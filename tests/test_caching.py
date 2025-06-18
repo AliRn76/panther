@@ -7,7 +7,6 @@ from panther import Panther
 from panther.app import API
 from panther.response import HTMLResponse
 from panther.test import APIClient
-from tests._utils import check_two_dicts
 
 
 @API()
@@ -16,18 +15,12 @@ async def without_cache_api():
     return {'detail': time.time()}
 
 
-@API(cache=True)
-async def with_cache_api():
-    await asyncio.sleep(0.01)
-    return {'detail': time.time()}
-
-
-@API(cache=True, cache_exp_time=timedelta(seconds=5))
+@API(cache=timedelta(seconds=2))
 async def expired_cache_api():
     await asyncio.sleep(0.01)
     return {'detail': time.time()}
 
-@API(cache=True)
+@API(cache=timedelta(seconds=2))
 async def expired_cache_html_response():
     await asyncio.sleep(0.01)
     return HTMLResponse(data=f'<html>{time.time()}</html>')
@@ -35,7 +28,6 @@ async def expired_cache_html_response():
 
 urls = {
     'without-cache': without_cache_api,
-    'with-cache': with_cache_api,
     'with-expired-cache': expired_cache_api,
     'with-html-response-cache': expired_cache_html_response,
 }
@@ -54,16 +46,8 @@ class TestInMemoryCaching(IsolatedAsyncioTestCase):
         res2 = await self.client.get('without-cache')
         assert res2.status_code == 200
 
-        assert check_two_dicts(res1.data, res2.data) is False
+        assert res1.data != res2.data
 
-    async def test_with_cache(self):
-        res1 = await self.client.get('with-cache')
-        assert res1.status_code == 200
-
-        res2 = await self.client.get('with-cache')
-        assert res2.status_code == 200
-
-        assert check_two_dicts(res1.data, res2.data) is True
 
     async def test_with_cache_5second_exp_time(self):
         # First Request
@@ -73,23 +57,23 @@ class TestInMemoryCaching(IsolatedAsyncioTestCase):
 
         # Check Logs
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == '`cache_exp_time` is not very accurate when `redis` is not connected.'
+        assert captured.records[0].getMessage() == '`cache` is not very accurate when `redis` is not connected.'
 
         # Second Request
         res2 = await self.client.get('with-expired-cache')
         assert res2.status_code == 200
 
         # Response should be cached
-        assert check_two_dicts(res1.data, res2.data) is True
+        assert res1.data == res2.data
 
-        await asyncio.sleep(5)
+        await asyncio.sleep(2)
 
         # Third Request
         res3 = await self.client.get('with-expired-cache')
         assert res3.status_code == 200
 
         # After 5 seconds we should have a new response
-        assert check_two_dicts(res1.data, res3.data) is False
+        assert res1.data != res3.data
 
 
     async def test_with_cache_content_type(self):
