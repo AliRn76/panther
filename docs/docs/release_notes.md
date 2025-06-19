@@ -20,6 +20,7 @@
   - Pass args to Middlewares `__init__` 
     - New Style of Middleware declaration [[Documentation]](https://pantherpy.github.io/middlewares)
   - `output_model` in `API` and `GenericAPI` 
+  - `background_tasks.add_task(BackgroundTask(...))` --> `BackgroundTask(...).submit()`
 
 ### 4.3.7
 - Improve MultiPart-FormData Regex

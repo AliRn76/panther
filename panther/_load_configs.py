@@ -7,7 +7,7 @@ from multiprocessing import Manager
 import jinja2
 
 from panther._utils import import_class, check_function_type_endpoint, check_class_type_endpoint
-from panther.background_tasks import background_tasks
+from panther.background_tasks import _background_tasks
 from panther.base_websocket import WebsocketConnections
 from panther.cli.utils import import_error
 from panther.configs import JWTConfig, config
@@ -201,7 +201,7 @@ def load_auto_reformat(_configs: dict, /) -> None:
 def load_background_tasks(_configs: dict, /) -> None:
     if _configs.get('BACKGROUND_TASKS'):
         config.BACKGROUND_TASKS = True
-        background_tasks.initialize()
+        _background_tasks.initialize()
 
 
 def load_urls(_configs: dict, /, urls: dict | None) -> None:

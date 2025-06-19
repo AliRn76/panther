@@ -11,7 +11,6 @@ from panther.utils import Singleton
 
 __all__ = (
     'BackgroundTask',
-    'background_tasks',
 )
 
 
@@ -30,6 +29,8 @@ class BackgroundTask:
     """
     Default: Task is going to run once,
     and if you only specify a custom interval, default interval time is 1 minutes
+
+    * Make sure to submit() BackgroundTask instance otherwise it won't be added to queue.
     """
     def __init__(self, func, *args, **kwargs):
         self._func: Callable = func
@@ -105,7 +106,7 @@ class BackgroundTask:
         self._day_of_week = week_days.index(day_of_week)
 
         if self._unit != 'weeks':
-            logger.warning('`.on()` only useful when you are using `.every_weeks()`')
+            logger.warning('`.on()` more useful when you are using `.every_weeks()`')
         return self
 
     def at(self, _time: datetime.time, /) -> Self:
@@ -122,7 +123,7 @@ class BackgroundTask:
                 f'Argument should be instance of `datetime.time()` or `datetime.datetime()` not `{type(_time)}`')
 
         if self._unit not in ['days', 'weeks']:
-            logger.warning('`.at()` only useful when you are using `.every_days()` or `.every_weeks()`')
+            logger.warning('`.at()` more useful when you are using `.every_days()` or `.every_weeks()`')
 
         return self
 
@@ -190,6 +191,9 @@ class BackgroundTask:
 
         return True
 
+    def submit(self):
+        _background_tasks.add_task(self)
+        return self
 
 class BackgroundTasks(Singleton):
     _initialized: bool = False
@@ -212,7 +216,6 @@ class BackgroundTasks(Singleton):
         """
         We only call initialize() once in the panther.main.Panther.load_configs()
         """
-
         def __run_task(task):
             if task() is False:
                 self.tasks.remove(task)
@@ -235,7 +238,7 @@ class BackgroundTasks(Singleton):
         return True
 
 
-background_tasks = BackgroundTasks()
+_background_tasks = BackgroundTasks()
 
 """
 -------------------------------------------------------------
@@ -249,11 +252,9 @@ Example:
 
 # Run it every 5 seconds for 2 times
 
->>> task1 = BackgroundTask(hello, 'Ali').interval(2).every_seconds(5)
->>> background_tasks.add_task(task1)
+>>> BackgroundTask(hello, 'Ali').interval(2).every_seconds(5).submit()
 
 # Run it every day at 08:00 O'clock forever
 
->>> task2 = BackgroundTask(hello, 'Saba').interval(-1).every_days().at(datetime.time(hour=8))
->>> background_tasks.add_task(task2)
+>>> BackgroundTask(hello, 'Saba').interval(-1).every_days().at(datetime.time(hour=8)).submit()
 """
