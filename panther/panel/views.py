@@ -50,7 +50,7 @@ class LoginView(GenericAPI):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 context={'error': 'Authentication Error'},
             )
-        tokens = JWTAuthentication.login(user.id)
+        tokens = await JWTAuthentication.login(user.id)
         return RedirectResponse(
             url=request.query_params.get('redirect_to', '..'),
             status_code=status.HTTP_302_FOUND,

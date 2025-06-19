@@ -1,7 +1,7 @@
 import contextlib
 import os
 from datetime import datetime
-from typing import Annotated, ClassVar
+from typing import Annotated, ClassVar, Self
 
 from pydantic import Field, WrapValidator, PlainSerializer, BaseModel as PydanticBaseModel
 
@@ -55,19 +55,26 @@ class BaseUser(Model):
     username: str
     password: str = Field('', max_length=64)
     last_login: datetime | None = None
-    date_created: datetime | None = Field(default_factory=timezone_now)
+    date_created: datetime | None = None
 
     USERNAME_FIELD: ClassVar = 'username'
 
-    async def update_last_login(self) -> None:
-        await self.update(last_login=timezone_now())
+    @classmethod
+    def insert_one(cls, _document: dict | None = None, /, **kwargs) -> Self:
+        kwargs['date_created'] = datetime.now()
+        return super().insert_one(_document, **kwargs)
 
     async def login(self) -> dict:
-        """Return dict of access and refresh token"""
-        return config.AUTHENTICATION.login(str(self.id))
+        """Return dict of access and refresh tokens"""
+        await self.update(last_login=timezone_now())
+        return await config.AUTHENTICATION.login(user=self)
+
+    async def refresh_tokens(self) -> dict:
+        """Return dict of new access and refresh tokens"""
+        return await config.AUTHENTICATION.refresh(user=self)
 
     async def logout(self) -> dict:
-        return await config.AUTHENTICATION.logout(self._auth_token)
+        return await config.AUTHENTICATION.logout(user=self)
 
     async def set_password(self, password: str):
         """
