@@ -124,7 +124,7 @@ class WebsocketConnections(Singleton):
 
         # 3. Put PathVariables and Request(If User Wants It) In kwargs
         try:
-            kwargs = connection.clean_parameters(connection.connect)
+            kwargs = connection.clean_parameters(connection.connect.__annotations__)
         except InvalidPathVariableAPIError as e:
             connection.change_state(state='Rejected', message=e.detail)
             return await connection.close()

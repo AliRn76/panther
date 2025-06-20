@@ -9,6 +9,7 @@ from orjson import JSONDecodeError
 from pydantic import ValidationError, BaseModel
 
 from panther._utils import is_function_async
+from panther.base_request import BaseRequest
 from panther.caching import (
     get_response_from_cache,
     set_response_in_cache,
@@ -90,6 +91,13 @@ class API:
             )
             raise PantherError(deprecation_message)
         # Validate Cache
+        if self.cache and not isinstance(self.cache, timedelta):
+            deprecation_message = (
+                    traceback.format_stack(limit=2)[0] +
+                    '\nThe `cache` argument has been changed in Panther v5, '
+                    'it should be an instance of `datetime.timedelta()`.'
+            )
+            raise PantherError(deprecation_message)
         assert self.cache is None or isinstance(self.cache, timedelta)
         # Validate Permissions
         for perm in self.permissions:
@@ -104,6 +112,10 @@ class API:
 
     def __call__(self, func):
         self.func = func
+        self.is_function_async = is_function_async(self.func)
+        self.function_annotations = {
+            k: v for k, v in func.__annotations__.items() if v in {BaseRequest, Request, bool, int}
+        }
 
         @functools.wraps(func)
         async def wrapper(request: Request) -> Response:
@@ -154,10 +166,10 @@ class API:
                 return Response(data=cached.data, headers=cached.headers, status_code=cached.status_code)
 
         # 7. Put PathVariables and Request(If User Wants It) In kwargs
-        kwargs = self.request.clean_parameters(self.func)
+        kwargs = self.request.clean_parameters(self.function_annotations)
 
         # 8. Call Endpoint
-        if is_function_async(self.func):
+        if self.is_function_async:
             response = await self.func(**kwargs)
         else:
             response = self.func(**kwargs)

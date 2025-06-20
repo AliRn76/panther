@@ -7,6 +7,7 @@ from panther.exceptions import InvalidPathVariableAPIError
 if typing.TYPE_CHECKING:
     from panther.db import Model
 
+
 class Headers:
     accept: str
     accept_encoding: str
@@ -135,10 +136,10 @@ class BaseRequest:
             if variable.startswith('<')
         }
 
-    def clean_parameters(self, func: Callable) -> dict:
+    def clean_parameters(self, function_annotations: dict) -> dict:
         kwargs = self.path_variables.copy()
 
-        for variable_name, variable_type in func.__annotations__.items():
+        for variable_name, variable_type in function_annotations.items():
             # Put Request/ Websocket In kwargs (If User Wants It)
             if issubclass(variable_type, BaseRequest):
                 kwargs[variable_name] = self
@@ -146,7 +147,13 @@ class BaseRequest:
             elif variable_name in kwargs:
                 # Cast To Boolean
                 if variable_type is bool:
-                    kwargs[variable_name] = kwargs[variable_name].lower() not in ['false', '0']
+                    value = kwargs[variable_name].lower()
+                    if value in ['false', '0']:
+                        kwargs[variable_name] = False
+                    elif value in ['true', '1']:
+                        kwargs[variable_name] = True
+                    else:
+                        raise InvalidPathVariableAPIError(value=kwargs[variable_name], variable_type=variable_type)
 
                 # Cast To Int
                 elif variable_type is int:
