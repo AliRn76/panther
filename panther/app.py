@@ -59,7 +59,7 @@ class API:
         output_model: type[BaseModel] | None = None,
         output_schema: OutputSchema | None = None,
         auth: bool = False,
-        permissions: list[BasePermission] | None = None,
+        permissions: list[type[BasePermission]] | None = None,
         throttling: Throttle | None = None,
         cache: timedelta | None = None,
         cache_exp_time: timedelta | None = None,
@@ -89,7 +89,18 @@ class API:
                     '\nYou may want to use `cache` instead.'
             )
             raise PantherError(deprecation_message)
+        # Validate Cache
         assert self.cache is None or isinstance(self.cache, timedelta)
+        # Validate Permissions
+        for perm in self.permissions:
+            if is_function_async(perm.authorization) is False:
+                msg = f'{perm.__name__}.authorization() should be `async`'
+                logger.error(msg)
+                raise PantherError(msg)
+            if type(perm.authorization).__name__ != 'method':
+                msg = f'{perm.__name__}.authorization() should be `@classmethod`'
+                logger.error(msg)
+                raise PantherError(msg)
 
     def __call__(self, func):
         self.func = func
@@ -125,7 +136,9 @@ class API:
         await self.handle_authentication()
 
         # 3. Permissions
-        await self.handle_permission()
+        for perm in self.permissions:
+            if await perm.authorization(self.request) is False:
+                raise AuthorizationAPIError
 
         # 4. Throttle
         if throttling := self.throttling or config.THROTTLING:
@@ -167,14 +180,6 @@ class API:
                 logger.critical('"AUTHENTICATION" has not been set in configs')
                 raise APIError
             self.request.user = await config.AUTHENTICATION.authentication(self.request)
-
-    async def handle_permission(self) -> None:
-        for perm in self.permissions:
-            if type(perm.authorization).__name__ != 'method':
-                logger.error(f'{perm.__name__}.authorization should be "classmethod"')
-                raise AuthorizationAPIError
-            if await perm.authorization(self.request) is False:
-                raise AuthorizationAPIError
 
     def handle_input_validation(self):
         if self.input_model:
@@ -232,10 +237,22 @@ class GenericAPI(metaclass=MetaGenericAPI):
     input_model: type[ModelSerializer] | type[BaseModel] | None = None
     output_schema: OutputSchema | None = None
     auth: bool = False
-    permissions: list | None = None
+    permissions: list[type[BasePermission]] | None = None
     throttling: Throttle | None = None
     cache: timedelta | None = None
     middlewares: list[HTTPMiddleware] | None = None
+
+    def __init_subclass__(cls, **kwargs):
+        # Creating API instance to validate the attributes.
+        API(
+            input_model=cls.input_model,
+            output_schema=cls.output_schema,
+            auth=cls.auth,
+            permissions=cls.permissions,
+            throttling=cls.throttling,
+            cache=cls.cache,
+            middlewares=cls.middlewares,
+        )
 
     async def get(self, *args, **kwargs):
         raise MethodNotAllowedAPIError
