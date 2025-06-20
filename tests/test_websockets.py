@@ -297,7 +297,7 @@ class TestWebsocket(TestCase):
 
         ws = WebsocketClient(app=app)
         with self.assertLogs(level='ERROR') as captured:
-            responses = ws.connect('with-auth', query_params={'authorization': f'Bearer {token}'})
+            responses = ws.connect('with-auth', query_params={'authorization': token})
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == 'QueryParamJWTAuthentication Error: "User not found"'

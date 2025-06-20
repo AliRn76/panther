@@ -70,15 +70,15 @@ class OpenAPI(GenericAPI):
 
             if isinstance(endpoint, types.FunctionType):
                 methods = endpoint.methods
-                if methods is None or 'POST' in methods:
+                if 'POST' in methods:
                     paths[url] |= self.get_content(endpoint, 'post')
-                if methods is None or 'GET' in methods:
+                if 'GET' in methods:
                     paths[url] |= self.get_content(endpoint, 'get')
-                if methods is None or 'PUT' in methods:
+                if 'PUT' in methods:
                     paths[url] |= self.get_content(endpoint, 'put')
-                if methods is None or 'PATCH' in methods:
+                if 'PATCH' in methods:
                     paths[url] |= self.get_content(endpoint, 'patch')
-                if methods is None or 'DELETE' in methods:
+                if 'DELETE' in methods:
                     paths[url] |= self.get_content(endpoint, 'delete')
             else:
                 if endpoint.post is not GenericAPI.post:

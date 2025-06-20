@@ -65,7 +65,7 @@ class API:
         cache_exp_time: timedelta | None = None,
         middlewares: list[HTTPMiddleware] | None = None,
     ):
-        self.methods = {m.upper() for m in methods} if methods else None
+        self.methods = {m.upper() for m in methods} if methods else {'GET', 'POST', 'PUT', 'PATCH', 'DELETE'}
         self.input_model = input_model
         self.output_schema = output_schema
         self.auth = auth
@@ -129,7 +129,7 @@ class API:
             return self.options()
 
         # 1. Check Method
-        if self.methods and self.request.method not in self.methods:
+        if self.request.method not in self.methods:
             raise MethodNotAllowedAPIError
 
         # 2. Authentication
