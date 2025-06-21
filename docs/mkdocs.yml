@@ -2,12 +2,17 @@ site_name: Panther
 site_description: Fast &  Friendly, Web Framework For Building Async APIs
 site_url: https://pantherpy.github.io
 
+repo_name: AliRn76/Panther
+repo_url: https://github.com/AliRn76/Panther
+edit_uri: edit/master/docs/
+
 theme:
   name: 'material'
   custom_dir: docs
   palette:
     - scheme: 'default'
       media: '(prefers-color-scheme: light)'
+      primary: 'blue'
       toggle:
         icon: 'material/lightbulb'
         name: 'Switch to dark mode'
@@ -17,12 +22,13 @@ theme:
       toggle:
         icon: 'material/lightbulb-outline'
         name: 'Switch to light mode'
+  features:
+    - navigation.path
+    - navigation.footer
+    - content.code.copy
+    - content.code.annotate
   icon:
     repo: fontawesome/brands/github
-
-repo_name: AliRn76/Panther
-repo_url: https://github.com/AliRn76/Panther
-edit_uri: edit/master/docs/
 
 nav:
   - Introduction: 'index.md'
@@ -30,7 +36,11 @@ nav:
       - Function Base: 'function_first_crud.md'
       - Class Base: 'class_first_crud.md'
       - Generic: 'generic_crud.md'
+  - First Crud: 'first_crud.md'
   - Database: 'database.md'
+  - Model: 'model.md'
+  - API: 'api.md'
+  - Pagination: 'pagination.md'
   - Panther ODM: 'panther_odm.md'
   - Configs: 'configs.md'
   - Redis: 'redis.md'
@@ -48,10 +58,14 @@ nav:
   - Monitoring: 'monitoring.md'
   - Log Queries: 'log_queries.md'
   - Open API (Swagger): 'open_api.md'
+  - Roadmap: 'roadmap.md'
   - Release Notes: 'release_notes.md'
 
 markdown_extensions:
+  - admonition
+  - pymdownx.details
   - pymdownx.superfences
+  - pymdownx.snippets
   - pymdownx.tabbed:
       alternate_style: true
   - toc:

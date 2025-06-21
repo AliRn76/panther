@@ -55,26 +55,26 @@ class TestCLI(TestCase):
         with patch('sys.stdout', new=StringIO()) as fake_out1:
             app = Panther(__name__)
 
-        base_dir = '{0:<39}'.format(str(Path(__name__).absolute().parent))
-        expected_value = fr"""╭──────────────────────────────────────────────────────────╮
-│    ____                 __    __                         │
-│   /\  _`\              /\ \__/\ \                        │
-│   \ \ \L\ \ __      ___\ \ ,_\ \ \___      __   _ __     │
-│    \ \ ,__/'__`\  /' _ `\ \ \/\ \  _ `\  /'__`\/\`'__\   │
-│     \ \ \/\ \L\.\_/\ \/\ \ \ \_\ \ \ \ \/\  __/\ \ \/    │
-│      \ \_\ \__/.\_\ \_\ \_\ \__\\ \_\ \_\ \____\\ \_\    │
-│       \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/    │
-│                                                          │
-│   Redis: False                                           │
-│   Websocket: False                                       │
-│   Monitoring: True                                       │
-│   Log Queries: True                                      │
-│   Background Tasks: False                                │
+        base_dir = '{0:<41}'.format(str(Path(__name__).absolute().parent))
+        expected_value = fr"""╭────────────────────────────────────────────────────────────╮
+│     ____                 __    __                          │
+│    /\  _`\              /\ \__/\ \                         │
+│    \ \ \L\ \ __      ___\ \ ,_\ \ \___      __   _ __      │
+│     \ \ ,__/'__`\  /' _ `\ \ \/\ \  _ `\  /'__`\/\`'__\    │
+│      \ \ \/\ \L\.\_/\ \/\ \ \ \_\ \ \ \ \/\  __/\ \ \/     │
+│       \ \_\ \__/.\_\ \_\ \_\ \__\\ \_\ \_\ \____\\ \_\     │
+│        \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/     │
+│                                                            │
+│   Redis: False                                             │
+│   Websocket: False                                         │
+│   Monitoring: True                                         │
+│   Log Queries: True                                        │
+│   Background Tasks: False                                  │
 │   Base directory: {base_dir}│
-│ * Run "panther monitor" in another session for Monitoring│
-│ * You may want to install `uvloop` for better performance│
-│   `pip install uvloop`                                   │
-╰──────────────────────────────────────────────────────────╯"""
+│ * Run "panther monitor" in another session for Monitoring  │
+│ * You may want to install `uvloop` for better performance  │
+│   `pip install uvloop`                                     │
+╰────────────────────────────────────────────────────────────╯"""
         with patch('sys.stdout', new=StringIO()) as fake_out2:
             rprint(expected_value)
         assert fake_out1.getvalue() == fake_out2.getvalue()
