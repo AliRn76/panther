@@ -41,7 +41,7 @@ class Monitoring:
                 vertical_overflow='visible',
                 screen=True,
             ) as live,
-            contextlib.suppress(KeyboardInterrupt)
+            contextlib.suppress(KeyboardInterrupt),
         ):
             f.readlines()  # Set cursor at the end of the file
 

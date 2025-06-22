@@ -1,5 +1,5 @@
 import asyncio
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
@@ -98,7 +98,7 @@ class TestThrottling(IsolatedAsyncioTestCase):
             'Content-Length': '29',
             'Access-Control-Allow-Origin': '*',
             'Retry-After': str(int((reset_time - datetime.now()).total_seconds())),
-            'X-RateLimit-Reset': str(int(reset_time.timestamp()))
+            'X-RateLimit-Reset': str(int(reset_time.timestamp())),
         }
 
     async def test_global_throttling(self):

@@ -2,11 +2,14 @@ import datetime
 import time
 from unittest import TestCase
 
-from panther.background_tasks import BackgroundTasks, BackgroundTask, _background_tasks
+import pytest
+
+from panther.background_tasks import BackgroundTask, BackgroundTasks, _background_tasks
 from panther.configs import config
 from panther.utils import Singleton
 
 
+@pytest.mark.slow
 class TestBackgroundTasks(TestCase):
     def setUp(self):
         self.obj = BackgroundTasks()
@@ -38,7 +41,8 @@ class TestBackgroundTasks(TestCase):
         assert self.obj.tasks == [task]
 
     def test_add_wrong_task(self):
-        def func(): pass
+        def func():
+            pass
 
         self.obj.initialize()
         assert self.obj.tasks == []
@@ -48,14 +52,16 @@ class TestBackgroundTasks(TestCase):
 
         assert len(captured.records) == 1
         assert (
-                captured.records[0].getMessage() == f'`{func.__name__}` '
-                                                    f'should be instance of `background_tasks.BackgroundTask`')
+            captured.records[0].getMessage() == f'`{func.__name__}` '
+            f'should be instance of `background_tasks.BackgroundTask`'
+        )
         assert self.obj.tasks == []
 
     def test_add_task_with_false_background_task(self):
         numbers = []
 
-        def func(_numbers): _numbers.append(1)
+        def func(_numbers):
+            _numbers.append(1)
 
         task = BackgroundTask(func, numbers)
         with self.assertLogs() as captured:

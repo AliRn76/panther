@@ -1,5 +1,5 @@
 import sys
-from typing import Sequence, Iterable
+from collections.abc import Iterable, Sequence
 
 from pantherdb import Cursor as PantherDBCursor
 from pydantic import BaseModel
@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from panther.configs import QueryObservable
 from panther.db.cursor import Cursor
 from panther.db.queries.base_queries import BaseQuery
-from panther.db.utils import log_query, check_connection
+from panther.db.utils import check_connection, log_query
 from panther.exceptions import NotFoundAPIError
 
 __all__ = ('Query',)
@@ -35,7 +35,7 @@ class Query(BaseQuery):
         else:
             for kls in cls.__bases__:
                 if kls.__bases__.count(Query):
-                    kls.__bases__ = (*kls.__bases__[:kls.__bases__.index(Query) + 1], parent)
+                    kls.__bases__ = (*kls.__bases__[: kls.__bases__.index(Query) + 1], parent)
 
     # # # # # Find # # # # #
     @classmethod
@@ -54,6 +54,7 @@ class Query(BaseQuery):
             >>> await User.find_one({'id': 1, 'name': 'Ali'})
             or
             >>> await User.find_one({'id': 1}, name='Ali')
+
         """
         return await super().find_one(_filter, **kwargs)
 
@@ -73,6 +74,7 @@ class Query(BaseQuery):
             >>> await User.find({'age': 18, 'name': 'Ali'})
             or
             >>> await User.find({'age': 18}, name='Ali')
+
         """
         return await super().find(_filter, **kwargs)
 
@@ -92,6 +94,7 @@ class Query(BaseQuery):
             >>> await User.first({'age': 18, 'name': 'Ali'})
             or
             >>> await User.first({'age': 18}, name='Ali')
+
         """
         return await super().first(_filter, **kwargs)
 
@@ -111,6 +114,7 @@ class Query(BaseQuery):
             >>> await User.last({'age': 18, 'name': 'Ali'})
             or
             >>> await User.last({'age': 18}, name='Ali')
+
         """
         return await super().last(_filter, **kwargs)
 
@@ -135,6 +139,7 @@ class Query(BaseQuery):
             >>> ]
 
             >>> await User.aggregate(pipeline)
+
         """
         return await super().aggregate(pipeline)
 
@@ -155,6 +160,7 @@ class Query(BaseQuery):
             >>> await User.count({'age': 18, 'name': 'Ali'})
             or
             >>> await User.count({'age': 18}, name='Ali')
+
         """
         return await super().count(_filter, **kwargs)
 
@@ -175,6 +181,7 @@ class Query(BaseQuery):
             >>> await User.insert_one({'age': 18, 'name': 'Ali'})
             or
             >>> await User.insert_one({'age': 18}, name='Ali')
+
         """
         return await super().insert_one(_document, **kwargs)
 
@@ -195,6 +202,7 @@ class Query(BaseQuery):
             >>>     {'age': 16, 'name': 'Amin'}
             >>> ]
             >>> await User.insert_many(users)
+
         """
         return await super().insert_many(documents)
 
@@ -212,6 +220,7 @@ class Query(BaseQuery):
             >>> user = await User.find_one(name='Ali')
 
             >>> await user.delete()
+
         """
         await super().delete()
 
@@ -231,6 +240,7 @@ class Query(BaseQuery):
             >>> await User.delete_one({'age': 18, 'name': 'Ali'})
             or
             >>> await User.delete_one({'age': 18}, name='Ali')
+
         """
         return await super().delete_one(_filter, **kwargs)
 
@@ -250,6 +260,7 @@ class Query(BaseQuery):
             >>> await User.delete_many({'age': 18, 'name': 'Ali'})
             or
             >>> await User.delete_many({'age': 18}, name='Ali')
+
         """
         return await super().delete_many(_filter, **kwargs)
 
@@ -271,6 +282,7 @@ class Query(BaseQuery):
             >>> await user.update({'name': 'Saba'}, age=19)
             or
             >>> await user.update({'name': 'Saba', 'age': 19})
+
         """
         await super().update(_update, **kwargs)
 
@@ -290,6 +302,7 @@ class Query(BaseQuery):
             >>> await User.update_one({'id': 1}, {'age': 18, 'name': 'Ali'})
             or
             >>> await User.update_one({'id': 1}, {'age': 18}, name='Ali')
+
         """
         return await super().update_one(_filter, _update, **kwargs)
 
@@ -309,6 +322,7 @@ class Query(BaseQuery):
             >>> await User.update_many({'name': 'Saba'}, {'age': 18, 'name': 'Ali'})
             or
             >>> await User.update_many({'name': 'Saba'}, {'age': 18}, name='Ali')
+
         """
         return await super().update_many(_filter, _update, **kwargs)
 
@@ -323,6 +337,7 @@ class Query(BaseQuery):
             >>> from app.models import User
 
             >>> await User.all()
+
         """
         return await cls.find()
 
@@ -342,6 +357,7 @@ class Query(BaseQuery):
             >>> await User.find_one_or_insert({'age': 18, 'name': 'Ali'})
             or
             >>> await User.find_one_or_insert({'age': 18}, name='Ali')
+
         """
         if obj := await cls.find_one(_filter, **kwargs):
             return obj, False
@@ -359,6 +375,7 @@ class Query(BaseQuery):
             >>> await User.find_one_or_raise({'age': 18, 'name': 'Ali'})
             or
             >>> await User.find_one_or_raise({'age': 18}, name='Ali')
+
         """
         if obj := await cls.find_one(_filter, **kwargs):
             return obj
@@ -379,17 +396,16 @@ class Query(BaseQuery):
             >>> await User.exists({'age': 18, 'name': 'Ali'})
             or
             >>> await User.exists({'age': 18}, name='Ali')
+
         """
-        if await cls.count(_filter, **kwargs) > 0:
-            return True
-        else:
-            return False
+        return await cls.count(_filter, **kwargs) > 0
 
     async def save(self) -> None:
         """
         Save the document
             If it has `id` --> Update It
             else --> Insert It
+
         Example:
         -------
             >>> from app.models import User
@@ -402,12 +418,14 @@ class Query(BaseQuery):
             # Insert
             >>> user = User(name='Ali')
             >>> await user.save()
+
         """
         document = {
             field: getattr(self, field).model_dump(by_alias=True)
             if issubclass(type(getattr(self, field)), BaseModel)
             else getattr(self, field)
-            for field in self.model_fields.keys() if field != 'request'
+            for field in self.model_fields
+            if field != 'request'
         }
 
         if self.id:

@@ -3,11 +3,12 @@ import os
 from datetime import datetime
 from typing import Annotated, ClassVar, Self
 
-from pydantic import Field, WrapValidator, PlainSerializer, BaseModel as PydanticBaseModel
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field, PlainSerializer, WrapValidator
 
 from panther.configs import config
 from panther.db.queries import Query
-from panther.utils import scrypt, URANDOM_SIZE, timezone_now
+from panther.utils import URANDOM_SIZE, scrypt, timezone_now
 
 with contextlib.suppress(ImportError):
     # Only required if user wants to use mongodb

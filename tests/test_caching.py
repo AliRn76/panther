@@ -1,7 +1,9 @@
-import time
 import asyncio
+import time
 from datetime import timedelta
 from unittest import IsolatedAsyncioTestCase
+
+import pytest
 
 from panther import Panther
 from panther.app import API
@@ -20,6 +22,7 @@ async def expired_cache_api():
     await asyncio.sleep(0.01)
     return {'detail': time.time()}
 
+
 @API(cache=timedelta(seconds=2))
 async def expired_cache_html_response():
     await asyncio.sleep(0.01)
@@ -33,6 +36,7 @@ urls = {
 }
 
 
+@pytest.mark.slow
 class TestInMemoryCaching(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -47,7 +51,6 @@ class TestInMemoryCaching(IsolatedAsyncioTestCase):
         assert res2.status_code == 200
 
         assert res1.data != res2.data
-
 
     async def test_with_cache_5second_exp_time(self):
         # First Request
@@ -74,7 +77,6 @@ class TestInMemoryCaching(IsolatedAsyncioTestCase):
 
         # After 5 seconds we should have a new response
         assert res1.data != res3.data
-
 
     async def test_with_cache_content_type(self):
         # First Request

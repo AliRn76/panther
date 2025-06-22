@@ -12,7 +12,7 @@ from panther import status
 from panther.base_request import BaseRequest
 from panther.configs import config
 from panther.db.connections import redis
-from panther.exceptions import InvalidPathVariableAPIError, BaseError
+from panther.exceptions import BaseError, InvalidPathVariableAPIError
 from panther.utils import Singleton
 
 if TYPE_CHECKING:
@@ -83,11 +83,11 @@ class WebsocketConnections(Singleton):
 
     async def _handle_received_message(self, received_message):
         if (
-                isinstance(received_message, dict)
-                and (connection_id := received_message.get('connection_id'))
-                and connection_id in self.connections
-                and 'action' in received_message
-                and 'data' in received_message
+            isinstance(received_message, dict)
+            and (connection_id := received_message.get('connection_id'))
+            and connection_id in self.connections
+            and 'action' in received_message
+            and 'data' in received_message
         ):
             # Check Action of WS
             match received_message['action']:
@@ -96,7 +96,7 @@ class WebsocketConnections(Singleton):
                 case 'close':
                     await self.connections[connection_id].close(
                         code=received_message['data']['code'],
-                        reason=received_message['data']['reason']
+                        reason=received_message['data']['reason'],
                     )
                 case unknown_action:
                     logger.error(f'Unknown Message Action: {unknown_action}')

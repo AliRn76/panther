@@ -1,5 +1,5 @@
+from collections.abc import Iterable
 from sys import version_info
-from typing import Iterable
 
 from pantherdb import Cursor
 

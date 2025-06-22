@@ -1,24 +1,25 @@
 import copy
 import typing
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
-from typing import Callable
 
 import jinja2
 from pydantic import BaseModel as PydanticBaseModel
 
+
 class JWTConfig:
     def __init__(
-            self,
-            key: str,
-            algorithm: str = 'HS256',
-            life_time: timedelta | int = timedelta(days=1),
-            refresh_life_time: timedelta | int | None = None,
+        self,
+        key: str,
+        algorithm: str = 'HS256',
+        life_time: timedelta | int = timedelta(days=1),
+        refresh_life_time: timedelta | int | None = None,
     ):
         self.key = key
         self.algorithm = algorithm
-        self.life_time = life_time.total_seconds() if isinstance(life_time, timedelta) else life_time
+        self.life_time = int(life_time.total_seconds()) if isinstance(life_time, timedelta) else life_time
 
         if refresh_life_time:
             if isinstance(refresh_life_time, timedelta):
@@ -27,6 +28,14 @@ class JWTConfig:
                 self.refresh_life_time = refresh_life_time
         else:
             self.refresh_life_time = self.life_time * 2
+
+    def __eq__(self, other):
+        return bool(
+            self.key == other.key
+            and self.algorithm == other.algorithm
+            and self.life_time == other.life_time
+            and self.refresh_life_time == other.refresh_life_time,
+        )
 
 
 class QueryObservable:
@@ -48,10 +57,10 @@ class Config:
     MONITORING: bool
     LOG_QUERIES: bool
     THROTTLING: None  # type: panther.throttling.Throttle
-    SECRET_KEY: bytes | None
+    SECRET_KEY: str | None
     HTTP_MIDDLEWARES: list
     WS_MIDDLEWARES: list
-    USER_MODEL: type[PydanticBaseModel] | None # type: type[panther.db.Model]
+    USER_MODEL: type[PydanticBaseModel] | None  # type: type[panther.db.Model]
     AUTHENTICATION: type[PydanticBaseModel] | None
     WS_AUTHENTICATION: type[PydanticBaseModel] | None
     JWT_CONFIG: JWTConfig | None

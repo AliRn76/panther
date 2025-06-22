@@ -1,6 +1,5 @@
 from typing import List
 
-from bson import ObjectId
 from pydantic import BaseModel
 
 from panther.db import Model
@@ -40,8 +39,6 @@ class Author(Model):
     our_book_detail: BookDetail
     #
 
-import types
-
 
 @Event.startup
 async def create_author():
@@ -58,7 +55,7 @@ async def create_author():
         book=b2,
         book2=None,
         book_detail={'book1': b2},
-        our_book_detail=BookDetail(detail='ok', book=b2, more_books=[[b2, b2]])
+        our_book_detail=BookDetail(detail='ok', book=b2, more_books=[[b2, b2]]),
     )
     print(f'{a1=}')
     # # await a1.save()

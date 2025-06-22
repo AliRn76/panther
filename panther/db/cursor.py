@@ -51,7 +51,6 @@ class Cursor(_Cursor):
         except StopIteration:
             raise
 
-
     def __getitem__(self, index: int | slice) -> Cursor[Self] | Self:
         document = super().__getitem__(index)
         if isinstance(document, dict):

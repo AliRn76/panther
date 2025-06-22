@@ -2,7 +2,7 @@ from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
 from panther.app import API, GenericAPI
-from panther.response import Response, HTMLResponse, PlainTextResponse, StreamingResponse, TemplateResponse
+from panther.response import HTMLResponse, PlainTextResponse, Response, StreamingResponse, TemplateResponse
 from panther.test import APIClient
 
 
@@ -124,7 +124,8 @@ async def return_template_response() -> TemplateResponse:
 class ReturnTemplateResponse(GenericAPI):
     def get(self) -> TemplateResponse:
         return TemplateResponse(
-            source='<html><body><p>{{ content }}</p></body></html>', context={'content': 'Hello World'}
+            source='<html><body><p>{{ content }}</p></body></html>',
+            context={'content': 'Hello World'},
         )
 
 
@@ -141,8 +142,8 @@ class ReturnPlainResponse(GenericAPI):
 class ReturnStreamingResponse(GenericAPI):
     def get(self):
         def f():
-            for i in range(5):
-                yield i
+            yield from range(5)
+
         return StreamingResponse(f())
 
 
@@ -151,6 +152,7 @@ class ReturnAsyncStreamingResponse(GenericAPI):
         async def f():
             for i in range(6):
                 yield i
+
         return StreamingResponse(f())
 
 
@@ -477,7 +479,10 @@ class TestResponses(IsolatedAsyncioTestCase):
             res = await self.client.get('invalid-status-code/')
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage().split('\n')[-2] == "TypeError: Response `status_code` Should Be `int`. (`ali` is <class 'str'>)"
+        assert (
+            captured.records[0].getMessage().split('\n')[-2]
+            == "TypeError: Response `status_code` Should Be `int`. (`ali` is <class 'str'>)"
+        )
 
         assert res.status_code == 500
         assert res.data == {'detail': 'Internal Server Error'}

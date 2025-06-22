@@ -2,11 +2,12 @@ import functools
 import logging
 import traceback
 import typing
+from collections.abc import Callable
 from datetime import timedelta
-from typing import Literal, Callable
+from typing import Literal
 
 from orjson import JSONDecodeError
-from pydantic import ValidationError, BaseModel
+from pydantic import BaseModel, ValidationError
 
 from panther._utils import is_function_async
 from panther.base_request import BaseRequest
@@ -18,11 +19,11 @@ from panther.configs import config
 from panther.exceptions import (
     APIError,
     AuthorizationAPIError,
+    BadRequestAPIError,
     JSONDecodeAPIError,
     MethodNotAllowedAPIError,
-    BadRequestAPIError
+    PantherError,
 )
-from panther.exceptions import PantherError
 from panther.middlewares import HTTPMiddleware
 from panther.openapi import OutputSchema
 from panther.permissions import BasePermission
@@ -50,6 +51,7 @@ class API:
     methods: Specify the allowed methods.
     middlewares: These middlewares have inner priority than global middlewares.
     """
+
     func: Callable
 
     def __init__(
@@ -64,7 +66,7 @@ class API:
         throttling: Throttle | None = None,
         cache: timedelta | None = None,
         cache_exp_time: timedelta | None = None,
-        middlewares: list[HTTPMiddleware] | None = None,
+        middlewares: list[type[HTTPMiddleware]] | None = None,
     ):
         self.methods = {m.upper() for m in methods} if methods else {'GET', 'POST', 'PUT', 'PATCH', 'DELETE'}
         self.input_model = input_model
@@ -73,29 +75,28 @@ class API:
         self.permissions = permissions or []
         self.throttling = throttling
         self.cache = cache
-        self.middlewares: list[HTTPMiddleware] | None = middlewares
+        self.middlewares: list[[HTTPMiddleware]] | None = middlewares
         self.request: Request | None = None
         if output_model:
             deprecation_message = (
-                    traceback.format_stack(limit=2)[0] +
-                    '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
-                    '\nPlease update your code to use the new approach. More info: '
-                    'https://pantherpy.github.io/open_api/'
+                traceback.format_stack(limit=2)[0]
+                + '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
+                '\nPlease update your code to use the new approach. More info: '
+                'https://pantherpy.github.io/open_api/'
             )
             raise PantherError(deprecation_message)
         if cache_exp_time:
             deprecation_message = (
-                    traceback.format_stack(limit=2)[0] +
-                    '\nThe `cache_exp_time` argument has been removed in Panther v5 and is no longer available.'
-                    '\nYou may want to use `cache` instead.'
+                traceback.format_stack(limit=2)[0]
+                + '\nThe `cache_exp_time` argument has been removed in Panther v5 and is no longer available.'
+                '\nYou may want to use `cache` instead.'
             )
             raise PantherError(deprecation_message)
         # Validate Cache
         if self.cache and not isinstance(self.cache, timedelta):
             deprecation_message = (
-                    traceback.format_stack(limit=2)[0] +
-                    '\nThe `cache` argument has been changed in Panther v5, '
-                    'it should be an instance of `datetime.timedelta()`.'
+                traceback.format_stack(limit=2)[0] + '\nThe `cache` argument has been changed in Panther v5, '
+                'it should be an instance of `datetime.timedelta()`.'
             )
             raise PantherError(deprecation_message)
         assert self.cache is None or isinstance(self.cache, timedelta)
@@ -222,21 +223,15 @@ class API:
 
 
 class MetaGenericAPI(type):
-    def __new__(
-            cls,
-            cls_name: str,
-            bases: tuple[type[typing.Any], ...],
-            namespace: dict[str, typing.Any],
-            **kwargs
-    ):
+    def __new__(cls, cls_name: str, bases: tuple[type[typing.Any], ...], namespace: dict[str, typing.Any], **kwargs):
         if cls_name == 'GenericAPI':
             return super().__new__(cls, cls_name, bases, namespace)
         if 'output_model' in namespace:
             deprecation_message = (
-                    traceback.format_stack(limit=2)[0] +
-                    '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
-                    '\nPlease update your code to use the new approach. More info: '
-                    'https://pantherpy.github.io/open_api/'
+                traceback.format_stack(limit=2)[0]
+                + '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
+                '\nPlease update your code to use the new approach. More info: '
+                'https://pantherpy.github.io/open_api/'
             )
             raise PantherError(deprecation_message)
         return super().__new__(cls, cls_name, bases, namespace)
@@ -246,6 +241,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
     """
     Check out the documentation of `panther.app.API()`.
     """
+
     input_model: type[ModelSerializer] | type[BaseModel] | None = None
     output_schema: OutputSchema | None = None
     auth: bool = False

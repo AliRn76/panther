@@ -70,7 +70,7 @@ class Throttle:
                 headers={
                     'Retry-After': str(retry_after),
                     'X-RateLimit-Reset': str(int(reset_time.timestamp())),
-                }
+                },
             )
 
         await self.increment_request_count(request)

@@ -1,4 +1,4 @@
-from panther.panel.views import TableView, CreateView, LoginView, DetailView, HomeView
+from panther.panel.views import CreateView, DetailView, HomeView, LoginView, TableView
 
 urls = {
     # '': models_api,

@@ -32,7 +32,7 @@ async def several_file_multipart_api(request: Request):
             'file_name': request.data['file2'].file_name,
             'content_type': request.data['file2'].content_type,
             'file': request.data['file2'].file.decode(),
-        }
+        },
     }
 
 
@@ -50,8 +50,9 @@ async def complex_multipart_api(request: Request):
             'file_name': request.data['file2'].file_name,
             'content_type': request.data['file2'].content_type,
             'file': request.data['file2'].file.decode(),
-        }
+        },
     }
+
 
 @API()
 async def multipart_api(request: Request):
@@ -71,61 +72,61 @@ class TestMultipart(IsolatedAsyncioTestCase):
     CONTENT_TYPE_1 = 'multipart/form-data; boundary=--------------------------201301649688174364392792'
     CONTENT_TYPE_2 = 'multipart/form-data; boundary=----geckoformboundaryc30219e1237602175b34337f41ace019'
     FLAT_PAYLOAD = (
-            b'----------------------------201301649688174364392792\r\n'
-            b'Content-Disposition: form-data; name="name"\r\n\r\n'
-            b'Ali Rn\r\n'
-            b'----------------------------201301649688174364392792\r\n'
-            b'Content-Disposition: form-data; name="age"\r\n\r\n'
-            b'25\r\n'
-            b'----------------------------201301649688174364392792--\r\n'
-        )
+        b'----------------------------201301649688174364392792\r\n'
+        b'Content-Disposition: form-data; name="name"\r\n\r\n'
+        b'Ali Rn\r\n'
+        b'----------------------------201301649688174364392792\r\n'
+        b'Content-Disposition: form-data; name="age"\r\n\r\n'
+        b'25\r\n'
+        b'----------------------------201301649688174364392792--\r\n'
+    )
     SINGLE_FILE_PAYLOAD = (
-            b'----------------------------201301649688174364392792\r\n'
-            b'Content-Disposition: form-data; name="file"; filename="hello_world.txt"\r\n'
-            b'Content-Type: text/plain\r\n\r\n'
-            b'Hello World\n\r\n'
-            b'----------------------------201301649688174364392792--\r\n'
-        )
+        b'----------------------------201301649688174364392792\r\n'
+        b'Content-Disposition: form-data; name="file"; filename="hello_world.txt"\r\n'
+        b'Content-Type: text/plain\r\n\r\n'
+        b'Hello World\n\r\n'
+        b'----------------------------201301649688174364392792--\r\n'
+    )
     SEVERAL_FILE_PAYLOAD = (
-            b'----------------------------201301649688174364392792\r\n'
-            b'Content-Disposition: form-data; name="file1"; filename="hello_world1.txt"\r\n'
-            b'Content-Type: text/plain\r\n\r\n'
-            b'Hello World1\n\r\n'
-            b'----------------------------201301649688174364392792\r\n'
-            b'Content-Disposition: form-data; name="file2"; filename="hello_world2.txt"\r\n'
-            b'Content-Type: text/plain\r\n\r\n'
-            b'Hello World2\n\r\n'
-            b'----------------------------201301649688174364392792--\r\n'
-        )
+        b'----------------------------201301649688174364392792\r\n'
+        b'Content-Disposition: form-data; name="file1"; filename="hello_world1.txt"\r\n'
+        b'Content-Type: text/plain\r\n\r\n'
+        b'Hello World1\n\r\n'
+        b'----------------------------201301649688174364392792\r\n'
+        b'Content-Disposition: form-data; name="file2"; filename="hello_world2.txt"\r\n'
+        b'Content-Type: text/plain\r\n\r\n'
+        b'Hello World2\n\r\n'
+        b'----------------------------201301649688174364392792--\r\n'
+    )
     COMPLEX_PAYLOAD = (
-            b'----------------------------201301649688174364392792\r\n'
-            b'Content-Disposition: form-data; name="name"\r\n\r\n'
-            b'Ali Rn\r\n'
-            b'----------------------------201301649688174364392792\r\n'
-            b'Content-Disposition: form-data; name="file1"; filename="hello_world1.txt"\r\n'
-            b'Content-Type: text/plain\r\n\r\n'
-            b'Hello World1\n\r\n'
-            b'----------------------------201301649688174364392792\r\n'
-            b'Content-Disposition: form-data; name="file2"; filename="hello_world2.txt"\r\n'
-            b'Content-Type: text/plain\r\n\r\n'
-            b'Hello World2\n\r\n'
-            b'----------------------------201301649688174364392792\r\n'
-            b'Content-Disposition: form-data; name="age"\r\n\r\n'
-            b'25\r\n'
-            b'----------------------------201301649688174364392792--\r\n'
-        )
+        b'----------------------------201301649688174364392792\r\n'
+        b'Content-Disposition: form-data; name="name"\r\n\r\n'
+        b'Ali Rn\r\n'
+        b'----------------------------201301649688174364392792\r\n'
+        b'Content-Disposition: form-data; name="file1"; filename="hello_world1.txt"\r\n'
+        b'Content-Type: text/plain\r\n\r\n'
+        b'Hello World1\n\r\n'
+        b'----------------------------201301649688174364392792\r\n'
+        b'Content-Disposition: form-data; name="file2"; filename="hello_world2.txt"\r\n'
+        b'Content-Type: text/plain\r\n\r\n'
+        b'Hello World2\n\r\n'
+        b'----------------------------201301649688174364392792\r\n'
+        b'Content-Disposition: form-data; name="age"\r\n\r\n'
+        b'25\r\n'
+        b'----------------------------201301649688174364392792--\r\n'
+    )
     MULTI_LINE_PAYLOAD = (
-            b'------geckoformboundaryc30219e1237602175b34337f41ace019\r\n'
-            b'Content-Disposition: form-data; name="team"\r\n\r\n'
-            b'SRE\r\n'
-            b'------geckoformboundaryc30219e1237602175b34337f41ace019\r\n'
-            b'Content-Disposition: form-data; name="phone"\r\n\r\n'
-            b'09033333333\r\n'
-            b'------geckoformboundaryc30219e1237602175b34337f41ace019\r\n'
-            b'Content-Disposition: form-data; name="message"\r\n\r\n'
-            b'My\r\nName\r\nIs\r\nAli\r\n\r\n'
-            b'------geckoformboundaryc30219e1237602175b34337f41ace019--\r\n'
-        )
+        b'------geckoformboundaryc30219e1237602175b34337f41ace019\r\n'
+        b'Content-Disposition: form-data; name="team"\r\n\r\n'
+        b'SRE\r\n'
+        b'------geckoformboundaryc30219e1237602175b34337f41ace019\r\n'
+        b'Content-Disposition: form-data; name="phone"\r\n\r\n'
+        b'09033333333\r\n'
+        b'------geckoformboundaryc30219e1237602175b34337f41ace019\r\n'
+        b'Content-Disposition: form-data; name="message"\r\n\r\n'
+        b'My\r\nName\r\nIs\r\nAli\r\n\r\n'
+        b'------geckoformboundaryc30219e1237602175b34337f41ace019--\r\n'
+    )
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -173,7 +174,7 @@ class TestMultipart(IsolatedAsyncioTestCase):
                 'file_name': 'hello_world2.txt',
                 'content_type': 'text/plain',
                 'file': 'Hello World2\n',
-            }
+            },
         }
 
     async def test_complex_multipart(self):
@@ -196,7 +197,7 @@ class TestMultipart(IsolatedAsyncioTestCase):
                 'file_name': 'hello_world2.txt',
                 'content_type': 'text/plain',
                 'file': 'Hello World2\n',
-            }
+            },
         }
 
     async def test_multiline_multipart(self):

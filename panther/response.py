@@ -1,12 +1,13 @@
 import asyncio
+import logging
+from collections.abc import AsyncGenerator, Generator
 from dataclasses import dataclass
 from http import cookies
 from sys import version_info
+from types import NoneType
+from typing import Any, Literal
 
 import jinja2
-import logging
-from types import NoneType
-from typing import Generator, AsyncGenerator, Any, Type, Literal
 
 from panther.exceptions import APIError
 
@@ -18,16 +19,18 @@ else:
     LiteralString = TypeVar('LiteralString')
 
 import orjson as json
+from pantherdb import Cursor as PantherDBCursor
 from pydantic import BaseModel
 
 from panther import status
-from panther.configs import config
 from panther._utils import to_async_generator
+from panther.configs import config
 from panther.db.cursor import Cursor
-from pantherdb import Cursor as PantherDBCursor
 from panther.pagination import Pagination
 
-ResponseDataTypes = list | tuple | set | Cursor | PantherDBCursor | dict | int | float | str | bool | bytes | NoneType | Type[BaseModel]
+ResponseDataTypes = (
+    list | tuple | set | Cursor | PantherDBCursor | dict | int | float | str | bool | bytes | NoneType | type[BaseModel]
+)
 IterableDataTypes = list | tuple | set | Cursor | PantherDBCursor
 StreamingDataTypes = Generator | AsyncGenerator
 
@@ -51,6 +54,7 @@ class Cookie:
         `lax` is the default behavior if not specified.
     expires: [Deprecated] In HTTP version 1.1, `expires` was deprecated and replaced with the easier-to-use `max-age`
     """
+
     key: str
     value: str
     domain: str = None
@@ -70,7 +74,7 @@ class Response:
         status_code: int = status.HTTP_200_OK,
         headers: dict | None = None,
         pagination: Pagination | None = None,
-        set_cookies: list[Cookie] | None = None
+        set_cookies: list[Cookie] | None = None,
     ):
         """
         :param data: should be an instance of ResponseDataTypes
@@ -253,6 +257,7 @@ class TemplateResponse(HTMLResponse):
 
     Example:
         TEMPLATES_DIR = 'templates/'
+
     """
 
     def __init__(
@@ -275,7 +280,8 @@ class TemplateResponse(HTMLResponse):
                 template = config.JINJA_ENVIRONMENT.get_template(name=name)
             except jinja2.exceptions.TemplateNotFound:
                 loaded_path = ' - '.join(
-                    ' - '.join(loader.searchpath) for loader in config.JINJA_ENVIRONMENT.loader.loaders
+                    ' - '.join(loader.searchpath)
+                    for loader in config.JINJA_ENVIRONMENT.loader.loaders
                     if isinstance(loader, jinja2.loaders.FileSystemLoader)
                 )
                 error = (
@@ -299,7 +305,7 @@ class RedirectResponse(Response):
         url: str,
         headers: dict | None = None,
         status_code: int = status.HTTP_307_TEMPORARY_REDIRECT,
-        set_cookies: list[Cookie] | None = None
+        set_cookies: list[Cookie] | None = None,
     ):
         headers = headers or {}
         headers['Location'] = url

@@ -4,12 +4,12 @@ from unittest import IsolatedAsyncioTestCase
 
 import faker
 import pytest
+from pantherdb import Cursor as PantherDBCursor
 
 from panther import Panther
 from panther.db import Model
 from panther.db.connections import db
 from panther.db.cursor import Cursor as MongoCursor
-from pantherdb import Cursor as PantherDBCursor
 
 f = faker.Faker()
 
@@ -21,7 +21,6 @@ class Book(Model):
 
 
 class _BaseDatabaseTestCase:
-
     # # # Insert
     async def test_insert_one(self):
         name = f.name()
@@ -41,14 +40,10 @@ class _BaseDatabaseTestCase:
     async def test_insert_many(self):
         insert_count = random.randint(2, 10)
         initial_books_data = [
-            {'name': f.name(), 'author': f.name(), 'pages_count': random.randint(0, 10)}
-            for _ in range(insert_count)
+            {'name': f.name(), 'author': f.name(), 'pages_count': random.randint(0, 10)} for _ in range(insert_count)
         ]
         books = await Book.insert_many(initial_books_data)
-        actual_books = [
-            {'name': book.name, 'author': book.author, 'pages_count': book.pages_count}
-            for book in books
-        ]
+        actual_books = [{'name': book.name, 'author': book.author, 'pages_count': book.pages_count} for book in books]
         expected_books = [
             {'name': book['name'], 'author': book['author'], 'pages_count': book['pages_count']}
             for book in initial_books_data
@@ -491,10 +486,10 @@ class _BaseDatabaseTestCase:
 
     @classmethod
     async def _insert_many_with_specific_params(
-            cls,
-            name: str = f.name(),
-            author: str = f.name(),
-            pages_count: int = random.randint(0, 10)
+        cls,
+        name: str = f.name(),
+        author: str = f.name(),
+        pages_count: int = random.randint(0, 10),
     ) -> int:
         insert_count = random.randint(2, 10)
 
@@ -511,10 +506,7 @@ class TestPantherDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
     def setUpClass(cls) -> None:
         global DATABASE
         DATABASE = {
-            'engine': {
-                'class': 'panther.db.connections.PantherDBConnection',
-                'path': cls.DB_PATH
-            },
+            'engine': {'class': 'panther.db.connections.PantherDBConnection', 'path': cls.DB_PATH},
         }
         Panther(__name__, configs=__name__, urls={})
 

@@ -116,7 +116,8 @@ class ListAPI(GenericAPI, CursorRequired):
         if hasattr(self, 'sort_fields') and 'sort' in query_params:
             return [
                 (field, -1 if param[0] == '-' else 1)
-                for field in self.sort_fields for param in query_params['sort'].split(',')
+                for field in self.sort_fields
+                for param in query_params['sort'].split(',')
                 if field == param.removeprefix('-')
             ]
 
@@ -129,11 +130,13 @@ class CreateAPI(GenericAPI):
     input_model: type[ModelSerializer]
 
     async def post(self, request: Request, **kwargs):
-        instance = await request.validated_data.create(validated_data={
-            field: getattr(request.validated_data, field)
-            for field in request.validated_data.model_fields_set
-            if field != 'request'
-        })
+        instance = await request.validated_data.create(
+            validated_data={
+                field: getattr(request.validated_data, field)
+                for field in request.validated_data.model_fields_set
+                if field != 'request'
+            },
+        )
         return Response(data=instance, status_code=status.HTTP_201_CREATED)
 
 
@@ -146,7 +149,7 @@ class UpdateAPI(GenericAPI, ObjectRequired):
 
         await request.validated_data.update(
             instance=instance,
-            validated_data=request.validated_data.model_dump(by_alias=True)
+            validated_data=request.validated_data.model_dump(by_alias=True),
         )
         return Response(data=instance, status_code=status.HTTP_200_OK)
 
@@ -156,7 +159,7 @@ class UpdateAPI(GenericAPI, ObjectRequired):
 
         await request.validated_data.partial_update(
             instance=instance,
-            validated_data=request.validated_data.model_dump(exclude_none=True, by_alias=True)
+            validated_data=request.validated_data.model_dump(exclude_none=True, by_alias=True),
         )
         return Response(data=instance, status_code=status.HTTP_200_OK)
 

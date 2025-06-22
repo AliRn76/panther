@@ -54,7 +54,6 @@ urls = {
 
 
 class TestJWTAuthentication(IsolatedAsyncioTestCase):
-
     def setUp(self) -> None:
         app = Panther(__name__, configs=__name__, urls=urls)
         self.client = APIClient(app=app)
@@ -78,6 +77,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
 
     async def test_not_classmethod_permission(self):
         try:
+
             @API(permissions=[NotClassMethodPermission])
             async def not_classmethod_permission_api(request: Request):
                 return request.user
@@ -88,6 +88,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
 
     async def test_not_classmethod_permission_classbased(self):
         try:
+
             class NotClassMethodPermissionAPI(GenericAPI):
                 permissions = [NotClassMethodPermission]
         except PantherError as e:
@@ -97,6 +98,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
 
     async def test_sync_permission(self):
         try:
+
             @API(permissions=[SyncPermission])
             async def sync_permission_api(request: Request):
                 return request.user
@@ -107,6 +109,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
 
     async def test_sync_permission_classbased(self):
         try:
+
             class SyncPermissionAPI(GenericAPI):
                 permissions = [SyncPermission]
         except PantherError as e:

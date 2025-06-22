@@ -3,7 +3,7 @@ import os
 
 import uvicorn
 
-from panther.cli.utils import print_uvicorn_help_message, clean_args, cli_error
+from panther.cli.utils import clean_args, cli_error, print_uvicorn_help_message
 
 
 def _handle_commands(args: dict[str, str | None]) -> dict:

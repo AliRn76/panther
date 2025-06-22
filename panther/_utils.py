@@ -4,9 +4,9 @@ import logging
 import re
 import subprocess
 import types
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable, Generator, Iterator
 from traceback import TracebackException
-from typing import Any, Generator, Iterator, AsyncGenerator
+from typing import Any
 
 from panther.exceptions import PantherError
 from panther.file_handler import File
@@ -20,6 +20,7 @@ def import_class(dotted_path: str, /) -> type[Any]:
     -------
         Input: panther.db.models.User
         Output: User (The Class)
+
     """
     path, name = dotted_path.rsplit('.', 1)
     module = importlib.import_module(path)
@@ -27,7 +28,7 @@ def import_class(dotted_path: str, /) -> type[Any]:
 
 
 NEWLINE_CRLF = b'\r\n'  # Windows-style
-NEWLINE_LF = b'\n'      # Unix/Linux-style
+NEWLINE_LF = b'\n'  # Unix/Linux-style
 
 # Regex patterns for CRLF (Windows)
 FIELD_PATTERN_CRLF = re.compile(rb'Content-Disposition: form-data; name="(.*)"\r\n\r\n(.*)', flags=re.DOTALL)
@@ -36,6 +37,7 @@ FILE_PATTERN_CRLF = re.compile(rb'Content-Disposition: form-data; name="(.*)"; f
 # Regex patterns for LF (Linux)
 FIELD_PATTERN_LF = re.compile(rb'Content-Disposition: form-data; name="(.*)"\n\n(.*)', flags=re.DOTALL)
 FILE_PATTERN_LF = re.compile(rb'Content-Disposition: form-data; name="(.*)"; filename="(.*)"\nContent-Type: (.*)')
+
 
 def read_multipart_form_data(boundary: str, body: bytes) -> dict:
     boundary_bytes = b'--' + boundary.encode()
@@ -106,7 +108,8 @@ def check_function_type_endpoint(endpoint: types.FunctionType) -> Callable:
     # Function Doesn't Have @API Decorator
     if not hasattr(endpoint, '__wrapped__'):
         raise PantherError(
-            f'You may have forgotten to use `@API()` on the `{endpoint.__module__}.{endpoint.__name__}()`')
+            f'You may have forgotten to use `@API()` on the `{endpoint.__module__}.{endpoint.__name__}()`',
+        )
 
 
 def check_class_type_endpoint(endpoint: Callable) -> Callable:
@@ -116,7 +119,7 @@ def check_class_type_endpoint(endpoint: Callable) -> Callable:
     if not issubclass(endpoint, (GenericAPI, GenericWebsocket)):
         raise PantherError(
             f'You may have forgotten to inherit from `panther.app.GenericAPI` or `panther.app.GenericWebsocket` '
-            f'on the `{endpoint.__module__}.{endpoint.__name__}()`'
+            f'on the `{endpoint.__module__}.{endpoint.__name__}()`',
         )
 
 

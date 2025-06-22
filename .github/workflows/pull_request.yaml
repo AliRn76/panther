@@ -35,7 +35,7 @@ jobs:
         run: rm -rf build/
 
       - name: Run Tests
-        run: coverage run -m pytest tests
+        run: coverage run tests
 
       - name: Show Coverage
         run: coverage report
@@ -60,7 +60,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: pytest -m "not mongodb" tests
+        run: python tests --not_mongodb
 
   tests-macos:
     name: Test MacOS
@@ -82,4 +82,4 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: pytest -m "not mongodb" tests
+        run: python tests --not_mongodb

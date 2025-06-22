@@ -129,10 +129,7 @@ class BaseRequest:
     def collect_path_variables(self, found_path: str):
         self.path_variables = {
             variable.strip('< >'): value
-            for variable, value in zip(
-                found_path.strip('/').split('/'),
-                self.path.strip('/').split('/')
-            )
+            for variable, value in zip(found_path.strip('/').split('/'), self.path.strip('/').split('/'))
             if variable.startswith('<')
         }
 

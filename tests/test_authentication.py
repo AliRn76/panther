@@ -60,9 +60,15 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
     NOT_ENOUGH_SEGMENT_TOKEN = {'Authorization': 'Bearer XXX'}
     JUST_BEARER_TOKEN = {'Authorization': 'Bearer'}
     BAD_UNICODE_TOKEN = {'Authorization': 'Bearer علی'}
-    BAD_SIGNATURE_TOKEN = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJpZCI6MX0.JAWUkAU2mWhxcd6MS8r9pd44yBIfkEBmpr3WLeqIccM'}
-    TOKEN_WITHOUT_USER_ID = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJpZCI6MX0.PpyXW0PgmGSPaaNirm_Ei4Y2fw9nb4TN26RN1u9RHSo'}
-    TOKEN = {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxfQ.AF3nsj8IQ6t0ncqIx4quoyPfYaZ-pqUOW4z_euUztPM'}
+    BAD_SIGNATURE_TOKEN = {
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJpZCI6MX0.JAWUkAU2mWhxcd6MS8r9pd44yBIfkEBmpr3WLeqIccM',
+    }
+    TOKEN_WITHOUT_USER_ID = {
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJpZCI6MX0.PpyXW0PgmGSPaaNirm_Ei4Y2fw9nb4TN26RN1u9RHSo',
+    }
+    TOKEN = {
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxfQ.AF3nsj8IQ6t0ncqIx4quoyPfYaZ-pqUOW4z_euUztPM',
+    }
 
     def setUp(self) -> None:
         app = Panther(__name__, configs=__name__, urls=urls)
@@ -70,6 +76,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
 
     def tearDown(self) -> None:
         Path(DB_PATH).unlink()
+        config.refresh()
 
     async def test_user_without_auth(self):
         res = await self.client.get('without')
@@ -114,7 +121,9 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
             res = await self.client.get('auth-required', headers=self.JUST_BEARER_TOKEN)
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'JWTAuthentication Error: "Authorization header must contain 2 parts"'
+        assert (
+            captured.records[0].getMessage() == 'JWTAuthentication Error: "Authorization header must contain 2 parts"'
+        )
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
@@ -124,7 +133,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == (
-            'JWTAuthentication Error: "\'latin-1\' codec can\'t encode characters in position 0-2: '
+            "JWTAuthentication Error: \"'latin-1' codec can't encode characters in position 0-2: "
             'ordinal not in range(256)"'
         )
         assert res.status_code == 401
@@ -178,7 +187,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
             'username': 'Username',
             'password': 'Password',
             'last_login': user.last_login.isoformat(),
-            'date_created': user.date_created.isoformat()
+            'date_created': user.date_created.isoformat(),
         }
         assert res.status_code == 200
         assert res.data == expected_response
@@ -191,8 +200,10 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
             res = await self.client.get('refresh-token', headers={'Authorization': f'Bearer {tokens["access_token"]}'})
 
         assert len(captured.records) == 1
-        assert captured.records[
-                   0].getMessage() == 'JWTAuthentication Error: "Invalid token type; expected `refresh` token."'
+        assert (
+            captured.records[0].getMessage()
+            == 'JWTAuthentication Error: "Invalid token type; expected `refresh` token."'
+        )
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
@@ -241,7 +252,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
             'username': 'Username',
             'password': 'Password',
             'last_login': user.last_login.isoformat(),
-            'date_created': user.date_created.isoformat()
+            'date_created': user.date_created.isoformat(),
         }
         assert res.status_code == 200
         assert res.data == expected_response
@@ -259,8 +270,10 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
             res = await self.client.get('refresh-token', headers={'cookie': f'access_token={tokens["access_token"]}'})
 
         assert len(captured.records) == 1
-        assert captured.records[
-                   0].getMessage() == 'CookieJWTAuthentication Error: "Invalid token type; expected `refresh` token."'
+        assert (
+            captured.records[0].getMessage()
+            == 'CookieJWTAuthentication Error: "Invalid token type; expected `refresh` token."'
+        )
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
@@ -274,9 +287,10 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
         tokens = await user.login()
 
         with self.assertLogs(level='ERROR') as captured:
-            res = await self.client.get('refresh-token', headers={
-                'cookie': f'access_token={tokens["access_token"]}; refresh_token={tokens["refresh_token"]}'
-            })
+            res = await self.client.get(
+                'refresh-token',
+                headers={'cookie': f'access_token={tokens["access_token"]}; refresh_token={tokens["refresh_token"]}'},
+            )
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == 'Redis is not connected; token revocation is not effective.'
@@ -293,8 +307,10 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
             res = await self.client.get('auth-required')
 
         assert len(captured.records) == 1
-        assert captured.records[
-                   0].getMessage() == 'QueryParamJWTAuthentication Error: "`authorization` query param not found."'
+        assert (
+            captured.records[0].getMessage()
+            == 'QueryParamJWTAuthentication Error: "`authorization` query param not found."'
+        )
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
@@ -308,14 +324,14 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
         tokens = await user.login()
 
         with self.assertNoLogs(level='ERROR'):
-            res = await self.client.get('auth-required', query_params={'authorization': tokens["access_token"]})
+            res = await self.client.get('auth-required', query_params={'authorization': tokens['access_token']})
 
         expected_response = {
             'id': user.id,
             'username': 'Username',
             'password': 'Password',
             'last_login': user.last_login.isoformat(),
-            'date_created': user.date_created.isoformat()
+            'date_created': user.date_created.isoformat(),
         }
         assert res.status_code == 200
         assert res.data == expected_response
@@ -330,11 +346,13 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
         tokens = await user.login()
 
         with self.assertLogs(level='ERROR') as captured:
-            res = await self.client.get('refresh-token', query_params={'authorization': tokens["access_token"]})
+            res = await self.client.get('refresh-token', query_params={'authorization': tokens['access_token']})
 
         assert len(captured.records) == 1
-        assert captured.records[
-                   0].getMessage() == 'QueryParamJWTAuthentication Error: "Invalid token type; expected `refresh` token."'
+        assert (
+            captured.records[0].getMessage()
+            == 'QueryParamJWTAuthentication Error: "Invalid token type; expected `refresh` token."'
+        )
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
@@ -348,7 +366,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
         tokens = await user.login()
 
         with self.assertLogs(level='ERROR') as captured:
-            res = await self.client.get('refresh-token', query_params={'authorization': tokens["refresh_token"]})
+            res = await self.client.get('refresh-token', query_params={'authorization': tokens['refresh_token']})
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == 'Redis is not connected; token revocation is not effective.'

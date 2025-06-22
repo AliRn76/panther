@@ -2,20 +2,19 @@ import random
 from unittest import TestCase
 
 from panther.base_request import BaseRequest
+from panther.configs import config
 from panther.exceptions import PantherError
 from panther.routings import (
+    ENDPOINT_NOT_FOUND,
     finalize_urls,
     find_endpoint,
     flatten_urls,
-    ENDPOINT_NOT_FOUND,
 )
 
 
 class TestRoutingFunctions(TestCase):
     def tearDown(self) -> None:
-        from panther.configs import config
-
-        config.URLS = {}
+        config.refresh()
 
     # Collecting
     def test_flatten_urls_ellipsis_endpoints(self):
@@ -71,7 +70,8 @@ class TestRoutingFunctions(TestCase):
             assert False
 
     def test_flatten_urls_invalid_url(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls1 = {
             'user/': {
@@ -99,7 +99,8 @@ class TestRoutingFunctions(TestCase):
             assert False
 
     def test_flatten_urls_empty_url(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '': temp_func,
@@ -113,7 +114,8 @@ class TestRoutingFunctions(TestCase):
         assert collected_urls == expected_result
 
     def test_flatten_urls_nested_empty_urls(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '': {
@@ -141,7 +143,8 @@ class TestRoutingFunctions(TestCase):
         assert collected_urls == expected_result
 
     def test_flatten_urls_slash_url(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '/': temp_func,
@@ -155,7 +158,8 @@ class TestRoutingFunctions(TestCase):
         assert collected_urls == expected_result
 
     def test_flatten_urls_nested_slash_urls(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '/': {
@@ -183,7 +187,8 @@ class TestRoutingFunctions(TestCase):
         assert collected_urls == expected_result
 
     def test_flatten_urls_simple_urls(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '<user_id>/': temp_func,
@@ -201,7 +206,8 @@ class TestRoutingFunctions(TestCase):
         assert collected_urls == expected_result
 
     def test_flatten_urls_simple_nested_urls(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             'user/': {
@@ -221,7 +227,8 @@ class TestRoutingFunctions(TestCase):
         assert collected_urls == expected_result
 
     def test_flatten_urls_simple_nested_urls_without_slash_at_end(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             'user': {
@@ -241,7 +248,8 @@ class TestRoutingFunctions(TestCase):
         assert collected_urls == expected_result
 
     def test_flatten_urls_complex_nested_urls(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             'user/': {
@@ -289,7 +297,8 @@ class TestRoutingFunctions(TestCase):
 
     # Finalize
     def test_finalize_empty_url(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '': temp_func,
@@ -304,7 +313,8 @@ class TestRoutingFunctions(TestCase):
         assert finalized_urls == expected_result
 
     def test_finalize_empty_url_nested(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '': {
@@ -335,7 +345,8 @@ class TestRoutingFunctions(TestCase):
         assert finalized_urls == expected_result
 
     def test_finalize_root_url(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '/': temp_func,
@@ -350,7 +361,8 @@ class TestRoutingFunctions(TestCase):
         assert finalized_urls == expected_result
 
     def test_finalize_root_url_nested(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '/': {
@@ -381,7 +393,8 @@ class TestRoutingFunctions(TestCase):
         assert finalized_urls == expected_result
 
     def test_finalize_root_and_empty_url_nested(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '/': {
@@ -412,7 +425,8 @@ class TestRoutingFunctions(TestCase):
         assert finalized_urls == expected_result
 
     def test_finalize_empty_and_root_url_nested(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '': {
@@ -443,7 +457,8 @@ class TestRoutingFunctions(TestCase):
         assert finalized_urls == expected_result
 
     def test_finalize_urls(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             'user/': {
@@ -504,13 +519,14 @@ class TestRoutingFunctions(TestCase):
                         },
                     },
                 },
-                'v2': {}
+                'v2': {},
             },
         }
         assert finalized_urls == expected_result
 
     def test_finalize_urls_same_pre_path_variable(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls = {
             '': temp_func,
@@ -530,13 +546,14 @@ class TestRoutingFunctions(TestCase):
         assert finalized_urls == expected_result
 
     def test_finalize_urls_with_same_level_path_variables(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         urls1 = {
             'user': {
                 '<index1>/': temp_func,
                 '<index2>/': temp_func,
-            }
+            },
         }
         urls2 = {
             'user': {
@@ -544,7 +561,7 @@ class TestRoutingFunctions(TestCase):
                 '<index2>/': temp_func,
                 '<index3>/': {'detail': temp_func},
                 '<index4>/': {'detail': temp_func},
-            }
+            },
         }
 
         try:
@@ -552,8 +569,8 @@ class TestRoutingFunctions(TestCase):
         except PantherError as exc:
             assert exc.args[0] == (
                 "URLs can't have same-level path variables that point to an endpoint: "
-                "\n\t- /user/<index1>"
-                "\n\t- /user/<index2>"
+                '\n\t- /user/<index1>'
+                '\n\t- /user/<index2>'
             )
         else:
             assert False
@@ -563,16 +580,17 @@ class TestRoutingFunctions(TestCase):
         except PantherError as exc:
             assert exc.args[0] == (
                 "URLs can't have same-level path variables that point to a dict: "
-                "\n\t- /user/<index1>"
-                "\n\t- /user/<index3>"
-                "\n\t- /user/<index4>"
+                '\n\t- /user/<index1>'
+                '\n\t- /user/<index3>'
+                '\n\t- /user/<index4>'
             )
         else:
             assert False
 
     # Find Endpoint
     def test_find_endpoint_root_url(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         from panther.configs import config
 
@@ -584,19 +602,26 @@ class TestRoutingFunctions(TestCase):
         assert _func == temp_func
 
     def test_find_endpoint_success(self):
-        def user_id_profile_id(): pass
+        def user_id_profile_id():
+            pass
 
-        def user_profile(): pass
+        def user_profile():
+            pass
 
-        def payment(): pass
+        def payment():
+            pass
 
-        def admin_v1_profile_avatar(): pass
+        def admin_v1_profile_avatar():
+            pass
 
-        def admin_v1_id(): pass
+        def admin_v1_id():
+            pass
 
-        def admin_v2_users_list_registered(): pass
+        def admin_v2_users_list_registered():
+            pass
 
-        def admin_v2_users_detail_not_registered(): pass
+        def admin_v2_users_detail_not_registered():
+            pass
 
         from panther.configs import config
 
@@ -648,19 +673,26 @@ class TestRoutingFunctions(TestCase):
         assert admin_v2_users_detail_not_registered_func == admin_v2_users_detail_not_registered
 
     def test_find_endpoint_success_path(self):
-        def user_id_profile_id(): pass
+        def user_id_profile_id():
+            pass
 
-        def user_profile(): pass
+        def user_profile():
+            pass
 
-        def payment(): pass
+        def payment():
+            pass
 
-        def admin_v1_profile_avatar(): pass
+        def admin_v1_profile_avatar():
+            pass
 
-        def admin_v1_id(): pass
+        def admin_v1_id():
+            pass
 
-        def admin_v2_users_list_registered(): pass
+        def admin_v2_users_list_registered():
+            pass
 
-        def admin_v2_users_detail_not_registered(): pass
+        def admin_v2_users_detail_not_registered():
+            pass
 
         from panther.configs import config
 
@@ -723,7 +755,8 @@ class TestRoutingFunctions(TestCase):
         assert admin_v2_users_detail_not_registered_path == 'admin/v1/users/detail/not-registered'
 
     def test_find_endpoint_not_found(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         from panther.configs import config
 
@@ -749,7 +782,8 @@ class TestRoutingFunctions(TestCase):
         assert admin_v2_users_detail_not_registered_func is None
 
     def test_find_endpoint_not_found_path(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         from panther.configs import config
 
@@ -775,7 +809,8 @@ class TestRoutingFunctions(TestCase):
         assert admin_v2_users_detail_not_registered_path == ''
 
     def test_find_endpoint_not_found_last_is_path_variable(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         from panther.configs import config
 
@@ -801,7 +836,8 @@ class TestRoutingFunctions(TestCase):
         assert admin_v2_users_detail_not_registered_func is None
 
     def test_find_endpoint_not_found_path_last_is_path_variable(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         from panther.configs import config
 
@@ -827,7 +863,8 @@ class TestRoutingFunctions(TestCase):
         assert admin_v2_users_detail_not_registered_path == ''
 
     def test_find_endpoint_not_found_too_many(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         from panther.configs import config
 
@@ -840,7 +877,8 @@ class TestRoutingFunctions(TestCase):
         assert func is None
 
     def test_find_endpoint_not_found_not_enough(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         from panther.configs import config
 
@@ -853,11 +891,14 @@ class TestRoutingFunctions(TestCase):
         assert func is None
 
     def test_find_endpoint_same_pre_path_variable(self):
-        def temp_1(): pass
+        def temp_1():
+            pass
 
-        def temp_2(): pass
+        def temp_2():
+            pass
 
-        def temp_3(): pass
+        def temp_3():
+            pass
 
         from panther.configs import config
 
@@ -877,11 +918,14 @@ class TestRoutingFunctions(TestCase):
         assert temp_3_func == temp_3
 
     def test_find_endpoint_same_pre_path_variable_path(self):
-        def temp_1(): pass
+        def temp_1():
+            pass
 
-        def temp_2(): pass
+        def temp_2():
+            pass
 
-        def temp_3(): pass
+        def temp_3():
+            pass
 
         from panther.configs import config
 
@@ -901,11 +945,14 @@ class TestRoutingFunctions(TestCase):
         assert temp_3_path == '<index>/<id>'
 
     def test_find_endpoint_same_pre_key(self):
-        def temp_1(): pass
+        def temp_1():
+            pass
 
-        def temp_2(): pass
+        def temp_2():
+            pass
 
-        def temp_3(): pass
+        def temp_3():
+            pass
 
         from panther.configs import config
 
@@ -926,11 +973,14 @@ class TestRoutingFunctions(TestCase):
         assert temp_3_func == temp_3
 
     def test_find_endpoint_same_pre_key_path(self):
-        def temp_1(): pass
+        def temp_1():
+            pass
 
-        def temp_2(): pass
+        def temp_2():
+            pass
 
-        def temp_3(): pass
+        def temp_3():
+            pass
 
         from panther.configs import config
 
@@ -951,7 +1001,9 @@ class TestRoutingFunctions(TestCase):
         assert temp_3_path == 'hello/<id>'
 
     def test_find_endpoint_with_params(self):
-        def user_id_profile_id(): pass
+        def user_id_profile_id():
+            pass
+
         from panther.configs import config
 
         config.URLS = {
@@ -967,7 +1019,8 @@ class TestRoutingFunctions(TestCase):
 
     # Collect PathVariables
     def test_collect_path_variables(self):
-        def temp_func(): pass
+        def temp_func():
+            pass
 
         from panther.configs import config
 
@@ -1000,60 +1053,67 @@ class TestRoutingFunctions(TestCase):
 
     # Complete test ready for benchmarking
     def test_find_endpoint_complete(self):
-        def _(): pass
-        def _3(): pass
-        def _1(): pass
-        def _4(): pass
-        def _159(): pass
-        def _16(): pass
-        def _1710(): pass
-        def _18(): pass
-        def _19(): pass
-        def _211(): pass
-        def _2121516(): pass
-        def _2141718(): pass
-        def _220(): pass
-        def _22122(): pass
+        def _():
+            pass
+
+        def _3():
+            pass
+
+        def _1():
+            pass
+
+        def _4():
+            pass
+
+        def _159():
+            pass
+
+        def _16():
+            pass
+
+        def _1710():
+            pass
+
+        def _18():
+            pass
+
+        def _19():
+            pass
+
+        def _211():
+            pass
+
+        def _2121516():
+            pass
+
+        def _2141718():
+            pass
+
+        def _220():
+            pass
+
+        def _22122():
+            pass
 
         from panther.configs import config
 
         config.URLS = {
             '': _,
-            '0': {
-                '21': {}
-            },
+            '0': {'21': {}},
             '1': {
                 '': _1,
-                '<5>': {
-                    '<9>': _159
-                },
+                '<5>': {'<9>': _159},
                 '6': _16,
-                '7': {
-                    '10': _1710
-                },
+                '7': {'10': _1710},
                 '<8>': _18,
             },
             '<2>': {
                 '11': _211,
-                '12': {
-                    '15': {
-                        '16': _2121516
-                    }
-                },
-                '<14>': {
-                    '<17>': {
-                        '<18>': _2141718
-                    }
-                },
-                '19': {
-                    '': _19
-                },
+                '12': {'15': {'16': _2121516}},
+                '<14>': {'<17>': {'<18>': _2141718}},
+                '19': {'': _19},
                 '<20>': _220,
-                '21': {
-                    '<22>': {
-                        '': _22122
-                    }
-                }
+                '21': {'<22>': {'': _22122}},
             },
             '3': _3,
             '<4>': _4,

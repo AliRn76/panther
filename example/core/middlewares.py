@@ -3,7 +3,6 @@ from panther.request import Request
 
 
 class PublicMiddleware(HTTPMiddleware):
-
     async def __call__(self, request: Request):
         if hasattr(request, 'middlewares'):
             request.middlewares.append('Public')
@@ -16,7 +15,6 @@ class PublicMiddleware(HTTPMiddleware):
 
 
 class PrivateMiddleware(HTTPMiddleware):
-
     async def __call__(self, request: Request):
         if hasattr(request, 'middlewares'):
             request.middlewares.append('Private')

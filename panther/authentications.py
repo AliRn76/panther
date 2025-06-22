@@ -1,7 +1,7 @@
 import logging
 import time
 from abc import abstractmethod
-from datetime import timezone, datetime
+from datetime import datetime, timezone
 from typing import Literal
 
 from panther.base_websocket import Websocket
@@ -135,7 +135,7 @@ class JWTAuthentication(BaseAuthentication):
         """Generate access and refresh tokens for user login."""
         return {
             'access_token': cls.encode_jwt(user_id=user.id),
-            'refresh_token': cls.encode_jwt(user_id=user.id, token_type='refresh')
+            'refresh_token': cls.encode_jwt(user_id=user.id, token_type='refresh'),
         }
 
     @classmethod

@@ -4,14 +4,15 @@ import logging
 import sys
 import time
 from threading import Thread
-from typing import Callable, Literal
+from typing import TYPE_CHECKING, Literal
 
 from panther._utils import is_function_async
 from panther.utils import Singleton
 
-__all__ = (
-    'BackgroundTask',
-)
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+__all__ = ('BackgroundTask',)
 
 
 logger = logging.getLogger('panther')
@@ -32,6 +33,7 @@ class BackgroundTask:
 
     * Make sure to submit() BackgroundTask instance otherwise it won't be added to queue.
     """
+
     def __init__(self, func, *args, **kwargs):
         self._func: Callable = func
         self._args: tuple = args
@@ -91,9 +93,9 @@ class BackgroundTask:
         return self
 
     def on(
-            self,
-            day_of_week: Literal['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-            /
+        self,
+        day_of_week: Literal['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+        /,
     ) -> Self:
         """
         Set day to schedule the task, useful on `.every_weeks()`
@@ -120,7 +122,8 @@ class BackgroundTask:
             _time = _time.time()
         else:
             raise TypeError(
-                f'Argument should be instance of `datetime.time()` or `datetime.datetime()` not `{type(_time)}`')
+                f'Argument should be instance of `datetime.time()` or `datetime.datetime()` not `{type(_time)}`',
+            )
 
         if self._unit not in ['days', 'weeks']:
             logger.warning('`.at()` more useful when you are using `.every_days()` or `.every_weeks()`')
@@ -133,6 +136,7 @@ class BackgroundTask:
         ------
             True: Wait and do nothing
             False: Don't wait and Run this task
+
         """
         now = datetime.datetime.now()
 
@@ -141,9 +145,8 @@ class BackgroundTask:
             return True
 
         # Check day of week
-        if self._day_of_week is not None:
-            if self._day_of_week != now.weekday():
-                return True
+        if self._day_of_week is not None and self._day_of_week != now.weekday():
+            return True
 
         # We don't have time condition, so run
         if self._time is None:
@@ -152,9 +155,7 @@ class BackgroundTask:
 
         # Time is ok, so run
         if bool(
-                now.hour == self._time.hour and
-                now.minute == self._time.minute and
-                now.second == self._time.second,
+            now.hour == self._time.hour and now.minute == self._time.minute and now.second == self._time.second,
         ):
             self._last_run = now
             return False
@@ -168,6 +169,7 @@ class BackgroundTask:
         ------
             True: Everything is ok
             False: This task is done, remove it from `BackgroundTasks.tasks`
+
         """
         if self._remaining_interval == 0:
             return False
@@ -195,6 +197,7 @@ class BackgroundTask:
         _background_tasks.add_task(self)
         return self
 
+
 class BackgroundTasks(Singleton):
     _initialized: bool = False
 
@@ -216,6 +219,7 @@ class BackgroundTasks(Singleton):
         """
         We only call initialize() once in the panther.main.Panther.load_configs()
         """
+
         def __run_task(task):
             if task() is False:
                 self.tasks.remove(task)

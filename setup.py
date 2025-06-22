@@ -6,7 +6,7 @@ from setuptools import setup
 
 def panther_version() -> str:
     with open('panther/__init__.py') as f:
-        return re.search("__version__ = ['\"]([^'\"]+)['\"]", f.read()).group(1)
+        return re.search('__version__ = [\'"]([^\'"]+)[\'"]', f.read()).group(1)
 
 
 VERSION = panther_version()
@@ -37,10 +37,7 @@ EXTRAS_REQUIRE = {
         'cryptography~=44.0.2',
         'watchfiles~=1.0.4',
     ],
-    'dev': [
-        'ruff~=0.11.2',
-        'pytest~=8.3.5'
-    ]
+    'dev': ['ruff~=0.11.2', 'pytest~=8.3.5'],
 }
 
 setup(

@@ -16,43 +16,31 @@ class OpenAPI(GenericAPI):
             schema = endpoint.output_schema.model.schema()
         else:
             status_code = parsed.status_code
-            schema = {
-                'properties': {
-                    k: {'default': v} for k, v in parsed.data.items()
-                }
-            }
+            schema = {'properties': {k: {'default': v} for k, v in parsed.data.items()}}
 
         responses = {}
         if schema:
-            responses = {
-                'responses': {
-                    status_code: {
-                        'content': {
-                            'application/json': {
-                                'schema': schema
-                            }
-                        }
-                    }
-                }
-            }
+            responses = {'responses': {status_code: {'content': {'application/json': {'schema': schema}}}}}
         request_body = {}
         if endpoint.input_model and method in ['post', 'put', 'patch']:
             request_body = {
                 'requestBody': {
                     'required': True,
                     'content': {
-                        'application/json': {
-                            'schema': endpoint.input_model.schema() if endpoint.input_model else {}
-                        }
-                    }
-                }
+                        'application/json': {'schema': endpoint.input_model.schema() if endpoint.input_model else {}},
+                    },
+                },
             }
 
-        content = {
-                      'title': parsed.title,
-                      'summary': endpoint.__doc__,
-                      'tags': ['.'.join(endpoint.__module__.rsplit('.')[:-1]) or endpoint.__module__],
-                  } | responses | request_body
+        content = (
+            {
+                'title': parsed.title,
+                'summary': endpoint.__doc__,
+                'tags': ['.'.join(endpoint.__module__.rsplit('.')[:-1]) or endpoint.__module__],
+            }
+            | responses
+            | request_body
+        )
         return {method: content}
 
     def get(self):
@@ -92,10 +80,5 @@ class OpenAPI(GenericAPI):
                 if endpoint.delete is not GenericAPI.delete:
                     paths[url] |= self.get_content(endpoint, 'delete')
 
-        openapi_content = {
-            'openapi': '3.0.0',
-            'paths': paths,
-            'components': {}
-        }
-        print(f'{openapi_content=}')
+        openapi_content = {'openapi': '3.0.0', 'paths': paths, 'components': {}}
         return TemplateResponse(name='openapi.html', context={'openapi_content': openapi_content})

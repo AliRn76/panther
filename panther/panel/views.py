@@ -4,12 +4,12 @@ from panther import status
 from panther.app import API, GenericAPI
 from panther.configs import config
 from panther.db.models import BaseUser
-from panther.exceptions import RedirectAPIError, AuthenticationAPIError
+from panther.exceptions import AuthenticationAPIError, RedirectAPIError
 from panther.panel.middlewares import RedirectToSlashMiddleware
-from panther.panel.utils import get_models, clean_model_schema
+from panther.panel.utils import clean_model_schema, get_models
 from panther.permissions import BasePermission
 from panther.request import Request
-from panther.response import TemplateResponse, Response, Cookie, RedirectResponse
+from panther.response import Cookie, RedirectResponse, Response, TemplateResponse
 
 logger = logging.getLogger('panther')
 
@@ -55,17 +55,9 @@ class LoginView(GenericAPI):
             url=request.query_params.get('redirect_to', '..'),
             status_code=status.HTTP_302_FOUND,
             set_cookies=[
-                Cookie(
-                    key='access_token',
-                    value=tokens['access_token'],
-                    max_age=config.JWT_CONFIG.life_time
-                ),
-                Cookie(
-                    key='refresh_token',
-                    value=tokens['refresh_token'],
-                    max_age=config.JWT_CONFIG.refresh_life_time
-                )
-            ]
+                Cookie(key='access_token', value=tokens['access_token'], max_age=config.JWT_CONFIG.life_time),
+                Cookie(key='refresh_token', value=tokens['refresh_token'], max_age=config.JWT_CONFIG.refresh_life_time),
+            ],
         )
 
 
@@ -93,7 +85,7 @@ class TableView(GenericAPI):
                 'fields': clean_model_schema(model.schema()),
                 'tables': get_models(),
                 'records': Response.prepare_data(data),
-            }
+            },
         )
 
 
@@ -108,7 +100,7 @@ class CreateView(GenericAPI):
             context={
                 'fields': clean_model_schema(model.schema()),
                 'tables': get_models(),
-            }
+            },
         )
 
     async def post(self, request: Request, index: int):
@@ -129,10 +121,7 @@ class DetailView(GenericAPI):
         obj = await model.find_one_or_raise(id=document_id)
         return TemplateResponse(
             name='detail.html',
-            context={
-                'fields': clean_model_schema(model.schema()),
-                'data': obj.model_dump()
-            }
+            context={'fields': clean_model_schema(model.schema()), 'data': obj.model_dump()},
         )
 
     async def put(self, request: Request, index: int, document_id: str):

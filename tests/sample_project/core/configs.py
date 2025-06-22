@@ -4,25 +4,20 @@ from pathlib import Path
 from panther.throttling import Throttle
 from panther.utils import load_env
 
-BASE_DIR = Path(__name__).resolve().parent
-BASE_DIR = BASE_DIR / 'tests/sample_project'  # noqa
+BASE_DIR = Path(__name__).resolve().parent / 'tests/sample_project'
 
 env = load_env(BASE_DIR / '.env')
 
 SECRET_KEY = env['SECRET_KEY']
 
-MIDDLEWARES = [
-    'panther.middlewares.monitoring.MonitoringMiddleware'
-]
+MIDDLEWARES = ['panther.middlewares.monitoring.MonitoringMiddleware']
 
 LOG_QUERIES = True
 DATABASE = {
-    'engine': {
-        'class': 'panther.db.connections.PantherDBConnection'
-    },
+    'engine': {'class': 'panther.db.connections.PantherDBConnection'},
 }
 AUTHENTICATION = 'panther.authentications.JWTAuthentication'
-JWTConfig = {
+JWT_CONFIG = {
     'algorithm': 'HS256',
     'life_time': timedelta(days=2),
     'key': SECRET_KEY,

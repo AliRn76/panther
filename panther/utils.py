@@ -33,7 +33,7 @@ def load_env(env_file: str | Path, /) -> dict[str, str]:
         raise ValueError(f'"{env_file}" is not a file.') from None
 
     with open(env_file) as file:
-        for line in file.readlines():
+        for line in file:
             striped_line = line.strip()
             if not striped_line.startswith('#') and '=' in striped_line:
                 key, value = striped_line.split('=', 1)
@@ -67,6 +67,7 @@ def round_datetime(dt: datetime, delta: timedelta) -> datetime:
 
         >>> round_datetime(datetime(2024, 7, 18, 13, 22, 11, 562159), timedelta(days=2))
         datetime.datetime(2024, 7, 18, 0, 0)
+
     """
     return datetime.min + round((dt - datetime.min) / delta) * delta
 
@@ -87,19 +88,12 @@ def scrypt(password: str, salt: bytes, digest: bool = False) -> str | bytes:
     h_len: The length in octets of the hash function (32 for SHA256).
     mf_len: The length in octets of the output of the mixing function (SMix below). Defined as r * 128 in RFC7914.
     """
-    n = 2 ** 14  # 16384
+    n = 2**14  # 16384
     r = 8
     p = 10
     dk_len = 64
 
-    derived_key = hashlib.scrypt(
-        password=password.encode(),
-        salt=salt,
-        n=n,
-        r=r,
-        p=p,
-        dklen=dk_len
-    )
+    derived_key = hashlib.scrypt(password=password.encode(), salt=salt, n=n, r=r, p=p, dklen=dk_len)
     if digest:
         return hashlib.md5(derived_key).hexdigest()
     return derived_key
