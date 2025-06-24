@@ -59,10 +59,10 @@ class Headers:
 
     def get_cookies(self) -> dict:
         """
-        request.headers.cookie:
+        Example of `request.headers.cookie`:
             'csrftoken=aaa; sessionid=bbb; access_token=ccc; refresh_token=ddd'
 
-        request.headers.get_cookies():
+        Example of `request.headers.get_cookies()`:
             {
                 'csrftoken': 'aaa',
                 'sessionid': 'bbb',

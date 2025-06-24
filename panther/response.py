@@ -74,7 +74,7 @@ class Response:
         status_code: int = status.HTTP_200_OK,
         headers: dict | None = None,
         pagination: Pagination | None = None,
-        set_cookies: list[Cookie] | None = None,
+        set_cookies: Cookie | list[Cookie] | None = None,
     ):
         """
         :param data: should be an instance of ResponseDataTypes
@@ -82,7 +82,7 @@ class Response:
         :param headers: should be dict of headers
         :param pagination: an instance of Pagination or None
             The `pagination.template()` method will be used
-        :param set_cookies: list of cookies you want to set on the client
+        :param set_cookies: single cookie or list of cookies you want to set on the client
             Set the `max_age` to `0` if you want to delete a cookie
         """
         headers = headers or {}
@@ -95,6 +95,8 @@ class Response:
         self.cookies = None
         if set_cookies:
             c = cookies.SimpleCookie()
+            if not isinstance(set_cookies, list):
+                set_cookies = [set_cookies]
             for cookie in set_cookies:
                 c[cookie.key] = cookie.value
                 c[cookie.key]['path'] = cookie.path
@@ -126,7 +128,7 @@ class Response:
         } | self._headers
 
     @property
-    def bytes_headers(self) -> list[tuple[bytes]]:
+    def bytes_headers(self) -> list[tuple[bytes, bytes]]:
         result = [(k.encode(), str(v).encode()) for k, v in (self.headers or {}).items()]
         if self.cookies:
             result.extend(self.cookies)

@@ -56,21 +56,24 @@ class RequestClient:
             send=self.send,
         )
         response_headers = {key.decode(): value.decode() for key, value in self.header['headers']}
+        cookies = [(key, value) for key, value in self.header['headers'] if key.decode() == 'Set-Cookie']
         if response_headers['Content-Type'] == 'text/html; charset=utf-8':
             data = self.response.decode()
-            return HTMLResponse(data=data, status_code=self.header['status'], headers=response_headers)
+            response = HTMLResponse(data=data, status_code=self.header['status'], headers=response_headers)
 
         elif response_headers['Content-Type'] == 'text/plain; charset=utf-8':
             data = self.response.decode()
-            return PlainTextResponse(data=data, status_code=self.header['status'], headers=response_headers)
+            response = PlainTextResponse(data=data, status_code=self.header['status'], headers=response_headers)
 
         elif response_headers['Content-Type'] == 'application/octet-stream':
             data = self.response.decode()
-            return PlainTextResponse(data=data, status_code=self.header['status'], headers=response_headers)
+            response = PlainTextResponse(data=data, status_code=self.header['status'], headers=response_headers)
 
         else:
             data = json.loads(self.response or b'null')
-            return Response(data=data, status_code=self.header['status'], headers=response_headers)
+            response = Response(data=data, status_code=self.header['status'], headers=response_headers)
+        response.cookies = cookies
+        return response
 
 
 class APIClient:

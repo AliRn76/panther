@@ -2,7 +2,7 @@ from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
 from panther.app import API, GenericAPI
-from panther.response import HTMLResponse, PlainTextResponse, Response, StreamingResponse, TemplateResponse
+from panther.response import Cookie, HTMLResponse, PlainTextResponse, Response, StreamingResponse, TemplateResponse
 from panther.test import APIClient
 
 
@@ -161,6 +161,55 @@ class ReturnInvalidStatusCode(GenericAPI):
         return Response(status_code='ali')
 
 
+@API()
+def full_cookie_api():
+    return Response(
+        set_cookies=Cookie(
+            key='custom_key',
+            value='custom_value',
+            domain='example.com',
+            max_age=100,
+            secure=True,
+            httponly=True,
+            samesite='strict',
+            path='/here/',
+        )
+    )
+
+
+@API()
+def multiple_cookies_api():
+    return Response(
+        set_cookies=[
+            Cookie(
+                key='custom_key1',
+                value='custom_value1',
+                domain='example.com',
+                max_age=100,
+                secure=True,
+                httponly=True,
+                samesite='strict',
+                path='/here/',
+            ),
+            Cookie(
+                key='custom_key2',
+                value='custom_value2',
+                domain='example.com',
+                max_age=100,
+                secure=True,
+                httponly=True,
+                samesite='strict',
+                path='/here/',
+            ),
+        ]
+    )
+
+
+@API()
+def default_cookies_api():
+    return Response(set_cookies=Cookie(key='custom_key', value='custom_value'))
+
+
 urls = {
     'nothing': return_nothing,
     'none': return_none,
@@ -191,6 +240,9 @@ urls = {
     'stream': ReturnStreamingResponse,
     'async-stream': ReturnAsyncStreamingResponse,
     'invalid-status-code': ReturnInvalidStatusCode,
+    'full-cookies': full_cookie_api,
+    'multiple-cookies': multiple_cookies_api,
+    'default-cookies': default_cookies_api,
 }
 
 
@@ -491,3 +543,46 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.headers['Content-Type'] == 'application/json'
         assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '34'
+
+    async def test_full_cookie(self):
+        res = await self.client.get('full-cookies/')
+        assert res.status_code == 200
+        assert 'Set-Cookie' in res.headers
+        assert res.headers['Set-Cookie'] == (
+            'custom_key=custom_value; Domain=example.com; HttpOnly; Max-Age=100; Path=/here/; SameSite=strict; Secure'
+        )
+        assert res.cookies == [
+            (
+                b'Set-Cookie',
+                b'custom_key=custom_value; '
+                b'Domain=example.com; '
+                b'HttpOnly; '
+                b'Max-Age=100; '
+                b'Path=/here/; '
+                b'SameSite=strict; '
+                b'Secure',
+            )
+        ]
+
+    async def test_multiple_cookies(self):
+        res = await self.client.get('multiple-cookies/')
+        assert res.status_code == 200
+        assert 'Set-Cookie' in res.headers
+        assert res.cookies == [
+            (
+                b'Set-Cookie',
+                b'custom_key1=custom_value1; Domain=example.com; HttpOnly; Max-Age=100; '
+                b'Path=/here/; SameSite=strict; Secure',
+            ),
+            (
+                b'Set-Cookie',
+                b'custom_key2=custom_value2; Domain=example.com; HttpOnly; Max-Age=100; '
+                b'Path=/here/; SameSite=strict; Secure',
+            ),
+        ]
+
+    async def test_default_cookie(self):
+        res = await self.client.get('default-cookies/')
+        assert res.status_code == 200
+        assert 'Set-Cookie' in res.headers
+        assert res.cookies == [(b'Set-Cookie', b'custom_key=custom_value; Path=/; SameSite=lax')]
