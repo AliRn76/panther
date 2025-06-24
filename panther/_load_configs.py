@@ -29,6 +29,7 @@ __all__ = (
     'load_database',
     'load_log_queries',
     'load_middlewares',
+    'load_other_configs',
     'load_redis',
     'load_secret_key',
     'load_shutdown',
@@ -207,6 +208,13 @@ def load_background_tasks(_configs: dict, /) -> None:
     if _configs.get('BACKGROUND_TASKS'):
         config.BACKGROUND_TASKS = True
         _background_tasks.initialize()
+
+
+def load_other_configs(_configs: dict, /) -> None:
+    known_configs = set(config.__dataclass_fields__)
+    for key, value in _configs.items():
+        if key.isupper() and key not in known_configs:
+            config[key] = value
 
 
 def load_urls(_configs: dict, /, urls: dict | None) -> None:

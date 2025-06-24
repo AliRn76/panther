@@ -70,6 +70,7 @@ class Panther:
         load_middlewares(self._configs_module)
         load_auto_reformat(self._configs_module)
         load_background_tasks(self._configs_module)
+        load_other_configs(self._configs_module)
         load_urls(self._configs_module, urls=self._urls)
         load_authentication_class(self._configs_module)
         load_websocket_connections()
