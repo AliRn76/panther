@@ -108,12 +108,12 @@ def print_info(config: Config):
     bt = config.BACKGROUND_TASKS
     ws = config.HAS_WS
     rd = redis.is_connected
-    bd = f'{config.BASE_DIR!s:<39}'
-    if len(bd) > 39:
-        bd = f'{bd[:36]}...'
+    bd = f'{config.BASE_DIR!s:<41}'
+    if len(bd) > 41:
+        bd = f'{bd[:38]}...'
 
     # Monitoring
-    monitor = f'{h} * Run "panther monitor" in another session for Monitoring{h}\n' if config.MONITORING else None
+    monitor = f'{h} * Run "panther monitor" in another session for Monitoring  {h}\n' if config.MONITORING else None
 
     # Uvloop
     uvloop_msg = None
@@ -122,8 +122,8 @@ def print_info(config: Config):
             import uvloop
         except ImportError:
             uvloop_msg = (
-                f'{h} * You may want to install `uvloop` for better performance{h}\n'
-                f'{h}   `pip install uvloop`                                   {h}\n'
+                f'{h} * You may want to install `uvloop` for better performance  {h}\n'
+                f'{h}   `pip install uvloop`                                     {h}\n'
             )
 
     # Gunicorn if Websocket
@@ -132,17 +132,17 @@ def print_info(config: Config):
         try:
             import gunicorn
 
-            gunicorn_msg = f'{h} * You have WS, so make sure to run gunicorn with --preload{h}\n'
+            gunicorn_msg = f'{h} * You have WS, so make sure to run gunicorn with --preload  {h}\n'
         except ImportError:
             pass
 
     # Message
     info_message = f"""{logo}
-{h}   Redis: {rd}                                       \t   {h}
-{h}   Websocket: {ws}                                   \t   {h}
-{h}   Monitoring: {mo}                                  \t   {h}
-{h}   Log Queries: {lq}                                 \t   {h}
-{h}   Background Tasks: {bt}                            \t   {h}
+{h}   Redis: {rd}                                       \t     {h}
+{h}   Websocket: {ws}                                   \t     {h}
+{h}   Monitoring: {mo}                                  \t     {h}
+{h}   Log Queries: {lq}                                 \t     {h}
+{h}   Background Tasks: {bt}                            \t     {h}
 {h}   Base directory: {bd}{h}
 """
     if monitor:

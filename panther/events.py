@@ -2,33 +2,36 @@ import asyncio
 import logging
 
 from panther._utils import is_function_async
-from panther.configs import config
+from panther.utils import Singleton
 
 logger = logging.getLogger('panther')
 
 
-class Event:
-    @staticmethod
-    def startup(func):
-        config.STARTUPS.append(func)
+class Event(Singleton):
+    _startups = []
+    _shutdowns = []
+
+    @classmethod
+    def startup(cls, func):
+        cls._startups.append(func)
 
         def wrapper():
             return func()
 
         return wrapper
 
-    @staticmethod
-    def shutdown(func):
-        config.SHUTDOWNS.append(func)
+    @classmethod
+    def shutdown(cls, func):
+        cls._shutdowns.append(func)
 
         def wrapper():
             return func()
 
         return wrapper
 
-    @staticmethod
-    async def run_startups():
-        for func in config.STARTUPS:
+    @classmethod
+    async def run_startups(cls):
+        for func in cls._startups:
             try:
                 if is_function_async(func):
                     await func()
@@ -37,9 +40,9 @@ class Event:
             except Exception as e:
                 logger.error(f'{func.__name__}() startup event got error: {e}')
 
-    @staticmethod
-    def run_shutdowns():
-        for func in config.SHUTDOWNS:
+    @classmethod
+    def run_shutdowns(cls):
+        for func in cls._shutdowns:
             if is_function_async(func):
                 try:
                     asyncio.run(func())
@@ -50,3 +53,9 @@ class Event:
                     pass
             else:
                 func()
+
+    @classmethod
+    def clear(cls):
+        """Clear all stored events (useful for testing)"""
+        cls._startups.clear()
+        cls._shutdowns.clear()
