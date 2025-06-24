@@ -5,6 +5,7 @@ from pydantic import ConfigDict, Field, field_validator
 
 from panther import Panther
 from panther.app import API
+from panther.configs import config
 from panther.db import Model
 from panther.request import Request
 from panther.serializer import ModelSerializer
@@ -106,6 +107,10 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
 
     def tearDown(self) -> None:
         Path(self.DB_PATH).unlink(missing_ok=True)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        config.refresh()
 
     # # # Class Usage
 

@@ -19,6 +19,10 @@ class TestBackgroundTasks(TestCase):
         del Singleton._instances[BackgroundTasks]
         config.BACKGROUND_TASKS = False
 
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
+
     def test_background_tasks_singleton(self):
         new_obj = BackgroundTasks()
         assert id(self.obj) == id(new_obj)

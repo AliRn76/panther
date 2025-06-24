@@ -2,6 +2,7 @@ from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther, status
 from panther.app import API, GenericAPI
+from panther.configs import config
 from panther.openapi.urls import urls
 from panther.openapi.utils import ParseEndpoint
 from panther.response import Response
@@ -132,6 +133,10 @@ class TestPanelAPIs(IsolatedAsyncioTestCase):
     def setUpClass(cls) -> None:
         app = Panther(__name__, configs=__name__, urls={'swagger': urls})
         cls.client = APIClient(app=app)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        config.refresh()
 
     async def test_swagger(self):
         response = await self.client.get('/swagger/')

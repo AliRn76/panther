@@ -45,6 +45,7 @@ def _is_url_endpoint_valid(url: str, endpoint: Callable):
     elif isinstance(endpoint, types.ModuleType):
         raise PantherError(f"URL Can't Point To Module. --> '{url}'")
 
+
 def finalize_urls(urls: dict) -> dict:
     """Convert flat dict to nested"""
     urls_list = []

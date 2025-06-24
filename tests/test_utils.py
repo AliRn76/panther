@@ -181,6 +181,10 @@ class TestLoadConfigs(TestCase):
     def tearDown(self):
         config.refresh()
 
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
+
     def test_urls_not_found(self):
         global URLs
         URLs = None

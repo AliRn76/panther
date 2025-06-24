@@ -78,6 +78,10 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
         Path(DB_PATH).unlink()
         config.refresh()
 
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
+
     async def test_user_without_auth(self):
         res = await self.client.get('without')
         assert res.status_code == 200

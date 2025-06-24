@@ -42,8 +42,12 @@ def interactive_cli_2_mock_responses(index=None):
 class TestCLI(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        config.refresh()
         sys.path.append('tests/sample_project')
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        config.refresh()
+        sys.path.pop()
 
     @skipIf(sys.platform.startswith('win'), 'Not supported in windows')
     def test_print_info(self):

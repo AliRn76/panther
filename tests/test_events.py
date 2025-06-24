@@ -1,6 +1,7 @@
 import logging
 from unittest import IsolatedAsyncioTestCase
 
+from panther.configs import config
 from panther.events import Event
 
 logger = logging.getLogger('panther')
@@ -9,6 +10,10 @@ logger = logging.getLogger('panther')
 class TestEvents(IsolatedAsyncioTestCase):
     def setUp(self):
         Event.clear()
+
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
 
     async def test_async_startup(self):
         assert len(Event._startups) == 0

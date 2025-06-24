@@ -2,6 +2,7 @@ from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
 from panther.app import API, GenericAPI
+from panther.configs import config
 from panther.response import Cookie, HTMLResponse, PlainTextResponse, Response, StreamingResponse, TemplateResponse
 from panther.test import APIClient
 
@@ -251,6 +252,10 @@ class TestResponses(IsolatedAsyncioTestCase):
     def setUpClass(cls) -> None:
         app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
+
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
 
     async def test_nothing(self):
         res = await self.client.get('nothing/')

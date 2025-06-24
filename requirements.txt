@@ -8,3 +8,5 @@ websockets
 motor
 mkdocs
 mkdocs-material
+ruff
+yappi

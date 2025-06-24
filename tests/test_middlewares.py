@@ -218,8 +218,8 @@ class TestMiddleware(IsolatedAsyncioTestCase):
 
 class TestWebsocketMiddleware(TestCase):
     @classmethod
-    def setUpClass(cls) -> None:
-        config.HAS_WS = True  # Required for `pytest` (`unittest` is fine)
+    def tearDownClass(cls):
+        config.refresh()
 
     def test_websocket_middleware(self):
         global MIDDLEWARES

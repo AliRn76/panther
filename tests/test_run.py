@@ -5,7 +5,7 @@ from unittest import TestCase
 
 import tests.sample_project.app.models
 from panther import Panther
-from panther.configs import Config
+from panther.configs import Config, config
 
 
 class TestRun(TestCase):
@@ -13,12 +13,16 @@ class TestRun(TestCase):
     def setUpClass(cls) -> None:
         sys.path.append('tests/sample_project')
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        config.refresh()
+        sys.path.pop()
+
     def test_init(self):
         app = Panther(__name__)
         assert isinstance(app, Panther)
 
     def test_load_configs(self):
-        from panther.configs import config
         from panther.panel.apis import documents_api, healthcheck_api, models_api, single_document_api
 
         base_dir = Path(__name__).resolve().parent
