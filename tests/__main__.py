@@ -53,7 +53,7 @@ def main():
 
     if any(code not in TEST_SUCCESS_CONDITIONS for code in results):
         sys.exit(1)
-    print('\n✅ All tests passed.')
+    print('✅ All tests passed.')
 
 
 if __name__ == '__main__':
