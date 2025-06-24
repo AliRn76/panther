@@ -49,11 +49,11 @@ def main():
     results = [run_test_file(file, flags) for file in files]
     for code, file in zip(results, files):
         if code not in TEST_SUCCESS_CONDITIONS:
-            print(f'❌ Some tests failed in {os.path.basename(file)}', file=sys.stderr)
+            print(f'[FAIL] Some tests failed in {os.path.basename(file)}', file=sys.stderr)
 
     if any(code not in TEST_SUCCESS_CONDITIONS for code in results):
         sys.exit(1)
-    print('✅ All tests passed.')
+    print('\n[PASS] All tests passed.')
 
 
 if __name__ == '__main__':
