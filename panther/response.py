@@ -1,9 +1,15 @@
 import asyncio
+import logging
+from collections.abc import AsyncGenerator, Generator
 from dataclasses import dataclass
 from http import cookies
 from sys import version_info
 from types import NoneType
-from typing import Generator, AsyncGenerator, Any, Type, Literal
+from typing import Any, Literal
+
+import jinja2
+
+from panther.exceptions import APIError
 
 if version_info >= (3, 11):
     from typing import LiteralString
@@ -13,18 +19,22 @@ else:
     LiteralString = TypeVar('LiteralString')
 
 import orjson as json
+from pantherdb import Cursor as PantherDBCursor
 from pydantic import BaseModel
 
 from panther import status
-from panther.configs import config
 from panther._utils import to_async_generator
+from panther.configs import config
 from panther.db.cursor import Cursor
-from pantherdb import Cursor as PantherDBCursor
 from panther.pagination import Pagination
 
-ResponseDataTypes = list | tuple | set | Cursor | PantherDBCursor | dict | int | float | str | bool | bytes | NoneType | Type[BaseModel]
+ResponseDataTypes = (
+    list | tuple | set | Cursor | PantherDBCursor | dict | int | float | str | bool | bytes | NoneType | type[BaseModel]
+)
 IterableDataTypes = list | tuple | set | Cursor | PantherDBCursor
 StreamingDataTypes = Generator | AsyncGenerator
+
+logger = logging.getLogger('panther')
 
 
 @dataclass(slots=True)
@@ -44,6 +54,7 @@ class Cookie:
         `lax` is the default behavior if not specified.
     expires: [Deprecated] In HTTP version 1.1, `expires` was deprecated and replaced with the easier-to-use `max-age`
     """
+
     key: str
     value: str
     domain: str = None
@@ -63,7 +74,7 @@ class Response:
         status_code: int = status.HTTP_200_OK,
         headers: dict | None = None,
         pagination: Pagination | None = None,
-        set_cookies: list[Cookie] | None = None
+        set_cookies: Cookie | list[Cookie] | None = None,
     ):
         """
         :param data: should be an instance of ResponseDataTypes
@@ -71,7 +82,7 @@ class Response:
         :param headers: should be dict of headers
         :param pagination: an instance of Pagination or None
             The `pagination.template()` method will be used
-        :param set_cookies: list of cookies you want to set on the client
+        :param set_cookies: single cookie or list of cookies you want to set on the client
             Set the `max_age` to `0` if you want to delete a cookie
         """
         headers = headers or {}
@@ -84,6 +95,8 @@ class Response:
         self.cookies = None
         if set_cookies:
             c = cookies.SimpleCookie()
+            if not isinstance(set_cookies, list):
+                set_cookies = [set_cookies]
             for cookie in set_cookies:
                 c[cookie.key] = cookie.value
                 c[cookie.key]['path'] = cookie.path
@@ -115,7 +128,7 @@ class Response:
         } | self._headers
 
     @property
-    def bytes_headers(self) -> list[tuple[bytes]]:
+    def bytes_headers(self) -> list[tuple[bytes, bytes]]:
         result = [(k.encode(), str(v).encode()) for k, v in (self.headers or {}).items()]
         if self.cookies:
             result.extend(self.cookies)
@@ -242,13 +255,13 @@ class PlainTextResponse(Response):
 
 class TemplateResponse(HTMLResponse):
     """
-    You may want to declare `TEMPLATES_DIR` in your configs
+    You may want to declare `TEMPLATES_DIR` in your configs, default is '.'
 
     Example:
         TEMPLATES_DIR = 'templates/'
-            or
-        TEMPLATES_DIR = '.'
+
     """
+
     def __init__(
         self,
         source: str | LiteralString | NoneType = None,
@@ -265,7 +278,20 @@ class TemplateResponse(HTMLResponse):
         :param status_code: should be int
         """
         if name:
-            template = config.JINJA_ENVIRONMENT.get_template(name=name)
+            try:
+                template = config.JINJA_ENVIRONMENT.get_template(name=name)
+            except jinja2.exceptions.TemplateNotFound:
+                loaded_path = ' - '.join(
+                    ' - '.join(loader.searchpath)
+                    for loader in config.JINJA_ENVIRONMENT.loader.loaders
+                    if isinstance(loader, jinja2.loaders.FileSystemLoader)
+                )
+                error = (
+                    f'`{name}` Template Not Found.\n'
+                    f'* Make sure `TEMPLATES_DIR` in your configs is correct, Current is {loaded_path}'
+                )
+                logger.error(error)
+                raise APIError
         else:
             template = config.JINJA_ENVIRONMENT.from_string(source=source)
         super().__init__(
@@ -281,7 +307,7 @@ class RedirectResponse(Response):
         url: str,
         headers: dict | None = None,
         status_code: int = status.HTTP_307_TEMPORARY_REDIRECT,
-        set_cookies: list[Cookie] | None = None
+        set_cookies: list[Cookie] | None = None,
     ):
         headers = headers or {}
         headers['Location'] = url

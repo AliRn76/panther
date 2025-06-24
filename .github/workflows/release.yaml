@@ -55,7 +55,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: pytest -m "not mongodb"  tests
+        run: python tests --not_mongodb
 
   tests-macos:
     name: Test MacOS Python${{ matrix.python-version }}
@@ -80,7 +80,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: pytest -m "not mongodb"  tests
+        run: python tests --not_mongodb
 
   tests-mongodb:
     name: Test MongoDB ${{ matrix.mongodb-version }}
@@ -112,7 +112,7 @@ jobs:
           mongodb-version: ${{ matrix.mongodb-version }}
 
       - name: Run Tests
-        run: pytest -m "mongodb" tests
+        run: python tests --not_mongodb
 
   coverage:
     name: Coverage
@@ -145,7 +145,7 @@ jobs:
         run: rm -rf build/
 
       - name: Run Coverage Tests
-        run: coverage run -m pytest tests
+        run: coverage run -m tests
 
       - name: Show Coverage
         run: coverage report

@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+
 from panther.configs import config
 
 LOGS_DIR = config.BASE_DIR / 'logs'
@@ -64,5 +65,5 @@ LOGGING = {
             'handlers': ['default', 'query_file'],
             'level': 'DEBUG',
         },
-    }
+    },
 }

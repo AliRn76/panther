@@ -1,8 +1,7 @@
 from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
 
-from pydantic import Field, ConfigDict
-from pydantic import field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 from panther import Panther
 from panther.app import API
@@ -101,9 +100,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         global DATABASES
-        DATABASES = {
-            'engine': 'panther.db.connections.PantherDBConnection'
-        }
+        DATABASES = {'engine': 'panther.db.connections.PantherDBConnection'}
         app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
 
@@ -119,10 +116,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
         assert res.data == {'author': 'default_author', 'pages_count': 0}
 
     async def test_not_required_fields_full_response(self):
-        payload = {
-            'author': 'ali',
-            'pages_count': '12'
-        }
+        payload = {'author': 'ali', 'pages_count': '12'}
         res = await self.client.post('not-required', payload=payload)
         assert res.status_code == 200
         assert res.data == {'author': 'ali', 'pages_count': 12}
@@ -134,11 +128,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
         assert res.data == {'name': 'Field required'}
 
     async def test_required_fields_success(self):
-        payload = {
-            'name': 'how to code',
-            'author': 'ali',
-            'pages_count': '12'
-        }
+        payload = {'name': 'how to code', 'author': 'ali', 'pages_count': '12'}
         res = await self.client.post('required', payload=payload)
         assert res.status_code == 200
         assert res.data == {'name': 'how to code', 'author': 'ali', 'pages_count': 12}
@@ -150,43 +140,26 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
         assert res.data == {'name': 'Field required', 'author': 'Field required', 'pages_count': 'Field required'}
 
     async def test_only_required_fields_success(self):
-        payload = {
-            'name': 'how to code',
-            'author': 'ali',
-            'pages_count': '12'
-        }
+        payload = {'name': 'how to code', 'author': 'ali', 'pages_count': '12'}
         res = await self.client.post('only-required', payload=payload)
         assert res.status_code == 200
         assert res.data == {'name': 'how to code', 'author': 'ali', 'pages_count': 12}
 
     async def test_with_validators(self):
-        payload = {
-            'name': 'how to code',
-            'author': 'ali',
-            'pages_count': '12'
-        }
+        payload = {'name': 'how to code', 'author': 'ali', 'pages_count': '12'}
         res = await self.client.post('with-validators', payload=payload)
         assert res.status_code == 200
         assert res.data == {'name': 'validated', 'author': 'validated', 'pages_count': 100}
 
     async def test_with_class_fields_success(self):
         # Test Default Value
-        payload1 = {
-            'name': 'how to code',
-            'author': 'ali',
-            'pages_count': '12'
-        }
+        payload1 = {'name': 'how to code', 'author': 'ali', 'pages_count': '12'}
         res = await self.client.post('class-fields', payload=payload1)
         assert res.status_code == 200
         assert res.data == {'name': 'how to code', 'author': 'ali', 'pages_count': 12, 'age': 10}
 
         # Test Validation
-        payload2 = {
-            'name': 'how to code',
-            'author': 'ali',
-            'pages_count': '12',
-            'age': 30
-        }
+        payload2 = {'name': 'how to code', 'author': 'ali', 'pages_count': '12', 'age': 30}
         res = await self.client.post('class-fields', payload=payload2)
         assert res.status_code == 200
         assert res.data == {'name': 'how to code', 'author': 'ali', 'pages_count': 12, 'age': 30}
@@ -195,6 +168,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
 
     async def test_define_class_without_meta(self):
         try:
+
             class Serializer0(ModelSerializer):
                 pass
         except Exception as e:
@@ -205,6 +179,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
 
     async def test_define_class_without_model(self):
         try:
+
             class Serializer1(ModelSerializer):
                 class Config:
                     pass
@@ -216,6 +191,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
 
     async def test_define_class_without_fields(self):
         try:
+
             class Serializer2(ModelSerializer):
                 class Config:
                     model = Book
@@ -227,6 +203,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
 
     async def test_define_class_with_invalid_fields(self):
         try:
+
             class Serializer3(ModelSerializer):
                 class Config:
                     model = Book
@@ -239,6 +216,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
 
     async def test_define_class_with_invalid_required_fields(self):
         try:
+
             class Serializer4(ModelSerializer):
                 class Config:
                     model = Book
@@ -252,6 +230,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
 
     async def test_define_class_with_invalid_model(self):
         try:
+
             class Serializer5(ModelSerializer):
                 class Config:
                     model = ModelSerializer
@@ -264,6 +243,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
 
     async def test_define_class_with_invalid_exclude_1(self):
         try:
+
             class Serializer6(ModelSerializer):
                 class Config:
                     model = Book
@@ -278,6 +258,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
 
     async def test_define_class_with_invalid_exclude_2(self):
         try:
+
             class Serializer7(ModelSerializer):
                 class Config:
                     model = Book
@@ -292,6 +273,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
 
     async def test_with_star_fields_with_exclude3(self):
         try:
+
             class Serializer8(ModelSerializer):
                 class Config:
                     model = Book
@@ -347,12 +329,13 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
     async def test_serializer_doc(self):
         class Serializer1(ModelSerializer):
             """Hello I'm Doc"""
+
             class Config:
                 model = Book
                 fields = ['name', 'author', 'pages_count']
 
         serialized = Serializer1(name='book', author='AliRn', pages_count='12')
-        assert serialized.__doc__ == 'Hello I\'m Doc'
+        assert serialized.__doc__ == "Hello I'm Doc"
 
         class Serializer2(ModelSerializer):
             class Config:

@@ -1,8 +1,8 @@
 import typing
 from typing import Any
 
-from pydantic import create_model, BaseModel, ConfigDict
-from pydantic.fields import FieldInfo, Field
+from pydantic import BaseModel, create_model
+from pydantic.fields import Field, FieldInfo
 from pydantic_core._pydantic_core import PydanticUndefined
 
 from panther.db import Model
@@ -12,13 +12,7 @@ from panther.request import Request
 class MetaModelSerializer:
     KNOWN_CONFIGS = ['model', 'fields', 'exclude', 'required_fields', 'optional_fields']
 
-    def __new__(
-            cls,
-            cls_name: str,
-            bases: tuple[type[typing.Any], ...],
-            namespace: dict[str, typing.Any],
-            **kwargs
-    ):
+    def __new__(cls, cls_name: str, bases: tuple[type[typing.Any], ...], namespace: dict[str, typing.Any], **kwargs):
         if cls_name == 'ModelSerializer':
             # Put `model` and `request` to the main class with `create_model()`
             namespace['__annotations__'].pop('model')
@@ -45,7 +39,7 @@ class MetaModelSerializer:
             __base__=(cls.model_serializer, BaseModel),
             model=(typing.ClassVar[type[BaseModel]], config.model),
             request=(Request, Field(None, exclude=True)),
-            **field_definitions
+            **field_definitions,
         )
 
     @classmethod
@@ -108,12 +102,11 @@ class MetaModelSerializer:
                     raise AttributeError(msg) from None
 
         # Check `required_fields` and `optional_fields` together
-        if (
-                (config.optional_fields == '*' and config.required_fields != []) or
-                (config.required_fields == '*' and config.optional_fields != [])
+        if (config.optional_fields == '*' and config.required_fields != []) or (
+            config.required_fields == '*' and config.optional_fields != []
         ):
             msg = (
-                f"`{cls_name}.Config.optional_fields` and "
+                f'`{cls_name}.Config.optional_fields` and '
                 f"`{cls_name}.Config.required_fields` can't include same fields at the same time"
             )
             raise AttributeError(msg) from None
@@ -122,7 +115,7 @@ class MetaModelSerializer:
                 if optional == required:
                     msg = (
                         f"`{optional}` can't be in `{cls_name}.Config.optional_fields` and "
-                        f"`{cls_name}.Config.required_fields` at the same time"
+                        f'`{cls_name}.Config.required_fields` at the same time'
                     )
                     raise AttributeError(msg) from None
 
@@ -151,7 +144,7 @@ class MetaModelSerializer:
             for field_name in config.fields:
                 field_definitions[field_name] = (
                     config.model.model_fields[field_name].annotation,
-                    config.model.model_fields[field_name]
+                    config.model.model_fields[field_name],
                 )
 
         # Apply `exclude`
@@ -183,10 +176,15 @@ class MetaModelSerializer:
 
     @classmethod
     def collect_model_config(cls, config: typing.Callable, namespace: dict) -> dict:
-        return {
-            attr: getattr(config, attr) for attr in dir(config)
-            if not attr.startswith('__') and attr not in cls.KNOWN_CONFIGS
-        } | namespace.pop('model_config', {}) | {'arbitrary_types_allowed': True}
+        return (
+            {
+                attr: getattr(config, attr)
+                for attr in dir(config)
+                if not attr.startswith('__') and attr not in cls.KNOWN_CONFIGS
+            }
+            | namespace.pop('model_config', {})
+            | {'arbitrary_types_allowed': True}
+        )
 
 
 class ModelSerializer(metaclass=MetaModelSerializer):
@@ -202,6 +200,7 @@ class ModelSerializer(metaclass=MetaModelSerializer):
                 required_fields = ['first_name', 'last_name']  # Optional
                 optional_fields = ['age']  # Optional
     """
+
     model: type[BaseModel]
     request: Request
 

@@ -38,9 +38,9 @@ def _flattening_urls(data: dict | Callable, url: str = ''):
 def _is_url_endpoint_valid(url: str, endpoint: Callable):
     if endpoint is ...:
         raise PantherError(f"URL Can't Point To Ellipsis. ('{url}' -> ...)")
-    elif endpoint is None:
+    if endpoint is None:
         raise PantherError(f"URL Can't Point To None. ('{url}' -> None)")
-    elif url and not re.match(r'^[a-zA-Z<>0-9_/-]+$', url):
+    if url and not re.match(r'^[a-zA-Z<>0-9_/-]+$', url):
         raise PantherError(f"URL Is Not Valid. --> '{url}'")
     elif isinstance(endpoint, types.ModuleType):
         raise PantherError(f"URL Can't Point To Module. --> '{url}'")
@@ -66,7 +66,7 @@ def finalize_urls(urls: dict) -> dict:
     return final_urls
 
 
-def check_urls_path_variables(urls: dict, path: str = '', ) -> None:
+def check_urls_path_variables(urls: dict, path: str = '') -> None:
     middle_route_error = []
     last_route_error = []
     for key, value in urls.items():
@@ -81,13 +81,11 @@ def check_urls_path_variables(urls: dict, path: str = '', ) -> None:
 
     if len(middle_route_error) > 1:
         msg = '\n\t- ' + '\n\t- '.join(e for e in middle_route_error)
-        raise PantherError(
-            f"URLs can't have same-level path variables that point to a dict: {msg}")
+        raise PantherError(f"URLs can't have same-level path variables that point to a dict: {msg}")
 
     if len(last_route_error) > 1:
         msg = '\n\t- ' + '\n\t- '.join(e for e in last_route_error)
-        raise PantherError(
-            f"URLs can't have same-level path variables that point to an endpoint: {msg}")
+        raise PantherError(f"URLs can't have same-level path variables that point to an endpoint: {msg}")
 
 
 def _merge(destination: MutableMapping, *sources) -> MutableMapping:
@@ -187,10 +185,9 @@ def find_endpoint(path: str) -> tuple[Callable | None, str]:
         else:
             # `found` is None
             for key, value in urls.items():
-                if key.startswith('<'):
-                    if isinstance(value, dict):
-                        found_path.append(key)
-                        urls = value
-                        break
+                if key.startswith('<') and isinstance(value, dict):
+                    found_path.append(key)
+                    urls = value
+                    break
             else:
                 return ENDPOINT_NOT_FOUND

@@ -25,7 +25,7 @@ from panther.openapi.utils import OutputSchema
 from panther.pagination import Pagination
 from panther.request import Request
 from panther.response import HTMLResponse, Response, StreamingResponse, TemplateResponse
-from panther.throttling import Throttling
+from panther.throttling import Throttle
 from panther.websocket import close_websocket_connection, send_message_to_websocket
 
 logger = logging.getLogger('panther')
@@ -80,9 +80,6 @@ async def return_response_tuple():
 
 @API(input_model=UserInputSerializer)
 async def res_request_data(request: Request):
-    print('ok')
-    print(f'{request.data=}')
-    print(f'{request.validated_data=}')
     return Response(data=request.validated_data, status_code=204)
 
 
@@ -115,7 +112,7 @@ async def check_permission(request: Request):
     return Response(request.user)
 
 
-@API(throttling=Throttling(rate=5, duration=timedelta(minutes=1)))
+@API(throttling=Throttle(rate=5, duration=timedelta(minutes=1)))
 async def rate_limit():
     return Response(data=('car', 'home', 'phone', 'book'), status_code=202)
 
@@ -187,7 +184,6 @@ async def send_message_to_websocket_api(connection_id: str):
 async def run_background_tasks_api():
     async def hello(name: str):
         time.sleep(5)
-        print(f'Done {name}')
 
     task = (
         BackgroundTask(hello, 'ali1').interval(2).every_seconds(2)
@@ -229,13 +225,13 @@ def logout_api(request: Request):
 
 
 def reader():
-    from faker import Faker
     import time
+
+    from faker import Faker
 
     f = Faker()
     for _ in range(5):
         name = f.name()
-        print(f'{name=}')
         yield name
         time.sleep(1)
 

@@ -6,7 +6,7 @@ from unittest import TestCase
 from panther import Panther
 from panther.configs import config
 from panther.middlewares import HTTPMiddleware
-from panther.utils import generate_secret_key, generate_hash_value_from_string, load_env, round_datetime
+from panther.utils import generate_hash_value_from_string, generate_secret_key, load_env, round_datetime
 
 
 class TestLoadEnvFile(TestCase):
@@ -104,7 +104,6 @@ DB_PORT = '{self.db_port}'
 
 
 class TestUtilFunctions(TestCase):
-
     def test_round_datetime_second_1(self):
         _datetime = datetime(year=1997, month=12, day=25, hour=12, minute=10, second=30)
         _delta = timedelta(seconds=20)
@@ -179,7 +178,7 @@ class TestUtilFunctions(TestCase):
 
 
 class TestLoadConfigs(TestCase):
-    def setUp(self):
+    def tearDown(self):
         config.refresh()
 
     def test_urls_not_found(self):
@@ -212,7 +211,7 @@ class TestLoadConfigs(TestCase):
         assert len(captured.records) == 1
         msg = (
             "Invalid 'URLs': can't be 'dict', you may want to pass it's value directly to Panther(). "
-            "Example: Panther(..., urls=...)"
+            'Example: Panther(..., urls=...)'
         )
         assert captured.records[0].getMessage() == msg
 
@@ -263,9 +262,7 @@ class TestLoadConfigs(TestCase):
 
     def test_middlewares_invalid_path(self):
         global MIDDLEWARES
-        MIDDLEWARES = [
-            ('fake.module', {})
-        ]
+        MIDDLEWARES = [('fake.module', {})]
 
         with self.assertLogs() as captured:
             try:
@@ -279,9 +276,15 @@ class TestLoadConfigs(TestCase):
 
         assert len(captured.records) == 2
         assert captured.records[0].levelname == 'WARNING'
-        assert captured.records[0].getMessage() == "DEPRECATED 'MIDDLEWARES': `data` does not supported in middlewares anymore, as your data is static you may want to pass them to your middleware with config variables"
+        assert (
+            captured.records[0].getMessage()
+            == "DEPRECATED 'MIDDLEWARES': `data` does not supported in middlewares anymore, as your data is static you may want to pass them to your middleware with config variables"
+        )
         assert captured.records[1].levelname == 'ERROR'
-        assert captured.records[1].getMessage() == "Invalid 'MIDDLEWARES': fake.module is not a valid middleware path or type"
+        assert (
+            captured.records[1].getMessage()
+            == "Invalid 'MIDDLEWARES': fake.module is not a valid middleware path or type"
+        )
 
     def test_middlewares_invalid_structure(self):
         global MIDDLEWARES
@@ -298,13 +301,14 @@ class TestLoadConfigs(TestCase):
                 MIDDLEWARES = []
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': fake.module is not a valid middleware path or type"
+        assert (
+            captured.records[0].getMessage()
+            == "Invalid 'MIDDLEWARES': fake.module is not a valid middleware path or type"
+        )
 
     def test_middlewares_too_many_args(self):
         global MIDDLEWARES
-        MIDDLEWARES = [
-            ('fake.module', 1, 2)
-        ]
+        MIDDLEWARES = [('fake.module', 1, 2)]
 
         with self.assertLogs(level='ERROR') as captured:
             try:
@@ -317,13 +321,14 @@ class TestLoadConfigs(TestCase):
                 MIDDLEWARES = []
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': ('fake.module', 1, 2) should be dotted path or type of a middleware class"
+        assert (
+            captured.records[0].getMessage()
+            == "Invalid 'MIDDLEWARES': ('fake.module', 1, 2) should be dotted path or type of a middleware class"
+        )
 
     def test_middlewares_without_args(self):
         global MIDDLEWARES
-        MIDDLEWARES = [
-            ('tests.test_utils.CorrectTestMiddleware', )
-        ]
+        MIDDLEWARES = [('tests.test_utils.CorrectTestMiddleware',)]
 
         with self.assertNoLogs(level='ERROR'):
             Panther(name=__name__, configs=__name__, urls={})
@@ -332,9 +337,7 @@ class TestLoadConfigs(TestCase):
 
     def test_middlewares_invalid_middleware_parent(self):
         global MIDDLEWARES
-        MIDDLEWARES = [
-            ('tests.test_utils.TestMiddleware', )
-        ]
+        MIDDLEWARES = [('tests.test_utils.TestMiddleware',)]
 
         with self.assertLogs(level='ERROR') as captured:
             try:
@@ -347,7 +350,10 @@ class TestLoadConfigs(TestCase):
                 MIDDLEWARES = []
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': is not a sub class of `HTTPMiddleware` or `WebsocketMiddleware`"
+        assert (
+            captured.records[0].getMessage()
+            == "Invalid 'MIDDLEWARES': is not a sub class of `HTTPMiddleware` or `WebsocketMiddleware`"
+        )
 
     def test_jwt_auth_without_secret_key(self):
         global AUTHENTICATION
@@ -392,7 +398,10 @@ class TestLoadConfigs(TestCase):
                 assert False
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'You may have forgotten to use `@API()` on the `tests.test_utils.invalid_api()`'
+        assert (
+            captured.records[0].getMessage()
+            == 'You may have forgotten to use `@API()` on the `tests.test_utils.invalid_api()`'
+        )
 
     def test_check_class_endpoint_inheritance(self):
         with self.assertLogs(level='ERROR') as captured:
@@ -405,8 +414,8 @@ class TestLoadConfigs(TestCase):
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == (
-            f'You may have forgotten to inherit from `panther.app.GenericAPI` or `panther.app.GenericWebsocket` '
-            f'on the `tests.test_utils.InvalidAPI()`'
+            'You may have forgotten to inherit from `panther.app.GenericAPI` or `panther.app.GenericWebsocket` '
+            'on the `tests.test_utils.InvalidAPI()`'
         )
 
     def test_check_websocket_inheritance(self):
@@ -420,8 +429,8 @@ class TestLoadConfigs(TestCase):
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == (
-            f'You may have forgotten to inherit from `panther.app.GenericAPI` or `panther.app.GenericWebsocket` '
-            f'on the `tests.test_utils.InvalidWebsocket()`'
+            'You may have forgotten to inherit from `panther.app.GenericAPI` or `panther.app.GenericWebsocket` '
+            'on the `tests.test_utils.InvalidWebsocket()`'
         )
 
 

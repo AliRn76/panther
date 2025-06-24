@@ -1,5 +1,6 @@
 import logging
-from typing import Literal, Callable
+from collections.abc import Callable
+from typing import Literal
 from urllib.parse import parse_qsl
 
 import orjson as json

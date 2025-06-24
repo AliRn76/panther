@@ -15,7 +15,7 @@ def shell(args) -> None:
         return cli_error(
             'Not Enough Arguments, Give me a file path that contains `Panther()` app.\n'
             '       * Make sure to run `panther shell` in the same directory as that file!\n'
-            '       * Example: `panther shell main.py`'
+            '       * Example: `panther shell main.py`',
         )
     elif len(args) != 1:
         return cli_error('Too Many Arguments.')

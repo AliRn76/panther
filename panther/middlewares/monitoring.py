@@ -24,11 +24,13 @@ class MonitoringMiddleware(HTTPMiddleware):
         logger.info(f'{method} | {request.path} | {request.client} | {response_time} | {response.status_code}')
         return response
 
+
 class WebsocketMonitoringMiddleware(WebsocketMiddleware):
     """
     Create Log Message Like Below:
     date_time | WS | path | ip:port | connection_time(seconds) | status
     """
+
     ConnectedConnectionTime = ' - '
 
     async def __call__(self, connection: Websocket):

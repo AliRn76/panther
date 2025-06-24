@@ -3,7 +3,6 @@ from unittest import TestCase
 import orjson as json
 
 from panther import Panther, status
-from panther.configs import config
 from panther.test import WebsocketClient
 from panther.websocket import GenericWebsocket
 
@@ -43,7 +42,7 @@ class PathVariableWebsocket(GenericWebsocket):
     async def connect(self, name: str, age: int, is_male: bool):
         await self.accept()
         await self.send(
-            f'{type(name).__name__}({name}), {type(age).__name__}({age}), {type(is_male).__name__}({is_male})'
+            f'{type(name).__name__}({name}), {type(age).__name__}({age}), {type(is_male).__name__}({is_male})',
         )
         await self.close()
 
@@ -89,10 +88,7 @@ class WebsocketWithAuthentication(GenericWebsocket):
 class Permission:
     @classmethod
     async def authorization(cls, connection) -> bool:
-        if connection.path == '/with-permission':
-            return True
-        else:
-            return False
+        return connection.path == '/with-permission'
 
 
 class WebsocketWithPermission(GenericWebsocket):
@@ -131,7 +127,6 @@ urls = {
 class TestWebsocket(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        config.HAS_WS = True  # Required for `pytest` (`unittest` is fine)
         cls.app = Panther(__name__, configs=__name__, urls=urls)
 
     def test_without_accept(self):
@@ -291,13 +286,10 @@ class TestWebsocket(TestCase):
         SECRET_KEY = 'hvdhRspoTPh1cJVBHcuingQeOKNc1uRhIP2k7suLe2g='
         token = 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxfQ.AF3nsj8IQ6t0ncqIx4quoyPfYaZ-pqUOW4z_euUztPM'
         app = Panther(__name__, configs=__name__, urls=urls)
-        WS_AUTHENTICATION = None
-        SECRET_KEY = None
-        DATABASE = None
 
         ws = WebsocketClient(app=app)
         with self.assertLogs(level='ERROR') as captured:
-            responses = ws.connect('with-auth', query_params={'authorization': f'Bearer {token}'})
+            responses = ws.connect('with-auth', query_params={'authorization': token})
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == 'QueryParamJWTAuthentication Error: "User not found"'

@@ -12,69 +12,70 @@ from panther.websocket import GenericWebsocket
 
 class MyMiddleware(HTTPMiddleware):
     async def __call__(self, request: Request):
-        request.middlewares = getattr(request, 'middlewares', []) + ['MyMiddleware']
+        request.middlewares = [*getattr(request, 'middlewares', []), 'MyMiddleware']
         response = await self.dispatch(request=request)
-        response.data = response.data + ['MyMiddleware']
+        response.data = [*response.data, 'MyMiddleware']
         return response
 
 
 class BeforeMiddleware1(HTTPMiddleware):
     async def __call__(self, request: Request):
-        request.middlewares = getattr(request, 'middlewares', []) + ['BeforeMiddleware1']
+        request.middlewares = [*getattr(request, 'middlewares', []), 'BeforeMiddleware1']
         return await self.dispatch(request=request)
 
 
 class BeforeMiddleware2(HTTPMiddleware):
     async def __call__(self, request: Request):
-        request.middlewares = getattr(request, 'middlewares', []) + ['BeforeMiddleware2']
+        request.middlewares = [*getattr(request, 'middlewares', []), 'BeforeMiddleware2']
         return await self.dispatch(request=request)
 
 
 class AfterMiddleware1(HTTPMiddleware):
     async def __call__(self, request: Request):
         response = await self.dispatch(request=request)
-        response.data = response.data + ['AfterMiddleware1']
+        response.data = [*response.data, 'AfterMiddleware1']
         return response
 
 
 class AfterMiddleware2(HTTPMiddleware):
     async def __call__(self, request: Request):
         response = await self.dispatch(request=request)
-        response.data = response.data + ['AfterMiddleware2']
+        response.data = [*response.data, 'AfterMiddleware2']
         return response
 
 
 class AfterMiddleware3(HTTPMiddleware):
     async def __call__(self, request: Request):
         response = await self.dispatch(request=request)
-        response.data = response.data + ['AfterMiddleware3']
+        response.data = [*response.data, 'AfterMiddleware3']
         return response
 
 
 class MyWSMiddleware1(WebsocketMiddleware):
     async def __call__(self, connection: Websocket):
-        connection.middlewares = getattr(connection, 'middlewares', []) + ['MyWSMiddleware1']
+        connection.middlewares = [*getattr(connection, 'middlewares', []), 'MyWSMiddleware1']
         return await self.dispatch(connection=connection)
+
 
 class MyWSMiddleware2(WebsocketMiddleware):
     async def __call__(self, connection: Websocket):
-        connection.middlewares = getattr(connection, 'middlewares', []) + ['MyWSMiddleware2']
+        connection.middlewares = [*getattr(connection, 'middlewares', []), 'MyWSMiddleware2']
         return await self.dispatch(connection=connection)
 
 
 class PrivateMiddleware1(HTTPMiddleware):
     async def __call__(self, request: Request):
-        request.middlewares = getattr(request, 'middlewares', []) + ['PrivateMiddleware1']
+        request.middlewares = [*getattr(request, 'middlewares', []), 'PrivateMiddleware1']
         response = await self.dispatch(request=request)
-        response.data = response.data + ['PrivateMiddleware1']
+        response.data = [*response.data, 'PrivateMiddleware1']
         return response
 
 
 class PrivateMiddleware2(HTTPMiddleware):
     async def __call__(self, request: Request):
-        request.middlewares = getattr(request, 'middlewares', []) + ['PrivateMiddleware2']
+        request.middlewares = [*getattr(request, 'middlewares', []), 'PrivateMiddleware2']
         response = await self.dispatch(request=request)
-        response.data = response.data + ['PrivateMiddleware2']
+        response.data = [*response.data, 'PrivateMiddleware2']
         return response
 
 
@@ -177,7 +178,7 @@ class TestMiddleware(IsolatedAsyncioTestCase):
             'PrivateMiddleware2',
             'FunctionCall',
             'PrivateMiddleware2',
-            'PrivateMiddleware1'
+            'PrivateMiddleware1',
         ]
 
     async def test_middlewares_order(self):

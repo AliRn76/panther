@@ -2,36 +2,35 @@ import functools
 import logging
 import traceback
 import typing
+from collections.abc import Callable
 from datetime import timedelta
-from typing import Literal, Callable
+from typing import Literal
 
 from orjson import JSONDecodeError
-from pydantic import ValidationError, BaseModel
+from pydantic import BaseModel, ValidationError
 
 from panther._utils import is_function_async
+from panther.base_request import BaseRequest
 from panther.caching import (
     get_response_from_cache,
     set_response_in_cache,
-    get_throttling_from_cache,
-    increment_throttling_in_cache
 )
 from panther.configs import config
 from panther.exceptions import (
     APIError,
     AuthorizationAPIError,
+    BadRequestAPIError,
     JSONDecodeAPIError,
     MethodNotAllowedAPIError,
-    ThrottlingAPIError,
-    BadRequestAPIError
+    PantherError,
 )
-from panther.exceptions import PantherError
 from panther.middlewares import HTTPMiddleware
 from panther.openapi import OutputSchema
 from panther.permissions import BasePermission
 from panther.request import Request
 from panther.response import Response
 from panther.serializer import ModelSerializer
-from panther.throttling import Throttling
+from panther.throttling import Throttle
 
 __all__ = ('API', 'GenericAPI')
 
@@ -47,12 +46,12 @@ class API:
     auth: It will authenticate the user with header of its request or raise an
         `panther.exceptions.AuthenticationAPIError`.
     permissions: List of permissions that will be called sequentially after authentication to authorize the user.
-    throttling: It will limit the users' request on a specific (time-bucket, path)
-    cache: Response of the request will be cached.
-    cache_exp_time: Specify the expiry time of the cache. (default is `config.DEFAULT_CACHE_EXP`)
+    throttling: It will limit the users' request on a specific (time-window, path)
+    cache: Specify the duration of the cache (Will be used only in GET requests).
     methods: Specify the allowed methods.
     middlewares: These middlewares have inner priority than global middlewares.
     """
+
     func: Callable
 
     def __init__(
@@ -63,33 +62,61 @@ class API:
         output_model: type[BaseModel] | None = None,
         output_schema: OutputSchema | None = None,
         auth: bool = False,
-        permissions: list[BasePermission] | None = None,
-        throttling: Throttling | None = None,
-        cache: bool = False,
-        cache_exp_time: timedelta | int | None = None,
-        middlewares: list[HTTPMiddleware] | None = None,
+        permissions: list[type[BasePermission]] | None = None,
+        throttling: Throttle | None = None,
+        cache: timedelta | None = None,
+        cache_exp_time: timedelta | None = None,
+        middlewares: list[type[HTTPMiddleware]] | None = None,
     ):
-        self.methods = {m.upper() for m in methods} if methods else None
+        self.methods = {m.upper() for m in methods} if methods else {'GET', 'POST', 'PUT', 'PATCH', 'DELETE'}
         self.input_model = input_model
         self.output_schema = output_schema
         self.auth = auth
         self.permissions = permissions or []
         self.throttling = throttling
         self.cache = cache
-        self.cache_exp_time = cache_exp_time
-        self.middlewares: list[HTTPMiddleware] | None = middlewares
+        self.middlewares: list[[HTTPMiddleware]] | None = middlewares
         self.request: Request | None = None
         if output_model:
             deprecation_message = (
-                    traceback.format_stack(limit=2)[0] +
-                    '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
-                    '\nPlease update your code to use the new approach. More info: '
-                    'https://pantherpy.github.io/open_api/'
+                traceback.format_stack(limit=2)[0]
+                + '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
+                '\nPlease update your code to use the new approach. More info: '
+                'https://pantherpy.github.io/open_api/'
             )
             raise PantherError(deprecation_message)
+        if cache_exp_time:
+            deprecation_message = (
+                traceback.format_stack(limit=2)[0]
+                + '\nThe `cache_exp_time` argument has been removed in Panther v5 and is no longer available.'
+                '\nYou may want to use `cache` instead.'
+            )
+            raise PantherError(deprecation_message)
+        # Validate Cache
+        if self.cache and not isinstance(self.cache, timedelta):
+            deprecation_message = (
+                traceback.format_stack(limit=2)[0] + '\nThe `cache` argument has been changed in Panther v5, '
+                'it should be an instance of `datetime.timedelta()`.'
+            )
+            raise PantherError(deprecation_message)
+        assert self.cache is None or isinstance(self.cache, timedelta)
+        # Validate Permissions
+        for perm in self.permissions:
+            if is_function_async(perm.authorization) is False:
+                msg = f'{perm.__name__}.authorization() should be `async`'
+                logger.error(msg)
+                raise PantherError(msg)
+            if type(perm.authorization).__name__ != 'method':
+                msg = f'{perm.__name__}.authorization() should be `@classmethod`'
+                logger.error(msg)
+                raise PantherError(msg)
 
     def __call__(self, func):
         self.func = func
+        self.is_function_async = is_function_async(self.func)
+        self.function_annotations = {
+            k: v for k, v in func.__annotations__.items() if v in {BaseRequest, Request, bool, int}
+        }
 
         @functools.wraps(func)
         async def wrapper(request: Request) -> Response:
@@ -115,17 +142,20 @@ class API:
             return self.options()
 
         # 1. Check Method
-        if self.methods and self.request.method not in self.methods:
+        if self.request.method not in self.methods:
             raise MethodNotAllowedAPIError
 
         # 2. Authentication
         await self.handle_authentication()
 
         # 3. Permissions
-        await self.handle_permission()
+        for perm in self.permissions:
+            if await perm.authorization(self.request) is False:
+                raise AuthorizationAPIError
 
-        # 4. Throttling
-        await self.handle_throttling()
+        # 4. Throttle
+        if throttling := self.throttling or config.THROTTLING:
+            await throttling.check_and_increment(request=self.request)
 
         # 5. Validate Input
         if self.request.method in {'POST', 'PUT', 'PATCH'}:
@@ -133,14 +163,14 @@ class API:
 
         # 6. Get Cached Response
         if self.cache and self.request.method == 'GET':
-            if cached := await get_response_from_cache(request=self.request, cache_exp_time=self.cache_exp_time):
+            if cached := await get_response_from_cache(request=self.request, duration=self.cache):
                 return Response(data=cached.data, headers=cached.headers, status_code=cached.status_code)
 
         # 7. Put PathVariables and Request(If User Wants It) In kwargs
-        kwargs = self.request.clean_parameters(self.func)
+        kwargs = self.request.clean_parameters(self.function_annotations)
 
         # 8. Call Endpoint
-        if is_function_async(self.func):
+        if self.is_function_async:
             response = await self.func(**kwargs)
         else:
             response = self.func(**kwargs)
@@ -153,11 +183,7 @@ class API:
 
         # 10. Set New Response To Cache
         if self.cache and self.request.method == 'GET':
-            await set_response_in_cache(request=self.request, response=response, cache_exp_time=self.cache_exp_time)
-
-        # 11. Warning CacheExpTime
-        if self.cache_exp_time and self.cache is False:
-            logger.warning('"cache_exp_time" won\'t work while "cache" is False')
+            await set_response_in_cache(request=self.request, response=response, duration=self.cache)
 
         return response
 
@@ -167,21 +193,6 @@ class API:
                 logger.critical('"AUTHENTICATION" has not been set in configs')
                 raise APIError
             self.request.user = await config.AUTHENTICATION.authentication(self.request)
-
-    async def handle_throttling(self) -> None:
-        if throttling := self.throttling or config.THROTTLING:
-            if await get_throttling_from_cache(self.request, duration=throttling.duration) + 1 > throttling.rate:
-                raise ThrottlingAPIError
-
-            await increment_throttling_in_cache(self.request, duration=throttling.duration)
-
-    async def handle_permission(self) -> None:
-        for perm in self.permissions:
-            if type(perm.authorization).__name__ != 'method':
-                logger.error(f'{perm.__name__}.authorization should be "classmethod"')
-                raise AuthorizationAPIError
-            if await perm.authorization(self.request) is False:
-                raise AuthorizationAPIError
 
     def handle_input_validation(self):
         if self.input_model:
@@ -212,21 +223,15 @@ class API:
 
 
 class MetaGenericAPI(type):
-    def __new__(
-            cls,
-            cls_name: str,
-            bases: tuple[type[typing.Any], ...],
-            namespace: dict[str, typing.Any],
-            **kwargs
-    ):
+    def __new__(cls, cls_name: str, bases: tuple[type[typing.Any], ...], namespace: dict[str, typing.Any], **kwargs):
         if cls_name == 'GenericAPI':
             return super().__new__(cls, cls_name, bases, namespace)
         if 'output_model' in namespace:
             deprecation_message = (
-                    traceback.format_stack(limit=2)[0] +
-                    '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
-                    '\nPlease update your code to use the new approach. More info: '
-                    'https://pantherpy.github.io/open_api/'
+                traceback.format_stack(limit=2)[0]
+                + '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
+                '\nPlease update your code to use the new approach. More info: '
+                'https://pantherpy.github.io/open_api/'
             )
             raise PantherError(deprecation_message)
         return super().__new__(cls, cls_name, bases, namespace)
@@ -236,14 +241,26 @@ class GenericAPI(metaclass=MetaGenericAPI):
     """
     Check out the documentation of `panther.app.API()`.
     """
+
     input_model: type[ModelSerializer] | type[BaseModel] | None = None
     output_schema: OutputSchema | None = None
     auth: bool = False
-    permissions: list | None = None
-    throttling: Throttling | None = None
-    cache: bool = False
-    cache_exp_time: timedelta | int | None = None
+    permissions: list[type[BasePermission]] | None = None
+    throttling: Throttle | None = None
+    cache: timedelta | None = None
     middlewares: list[HTTPMiddleware] | None = None
+
+    def __init_subclass__(cls, **kwargs):
+        # Creating API instance to validate the attributes.
+        API(
+            input_model=cls.input_model,
+            output_schema=cls.output_schema,
+            auth=cls.auth,
+            permissions=cls.permissions,
+            throttling=cls.throttling,
+            cache=cls.cache,
+            middlewares=cls.middlewares,
+        )
 
     async def get(self, *args, **kwargs):
         raise MethodNotAllowedAPIError
@@ -284,6 +301,5 @@ class GenericAPI(metaclass=MetaGenericAPI):
             permissions=self.permissions,
             throttling=self.throttling,
             cache=self.cache,
-            cache_exp_time=self.cache_exp_time,
             middlewares=self.middlewares,
         )(func)(request=request)

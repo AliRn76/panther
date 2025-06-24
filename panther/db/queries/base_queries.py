@@ -1,8 +1,8 @@
 import operator
 from abc import abstractmethod
+from collections.abc import Iterator
 from functools import reduce
 from sys import version_info
-from typing import Iterator
 
 from pydantic_core._pydantic_core import ValidationError
 
@@ -27,10 +27,7 @@ class BaseQuery:
     @classmethod
     def _clean_error_message(cls, validation_error: ValidationError, is_updating: bool = False) -> str:
         error = ', '.join(
-            '{field}="{error}"'.format(
-                field='.'.join(str(loc) for loc in e['loc']),
-                error=e['msg']
-            )
+            '{field}="{error}"'.format(field='.'.join(str(loc) for loc in e['loc']), error=e['msg'])
             for e in validation_error.errors()
             if not is_updating or e['type'] != 'missing'
         )

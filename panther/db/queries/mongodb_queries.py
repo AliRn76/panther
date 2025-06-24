@@ -3,10 +3,9 @@ from __future__ import annotations
 import types
 import typing
 from sys import version_info
-from typing import get_args, get_origin, Iterable, Sequence, Any, Union
+from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel, ValidationError
-from pymongo.results import InsertOneResult, InsertManyResult
 
 from panther.db.connections import db
 from panther.db.cursor import Cursor
@@ -15,13 +14,19 @@ from panther.db.queries.base_queries import BaseQuery
 from panther.db.utils import prepare_id_for_query
 from panther.exceptions import DatabaseError
 
+if typing.TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
 try:
     from bson.codec_options import CodecOptions
+    from pymongo.results import InsertManyResult, InsertOneResult
 except ImportError:
-    # This 'CodecOptions' is not going to be used,
-    #   If user really wants to use it,
-    #   we are going to force him to install it in `panther.db.connections.MongoDBConnection.init`
+    # MongoDB-related libraries are not required by default.
+    # If the user intends to use MongoDB, they must install the required dependencies explicitly.
+    # This will be enforced in `panther.db.connections.MongoDBConnection.init`.
     CodecOptions = type('CodecOptions', (), {})
+    InsertOneResult = type('InsertOneResult', (), {})
+    InsertManyResult = type('InsertManyResult', (), {})
 
 if version_info >= (3, 11):
     from typing import Self
@@ -49,9 +54,7 @@ def get_annotation_type(annotation: Any) -> type | None:
         return None
 
     # Handle basic types (str, int, bool, dict) and Pydantic BaseModel subclasses
-    if isinstance(annotation, type) and (
-            annotation in (str, int, bool, dict) or issubclass(annotation, BaseModel)
-    ):
+    if isinstance(annotation, type) and (annotation in (str, int, bool, dict) or issubclass(annotation, BaseModel)):
         return annotation
 
     raise DatabaseError(f'Panther does not support {annotation} as a field type for unwrapping.')
@@ -76,9 +79,9 @@ class BaseMongoDBQuery(BaseQuery):
         if isinstance(field_type, (types.GenericAlias, typing._GenericAlias)):
             element_type = get_annotation_type(field_type)  # Unwrap further (e.g. list[str] -> str)
             if element_type is None:
-                raise DatabaseError(f"Cannot determine element type for generic list item: {field_type}")
+                raise DatabaseError(f'Cannot determine element type for generic list item: {field_type}')
             if not isinstance(value, list):  # Or check if iterable, matching the structure
-                raise DatabaseError(f"Expected a list for nested generic type {field_type}, got {type(value)}")
+                raise DatabaseError(f'Expected a list for nested generic type {field_type}, got {type(value)}')
             return [await cls._create_list(field_type=element_type, value=item) for item in value]
 
         # Make sure Model condition is before BaseModel.
@@ -88,7 +91,7 @@ class BaseMongoDBQuery(BaseQuery):
 
         if isinstance(field_type, type) and issubclass(field_type, BaseModel):
             if not isinstance(value, dict):
-                raise DatabaseError(f"Expected a dictionary for BaseModel {field_type.__name__}, got {type(value)}")
+                raise DatabaseError(f'Expected a dictionary for BaseModel {field_type.__name__}, got {type(value)}')
 
             return {
                 field_name: await cls._create_field(model=field_type, field_name=field_name, value=value[field_name])
@@ -115,14 +118,15 @@ class BaseMongoDBQuery(BaseQuery):
         if unwrapped_type is None:
             raise DatabaseError(
                 f"Could not determine a valid underlying type for field '{field_name}' "
-                f"with annotation {field_annotation} in model {model.__name__}."
+                f'with annotation {field_annotation} in model {model.__name__}.',
             )
 
         if get_origin(field_annotation) is list:
             # Or check for general iterables if applicable
             if not isinstance(value, list):
                 raise DatabaseError(
-                    f"Field '{field_name}' expects a list, got {type(value)} for model {model.__name__}")
+                    f"Field '{field_name}' expects a list, got {type(value)} for model {model.__name__}",
+                )
             return [await cls._create_list(field_type=unwrapped_type, value=item) for item in value]
 
         if isinstance(unwrapped_type, type) and issubclass(unwrapped_type, Model):
@@ -134,7 +138,7 @@ class BaseMongoDBQuery(BaseQuery):
             if not isinstance(value, dict):
                 raise DatabaseError(
                     f"Field '{field_name}' expects a dictionary for BaseModel {unwrapped_type.__name__}, "
-                    f"got {type(value)} in model {model.__name__}"
+                    f'got {type(value)} in model {model.__name__}',
                 )
             return {
                 nested_field_name: await cls._create_field(
@@ -142,7 +146,8 @@ class BaseMongoDBQuery(BaseQuery):
                     field_name=nested_field_name,
                     value=value[nested_field_name],
                 )
-                for nested_field_name in unwrapped_type.model_fields if nested_field_name in value
+                for nested_field_name in unwrapped_type.model_fields
+                if nested_field_name in value
             }
 
         return value
@@ -221,10 +226,7 @@ class BaseMongoDBQuery(BaseQuery):
     async def insert_one(cls, _document: dict | None = None, /, **kwargs) -> Self:
         document = cls._merge(_document, kwargs)
         cls._validate_data(data=document)
-        final_document = {
-            field: cls.clean_value(field=field, value=value)
-            for field, value in document.items()
-        }
+        final_document = {field: cls.clean_value(field=field, value=value) for field, value in document.items()}
         result = await cls._create_model_instance(document=final_document)
         insert_one_result: InsertOneResult = await db.session[cls.__name__].insert_one(final_document)
         result.id = insert_one_result.inserted_id
@@ -237,10 +239,7 @@ class BaseMongoDBQuery(BaseQuery):
         for document in documents:
             prepare_id_for_query(document, is_mongo=True)
             cls._validate_data(data=document)
-            cleaned_document = {
-                field: cls.clean_value(field=field, value=value)
-                for field, value in document.items()
-            }
+            cleaned_document = {field: cls.clean_value(field=field, value=value) for field, value in document.items()}
             final_documents.append(cleaned_document)
             results.append(await cls._create_model_instance(document=cleaned_document))
         insert_many_result: InsertManyResult = await db.session[cls.__name__].insert_many(final_documents)

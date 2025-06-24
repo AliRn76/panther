@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from rich import print as rich_print
 from rich.console import Console
@@ -8,15 +8,16 @@ from rich.prompt import Prompt
 
 from panther import version
 from panther.cli.template import (
-    TEMPLATE,
-    SINGLE_FILE_TEMPLATE,
     AUTHENTICATION_PART,
-    MONITORING_PART,
-    LOG_QUERIES_PART,
     AUTO_REFORMAT_PART,
-    DATABASE_PANTHERDB_PART,
     DATABASE_MONGODB_PART,
-    USER_MODEL_PART, REDIS_PART,
+    DATABASE_PANTHERDB_PART,
+    LOG_QUERIES_PART,
+    MONITORING_PART,
+    REDIS_PART,
+    SINGLE_FILE_TEMPLATE,
+    TEMPLATE,
+    USER_MODEL_PART,
 )
 from panther.cli.utils import cli_error
 
@@ -52,7 +53,7 @@ class CreateProject:
                 'message': 'Directory (default is .)',
                 'validation_func': self._check_all_directories,
                 'error_message': '"{}" Directory Already Exists.',
-                'show_validation_error': True
+                'show_validation_error': True,
             },
             {
                 'field': 'single_file',
@@ -69,7 +70,7 @@ class CreateProject:
                 'field': 'database_encryption',
                 'message': 'Do You Want Encryption For Your Database (Required `cryptography`)',
                 'is_boolean': True,
-                'condition': "self.database == '0'"
+                'condition': "self.database == '0'",
             },
             {
                 'field': 'redis',
@@ -90,7 +91,7 @@ class CreateProject:
                 'field': 'log_queries',
                 'message': 'Do You Want To Log Queries',
                 'is_boolean': True,
-                'condition': "self.database != '2'"
+                'condition': "self.database != '2'",
             },
             {
                 'field': 'auto_reformat',
@@ -194,12 +195,12 @@ class CreateProject:
             self.progress(i + 1)
 
     def ask(
-            self,
-            message: str,
-            default: str | bool,
-            error_message: str,
-            validation_func: Callable,
-            show_validation_error: bool = False,
+        self,
+        message: str,
+        default: str | bool,
+        error_message: str,
+        validation_func: Callable,
+        show_validation_error: bool = False,
     ) -> str:
         value = Prompt.ask(message, console=self.input_console).lower() or default
         while not validation_func(value):

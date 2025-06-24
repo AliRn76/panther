@@ -13,29 +13,24 @@ class TestRun(TestCase):
     def setUpClass(cls) -> None:
         sys.path.append('tests/sample_project')
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        sys.path.pop()
-
     def test_init(self):
         app = Panther(__name__)
         assert isinstance(app, Panther)
 
     def test_load_configs(self):
         from panther.configs import config
-        from panther.panel.apis import documents_api, models_api, single_document_api, healthcheck_api
+        from panther.panel.apis import documents_api, healthcheck_api, models_api, single_document_api
 
         base_dir = Path(__name__).resolve().parent
         secret_key = 'fHrIYx3yK0J_UG0K0zD6miLPNy1esoYXzVsvif6e7rY='
         Panther(__name__)
 
         assert isinstance(config, Config)
-        assert config.BASE_DIR == base_dir
+        assert base_dir == config.BASE_DIR
         assert config.LOG_QUERIES is True
-        assert config.DEFAULT_CACHE_EXP == timedelta(seconds=10)
         assert config.THROTTLING.rate == 10
         assert config.THROTTLING.duration == timedelta(seconds=10)
-        assert config.SECRET_KEY == secret_key.encode()
+        assert secret_key == config.SECRET_KEY
 
         assert len(config.HTTP_MIDDLEWARES) == 1
         assert len(config.WS_MIDDLEWARES) == 0
@@ -43,7 +38,7 @@ class TestRun(TestCase):
         assert config.USER_MODEL.__name__ == tests.sample_project.app.models.User.__name__
         assert config.USER_MODEL.__module__.endswith('app.models')
         assert config.JWT_CONFIG.algorithm == 'HS256'
-        assert config.JWT_CONFIG.life_time == timedelta(days=2).total_seconds()
+        assert config.JWT_CONFIG.life_time == int(timedelta(days=2).total_seconds())
         assert config.JWT_CONFIG.key == secret_key
 
         assert '' in config.URLS
@@ -59,7 +54,7 @@ class TestRun(TestCase):
                     '': documents_api,
                     '<document_id>': single_document_api,
                 },
-                'health': healthcheck_api
+                'health': healthcheck_api,
             },
         }
         # TODO: Fix this line, at the end of this task

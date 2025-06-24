@@ -3,7 +3,7 @@ from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
 from panther.db import Model
-from panther.generics import RetrieveAPI, ListAPI, UpdateAPI, DeleteAPI, CreateAPI
+from panther.generics import CreateAPI, DeleteAPI, ListAPI, RetrieveAPI, UpdateAPI
 from panther.pagination import Pagination
 from panther.request import Request
 from panther.serializer import ModelSerializer
@@ -77,10 +77,7 @@ class TestGeneric(IsolatedAsyncioTestCase):
     def setUpClass(cls) -> None:
         global DATABASE
         DATABASE = {
-            'engine': {
-                'class': 'panther.db.connections.PantherDBConnection',
-                'path': cls.DB_PATH
-            },
+            'engine': {'class': 'panther.db.connections.PantherDBConnection', 'path': cls.DB_PATH},
         }
         app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
@@ -101,12 +98,14 @@ class TestGeneric(IsolatedAsyncioTestCase):
         assert res.data == [{'id': u.id, 'name': u.name} for u in users]
 
     async def test_list_features(self):
-        await Person.insert_many([
-            {'name': 'Ali', 'age': 0},
-            {'name': 'Ali', 'age': 1},
-            {'name': 'Saba', 'age': 0},
-            {'name': 'Saba', 'age': 1},
-        ])
+        await Person.insert_many(
+            [
+                {'name': 'Ali', 'age': 0},
+                {'name': 'Ali', 'age': 1},
+                {'name': 'Saba', 'age': 0},
+                {'name': 'Saba', 'age': 1},
+            ],
+        )
         res = await self.client.get('full-list')
         assert res.status_code == 200
         assert set(res.data.keys()) == {'results', 'count', 'previous', 'next'}

@@ -1,11 +1,15 @@
+import datetime
 import time
 from unittest import TestCase
 
-from panther.background_tasks import BackgroundTasks, BackgroundTask
+import pytest
+
+from panther.background_tasks import BackgroundTask, BackgroundTasks, _background_tasks
 from panther.configs import config
 from panther.utils import Singleton
 
 
+@pytest.mark.slow
 class TestBackgroundTasks(TestCase):
     def setUp(self):
         self.obj = BackgroundTasks()
@@ -37,7 +41,8 @@ class TestBackgroundTasks(TestCase):
         assert self.obj.tasks == [task]
 
     def test_add_wrong_task(self):
-        def func(): pass
+        def func():
+            pass
 
         self.obj.initialize()
         assert self.obj.tasks == []
@@ -47,14 +52,16 @@ class TestBackgroundTasks(TestCase):
 
         assert len(captured.records) == 1
         assert (
-                captured.records[0].getMessage() == f'`{func.__name__}` '
-                                                    f'should be instance of `background_tasks.BackgroundTask`')
+            captured.records[0].getMessage() == f'`{func.__name__}` '
+            f'should be instance of `background_tasks.BackgroundTask`'
+        )
         assert self.obj.tasks == []
 
     def test_add_task_with_false_background_task(self):
         numbers = []
 
-        def func(_numbers): _numbers.append(1)
+        def func(_numbers):
+            _numbers.append(1)
 
         task = BackgroundTask(func, numbers)
         with self.assertLogs() as captured:
@@ -135,7 +142,25 @@ class TestBackgroundTasks(TestCase):
         time.sleep(2)
         assert len(numbers) == 2
 
-    def test_add_task_with_custom_every_seconds(self):
+    def test_concurrent_tasks(self):
+        numbers = []
+
+        def func1(_numbers):
+            time.sleep(3)
+            _numbers.append(1)
+
+        def func2(_numbers):
+            time.sleep(3)
+            _numbers.append(1)
+
+        _background_tasks.initialize()
+        BackgroundTask(func1, numbers).submit()
+        BackgroundTask(func2, numbers).submit()
+        assert len(numbers) == 0
+        time.sleep(5)  # Initialization takes 2 second
+        assert len(numbers) == 2
+
+    def test_add_task_with_custom_every_3_seconds(self):
         numbers = []
 
         def func(_numbers):
@@ -150,3 +175,30 @@ class TestBackgroundTasks(TestCase):
         time.sleep(3)
         assert len(numbers) == 2
 
+    def test_submit_single_task(self):
+        numbers = []
+
+        def func(_numbers):
+            _numbers.append(1)
+
+        _background_tasks.initialize()
+        task = BackgroundTask(func, numbers).submit()
+        assert _background_tasks.tasks == [task]
+        assert len(numbers) == 0
+        time.sleep(2)
+        assert len(numbers) == 1
+
+    def test_task_at_3second_later(self):
+        numbers = []
+
+        def func(_numbers):
+            _numbers.append(1)
+
+        now = datetime.datetime.now()
+
+        _background_tasks.initialize()
+        BackgroundTask(func, numbers).at((now + datetime.timedelta(seconds=3)).time()).submit()
+        time.sleep(2)
+        assert len(numbers) == 0
+        time.sleep(2)
+        assert len(numbers) == 1

@@ -44,7 +44,6 @@ class InvalidModel(Model):
 
 
 class _BaseDatabaseTestCase:
-
     async def test_insert_one(self):
         book = await Book.insert_one(name='my_test')
         author = await Author.insert_one(
@@ -54,7 +53,7 @@ class _BaseDatabaseTestCase:
             book=book,
             book2=None,
             book_detail={'book1': book},
-            our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]])
+            our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]]),
         )
 
         assert isinstance(book, Book)
@@ -102,7 +101,7 @@ class _BaseDatabaseTestCase:
                     'book': book,
                     'book2': None,
                     'book_detail': {'book1': book},
-                    'our_book_detail': BookDetail(detail='ok', book=book, more_books=[[book, book]])
+                    'our_book_detail': BookDetail(detail='ok', book=book, more_books=[[book, book]]),
                 },
                 {
                     'name': 'ali',
@@ -111,9 +110,9 @@ class _BaseDatabaseTestCase:
                     'book': book,
                     'book2': None,
                     'book_detail': {'book1': book},
-                    'our_book_detail': BookDetail(detail='ok', book=book, more_books=[[book, book]])
-                }
-            ]
+                    'our_book_detail': BookDetail(detail='ok', book=book, more_books=[[book, book]]),
+                },
+            ],
         )
 
         for author in authors:
@@ -160,7 +159,7 @@ class _BaseDatabaseTestCase:
             book=book,
             book2=None,
             book_detail={'book1': book},
-            our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]])
+            our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]]),
         )
         author = await Author.find_one(name='ali')
 
@@ -207,7 +206,7 @@ class _BaseDatabaseTestCase:
             book=book,
             book2=None,
             book_detail={'book1': book},
-            our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]])
+            our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]]),
         )
         _authors = await Author.find(name='ali')
         authors = [i for i in _authors]
@@ -253,8 +252,10 @@ class _BaseDatabaseTestCase:
         try:
             await InvalidModel.insert_one(new_book={'book': book})
         except DatabaseError as e:
-            assert e.args[
-                       0] == 'Panther does not support dict[str, tests.test_database_advance.Book] as a field type for unwrapping.'
+            assert (
+                e.args[0]
+                == 'Panther does not support dict[str, tests.test_database_advance.Book] as a field type for unwrapping.'
+            )
 
 
 @pytest.mark.mongodb
@@ -287,13 +288,21 @@ class TestMongoDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
             book=book,
             book2=None,
             book_detail={'book1': book},
-            our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]])
+            our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]]),
         )
 
         document = await db.session['Author'].find_one()
         assert isinstance(document, dict)
         assert list(document.keys()) == [
-            '_id', 'name', 'books', 'books2', 'book', 'book2', 'book_detail', 'our_book_detail']
+            '_id',
+            'name',
+            'books',
+            'books2',
+            'book',
+            'book2',
+            'book_detail',
+            'our_book_detail',
+        ]
 
         assert document['_id'] == author._id
 

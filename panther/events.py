@@ -14,6 +14,7 @@ class Event:
 
         def wrapper():
             return func()
+
         return wrapper
 
     @staticmethod
@@ -22,6 +23,7 @@ class Event:
 
         def wrapper():
             return func()
+
         return wrapper
 
     @staticmethod

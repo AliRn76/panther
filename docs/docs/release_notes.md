@@ -13,10 +13,14 @@
 - Change `path` to `name` in `TemplateResponse()`
 - Change `new_password` to `password` in `BaseUser.check_password()`
 - Deprecated:
+  - `DEFAULT_CACHE_EXP` in configs
+  - Rename `cache_exp_time` to `cache` in `@API` and `GenricAPI`
+  - Rename `panther.throttling.Throttling` to `panther.throttling.Throttle`
   - Remove `MONITORING` and move its functionality as middleware in `panther.middelwares.monitoring.MonitoringMiddleware` 
   - Pass args to Middlewares `__init__` 
     - New Style of Middleware declaration [[Documentation]](https://pantherpy.github.io/middlewares)
   - `output_model` in `API` and `GenericAPI` 
+  - `background_tasks.add_task(BackgroundTask(...))` --> `BackgroundTask(...).submit()`
 
 ### 4.3.7
 - Improve MultiPart-FormData Regex

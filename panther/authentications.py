@@ -1,7 +1,7 @@
 import logging
 import time
 from abc import abstractmethod
-from datetime import timezone, datetime
+from datetime import datetime, timezone
 from typing import Literal
 
 from panther.base_websocket import Websocket
@@ -42,18 +42,32 @@ class JWTAuthentication(BaseAuthentication):
     HTTP_HEADER_ENCODING = 'iso-8859-1'  # RFC5987
 
     @classmethod
-    def get_authorization_header(cls, request: Request | Websocket) -> str:
+    def get_authorization_header(cls, request: Request | Websocket) -> list[str]:
+        """Retrieve the Authorization header from the request."""
         if auth := request.headers.authorization:
-            return auth
+            return auth.split()
         msg = 'Authorization is required'
         raise cls.exception(msg) from None
 
     @classmethod
     async def authentication(cls, request: Request | Websocket) -> Model:
-        auth_header = cls.get_authorization_header(request).split()
+        """Authenticate the user based on the JWT token in the Authorization header."""
+        auth_header = cls.get_authorization_header(request)
+        token = cls.get_token(auth_header=auth_header)
 
+        if redis.is_connected and await cls.is_token_revoked(token=token):
+            msg = 'User logged out'
+            raise cls.exception(msg) from None
+
+        payload = await cls.decode_jwt(token)
+        user = await cls.get_user(payload)
+        user._auth_token = token
+        return user
+
+    @classmethod
+    def get_token(cls, auth_header):
         if len(auth_header) != 2:
-            msg = 'Authorization should have 2 part'
+            msg = 'Authorization header must contain 2 parts'
             raise cls.exception(msg) from None
 
         bearer, token = auth_header
@@ -67,18 +81,11 @@ class JWTAuthentication(BaseAuthentication):
             msg = 'Authorization keyword is not valid'
             raise cls.exception(msg) from None
 
-        if redis.is_connected and await cls._check_in_cache(token=token):
-            msg = 'User logged out'
-            raise cls.exception(msg) from None
-
-        payload = cls.decode_jwt(token)
-        user = await cls.get_user(payload)
-        user._auth_token = token
-        return user
+        return token
 
     @classmethod
-    def decode_jwt(cls, token: str) -> dict:
-        """Decode JWT token to user_id (it can return multiple variable ... )"""
+    async def decode_jwt(cls, token: str) -> dict:
+        """Decode a JWT token and return the payload."""
         try:
             return jwt.decode(
                 token=token,
@@ -90,21 +97,21 @@ class JWTAuthentication(BaseAuthentication):
 
     @classmethod
     async def get_user(cls, payload: dict) -> Model:
-        """Get UserModel from config, else use default UserModel from cls.model"""
+        """Fetch the user based on the decoded JWT payload from config.UserModel or cls.model"""
         if (user_id := payload.get('user_id')) is None:
             msg = 'Payload does not have `user_id`'
             raise cls.exception(msg)
 
         user_model = config.USER_MODEL or cls.model
-        if user := await user_model.find_one(id=user_id):
-            return user
+        user = await user_model.find_one(id=user_id)
+        if user is None:
+            raise cls.exception('User not found')
 
-        msg = 'User not found'
-        raise cls.exception(msg) from None
+        return user
 
     @classmethod
     def encode_jwt(cls, user_id: str, token_type: Literal['access', 'refresh'] = 'access') -> str:
-        """Encode JWT from user_id."""
+        """Generate a JWT token for a given user ID."""
         issued_at = datetime.now(timezone.utc).timestamp()
         if token_type == 'access':
             expire = issued_at + config.JWT_CONFIG.life_time
@@ -124,60 +131,92 @@ class JWTAuthentication(BaseAuthentication):
         )
 
     @classmethod
-    def login(cls, user_id: str) -> dict:
-        """Return dict of access and refresh token"""
+    async def login(cls, user) -> dict:
+        """Generate access and refresh tokens for user login."""
         return {
-            'access_token': cls.encode_jwt(user_id=user_id),
-            'refresh_token': cls.encode_jwt(user_id=user_id, token_type='refresh')
+            'access_token': cls.encode_jwt(user_id=user.id),
+            'refresh_token': cls.encode_jwt(user_id=user.id, token_type='refresh'),
         }
 
     @classmethod
-    async def logout(cls, raw_token: str) -> None:
-        *_, token = raw_token.split()
-        if redis.is_connected:
-            payload = cls.decode_jwt(token=token)
-            remaining_exp_time = payload['exp'] - time.time()
-            await cls._set_in_cache(token=token, exp=int(remaining_exp_time))
+    async def logout(cls, user) -> None:
+        """Log out a user by revoking their JWT token."""
+        payload = await cls.decode_jwt(token=user._auth_token)
+        await cls.revoke_token_in_cache(token=user._auth_token, exp=payload['exp'])
+
+    @classmethod
+    async def refresh(cls, user):
+        if hasattr(user, '_auth_refresh_token'):
+            # It happens in CookieJWTAuthentication
+            token = user._auth_refresh_token
         else:
-            logger.error('`redis` middleware is required for `logout()`')
+            token = user._auth_token
+
+        payload = await cls.decode_jwt(token=token)
+
+        if payload['token_type'] != 'refresh':
+            raise cls.exception('Invalid token type; expected `refresh` token.')
+        # Revoke after use
+        await cls.revoke_token_in_cache(token=token, exp=payload['exp'])
+
+        return await cls.login(user=user)
 
     @classmethod
-    async def _set_in_cache(cls, token: str, exp: int) -> None:
-        key = generate_hash_value_from_string(token)
-        await redis.set(key, b'', ex=exp)
+    async def revoke_token_in_cache(cls, token: str, exp: int) -> None:
+        """Mark the token as revoked in the cache."""
+        if redis.is_connected:
+            key = generate_hash_value_from_string(token)
+            remaining_exp_time = int(exp - time.time())
+            await redis.set(key, b'', ex=remaining_exp_time)
+        else:
+            logger.error('Redis is not connected; token revocation is not effective.')
 
     @classmethod
-    async def _check_in_cache(cls, token: str) -> bool:
+    async def is_token_revoked(cls, token: str) -> bool:
+        """Check if the token is revoked by looking it up in the cache."""
         key = generate_hash_value_from_string(token)
         return bool(await redis.exists(key))
 
 
 class QueryParamJWTAuthentication(JWTAuthentication):
     @classmethod
-    def get_authorization_header(cls, request: Request | Websocket) -> str:
+    def get_authorization_header(cls, request: Request | Websocket) -> list[str]:
+        """'
+        Retrieve the Authorization from query params
+        Example:
+            https://example.com?authorization=the_jwt_without_bearer
+        """
         if auth := request.query_params.get('authorization'):
             return auth
         msg = '`authorization` query param not found.'
         raise cls.exception(msg) from None
 
+    @classmethod
+    def get_token(cls, auth_header) -> str:
+        return auth_header
+
 
 class CookieJWTAuthentication(JWTAuthentication):
     @classmethod
+    async def authentication(cls, request: Request | Websocket) -> Model:
+        user = await super().authentication(request=request)
+        if refresh_token := request.headers.get_cookies().get('refresh_token'):
+            # It's used in `cls.refresh()`
+            user._auth_refresh_token = refresh_token
+        return user
+
+    @classmethod
     def get_authorization_header(cls, request: Request | Websocket) -> str:
+        """'
+        Retrieve the Authorization from cookies
+        Example:
+            access_token=the_jwt_without_bearer
+        """
         if token := request.headers.get_cookies().get('access_token'):
             return token
         msg = '`access_token` Cookie not found.'
         raise cls.exception(msg) from None
 
     @classmethod
-    async def authentication(cls, request: Request | Websocket) -> Model:
-        token = cls.get_authorization_header(request)
-
-        if redis.is_connected and await cls._check_in_cache(token=token):
-            msg = 'User logged out'
-            raise cls.exception(msg) from None
-
-        payload = cls.decode_jwt(token)
-        user = await cls.get_user(payload)
-        user._auth_token = token
-        return user
+    def get_token(cls, auth_header) -> str:
+        return auth_header

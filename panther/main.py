@@ -8,13 +8,13 @@ from pathlib import Path
 import panther.logging
 from panther import status
 from panther._load_configs import *
-from panther._utils import traceback_message, reformat_code
+from panther._utils import reformat_code, traceback_message
 from panther.app import GenericAPI
 from panther.base_websocket import Websocket
 from panther.cli.utils import print_info
 from panther.configs import config
 from panther.events import Event
-from panther.exceptions import APIError, PantherError, NotFoundAPIError, BaseError, UpgradeRequiredError
+from panther.exceptions import APIError, BaseError, NotFoundAPIError, PantherError, UpgradeRequiredError
 from panther.request import Request
 from panther.response import Response
 from panther.routings import find_endpoint
@@ -26,6 +26,17 @@ logger = logging.getLogger('panther')
 
 class Panther:
     def __init__(self, name: str, configs: str | None = None, urls: dict | None = None):
+        """
+        Initialize a Panther application instance.
+
+        Args:
+            name: Typically set to `__name__`; used to determine the current directory of the application.
+            configs: The name of the module containing your configuration.
+                If the configuration is defined in the current file, you can also set this to `__name__`.
+            urls: A dictionary containing your URL routing.
+                If not provided, Panther will attempt to load `URLs` from the configs module.
+
+        """
         self._configs_module_name = configs
         self._urls = urls
 
@@ -35,7 +46,7 @@ class Panther:
             self.load_configs()
             if config.AUTO_REFORMAT:
                 reformat_code(base_dir=config.BASE_DIR)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.error(e.args[0] if isinstance(e, PantherError) else traceback_message(exception=e))
             sys.exit()
 
@@ -59,7 +70,7 @@ class Panther:
         load_middlewares(self._configs_module)
         load_auto_reformat(self._configs_module)
         load_background_tasks(self._configs_module)
-        load_default_cache_exp(self._configs_module)
+        load_other_configs(self._configs_module)
         load_urls(self._configs_module, urls=self._urls)
         load_authentication_class(self._configs_module)
         load_websocket_connections()
@@ -69,15 +80,15 @@ class Panther:
     async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
         if scope['type'] == 'lifespan':
             message = await receive()
-            if message["type"] == 'lifespan.startup':
+            if message['type'] == 'lifespan.startup':
                 if config.HAS_WS:
                     await config.WEBSOCKET_CONNECTIONS.start()
                 try:
                     await Event.run_startups()
                 except Exception as e:
                     logger.error(e)
-                    raise e
-            elif message["type"] == 'lifespan.shutdown':
+                    raise
+            elif message['type'] == 'lifespan.shutdown':
                 # It's not happening :\, so handle the shutdowns in __del__ ...
                 pass
             return
@@ -109,7 +120,6 @@ class Panther:
 
         return await config.WEBSOCKET_CONNECTIONS.listen(connection=final_connection)
 
-
     async def handle_ws(self, scope: dict, receive: Callable, send: Callable) -> None:
         # Create Temp Connection
         connection = Websocket(scope=scope, receive=receive, send=send)
@@ -128,7 +138,6 @@ class Panther:
         except Exception as e:
             logger.error(traceback_message(exception=e))
             await connection.close()
-
 
     @classmethod
     async def handle_http_endpoint(cls, request: Request) -> Response:
@@ -166,7 +175,7 @@ class Panther:
                 logger.error('You forgot to return `response` on the `Middlewares.__call__()`')
                 response = Response(
                     data={'detail': 'Internal Server Error'},
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
         # Handle `APIError` Exceptions
         except APIError as e:
@@ -176,11 +185,11 @@ class Panther:
                 status_code=e.status_code,
             )
         # Handle Unknown Exceptions
-        except Exception as e:  # noqa: BLE001 - Blind Exception
+        except Exception as e:
             logger.error(traceback_message(exception=e))
             response = Response(
                 data={'detail': 'Internal Server Error'},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
         # Return Response

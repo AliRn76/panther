@@ -1,5 +1,6 @@
-from panther.db.cursor import Cursor
 from pantherdb import Cursor as PantherDBCursor
+
+from panther.db.cursor import Cursor
 
 
 class Pagination:
@@ -14,6 +15,7 @@ class Pagination:
             'results': [...]
         }
     """
+
     DEFAULT_LIMIT = 20
     DEFAULT_SKIP = 0
 
@@ -47,5 +49,5 @@ class Pagination:
             'count': count,
             'next': self.build_next_params() if has_next else None,
             'previous': self.build_previous_params() if self.skip else None,
-            'results': response
+            'results': response,
         }

@@ -2,15 +2,14 @@ import logging
 
 from panther import status
 from panther.app import API, GenericAPI
-from panther.authentications import JWTAuthentication, CookieJWTAuthentication
 from panther.configs import config
 from panther.db.models import BaseUser
-from panther.exceptions import RedirectAPIError, AuthenticationAPIError
+from panther.exceptions import AuthenticationAPIError, RedirectAPIError
 from panther.panel.middlewares import RedirectToSlashMiddleware
-from panther.panel.utils import get_models, clean_model_schema
+from panther.panel.utils import clean_model_schema, get_models
 from panther.permissions import BasePermission
 from panther.request import Request
-from panther.response import TemplateResponse, Response, Cookie, RedirectResponse
+from panther.response import Cookie, RedirectResponse, Response, TemplateResponse
 
 logger = logging.getLogger('panther')
 
@@ -18,6 +17,8 @@ logger = logging.getLogger('panther')
 class AdminPanelPermission(BasePermission):
     @classmethod
     async def authorization(cls, request: Request) -> bool:
+        from panther.authentications import CookieJWTAuthentication
+
         try:  # We don't want to set AUTHENTICATION class, so we have to use permission classes
             await CookieJWTAuthentication.authentication(request=request)
             return True
@@ -32,6 +33,8 @@ class LoginView(GenericAPI):
         return TemplateResponse(name='login.html')
 
     async def post(self, request: Request):
+        from panther.authentications import JWTAuthentication
+
         user: BaseUser = await config.USER_MODEL.find_one({config.USER_MODEL.USERNAME_FIELD: request.data['username']})
         if user is None:
             logger.debug('User not found.')
@@ -47,22 +50,14 @@ class LoginView(GenericAPI):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 context={'error': 'Authentication Error'},
             )
-        tokens = JWTAuthentication.login(user.id)
+        tokens = await JWTAuthentication.login(user.id)
         return RedirectResponse(
             url=request.query_params.get('redirect_to', '..'),
             status_code=status.HTTP_302_FOUND,
             set_cookies=[
-                Cookie(
-                    key='access_token',
-                    value=tokens['access_token'],
-                    max_age=config.JWT_CONFIG.life_time
-                ),
-                Cookie(
-                    key='refresh_token',
-                    value=tokens['refresh_token'],
-                    max_age=config.JWT_CONFIG.refresh_life_time
-                )
-            ]
+                Cookie(key='access_token', value=tokens['access_token'], max_age=config.JWT_CONFIG.life_time),
+                Cookie(key='refresh_token', value=tokens['refresh_token'], max_age=config.JWT_CONFIG.refresh_life_time),
+            ],
         )
 
 
@@ -90,7 +85,7 @@ class TableView(GenericAPI):
                 'fields': clean_model_schema(model.schema()),
                 'tables': get_models(),
                 'records': Response.prepare_data(data),
-            }
+            },
         )
 
 
@@ -105,7 +100,7 @@ class CreateView(GenericAPI):
             context={
                 'fields': clean_model_schema(model.schema()),
                 'tables': get_models(),
-            }
+            },
         )
 
     async def post(self, request: Request, index: int):
@@ -126,10 +121,7 @@ class DetailView(GenericAPI):
         obj = await model.find_one_or_raise(id=document_id)
         return TemplateResponse(
             name='detail.html',
-            context={
-                'fields': clean_model_schema(model.schema()),
-                'data': obj.model_dump()
-            }
+            context={'fields': clean_model_schema(model.schema()), 'data': obj.model_dump()},
         )
 
     async def put(self, request: Request, index: int, document_id: str):

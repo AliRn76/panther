@@ -108,15 +108,12 @@ def print_info(config: Config):
     bt = config.BACKGROUND_TASKS
     ws = config.HAS_WS
     rd = redis.is_connected
-    bd = '{0:<39}'.format(str(config.BASE_DIR))
+    bd = f'{config.BASE_DIR!s:<39}'
     if len(bd) > 39:
         bd = f'{bd[:36]}...'
 
     # Monitoring
-    if config.MONITORING:
-        monitor = f'{h} * Run "panther monitor" in another session for Monitoring{h}\n'
-    else:
-        monitor = None
+    monitor = f'{h} * Run "panther monitor" in another session for Monitoring{h}\n' if config.MONITORING else None
 
     # Uvloop
     uvloop_msg = None
@@ -126,13 +123,15 @@ def print_info(config: Config):
         except ImportError:
             uvloop_msg = (
                 f'{h} * You may want to install `uvloop` for better performance{h}\n'
-                f'{h}   `pip install uvloop`                                   {h}\n')
+                f'{h}   `pip install uvloop`                                   {h}\n'
+            )
 
     # Gunicorn if Websocket
     gunicorn_msg = None
     if config.HAS_WS:
         try:
             import gunicorn
+
             gunicorn_msg = f'{h} * You have WS, so make sure to run gunicorn with --preload{h}\n'
         except ImportError:
             pass

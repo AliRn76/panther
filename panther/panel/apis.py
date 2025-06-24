@@ -3,8 +3,7 @@ import contextlib
 from panther import status
 from panther.app import API
 from panther.configs import config
-from panther.db.connections import db
-from panther.db.connections import redis
+from panther.db.connections import db, redis
 from panther.panel.utils import get_model_fields
 from panther.request import Request
 from panther.response import Response
@@ -16,11 +15,7 @@ with contextlib.suppress(ImportError):
 
 @API(methods=['GET'])
 async def models_api():
-    return [{
-        'name': model.__name__,
-        'module': model.__module__,
-        'index': i
-    } for i, model in enumerate(config.MODELS)]
+    return [{'name': model.__name__, 'module': model.__module__, 'index': i} for i, model in enumerate(config.MODELS)]
 
 
 @API(methods=['GET', 'POST'])

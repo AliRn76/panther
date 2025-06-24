@@ -38,15 +38,15 @@ class BaseDatabaseConnection:
 
 class MongoDBConnection(BaseDatabaseConnection):
     def init(
-            self,
-            host: str = 'localhost',
-            port: int = 27017,
-            document_class: dict[str, Any] | None = None,
-            tz_aware: bool | None = None,
-            connect: bool | None = None,
-            type_registry=None,  # type: bson.codec_options.TypeRegistry
-            database: str | None = None,
-            **kwargs: Any,
+        self,
+        host: str = 'localhost',
+        port: int = 27017,
+        document_class: dict[str, Any] | None = None,
+        tz_aware: bool | None = None,
+        connect: bool | None = None,
+        type_registry=None,  # type: bson.codec_options.TypeRegistry
+        database: str | None = None,
+        **kwargs: Any,
     ) -> None:
         try:
             from motor.motor_asyncio import AsyncIOMotorClient
@@ -55,6 +55,7 @@ class MongoDBConnection(BaseDatabaseConnection):
 
         with contextlib.suppress(ImportError):
             import uvloop
+
             asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
         self._client: AsyncIOMotorClient = AsyncIOMotorClient(
@@ -81,7 +82,7 @@ class PantherDBConnection(BaseDatabaseConnection):
                 import cryptography
             except ImportError as e:
                 raise import_error(e, package='cryptography')
-            params['secret_key'] = config.SECRET_KEY
+            params['secret_key'] = config.SECRET_KEY.encode()
 
         self._connection: PantherDB = PantherDB(**params)
 
@@ -100,13 +101,13 @@ class RedisConnection(Singleton, _Redis):
     is_connected: bool = False
 
     def __init__(
-            self,
-            init: bool = False,
-            host: str = 'localhost',
-            port: int = 6379,
-            db: int = 0,
-            websocket_db: int = 0,
-            **kwargs
+        self,
+        init: bool = False,
+        host: str = 'localhost',
+        port: int = 6379,
+        db: int = 0,
+        websocket_db: int = 0,
+        **kwargs,
     ):
         if init:
             self.host = host
@@ -132,12 +133,7 @@ class RedisConnection(Singleton, _Redis):
 
     def create_connection_for_websocket(self) -> _Redis:
         if not hasattr(self, 'websocket_connection'):
-            self.websocket_connection = _Redis(
-                host=self.host,
-                port=self.port,
-                db=self.websocket_db,
-                **self.kwargs
-            )
+            self.websocket_connection = _Redis(host=self.host, port=self.port, db=self.websocket_db, **self.kwargs)
         return self.websocket_connection
 
 

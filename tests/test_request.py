@@ -144,11 +144,9 @@ urls = {
     'query-params': request_query_params,
     'data': request_data,
     'path/<name>/variable/<age>/<is_alive>/': request_path_variables,
-
     'header': request_header,
     'header-attr': request_header_by_attr,
     'header-item': request_header_by_item,
-
     'all-func': all_methods,
     'all-class': AllMethods,
     'get-func': get_method,

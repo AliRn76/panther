@@ -40,25 +40,32 @@ async def generate_data():
             name=f.name(),
             age=random.randint(10, 99),
             is_male=random.getrandbits(1),
-            person=Person(
-                real_name=f.name(),
-                is_alive=random.getrandbits(1),
-                age=random.randint(10, 99)
-            ).model_dump() if i % 2 else None,
+            person=Person(real_name=f.name(), is_alive=random.getrandbits(1), age=random.randint(10, 99)).model_dump()
+            if i % 2
+            else None,
             books=[
-                Book(title='Book1', pages_count=10, readers=[Person(
-                    real_name=f.name(),
-                    is_alive=random.getrandbits(1),
-                    age=random.randint(10, 99)
-                ).model_dump()]).model_dump(), Book(title='Book1', pages_count=10).model_dump()
-            ] if i % 2 else None,
+                Book(
+                    title='Book1',
+                    pages_count=10,
+                    readers=[
+                        Person(
+                            real_name=f.name(),
+                            is_alive=random.getrandbits(1),
+                            age=random.randint(10, 99),
+                        ).model_dump(),
+                    ],
+                ).model_dump(),
+                Book(title='Book1', pages_count=10).model_dump(),
+            ]
+            if i % 2
+            else None,
         )
 
 
 DATABASE = {
     'engine': {
         'class': 'panther.db.connections.PantherDBConnection',
-    }
+    },
 }
 SECRET_KEY = 'ok'
 app = Panther(__name__, configs=__name__, urls={'admin': admin_url, 'generate': generate_data})

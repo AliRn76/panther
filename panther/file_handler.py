@@ -1,8 +1,8 @@
 from functools import cached_property
 
-from panther import status
 from pydantic import BaseModel, field_validator, model_serializer
 
+from panther import status
 from panther.exceptions import APIError
 
 

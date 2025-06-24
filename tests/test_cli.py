@@ -10,7 +10,7 @@ from rich import print as rprint
 
 from panther import Panther
 from panther.cli.create_command import CreateProject
-from panther.cli.template import TEMPLATE, SINGLE_FILE_TEMPLATE
+from panther.cli.template import SINGLE_FILE_TEMPLATE, TEMPLATE
 from panther.configs import config
 
 interactive_cli_1_index = 0
@@ -40,22 +40,17 @@ def interactive_cli_2_mock_responses(index=None):
 
 
 class TestCLI(TestCase):
-
     @classmethod
     def setUpClass(cls) -> None:
         config.refresh()
         sys.path.append('tests/sample_project')
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        sys.path.pop()
-
     @skipIf(sys.platform.startswith('win'), 'Not supported in windows')
     def test_print_info(self):
         with patch('sys.stdout', new=StringIO()) as fake_out1:
-            app = Panther(__name__)
+            Panther(__name__)
 
-        base_dir = '{0:<41}'.format(str(Path(__name__).absolute().parent))
+        base_dir = f'{Path(__name__).absolute().parent!s:<41}'
         expected_value = fr"""╭────────────────────────────────────────────────────────────╮
 │     ____                 __    __                          │
 │    /\  _`\              /\ \__/\ \                         │
@@ -126,8 +121,8 @@ class TestCLI(TestCase):
             assert len(captured_info.records) == 2
             assert captured_info.records[0].getMessage() == f'"{project_path}" Directory Already Exists.'
             assert captured_info.records[1].getMessage() == 'Use "panther -h" for more help'
-        except AssertionError as e:
-            raise e
+        except AssertionError:
+            raise
         finally:
             os.removedirs(project_path)
 

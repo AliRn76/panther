@@ -51,6 +51,7 @@ def clean_model_schema(schema: dict) -> dict:
             'is_male': {'title': 'Is Male', 'type': ['boolean', 'null'], 'required': True}
         }
     }
+
     """
 
     result = defaultdict(dict)
@@ -108,8 +109,11 @@ def get_model_fields(model):
 
 
 def get_models():
-    return [{
-        'index': i,
-        'name': model.__name__,
-        'module': model.__module__,
-    } for i, model in enumerate(config.MODELS)]
+    return [
+        {
+            'index': i,
+            'name': model.__name__,
+            'module': model.__module__,
+        }
+        for i, model in enumerate(config.MODELS)
+    ]

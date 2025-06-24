@@ -13,12 +13,7 @@ class BaseError(Exception):
     detail: str | dict | list = 'Internal Server Error'
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
 
-    def __init__(
-            self,
-            detail: str | dict | list = None,
-            status_code: int = None,
-            headers: dict = None
-    ):
+    def __init__(self, detail: str | dict | list = None, status_code: int = None, headers: dict = None):
         self.detail = detail or self.detail
         self.status_code = status_code or self.status_code
         self.headers = headers
@@ -81,5 +76,5 @@ class ThrottlingAPIError(APIError):
 
 class InvalidPathVariableAPIError(APIError):
     def __init__(self, value: str, variable_type: type):
-        detail = f"Path variable '{value}' should be '{variable_type.__name__}'"
+        detail = f'Path variable `{value}` is not `{variable_type.__name__}`'
         super().__init__(detail=detail, status_code=status.HTTP_400_BAD_REQUEST)

@@ -4,7 +4,7 @@ from typing import Literal
 
 import orjson as json
 
-from panther.response import Response, HTMLResponse, PlainTextResponse, StreamingResponse
+from panther.response import HTMLResponse, PlainTextResponse, Response
 
 __all__ = ('APIClient', 'WebsocketClient')
 
@@ -28,12 +28,12 @@ class RequestClient:
         }
 
     async def request(
-            self,
-            path: str,
-            method: Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-            payload: bytes | dict | None,
-            headers: dict,
-            query_params: dict,
+        self,
+        path: str,
+        method: Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+        payload: bytes | dict | None,
+        headers: dict,
+        query_params: dict,
     ) -> Response:
         headers = [(k.encode(), str(v).encode()) for k, v in headers.items()]
         if not path.startswith('/'):
@@ -56,21 +56,24 @@ class RequestClient:
             send=self.send,
         )
         response_headers = {key.decode(): value.decode() for key, value in self.header['headers']}
+        cookies = [(key, value) for key, value in self.header['headers'] if key.decode() == 'Set-Cookie']
         if response_headers['Content-Type'] == 'text/html; charset=utf-8':
             data = self.response.decode()
-            return HTMLResponse(data=data, status_code=self.header['status'], headers=response_headers)
+            response = HTMLResponse(data=data, status_code=self.header['status'], headers=response_headers)
 
         elif response_headers['Content-Type'] == 'text/plain; charset=utf-8':
             data = self.response.decode()
-            return PlainTextResponse(data=data, status_code=self.header['status'], headers=response_headers)
+            response = PlainTextResponse(data=data, status_code=self.header['status'], headers=response_headers)
 
         elif response_headers['Content-Type'] == 'application/octet-stream':
             data = self.response.decode()
-            return PlainTextResponse(data=data, status_code=self.header['status'], headers=response_headers)
+            response = PlainTextResponse(data=data, status_code=self.header['status'], headers=response_headers)
 
         else:
             data = json.loads(self.response or b'null')
-            return Response(data=data, status_code=self.header['status'], headers=response_headers)
+            response = Response(data=data, status_code=self.header['status'], headers=response_headers)
+        response.cookies = cookies
+        return response
 
 
 class APIClient:
@@ -78,27 +81,27 @@ class APIClient:
         self._app = app
 
     async def _send_request(
-            self,
-            path: str,
-            method: Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-            payload: dict | None,
-            headers: dict,
-            query_params: dict,
+        self,
+        path: str,
+        method: Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+        payload: dict | None,
+        headers: dict,
+        query_params: dict,
     ) -> Response:
         request_client = RequestClient(app=self._app)
         return await request_client.request(
-                path=path,
-                method=method,
-                payload=payload,
-                headers=headers,
-                query_params=query_params or {},
-            )
+            path=path,
+            method=method,
+            payload=payload,
+            headers=headers,
+            query_params=query_params or {},
+        )
 
     async def get(
-            self,
-            path: str,
-            headers: dict | None = None,
-            query_params: dict | None = None,
+        self,
+        path: str,
+        headers: dict | None = None,
+        query_params: dict | None = None,
     ) -> Response:
         return await self._send_request(
             path=path,
@@ -109,12 +112,12 @@ class APIClient:
         )
 
     async def post(
-            self,
-            path: str,
-            payload: bytes | dict | None = None,
-            headers: dict | None = None,
-            query_params: dict | None = None,
-            content_type: str = 'application/json',
+        self,
+        path: str,
+        payload: bytes | dict | None = None,
+        headers: dict | None = None,
+        query_params: dict | None = None,
+        content_type: str = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
         return await self._send_request(
@@ -126,12 +129,12 @@ class APIClient:
         )
 
     async def put(
-            self,
-            path: str,
-            payload: bytes | dict | None = None,
-            headers: dict | None = None,
-            query_params: dict | None = None,
-            content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
+        self,
+        path: str,
+        payload: bytes | dict | None = None,
+        headers: dict | None = None,
+        query_params: dict | None = None,
+        content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
         return await self._send_request(
@@ -143,12 +146,12 @@ class APIClient:
         )
 
     async def patch(
-            self,
-            path: str,
-            payload: bytes | dict | None = None,
-            headers: dict | None = None,
-            query_params: dict | None = None,
-            content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
+        self,
+        path: str,
+        payload: bytes | dict | None = None,
+        headers: dict | None = None,
+        query_params: dict | None = None,
+        content_type: Literal['application/json', 'multipart/form-data'] = 'application/json',
     ) -> Response:
         headers = {'content-type': content_type} | (headers or {})
         return await self._send_request(
@@ -160,10 +163,10 @@ class APIClient:
         )
 
     async def delete(
-            self,
-            path: str,
-            headers: dict | None = None,
-            query_params: dict | None = None,
+        self,
+        path: str,
+        headers: dict | None = None,
+        query_params: dict | None = None,
     ) -> Response:
         return await self._send_request(
             path=path,
@@ -183,15 +186,13 @@ class WebsocketClient:
         self.responses.append(data)
 
     async def receive(self):
-        return {
-            'type': 'websocket.connect'
-        }
+        return {'type': 'websocket.connect'}
 
     def connect(
-            self,
-            path: str,
-            headers: dict | None = None,
-            query_params: dict | None = None,
+        self,
+        path: str,
+        headers: dict | None = None,
+        query_params: dict | None = None,
     ):
         headers = [(k.encode(), str(v).encode()) for k, v in (headers or {}).items()]
         if not path.startswith('/'):
@@ -210,13 +211,13 @@ class WebsocketClient:
             'query_string': query_params.encode(),
             'headers': headers,
             'subprotocols': [],
-            'state': {}
+            'state': {},
         }
         asyncio.run(
             self.app(
                 scope=scope,
                 receive=self.receive,
                 send=self.send,
-            )
+            ),
         )
         return self.responses
