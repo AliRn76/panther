@@ -37,8 +37,8 @@ nav:
   - Query: 'query.md'
   - URLs: 'urls.md'
   - Model: 'model.md'
-
   - Serializer: 'serializer.md'
+
   - API: 'api.md'
 
   - How To CRUD:
