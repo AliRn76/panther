@@ -33,13 +33,12 @@ theme:
 nav:
   - Introduction: 'index.md'
   - First CRUD: 'first_crud.md'
+  - Database: 'database.md'
 
   - How To CRUD:
       - Function Base: 'function_first_crud.md'
       - Class Base: 'class_first_crud.md'
       - Generic: 'generic_crud.md'
-  - First Crud: 'first_crud.md'
-  - Database: 'database.md'
   - Model: 'model.md'
   - API: 'api.md'
   - Pagination: 'pagination.md'

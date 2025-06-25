@@ -1,43 +1,57 @@
-Panther currently built-in supports 2 database (`MongoDB`, `PantherDB`), but you can define your own custom database connection and queries too.
+# Database Support in Panther
 
+Panther natively supports two databases: `MongoDB` and `PantherDB`. However, you can also define your own custom database connections and queries.
 
-### Structure
+---
+
+## Configuration Structure
+
+Define your database configuration in the following format:
 
 ```python
 DATABASE = {
     'engine': {
         'class': 'address of engine',
         'arg1': 'value1',
-        ...
+        # ... additional arguments ...
     },
-    'query': 'address of query class'
+    'query': 'address of query class',  # Optional
 }
 ```
-#### Notes
-- Built-in supported engines:
+
+### Notes
+- **Built-in supported engines:**
   - `panther.db.connections.PantherDBConnection`
   - `panther.db.connections.MongoDBConnection`
-- `engine` values, other than the `class` will be passed to the `class.__init__()` 
-- `query` is not required when you are using default supported engines, but you can customize it
+- All values in `engine` (except `class`) are passed to the `__init__` method of the specified class.
+- The `query` key is optional for the default supported engines, but you can customize it if needed.
 
-### PantherDB
+---
+
+## PantherDB
+
+Example configuration for PantherDB:
 
 ```python
 DATABASE = {
     'engine': {
         'class': 'panther.db.connections.PantherDBConnection',
-        'path': BASE_DIR / 'database.pdb',
-        'encryption': True
+        'path': BASE_DIR / 'database.pdb',  # Optional
+        'encryption': True  # Optional, default is False
     }
 }
 ```
 
-#### Notes
-- `path` is not required, but you can customize the directory and file of your database
-- `encryption` is not required and default is `False`
-- The `cryptography` package is required if you set `encryption` to `True`
+### Notes
+- `path` is optional; you can customize the directory and filename of your database.
+- `encryption` is optional and defaults to `False`.
+- The `cryptography` package is required if you set `encryption` to `True`.
 
-### MongoDB
+---
+
+## MongoDB
+
+Example configuration for MongoDB:
 
 ```python
 DATABASE = {
@@ -48,73 +62,19 @@ DATABASE = {
 }
 ```
 
-#### Notes
-- The parameters are same as `pymongo.MongoClient` [[Reference]](https://pymongo.readthedocs.io/en/stable/tutorial.html#making-a-connection-with-mongoclient)
+### Notes
+- The parameters for the engine are the same as those for `pymongo.MongoClient`. See the [PyMongo documentation](https://pymongo.readthedocs.io/en/stable/tutorial.html#making-a-connection-with-mongoclient) for details.
 
-### How it works?
+---
 
-- Panther creates a database connection depends on `DATABASE` block you defined in `configs`
+## How Does It Work?
 
-- You can access to this connection with your `models`,
-or direct access from `from panther.db.connections import db`
+- Panther creates a database connection based on the `DATABASE` configuration you define in your configs.
+- You can access this connection through your models, or directly via:
+  ```python
+  from panther.db.connections import db
+  ```
 
+---
 
-- Now we are going to create a new API which uses `PantherDB` and creating a `Book`
-
-  1.  Create `Book` model in `app/models.py`
-      ```python  
-      from panther.db import Model
-    
-    
-      class Book(Model):
-          title: str
-          description: str
-          pages_count: int
-      ```
-
-  2. Add `book` url in `app/urls.py` that points to `book_api()`
-
-      ```python  
-      ...
-      from app.apis import book_api
-    
-    
-      urls = {
-          'book/': book_api,
-      }
-      ```  
-
-  3. Create `book_api()` in `app/apis.py`
-
-      ```python  
-      from panther import status
-      from panther.app import API
-      from panther.response import Response
-    
-    
-      @API()
-      async def book_api():
-          ...
-          return Response(status_code=status.HTTP_201_CREATED)  
-      ```  
-
-  4. Now we should use the [Panther ODM](https://pantherpy.github.io/panther_odm/) to create a book, it's based on mongo queries, for creation we use `insert_one` like this:
-
-      ```python
-      from panther import status
-      from panther.app import API
-      from panther.response import Response
-      from app.models import Book
-    
-    
-      @API()
-      async def book_api():
-          Book.insert_one(
-              title='Python',
-              description='Python is good.',
-              pages_count=10
-          )
-          return Response(status_code=status.HTTP_201_CREATED)  
-      ```
-
-**In [next](https://pantherpy.github.io/panther_odm/) step we are going to explain more about `Panther ODM`**
+**Next:** Learn more about [Panther ODM](https://pantherpy.github.io/panther_odm/).
