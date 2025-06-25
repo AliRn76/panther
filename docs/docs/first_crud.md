@@ -27,7 +27,7 @@ Configure the `DATABASE` settings in `core/configs.py`. In this guide, we will u
 
 > [PantherDB](https://github.com/PantherPy/PantherDB/#readme) is a simple, file-based, document-oriented database.
 
-```python title="configs.py"
+```python title="core/configs.py"
 DATABASE = {
     'engine': {
         'class': 'panther.db.connections.PantherDBConnection',
@@ -44,7 +44,7 @@ DATABASE = {
 
 Create a model named `Book` in `app/models.py`:
 
-```python title="models.py" linenums="1"
+```python title="app/models.py" linenums="1"
 from panther.db import Model
 
 
@@ -107,7 +107,7 @@ Serializers transform data between the application and API requests.
 === "Function-Base/ Class-Base API"
     The serializer can be inherited from `ModelSerializer` or `pydantic.BaseModel`
 
-    ```python title="serializers.py" linenums="1"
+    ```python title="app/serializers.py" linenums="1"
     from panther.serializer import ModelSerializer
     
     from app.models import Book
@@ -119,7 +119,7 @@ Serializers transform data between the application and API requests.
     ```
     or
 
-    ```python title="serializers.py" linenums="1"
+    ```python title="app/serializers.py" linenums="1"
     import pydantic
     
     from app.models import Book
@@ -153,7 +153,7 @@ Serializers transform data between the application and API requests.
 
 === "Function-Base API"
 
-    ```python title="apis.py" linenums="1"
+    ```python title="app/apis.py" linenums="1"
     from panther import status
     from panther.app import API
     from panther.request import Request
@@ -176,7 +176,7 @@ Serializers transform data between the application and API requests.
 
 === "Class-Base API"
 
-    ```python title="apis.py" linenums="1"
+    ```python title="app/apis.py" linenums="1"
     from panther import status
     from panther.app import GenericAPI
     from panther.request import Request
@@ -201,7 +201,7 @@ Serializers transform data between the application and API requests.
 
 === "Generic API (Beta)"
 
-    ```python title="apis.py" linenums="1"
+    ```python title="app/apis.py" linenums="1"
     from panther.app import CreateAPI
 
     from app.serializers import BookSerializer
@@ -215,7 +215,7 @@ Serializers transform data between the application and API requests.
 
 === "Function-Base API"
 
-    ```python title="apis.py" linenums="1"
+    ```python title="app/apis.py" linenums="1"
     from panther import status
     from panther.app import API
     from panther.request import Request
@@ -227,25 +227,17 @@ Serializers transform data between the application and API requests.
     
     @API(input_model=BookSerializer, methods=['POST', 'GET'])
     async def book_api(request: Request):
-        if request.method == 'POST':
-            body: BookSerializer = request.validated_data
-            book: Book = await Book.insert_one(
-                name=body.name,
-                author=body.author,
-                pages_count=body.pages_count,
-            )
-            return Response(data=book, status_code=status.HTTP_201_CREATED) 
-        else:  # GET
+        ...
+        if request.method == 'GET':
             books = await Book.find()
             return Response(data=books, status_code=status.HTTP_200_OK)
     ```
 
 === "Class-Base API"
 
-    ```python title="apis.py" linenums="1"
+    ```python title="app/apis.py" linenums="1"
     from panther import status
     from panther.app import GenericAPI
-    from panther.request import Request
     from panther.response import Response
     
     from app.serializers import BookSerializer
@@ -254,15 +246,6 @@ Serializers transform data between the application and API requests.
     
     class BookAPI(GenericAPI):
         input_model = BookSerializer
-    
-        async def post(self, request: Request):
-            body: BookSerializer = request.validated_data
-            book = await Book.insert_one(
-                name=body.name,
-                author=body.author,
-                pages_count=body.pages_count,
-            )
-            return Response(data=book, status_code=status.HTTP_201_CREATED)
 
         async def get(self):
             books = await Book.find()
@@ -271,7 +254,7 @@ Serializers transform data between the application and API requests.
 
 === "Generic API (Beta)"
 
-    ```python title="apis.py" linenums="1"
+    ```python title="app/apis.py" linenums="1"
     from panther.generics import CreateAPI, ListAPI
     from panther.pagination import Pagination
     from panther.request import Request
@@ -305,7 +288,7 @@ Serializers transform data between the application and API requests.
 
 === "Function-Base API"
 
-    ```python title="apis.py" linenums="23"
+    ```python title="app/apis.py" linenums="1"
     from panther import status
     from panther.app import API
     from panther.request import Request
@@ -323,7 +306,7 @@ Serializers transform data between the application and API requests.
 
 === "Class-Base API"
 
-    ```python title="apis.py" linenums="25"
+    ```python title="app/apis.py" linenums="1"
     from panther import status
     from panther.app import GenericAPI
     from panther.response import Response
@@ -340,7 +323,7 @@ Serializers transform data between the application and API requests.
 
 === "Generic API (Beta)"
 
-    ```python title="apis.py" linenums="17"
+    ```python title="app/apis.py" linenums="1"
     from panther.generics import RetrieveAPI
     from panther.request import Request
 
@@ -356,7 +339,7 @@ Serializers transform data between the application and API requests.
 
 === "Function-Base API"
 
-    ```python title="apis.py" linenums="23"
+    ```python title="app/apis.py" linenums="1"
     from panther import status
     from panther.app import API
     from panther.request import Request
@@ -368,12 +351,8 @@ Serializers transform data between the application and API requests.
    
     @API(input_model=BookSerializer, methods=['GET', 'PUT'])
     async def single_book_api(request: Request, book_id: int):
-        if request.method == 'GET':
-            if book := await Book.find_one(id=book_id):
-                return Response(data=book, status_code=status.HTTP_200_OK)
-            return Response(data={'detail': 'Book not found'}, status_code=status.HTTP_400_BAD_REQUEST)
-        
-        else:  # 'PUT'            
+        ...
+        if request.method == 'PUT':            
             is_updated = await Book.update_one({'id': book_id}, request.validated_data.model_dump())
             data = {'is_updated': is_updated}
             return Response(data=data, status_code=status.HTTP_200_OK)
@@ -381,7 +360,7 @@ Serializers transform data between the application and API requests.
 
 === "Class-Base API"
 
-    ```python title="apis.py" linenums="25"
+    ```python title="app/apis.py" linenums="1"
     from panther import status
     from panther.app import GenericAPI
     from panther.response import Response
@@ -390,10 +369,7 @@ Serializers transform data between the application and API requests.
     
    
     class SingleBookAPI(GenericAPI):
-        async def get(self, book_id: int):
-            if book := await Book.find_one(id=book_id):
-                return Response(data=book, status_code=status.HTTP_200_OK)
-            return Response(data={'detail': 'Book not found'}, status_code=status.HTTP_400_BAD_REQUEST)
+        input_model = BookSerializer
 
         async def put(self, request: Request, book_id: int):
             is_updated = await Book.update_one({'id': book_id}, request.validated_data.model_dump())
@@ -403,7 +379,7 @@ Serializers transform data between the application and API requests.
 
 === "Generic API (Beta)"
 
-    ```python title="apis.py" linenums="17"
+    ```python title="app/apis.py" linenums="1"
     from panther.generics import RetrieveAPI
     from panther.request import Request
 
@@ -423,7 +399,7 @@ Serializers transform data between the application and API requests.
 
 === "Function-Base API"
 
-    ```python title="apis.py" linenums="23"
+    ```python title="apis.py" linenums="1"
     from panther import status
     from panther.app import API
     from panther.request import Request
@@ -435,24 +411,15 @@ Serializers transform data between the application and API requests.
    
     @API(input_model=BookSerializer, methods=['GET', 'PUT', 'DELETE'])
     async def single_book_api(request: Request, book_id: int):
-        if request.method == 'GET':
-            if book := await Book.find_one(id=book_id):
-                return Response(data=book, status_code=status.HTTP_200_OK)
-            return Response(data={'detail': 'Book not found'}, status_code=status.HTTP_400_BAD_REQUEST)
-        
-        elif request.method == 'PUT':       
-            is_updated = await Book.update_one({'id': book_id}, request.validated_data.model_dump())
-            data = {'is_updated': is_updated}
-            return Response(data=data, status_code=status.HTTP_200_OK)
-        
-        else:  # 'DELETE'
+        ...
+        if request.method == 'DELETE':
             await Book.delete_one(id=book_id)
             return Response(status_code=status.HTTP_204_NO_CONTENT)
     ```
 
 === "Class-Base API"
 
-    ```python title="apis.py" linenums="25"
+    ```python title="apis.py" linenums="1"
     from panther import status
     from panther.app import GenericAPI
     from panther.response import Response
@@ -461,16 +428,6 @@ Serializers transform data between the application and API requests.
     
    
     class SingleBookAPI(GenericAPI):
-        async def get(self, book_id: int):
-            if book := await Book.find_one(id=book_id):
-                return Response(data=book, status_code=status.HTTP_200_OK)
-            return Response(data={'detail': 'Book not found'}, status_code=status.HTTP_400_BAD_REQUEST)
-
-        async def put(self, request: Request, book_id: int):
-            is_updated = await Book.update_one({'id': book_id}, request.validated_data.model_dump())
-            data = {'is_updated': is_updated}
-            return Response(data=data, status_code=status.HTTP_200_OK)
-
         async def delete(self, book_id: int):
             await Book.delete_one(id=book_id)
             return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -478,7 +435,7 @@ Serializers transform data between the application and API requests.
 
 === "Generic API (Beta)"
 
-    ```python title="apis.py" linenums="17"
+    ```python title="apis.py" linenums="1"
     from panther.generics import RetrieveAPI
     from panther.request import Request
 

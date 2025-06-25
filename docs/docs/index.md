@@ -92,9 +92,8 @@ from panther.response import Response
 
 
 class FirstAPI(GenericAPI):
-    # Enable caching for 10 seconds
-    cache = True
-    cache_exp_time = timedelta(seconds=10)
+    # Response will be cached for 10 seconds for each user/ ip
+    cache = timedelta(seconds=10)
 
     def get(self):
         current = datetime.now().isoformat()
@@ -103,7 +102,7 @@ class FirstAPI(GenericAPI):
 
 
 url_routing = {
-    '': FirstAPI,
+    '/': FirstAPI,
     'swagger/': openapi_urls,  # Auto generated Swagger API documentation
 }
 app = Panther(__name__, configs=__name__, urls=url_routing)
