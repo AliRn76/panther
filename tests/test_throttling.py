@@ -100,7 +100,6 @@ class TestThrottling(IsolatedAsyncioTestCase):
         assert res.headers == {
             'Content-Type': 'application/json',
             'Content-Length': '29',
-            'Access-Control-Allow-Origin': '*',
             'Retry-After': str(int((reset_time - datetime.now()).total_seconds())),
             'X-RateLimit-Reset': str(int(reset_time.timestamp())),
         }

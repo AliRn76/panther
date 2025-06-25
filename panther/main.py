@@ -193,7 +193,7 @@ class Panther:
             )
 
         # Return Response
-        await response.send(send, receive)
+        await response.send(send=send, receive=receive)
 
     def __del__(self):
         Event.run_shutdowns()

@@ -137,10 +137,6 @@ class API:
     async def handle_endpoint(self, request: Request) -> Response:
         self.request = request
 
-        # 0. Preflight
-        if self.request.method == 'OPTIONS':
-            return self.options()
-
         # 1. Check Method
         if self.request.method not in self.methods:
             raise MethodNotAllowedAPIError
@@ -197,14 +193,6 @@ class API:
     def handle_input_validation(self):
         if self.input_model:
             self.request.validated_data = self.validate_input(model=self.input_model, request=self.request)
-
-    @classmethod
-    def options(cls):
-        headers = {
-            'Access-Control-Allow-Methods': 'DELETE, GET, PATCH, POST, PUT, OPTIONS, HEAD',
-            'Access-Control-Allow-Headers': 'Accept, Authorization, User-Agent, Content-Type',
-        }
-        return Response(headers=headers)
 
     @classmethod
     def validate_input(cls, model, request: Request):
@@ -289,8 +277,6 @@ class GenericAPI(metaclass=MetaGenericAPI):
                 func = self.patch
             case 'DELETE':
                 func = self.delete
-            case 'OPTIONS':
-                func = API.options
             case _:
                 raise MethodNotAllowedAPIError
 
