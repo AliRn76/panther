@@ -34,6 +34,7 @@ nav:
   - Introduction: 'index.md'
   - First CRUD: 'first_crud.md'
   - Database: 'database.md'
+  - Query: 'query.md'
 
   - How To CRUD:
       - Function Base: 'function_first_crud.md'
@@ -42,7 +43,6 @@ nav:
   - Model: 'model.md'
   - API: 'api.md'
   - Pagination: 'pagination.md'
-  - Panther ODM: 'panther_odm.md'
   - Configs: 'configs.md'
   - Redis: 'redis.md'
   - Serializer: 'serializer.md'
