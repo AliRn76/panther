@@ -33,7 +33,6 @@ class Author(Model):
     name: str
     books: list[Book]
     books2: List[Book]
-    # new_book: dict[str, Book]
     book: Book
     book2: None | Book = None
     book_detail: dict
