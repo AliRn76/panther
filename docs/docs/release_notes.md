@@ -1,15 +1,16 @@
 # Panther Release Notes
 
 ### 5.0.0
-- Added Built-In `AdminPanel`
-- Added Built-In `OpenAPI`
+- Add Built-In `AdminPanel`
+- Add Built-In `OpenAPI`
+- Add `CORSMiddleware`
 - Support `Set-Cookie` in Response
 - Support `application/x-www-form-urlencoded` Content Type
 - Support Different `Middlewares` Per API
+- Support `asyncio` in `panther shell`
+- Add `RedirectResponse`
+- Support `Boolean` type in `load_env()`
 - Optimized `ORM` with smarter `ObjectID` handling
-- Added `asyncio` support in `panther shell`
-- Added `RedirectResponse`
-- Added `Boolean` support in `load_env()`
 - Change `path` to `name` in `TemplateResponse()`
 - Change `new_password` to `password` in `BaseUser.check_password()`
 - Deprecated:

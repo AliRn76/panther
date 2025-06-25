@@ -262,9 +262,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data is None
         assert res.body == b''
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '0'
 
     async def test_nothing_cls(self):
@@ -272,9 +271,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data is None
         assert res.body == b''
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '0'
 
     async def test_none(self):
@@ -282,9 +280,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data is None
         assert res.body == b''
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '0'
 
     async def test_none_cls(self):
@@ -292,9 +289,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data is None
         assert res.body == b''
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '0'
 
     async def test_dict(self):
@@ -302,9 +298,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == {'detail': 'ok'}
         assert res.body == b'{"detail":"ok"}'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '15'
 
     async def test_dict_cls(self):
@@ -312,9 +307,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == {'detail': 'ok'}
         assert res.body == b'{"detail":"ok"}'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '15'
 
     async def test_string(self):
@@ -322,9 +316,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == 'Hello'
         assert res.body == b'"Hello"'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '7'
 
     async def test_string_cls(self):
@@ -332,9 +325,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == 'Hello'
         assert res.body == b'"Hello"'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '7'
 
     async def test_list(self):
@@ -342,9 +334,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == [1, 2, 3]
         assert res.body == b'[1,2,3]'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '7'
 
     async def test_list_cls(self):
@@ -352,9 +343,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == [1, 2, 3]
         assert res.body == b'[1,2,3]'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '7'
 
     async def test_tuple(self):
@@ -362,9 +352,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == [1, 2, 3, 4]
         assert res.body == b'[1,2,3,4]'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '9'
 
     async def test_tuple_cls(self):
@@ -372,9 +361,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == [1, 2, 3, 4]
         assert res.body == b'[1,2,3,4]'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '9'
 
     async def test_response_none(self):
@@ -382,9 +370,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data is None
         assert res.body == b''
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '0'
 
     async def test_response_none_cls(self):
@@ -392,9 +379,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data is None
         assert res.body == b''
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '0'
 
     async def test_response_dict(self):
@@ -402,9 +388,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == {'detail': 'ok'}
         assert res.body == b'{"detail":"ok"}'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '15'
 
     async def test_response_dict_cls(self):
@@ -412,9 +397,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == {'detail': 'ok'}
         assert res.body == b'{"detail":"ok"}'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '15'
 
     async def test_response_list(self):
@@ -422,9 +406,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == ['car', 'home', 'phone']
         assert res.body == b'["car","home","phone"]'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '22'
 
     async def test_response_list_cls(self):
@@ -432,9 +415,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == ['car', 'home', 'phone']
         assert res.body == b'["car","home","phone"]'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '22'
 
     async def test_response_tuple(self):
@@ -442,9 +424,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == ['car', 'home', 'phone', 'book']
         assert res.body == b'["car","home","phone","book"]'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '29'
 
     async def test_response_tuple_cls(self):
@@ -452,9 +433,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == ['car', 'home', 'phone', 'book']
         assert res.body == b'["car","home","phone","book"]'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '29'
 
     async def test_response_html(self):
@@ -462,9 +442,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == '<html><head><title></title></head></html>'
         assert res.body == b'<html><head><title></title></head></html>'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'text/html; charset=utf-8'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '41'
 
     async def test_response_html_cls(self):
@@ -472,9 +451,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == '<html><head><title></title></head></html>'
         assert res.body == b'<html><head><title></title></head></html>'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'text/html; charset=utf-8'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '41'
 
     async def test_response_template(self) -> None:
@@ -482,9 +460,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == '<html><body><p>Hello World</p></body></html>'
         assert res.body == b'<html><body><p>Hello World</p></body></html>'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'text/html; charset=utf-8'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '44'
 
     async def test_response_template_cls(self) -> None:
@@ -492,9 +469,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == '<html><body><p>Hello World</p></body></html>'
         assert res.body == b'<html><body><p>Hello World</p></body></html>'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'text/html; charset=utf-8'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '44'
 
     async def test_response_plain(self):
@@ -502,9 +478,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == 'Hello World'
         assert res.body == b'Hello World'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'text/plain; charset=utf-8'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '11'
 
     async def test_response_plain_cls(self):
@@ -512,9 +487,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert res.data == 'Hello World'
         assert res.body == b'Hello World'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'text/plain; charset=utf-8'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '11'
 
     async def test_streaming_response(self):
@@ -544,9 +518,8 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 500
         assert res.data == {'detail': 'Internal Server Error'}
         assert res.body == b'{"detail":"Internal Server Error"}'
-        assert set(res.headers.keys()) == {'Content-Type', 'Access-Control-Allow-Origin', 'Content-Length'}
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Access-Control-Allow-Origin'] == '*'
         assert res.headers['Content-Length'] == '34'
 
     async def test_full_cookie(self):
