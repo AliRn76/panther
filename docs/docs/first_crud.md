@@ -21,7 +21,7 @@ The final structure of your project will be as follows:
 ## Configuring the Database
 
 !!! question "How does the database work in Panther?"
-    Refer to [[this page](/database/)] to learn about supported databases and their functionality.
+    Refer to [[Database](/database/)] to learn about supported databases and their functionality.
 
 Configure the `DATABASE` settings in `core/configs.py`. In this guide, we will use `PantherDB`.
 
@@ -40,7 +40,7 @@ DATABASE = {
 ## Defining the Model
 
 !!! question "How do models work in Panther?"
-    Refer to [[this page](/model/)] to learn more about defining models and how they function.
+    Refer to [[Model](/model/)] to learn more about defining models and how they function.
 
 Create a model named `Book` in `app/models.py`:
 
@@ -59,7 +59,7 @@ class Book(Model):
 ## Defining URLs
 
 !!! question "How do URLs work in Panther?"
-    Refer to [[this page](/urls/)] to learn more about URL definitions.
+    Refer to [[URLs](/urls/)] to learn more about URL definitions.
 
 The base `urls` configuration should include all application URLs.
 
@@ -100,7 +100,7 @@ In `app/urls.py`, define the `Book` API URLs:
 ## Defining the Serializer
 
 !!! question "How do serializers work in Panther?"
-    Refer to [[this page](/serializer/)] to learn more about available serializers.
+    Refer to [[Serializer](/serializer/)] to learn more about available serializers.
 
 Serializers transform data between the application and API requests.
 
@@ -147,7 +147,7 @@ Serializers transform data between the application and API requests.
 
 ### APIs
 !!! question "How do APIs work in Panther?"
-    Refer to [[this page](/api/)] to learn more about API types and their usage.
+    Refer to [[API](/api/)] to learn more about API types and their usage.
 
 #### Create
 

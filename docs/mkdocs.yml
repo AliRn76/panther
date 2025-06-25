@@ -35,13 +35,16 @@ nav:
   - First CRUD: 'first_crud.md'
   - Database: 'database.md'
   - Query: 'query.md'
+  - URLs: 'urls.md'
+    
+  - Model: 'model.md'
+  - Serializer: 'serializer.md'
+  - API: 'api.md'
 
   - How To CRUD:
       - Function Base: 'function_first_crud.md'
       - Class Base: 'class_first_crud.md'
       - Generic: 'generic_crud.md'
-  - Model: 'model.md'
-  - API: 'api.md'
   - Pagination: 'pagination.md'
   - Configs: 'configs.md'
   - Redis: 'redis.md'
@@ -50,7 +53,6 @@ nav:
   - Middlewares: 'middlewares.md'
   - Authentications: 'authentications.md'
   - Events: 'events.md'
-  - URLs: 'urls.md'
   - Throttling: 'throttling.md'
   - Background Tasks: 'background_tasks.md'
 #  - Caching: 'caching.md'
