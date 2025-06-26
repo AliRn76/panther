@@ -39,6 +39,7 @@ logger = logging.getLogger('panther')
 
 class API:
     """
+    methods: Specify the allowed methods.
     input_model: The `request.data` will be validated with this attribute, It will raise an
         `panther.exceptions.BadRequestAPIError` or put the validated data in the `request.validated_data`.
     output_schema: This attribute only used in creation of OpenAPI scheme which is available in `panther.openapi.urls`
@@ -48,7 +49,6 @@ class API:
     permissions: List of permissions that will be called sequentially after authentication to authorize the user.
     throttling: It will limit the users' request on a specific (time-window, path)
     cache: Specify the duration of the cache (Will be used only in GET requests).
-    methods: Specify the allowed methods.
     middlewares: These middlewares have inner priority than global middlewares.
     """
 
@@ -59,14 +59,13 @@ class API:
         *,
         methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
         input_model: type[ModelSerializer] | type[BaseModel] | None = None,
-        output_model: type[BaseModel] | None = None,
         output_schema: OutputSchema | None = None,
         auth: bool = False,
         permissions: list[type[BasePermission]] | None = None,
         throttling: Throttle | None = None,
         cache: timedelta | None = None,
-        cache_exp_time: timedelta | None = None,
         middlewares: list[type[HTTPMiddleware]] | None = None,
+        **kwargs
     ):
         self.methods = {m.upper() for m in methods} if methods else {'GET', 'POST', 'PUT', 'PATCH', 'DELETE'}
         self.input_model = input_model
@@ -77,7 +76,7 @@ class API:
         self.cache = cache
         self.middlewares: list[[HTTPMiddleware]] | None = middlewares
         self.request: Request | None = None
-        if output_model:
+        if kwargs.pop('output_model', None):
             deprecation_message = (
                 traceback.format_stack(limit=2)[0]
                 + '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
@@ -85,7 +84,7 @@ class API:
                 'https://pantherpy.github.io/open_api/'
             )
             raise PantherError(deprecation_message)
-        if cache_exp_time:
+        if kwargs.pop('cache_exp_time', None):
             deprecation_message = (
                 traceback.format_stack(limit=2)[0]
                 + '\nThe `cache_exp_time` argument has been removed in Panther v5 and is no longer available.'
@@ -110,6 +109,11 @@ class API:
                 msg = f'{perm.__name__}.authorization() should be `@classmethod`'
                 logger.error(msg)
                 raise PantherError(msg)
+        # Check kwargs
+        if kwargs:
+            msg = f'Unknown kwargs: {kwargs.keys()}'
+            logger.error(msg)
+            raise PantherError(msg)
 
     def __call__(self, func):
         self.func = func
@@ -142,7 +146,11 @@ class API:
             raise MethodNotAllowedAPIError
 
         # 2. Authentication
-        await self.handle_authentication()
+        if self.auth:
+            if not config.AUTHENTICATION:
+                logger.critical('"AUTHENTICATION" has not been set in configs')
+                raise APIError
+            self.request.user = await config.AUTHENTICATION.authentication(self.request)
 
         # 3. Permissions
         for perm in self.permissions:
@@ -154,8 +162,8 @@ class API:
             await throttling.check_and_increment(request=self.request)
 
         # 5. Validate Input
-        if self.request.method in {'POST', 'PUT', 'PATCH'}:
-            self.handle_input_validation()
+        if self.input_model and self.request.method in {'POST', 'PUT', 'PATCH'}:
+            self.request.validated_data = self.validate_input(model=self.input_model, request=self.request)
 
         # 6. Get Cached Response
         if self.cache and self.request.method == 'GET':
@@ -182,17 +190,6 @@ class API:
             await set_response_in_cache(request=self.request, response=response, duration=self.cache)
 
         return response
-
-    async def handle_authentication(self) -> None:
-        if self.auth:
-            if not config.AUTHENTICATION:
-                logger.critical('"AUTHENTICATION" has not been set in configs')
-                raise APIError
-            self.request.user = await config.AUTHENTICATION.authentication(self.request)
-
-    def handle_input_validation(self):
-        if self.input_model:
-            self.request.validated_data = self.validate_input(model=self.input_model, request=self.request)
 
     @classmethod
     def validate_input(cls, model, request: Request):

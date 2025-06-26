@@ -87,12 +87,10 @@ from panther.response import Response
 
 
 class CustomMiddleware(HTTPMiddleware):
-    async def before(self, request: Request) -> Request:
-        print('Before Endpoint')
-        return request
-
-    async def after(self, response: Response) -> Response:
-        print('After Endpoint')
+    async def __call__(self, request: Request) -> Response:
+        print('Hi')
+        response = await self.dispatch(request=request)
+        print('Bye')
         return response
 ```
 
@@ -100,19 +98,17 @@ class CustomMiddleware(HTTPMiddleware):
 
 ```python
 from datetime import datetime
-from panther.middlewares.base import BaseMiddleware
+from panther.middlewares.base import HTTPMiddleware
 from panther.request import Request
 from panther.response import Response
-from panther.websocket import GenericWebsocket 
 
 
-class TimerMiddleware(BaseMiddleware):
-    async def before(self, request: Request | GenericWebsocket) -> Request | GenericWebsocket:
-        self.start_time = datetime.now()
-        return request
-
-    async def after(self, response: Response | GenericWebsocket) -> Response | GenericWebsocket:
-        result = datetime.now() - self.start_time
+class TimerMiddleware(HTTPMiddleware):
+    async def __call__(self, request: Request) -> Response:
+        start_time = datetime.now()
+        response = await self.dispatch(request=request)
+        result = datetime.now() - start_time
         print(f'Request takes {result.total_seconds()} seconds')
         return response
+
 ```

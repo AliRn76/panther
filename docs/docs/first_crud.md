@@ -1,4 +1,4 @@
-We assume you have successfully set up your project following the [Introduction](https://pantherpy.github.io/#installation) guide.
+We assume you have successfully set up your project following the [Introduction](/#installation) guide.
 
 In this guide, we will create a `CRUD` (`Create`, `Retrieve`, `Update`, and `Delete`) API for managing `Book` entities.
 
