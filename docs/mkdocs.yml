@@ -41,6 +41,7 @@ nav:
   - API: 'api.md'
   - Redis: 'redis.md'
   - Events: 'events.md'
+  - Background Tasks: 'background_tasks.md'
 
   - How To CRUD:
       - Function Base: 'function_first_crud.md'
@@ -51,7 +52,6 @@ nav:
   - WebSocket: 'websocket.md'
   - Middlewares: 'middlewares.md'
   - Authentications: 'authentications.md'
-  - Background Tasks: 'background_tasks.md'
   - Caching: 'caching.md'
   - UserModel: 'user_model.md'
   - Single-File: 'single_file.md'

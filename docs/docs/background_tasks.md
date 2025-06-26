@@ -1,119 +1,130 @@
-## Intro
-Panther is going to run the `background tasks` as a thread in the background on startup if you set the `BACKGROUND_TASKS` to `True`
+# Background Tasks in Panther
 
-## Usage
-- Add the `BACKGROUND_TASKS = True` in the `configs`  
+Panther can run background tasks in a separate thread at startup if you set `BACKGROUND_TASKS = True` in your configuration.
 
-- Import the `background_tasks` from `panther.background_tasks`:
+## Quick Start
+
+1. **Enable background tasks**  
+   In your `configs`, add:
+   ```python
+   BACKGROUND_TASKS = True
+   ```
+
+2. **Create and submit a task**  
     ```python
-    from panther.background_tasks import background_tasks
-    ```
-
-- Create a `task`
-    ```python
-    from panther.background_tasks import background_tasks, BackgroundTask
+    from panther.background_tasks import BackgroundTask
     
     def do_something(name: str, age: int):
-        pass
-  
-    task = BackgroundTask(do_something, name='Ali', age=26)
+       print(f"{name} is {age} years old.")
+    
+    BackgroundTask(do_something, name='Ali', age=26).submit()
     ```
-  
-- Now you can add your task to the `background_tasks`
+    - You must call `.submit()` to add the task to the queue.
+      - The task function can be synchronous or asynchronous.
+
+---
+
+## Task Options
+
+### 1. Interval
+
+Control how many times a task runs:
+
+```python
+BackgroundTask(do_something, name='Ali', age=26).interval(3).submit()
+```
+
+- By default, tasks run once (`interval=1`).
+- Use `interval(-1)` for infinite runs.
+- Each interval is separated by the schedule you set (see below).
+
+### 2. Scheduling
+
+You can schedule tasks to run at specific intervals:
+
+- **Every N seconds/minutes/hours/days/weeks:**
     ```python
-    from panther.background_tasks import background_tasks, BackgroundTask
-    
-    def do_something(name: str, age: int):
-        pass
-  
-    task = BackgroundTask(do_something, name='Ali', age=26)
-    background_tasks.add_task(task)
+    BackgroundTask(do_something, name='Ali', age=26).every_seconds(10).submit()
+    BackgroundTask(do_something, name='Ali', age=26).every_minutes(5).submit()
+    BackgroundTask(do_something, name='Ali', age=26).every_hours(2).submit()
+    BackgroundTask(do_something, name='Ali', age=26).every_days(1).submit()
+    BackgroundTask(do_something, name='Ali', age=26).every_weeks(1).submit()
     ```
+    - Default value for each is `1` (e.g., every 1 minute).
 
+- **Custom values:**  
+  You can pass a custom value to any of the above, e.g., `every_days(4)` runs every 4 days.
 
-## Options
-- ### Interval
-    You can set custom `interval` for the `tasks`, let's say we want to run the `task` below for `3 times`.
-    
-    ```python
-    from panther.background_tasks import BackgroundTask, background_tasks
-    
-    
-    def do_something(name: str, age: int):
-        pass
-        
-    task = BackgroundTask(do_something, name='Ali', age=26).interval(3)
-    background_tasks.add_task(task)
-    ```
-  
-- ### Schedule
-  `BackgroundTask` has some methods to `schedule` the run time, (Default value of them is `1`)
-  - `every_seconds()`
-  - `every_minutes()` 
-  - `every_hours()` 
-  - `every_days()`
-  - `every_weeks()`
-  - `at()`  # Set Custom Time
-  - `on()`  # Set Custom Day Of Week
-  > You can pass your custom value to them too, 
-  > 
-  > **Example**: Run Every 4 days: `every_days(4)`.
- 
+### 3. Time of Day
 
-- ### Time Specification
-  You can set a custom `time` to tasks too
-  
-  let's say we want to run the `task` below every day on `8:00` o'clock. 
+Run a task at a specific time:
 
-  ```python
-  from datetime import time
-  
-  from panther.background_tasks import BackgroundTask, background_tasks
-  
-  
-  def do_something(name: str, age: int):
-          pass
-      
-  task = BackgroundTask(do_something, name='Ali', age=26).every_days().at(time(hour=8))
-  background_tasks.add_task(task)
-  ```
+```python
+from datetime import time
+from panther.background_tasks import BackgroundTask
 
-- ### Day Of Week Specification
-  Now we want to run the `task` below every 2 week on `monday`, on `8:00` o'clock. 
+BackgroundTask(do_something, name='Ali', age=26)\
+    .every_days()\
+    .at(time(hour=8, minute=0))\
+    .submit()
+```
 
-  ```python
-  from datetime import time
-  
-  from panther.background_tasks import BackgroundTask, background_tasks
-  
-  
-  def do_something(name: str, age: int):
-          pass
-      
-  task = BackgroundTask(do_something, name='Ali', age=26).every_weeks(2).on('monday').at(time(hour=8))
-  background_tasks.add_task(task)
-  ```
+- The task will run when the system time matches the specified hour, minute, and second.
 
-## Notice
-- > The `task` function can be `sync` or `async`
+### 4. Day of Week
 
-- > You can pass the arguments to the task as `args` and `kwargs` 
-  
-    ```python
-    def do_something(name: str, age: int):
-            pass
-        
-    task = BackgroundTask(do_something, name='Ali', age=26)
-    or 
-    task = BackgroundTask(do_something, 'Ali', age=26)
-    or 
-    task = BackgroundTask(do_something, 'Ali', 26)
-    ```
+Run a task on a specific day of the week:
 
-- > Default of interval() is 1.
+```python
+from datetime import time
+from panther.background_tasks import BackgroundTask, WeekDay
 
-- > The -1 interval means infinite, 
+BackgroundTask(do_something, name='Ali', age=26)\
+    .every_weeks(2)\
+    .on(WeekDay.SUNDAY)\
+    .at(time(hour=8))\
+    .submit()
+```
 
-- > The `.at()` only useful when you are using `.every_days()` or `.every_weeks()`
+- Valid days: `WeekDay.MONDAY`, `WeekDay.TUESDAY`, `WeekDay.WEDNESDAY`, `WeekDay.THURSDAY`, `WeekDay.FRIDAY`, `WeekDay.SATURDAY`, `WeekDay.SUNDAY`.
 
-- > The `.on()` only useful when you are using `.every_weeks()`
+---
+
+## Passing Arguments
+
+You can pass arguments to your task function as positional or keyword arguments:
+
+```python
+BackgroundTask(do_something, name='Ali', age=26)
+BackgroundTask(do_something, 'Ali', age=26)
+BackgroundTask(do_something, 'Ali', 26)
+```
+
+---
+
+## Important Notes & Best Practices
+
+- **Task function** can be synchronous or asynchronous.
+- **You must call `.submit()`** to add the task to the background queue.
+- **Default interval** is 1 (runs once). Use `.interval(-1)` for infinite runs.
+- If you try to add a task before `BACKGROUND_TASKS` is enabled, it will be ignored and a warning will be logged.
+- Each task runs in its own thread when triggered.
+- Tasks are checked every second for their schedule.
+
+---
+
+## Example: Task
+
+```python
+import datetime
+from panther.background_tasks import BackgroundTask
+
+async def hello(name: str):
+    print(f'Hello {name}')
+
+# Run 2 times, every 5 seconds
+BackgroundTask(hello, 'Ali').interval(2).every_seconds(5).submit()
+
+# Run forever, every day at 08:00
+BackgroundTask(hello, 'Saba').interval(-1).every_days().at(datetime.time(hour=8)).submit()
+```

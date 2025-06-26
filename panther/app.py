@@ -65,7 +65,7 @@ class API:
         throttling: Throttle | None = None,
         cache: timedelta | None = None,
         middlewares: list[type[HTTPMiddleware]] | None = None,
-        **kwargs
+        **kwargs,
     ):
         self.methods = {m.upper() for m in methods} if methods else {'GET', 'POST', 'PUT', 'PATCH', 'DELETE'}
         self.input_model = input_model
