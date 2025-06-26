@@ -22,6 +22,7 @@
     - New Style of Middleware declaration [[Documentation]](https://pantherpy.github.io/middlewares)
   - `output_model` in `API` and `GenericAPI` 
   - `background_tasks.add_task(BackgroundTask(...))` --> `BackgroundTask(...).submit()`
+  - `websocket_db` from `REDIS` block, it's value is `0` now
 
 ### 4.3.7
 - Improve MultiPart-FormData Regex
