@@ -74,7 +74,3 @@ DATABASE = {
   ```python
   from panther.db.connections import db
   ```
-
----
-
-**Next:** Learn more about [Panther ODM](https://pantherpy.github.io/panther_odm/).

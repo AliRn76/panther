@@ -132,7 +132,7 @@ class MainPage(GenericAPI):
         <ul id="log"></ul>
         <script>
             const s = new WebSocket('ws://127.0.0.1:8000/ws');
-            s.onmessage = e => log.innerHTML += `<li>Server: ${e.data}</li>`;
+            s.onmessage = e => log.innerHTML += `<li><- ${msg.value}</li><li>-> ${e.data}</li>`;
         </script>
         """
         return HTMLResponse(template)

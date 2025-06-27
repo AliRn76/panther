@@ -1,12 +1,12 @@
 # WebSocket Support in Panther
 
-**WebSockets** allow you to build interactive, real-time features such as chat, notifications, and live updates. 
+**WebSockets** enable you to build interactive, real-time features such as chat, notifications, and live updates.
 
 ---
 
 ## Structure & Requirements
 
-### Create a WebSocket Class
+### Creating a WebSocket Class
 Create a WebSocket handler class in `app/websockets.py` by inheriting from `GenericWebsocket`:
 
 ```python
@@ -22,7 +22,7 @@ class BookWebsocket(GenericWebsocket):
         await self.send(data=data)
 ```
 
-### Update URLs
+### Registering WebSocket URLs
 Register your WebSocket class in `app/urls.py`:
 
 ```python
@@ -33,8 +33,7 @@ urls = {
 }
 ```
 
-> Panther supports **WebSocket** routing just like APIs.
-
+> Panther supports WebSocket routing just like APIs.
 
 ---
 
@@ -56,6 +55,50 @@ urls = {
 ---
 
 ## Advanced Usage
+
+### Authentication
+You can enable authentication in your WebSocket class by setting `auth = True` and specifying your authentication class in the configuration with `WS_AUTHENTICATION`. Panther will use the `authentication()` method of this class to authenticate the user. There are several built-in options, but we recommend `QueryParamJWTAuthentication` for WebSocket authentication.
+
+```python
+WS_AUTHENTICATION = 'panther.authentications.QueryParamJWTAuthentication'
+```
+
+This will set `self.user` to a `UserModel` instance or `None`. The connection will be rejected if any exception occurs during authentication.
+
+```python title="app/websockets.py" linenums="1"
+from panther.websocket import GenericWebsocket
+
+class MyWebSocket(GenericWebsocket):
+    auth = True
+    
+    async def connect(self):
+        print(self.user)
+        ...
+```
+
+### Permissions
+You can implement your authorization logic using permission classes. Any class that inherits from `panther.permissions.BasePermission` or implements an `authorization()` method can be used as a permission class.
+
+Pass a list of permission classes to your WebSocket class, and Panther will call each class's `authorization()` method. If any return `False`, the connection will be rejected.
+
+> The `authorization()` method should be an `async classmethod`.
+
+```python title="app/websockets.py" linenums="1"
+from panther.websocket import Websocket, GenericWebsocket
+from panther.permissions import BasePermission
+
+class MyPermission(BasePermission):
+    @classmethod
+    async def authorization(cls, request: Websocket) -> bool:
+        return True
+
+class MyWebSocket(GenericWebsocket):
+    permissions = [MyPermission]
+    
+    async def connect(self):
+        ...
+```
+
 
 ### Multiple Workers & Redis
 - **Recommended:** For running WebSockets with multiple workers, add Redis to your configuration. [See Adding Redis](/redis/)
@@ -94,11 +137,13 @@ urls = {
 
 ---
 
-## Example Client Code
-Here's a simple example using JavaScript:
+## Example
+
+### Example Client Code
+**Here's a simple example using JavaScript:**
 
 ```js
-const ws = new WebSocket('ws://localhost:8000/ws/book/');
+const ws = new WebSocket('ws://127.0.0.1:8000/ws/book/');
 ws.onopen = () => {
     ws.send('Hello, server!');
 };
@@ -109,6 +154,42 @@ ws.onclose = () => {
     console.log('Connection closed');
 };
 ```
+
+### Echo Example
+**Full echo example with WebSocket:**
+
+```python title="main.py" linenums="1"
+from panther import Panther
+from panther.app import GenericAPI
+from panther.response import HTMLResponse
+from panther.websocket import GenericWebsocket
+
+class EchoWebsocket(GenericWebsocket):
+    async def connect(self, **kwargs):
+        await self.accept()
+
+    async def receive(self, data: str | bytes):
+        await self.send(data)
+
+class MainPage(GenericAPI):
+    def get(self):
+        template = """
+        <input id="msg"><button onclick="s.send(msg.value)">Send</button>
+        <ul id="log"></ul>
+        <script>
+            const s = new WebSocket('ws://127.0.0.1:8000/ws');
+            s.onmessage = e => log.innerHTML += `<li><- ${msg.value}</li><li>-> ${e.data}</li>`;
+        </script>
+        """
+        return HTMLResponse(template)
+
+url_routing = {
+    '': MainPage,
+    'ws': EchoWebsocket,
+}
+app = Panther(__name__, configs=__name__, urls=url_routing)
+```
+**Run** with `panther run main:app` and **visit** `http://127.0.0.1:8000`.
 
 ---
 
