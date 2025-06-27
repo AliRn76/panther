@@ -43,6 +43,9 @@ nav:
   - Events: 'events.md'
   - Background Tasks: 'background_tasks.md'
   - WebSocket: 'websocket.md'
+  - Middlewares: 'middlewares.md'
+
+  - Cross-Origin Resource Sharing (CORS): 'cors.md'
 
   - How To CRUD:
       - Function Base: 'function_first_crud.md'
@@ -50,7 +53,6 @@ nav:
       - Generic: 'generic_crud.md'
   - Pagination: 'pagination.md'
   - Configs: 'configs.md'
-  - Middlewares: 'middlewares.md'
   - Authentications: 'authentications.md'
   - Caching: 'caching.md'
   - UserModel: 'user_model.md'

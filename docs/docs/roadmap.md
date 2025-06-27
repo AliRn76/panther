@@ -17,6 +17,7 @@ We welcome contributions! Here's how you can help:
 ## Community Feedback
 
 Your input is valuable! If you have any feature requests or suggestions for future development, please:
+
 1. Check existing issues to avoid duplicates
 2. Create a new issue with a clear description
 3. Include use cases and potential implementation ideas
