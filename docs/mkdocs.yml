@@ -51,6 +51,7 @@ nav:
       - Timezone: 'timezone.md'
       - Auto-Reformatting (Ruff): 'ruff.md'
       - Log Queries: 'log_queries.md'
+      - Template Response: 'templates.md'
 
 
 
@@ -61,7 +62,6 @@ nav:
   - Pagination: 'pagination.md'
   - Configs: 'configs.md'
   - UserModel: 'user_model.md'
-  - Log Queries: 'log_queries.md'
   - Open API (Swagger): 'open_api.md'
   - Roadmap: 'roadmap.md'
 
