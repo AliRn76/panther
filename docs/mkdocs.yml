@@ -47,6 +47,11 @@ nav:
   - Authentications: 'authentications.md'
   - Single-File Application: 'single_file.md'
   - Cross-Origin Resource Sharing (CORS): 'cors.md'
+  - Advance Configs:
+      - Timezone: 'timezone.md'
+      - Auto-Reformatting (Ruff): 'ruff.md'
+
+
 
   - How To CRUD:
       - Function Base: 'function_first_crud.md'
@@ -54,12 +59,12 @@ nav:
       - Generic: 'generic_crud.md'
   - Pagination: 'pagination.md'
   - Configs: 'configs.md'
-  - Caching: 'caching.md'
   - UserModel: 'user_model.md'
   - Monitoring: 'monitoring.md'
   - Log Queries: 'log_queries.md'
   - Open API (Swagger): 'open_api.md'
   - Roadmap: 'roadmap.md'
+
   - Release Notes: 'release_notes.md'
 
 markdown_extensions:
