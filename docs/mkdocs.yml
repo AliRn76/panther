@@ -44,6 +44,7 @@ nav:
   - Background Tasks: 'background_tasks.md'
   - WebSocket: 'websocket.md'
   - Middlewares: 'middlewares.md'
+  - Authentications: 'authentications.md'
 
   - Cross-Origin Resource Sharing (CORS): 'cors.md'
 
@@ -53,7 +54,6 @@ nav:
       - Generic: 'generic_crud.md'
   - Pagination: 'pagination.md'
   - Configs: 'configs.md'
-  - Authentications: 'authentications.md'
   - Caching: 'caching.md'
   - UserModel: 'user_model.md'
   - Single-File: 'single_file.md'

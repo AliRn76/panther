@@ -36,7 +36,13 @@ class BaseAuthentication:
 
 
 class JWTAuthentication(BaseAuthentication):
-    model = BaseUser
+    """
+    Retrieve the Authorization from header
+    Example:
+        Headers: {'authorization': 'Bearer the_jwt_token'}
+    """
+
+    model = None
     keyword = 'Bearer'
     algorithm = 'HS256'
     HTTP_HEADER_ENCODING = 'iso-8859-1'  # RFC5987
@@ -97,12 +103,12 @@ class JWTAuthentication(BaseAuthentication):
 
     @classmethod
     async def get_user(cls, payload: dict) -> Model:
-        """Fetch the user based on the decoded JWT payload from config.UserModel or cls.model"""
+        """Fetch the user based on the decoded JWT payload from cls.model or config.UserModel"""
         if (user_id := payload.get('user_id')) is None:
             msg = 'Payload does not have `user_id`'
             raise cls.exception(msg)
 
-        user_model = config.USER_MODEL or cls.model
+        user_model = cls.model or config.USER_MODEL
         user = await user_model.find_one(id=user_id)
         if user is None:
             raise cls.exception('User not found')
@@ -179,13 +185,14 @@ class JWTAuthentication(BaseAuthentication):
 
 
 class QueryParamJWTAuthentication(JWTAuthentication):
+    """
+    Retrieve the Authorization from query params
+    Example:
+        https://example.com?authorization=the_jwt_without_bearer
+    """
+
     @classmethod
     def get_authorization_header(cls, request: Request | Websocket) -> list[str]:
-        """'
-        Retrieve the Authorization from query params
-        Example:
-            https://example.com?authorization=the_jwt_without_bearer
-        """
         if auth := request.query_params.get('authorization'):
             return auth
         msg = '`authorization` query param not found.'
@@ -197,6 +204,12 @@ class QueryParamJWTAuthentication(JWTAuthentication):
 
 
 class CookieJWTAuthentication(JWTAuthentication):
+    """
+    Retrieve the Authorization from cookies
+    Example:
+        Cookies: access_token=the_jwt_without_bearer
+    """
+
     @classmethod
     async def authentication(cls, request: Request | Websocket) -> Model:
         user = await super().authentication(request=request)
@@ -207,11 +220,6 @@ class CookieJWTAuthentication(JWTAuthentication):
 
     @classmethod
     def get_authorization_header(cls, request: Request | Websocket) -> str:
-        """'
-        Retrieve the Authorization from cookies
-        Example:
-            access_token=the_jwt_without_bearer
-        """
         if token := request.headers.get_cookies().get('access_token'):
             return token
         msg = '`access_token` Cookie not found.'

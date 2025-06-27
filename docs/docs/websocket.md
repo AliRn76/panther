@@ -57,7 +57,9 @@ urls = {
 ## Advanced Usage
 
 ### Authentication
-You can enable authentication in your WebSocket class by setting `auth = True` and specifying your authentication class in the configuration with `WS_AUTHENTICATION`. Panther will use the `authentication()` method of this class to authenticate the user. There are several built-in options, but we recommend `QueryParamJWTAuthentication` for WebSocket authentication.
+You can enable authentication in your WebSocket class by setting `auth = True` and specifying your authentication class in the configuration with `WS_AUTHENTICATION`. 
+Panther will use the `authentication()` method of this class to authenticate the user. 
+There are several built-in options, but we recommend `QueryParamJWTAuthentication` for WebSocket authentication.
 
 ```python
 WS_AUTHENTICATION = 'panther.authentications.QueryParamJWTAuthentication'
