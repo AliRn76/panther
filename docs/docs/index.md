@@ -82,7 +82,7 @@
 
 Here's a simple REST API endpoint that returns a "Hello World" message:
 
-```python
+```python title="main.py" linenums="1"
 from datetime import datetime, timedelta
 
 from panther import status, Panther
@@ -112,7 +112,7 @@ app = Panther(__name__, configs=__name__, urls=url_routing)
 
 Here's a simple WebSocket echo server that sends back any message it receives:
 
-```python
+```python title="main.py" linenums="1"
 from panther import Panther
 from panther.app import GenericAPI
 from panther.response import HTMLResponse

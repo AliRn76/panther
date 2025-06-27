@@ -45,6 +45,7 @@ nav:
   - WebSocket: 'websocket.md'
   - Middlewares: 'middlewares.md'
   - Authentications: 'authentications.md'
+  - Single-File Application: 'single_file.md'
 
   - Cross-Origin Resource Sharing (CORS): 'cors.md'
 
@@ -56,7 +57,6 @@ nav:
   - Configs: 'configs.md'
   - Caching: 'caching.md'
   - UserModel: 'user_model.md'
-  - Single-File: 'single_file.md'
   - Monitoring: 'monitoring.md'
   - Log Queries: 'log_queries.md'
   - Open API (Swagger): 'open_api.md'
