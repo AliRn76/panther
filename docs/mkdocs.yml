@@ -46,7 +46,6 @@ nav:
   - Middlewares: 'middlewares.md'
   - Authentications: 'authentications.md'
   - Single-File Application: 'single_file.md'
-
   - Cross-Origin Resource Sharing (CORS): 'cors.md'
 
   - How To CRUD:
