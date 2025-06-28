@@ -47,9 +47,7 @@ nav:
   - Authentications: 'authentications.md'
   - Single-File Application: 'single_file.md'
   - Cross-Origin Resource Sharing (CORS): 'cors.md'
-#  - Generic APIs: 'generic_api.md'  # TODO
-#  - Pagination: 'pagination.md'  # TODO: Maybe we have to move it inside generics ... or somewhere else
-#  - Open API (Swagger): 'open_api.md'  # TODO
+  - Open API (Swagger): 'open_api.md'
   - Advance Configs:
       - User Model: 'user_model.md'
       - Timezone: 'timezone.md'

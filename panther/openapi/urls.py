@@ -1,5 +1,5 @@
 from panther.openapi.views import OpenAPI
 
-urls = {
+url_routing = {
     '': OpenAPI,
 }
