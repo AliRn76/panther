@@ -11,7 +11,7 @@ Panther can run background tasks in a separate thread at startup if you set `BAC
    ```
 
 2. **Create and submit a task**  
-    ```python
+    ```python linenums="1"
     from panther.background_tasks import BackgroundTask
     
     def do_something(name: str, age: int):

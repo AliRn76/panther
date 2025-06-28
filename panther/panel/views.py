@@ -16,6 +16,7 @@ logger = logging.getLogger('panther')
 
 class AdminPanelPermission(BasePermission):
     """We didn't want to change AUTHENTICATION class of user, so we use permission class for this purpose."""
+
     @classmethod
     async def authorization(cls, request: Request) -> bool:
         from panther.authentications import CookieJWTAuthentication

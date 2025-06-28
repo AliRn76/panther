@@ -21,7 +21,7 @@ The final structure of your project will be as follows:
 ## Configuring the Database
 
 !!! question "How does the database work in Panther?"
-    Refer to [[Database](database.md)] to learn about supported databases and their functionality.
+    Refer to [Database](database.md) to learn about supported databases and their functionality.
 
 Configure the `DATABASE` settings in `core/configs.py`. In this guide, we will use `PantherDB`.
 
@@ -40,7 +40,7 @@ DATABASE = {
 ## Defining the Model
 
 !!! question "How do models work in Panther?"
-    Refer to [Model](model.md) to learn more about defining models and how they function.
+    Refer to [Models](model.md) to learn more about defining models and how they function.
 
 Create a model named `Book` in `app/models.py`:
 
@@ -133,7 +133,7 @@ Serializers transform data between the application and API requests.
 === "Generic API (Beta)"
     The serializer should be inherited from `ModelSerializer` to be used in `GenericAPI`.
 
-    ```python title="serializers.py" linenums="1"
+    ```python title="app/serializers.py" linenums="1"
     from panther.serializer import ModelSerializer
     
     from app.models import Book

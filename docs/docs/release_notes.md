@@ -19,7 +19,7 @@
     - `BaseUser.check_password(new_password=...)` is renamed to `password`.
     - `TemplateResponse(path=...)` is renamed to `name`.
     - Middlewares does not support custom args for their `__init__`.
-    - New Style of Middleware declaration [[Documentation]](https://pantherpy.github.io/middlewares).
+    - New Style of Middleware declaration [[Documentation]](middlewares.md).
     - `API` and `GenericAPI` do not support `output_model` anymore, checkout `output_schema` .
     - New background task declaration, `background_tasks.add_task(BackgroundTask(...))` --> `BackgroundTask(...).submit()`.
     - `REDIS` block in configs does not support `websocket_db` anymore.

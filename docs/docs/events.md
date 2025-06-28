@@ -8,7 +8,7 @@ Panther provides a simple way to execute custom logic during your application's 
 
 To run code when your application starts, use the `@Event.startup` decorator:
 
-```python
+```python title="events.py" linenums="1"
 from panther.events import Event
 
 @Event.startup
@@ -24,7 +24,7 @@ You can define multiple startup event handlers. They will be executed in the ord
 
 To run code when your application is shutting down, use the `@Event.shutdown` decorator:
 
-```python
+```python title="events.py" linenums="1"
 from panther.events import Event
 
 @Event.shutdown

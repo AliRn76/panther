@@ -8,7 +8,7 @@ Panther requires you to define your application's URL routing. You can provide t
 ## How to Configure URLs
 
 - The `URLs` config should be a dotted path (string) pointing to your root URL dictionary.
-  - Example: `URLs = 'path.to.module.url_dict'`
+    - Example: `URLs = 'path.to.module.url_dict'`
 - The target of `URLs` **must** be a Python `dict`.
 - In the URL dictionary, each **key** is a URL path, and each **value** is either an endpoint (function/class) or another nested dictionary for sub-routing.
 
@@ -19,30 +19,41 @@ You can define variables in your URL paths using angle brackets (`<variable_name
 - Example path: `user/<user_id>/blog/<title>/`
 - The corresponding endpoint must accept parameters with the same names.
 - Panther will automatically cast arguments to the expected types and raise an error if the types do not match.
-- **Function-based example:**
-  ```python
-  @API()
-  async def profile_api(user_id: int, title: str):
-      ...
-  ```
-- **Class-based example:**
-  ```python
-  class MyAPI(GenericAPI):
-      async def get(self, user_id: int, title: str):
-          ...
-  ```
+
+=== "Function-based"
+    ```python title="app/apis.py"
+    @API()
+    async def profile_api(user_id: int, title: str, is_alive: bool):
+        ...
+    ```
+
+=== "Class-based"
+    ```python title="app/apis.py"
+    class MyAPI(GenericAPI):
+        async def get(self, user_id: int, title: str, is_alive: bool):
+            ...
+    ```
 
 ---
 
 ## Example: Global Config Structure
+Specify a dotted path to a dictionary of URLs in your configuration file.
 
-**core/configs.py**
-```python
+```
+.
+├── app
+│     ├── apis.py
+│     └── urls.py
+└── core
+      ├── configs.py
+      └── urls.py
+```
+
+```python title="core/configs.py"
 URLs = 'core.urls.url_routing'
 ```
 
-**core/urls.py**
-```python
+```python title="core/urls.py" linenums="1"
 from app.urls import app_urls
 
 url_routing = {
@@ -50,23 +61,21 @@ url_routing = {
 }
 ```
 
-**app/urls.py**
-```python
+```python title="app/urls.py" linenums="1"
 from app.apis import *
 
 app_urls = {
     'login/': login_api,
     'logout/': logout_api,
-    '<user_id>/blog/<title>/': profile_api,
+    '<user_id>/blog/<title>/<is_alive>/': profile_api,
 }
 ```
 
-**app/apis.py**
-```python
+```python title="app/apis.py" linenums="1"
 from panther import API
 
 @API()
-async def profile_api(user_id: int, title: str):
+async def profile_api(user_id: int, title: str, is_alive: bool):
     ...
 ```
 
@@ -76,7 +85,9 @@ async def profile_api(user_id: int, title: str):
 
 You can pass the URL dictionary directly to Panther:
 
-```python
+```python title="main.py"
+# Other codes ...
+
 urls = {
     '/': first_api,
 }

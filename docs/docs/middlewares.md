@@ -24,7 +24,7 @@ MIDDLEWARES = [
 
 You can assign middlewares to specific APIs, either class-based or function-based:
 
-```python
+```python title="apis.py" linenums="1"
 from panther.app import API, GenericAPI
 from panther.middlewares import HTTPMiddleware
 
@@ -81,7 +81,7 @@ from panther.middlewares import WebsocketMiddleware
 
 #### Example: HTTP Middleware
 
-```python
+```python title="middlewares.py" linenums="1"
 from datetime import datetime
 from panther.middlewares.base import HTTPMiddleware
 from panther.request import Request
@@ -98,7 +98,7 @@ class CustomMiddleware(HTTPMiddleware):
 
 #### Example: WebSocket Middleware
 
-```python
+```python title="middlewares.py" linenums="1"
 from datetime import datetime
 from panther.middlewares.base import WebsocketMiddleware
 from panther.websocket import GenericWebsocket, Websocket

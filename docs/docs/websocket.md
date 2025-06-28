@@ -9,7 +9,7 @@
 ### Creating a WebSocket Class
 Create a WebSocket handler class in `app/websockets.py` by inheriting from `GenericWebsocket`:
 
-```python
+```python title="app/websockets.py" linenums="1"
 from panther.websocket import GenericWebsocket
 
 class BookWebsocket(GenericWebsocket):
@@ -25,7 +25,7 @@ class BookWebsocket(GenericWebsocket):
 ### Registering WebSocket URLs
 Register your WebSocket class in `app/urls.py`:
 
-```python
+```python title="app/urls.py" linenums="1"
 from app.websockets import BookWebsocket
 
 urls = {
@@ -125,7 +125,7 @@ class MyWebSocket(GenericWebsocket):
 ### Path Variables
 You can define path variables in your WebSocket URL. These will be passed to the `connect()` method:
 
-```python
+```python linenums="1"
 from panther.websocket import GenericWebsocket
 
 class UserWebsocket(GenericWebsocket):
@@ -144,7 +144,7 @@ urls = {
 ### Example Client Code
 **Here's a simple example using JavaScript:**
 
-```js
+```js title="websocket.js" linenums="1"
 const ws = new WebSocket('ws://127.0.0.1:8000/ws/book/');
 ws.onopen = () => {
     ws.send('Hello, server!');

@@ -6,7 +6,7 @@ Panther models allow you to define your data schema and interact with the databa
 
 To create a Panther model, define a class that inherits from `panther.db.Model`:
 
-```python
+```python title="app/models.py" linenums="1"
 from panther.db import Model
 
 class User(Model):
@@ -25,7 +25,9 @@ You can define model attributes (columns) using Python type hints. Each attribut
 - **str**, **int**, **bool**: Saved in the database as-is.
 
 **Example:**
-```python
+```python title="app/models.py" linenums="1"
+from panther.db import Model
+
 class Product(Model):
     name: str
     price: int
@@ -36,7 +38,7 @@ class Product(Model):
 - **list**: Each item in the list is processed according to its type. The child type can be a primitive, a `pydantic.BaseModel`, or another `Model`.
 
 **Example:**
-```python
+```python title="app/models.py" linenums="1"
 from pydantic import BaseModel
 from panther.db import Model
 
@@ -58,7 +60,9 @@ class School(Model):
 - **dict**: Each value in the dictionary is processed according to its type. Only plain `dict` is supported (not typed dicts like `dict[str, int]`).
 
 **Example:**
-```python
+```python title="app/models.py" linenums="1"
+from panther.db import Model
+
 class Config(Model):
     settings: dict
 ```
@@ -67,8 +71,9 @@ class Config(Model):
 - **pydantic.BaseModel**: Treated like a dictionary, but with type information for each item. Each item is processed according to its type.
 
 **Example:**
-```python
+```python title="app/models.py" linenums="1"
 from pydantic import BaseModel
+from panther.db import Model
 
 class Address(BaseModel):
     city: str
@@ -87,7 +92,9 @@ class Customer(Model):
     4. Panther retrieves the corresponding value from the database and returns it as a fully populated model instance.
 
 **Example:**
-```python
+```python title="app/models.py" linenums="1"
+from panther.db import Model
+
 class Department(Model):
     name: str
 
@@ -101,7 +108,9 @@ class Employee(Model):
 - If you make an attribute optional, you must assign a default value.
 
 **Example:**
-```python
+```python title="app/models.py" linenums="1"
+from panther.db import Model
+
 class Article(Model):
     title: str
     summary: str | None = None  # Optional attribute with default value

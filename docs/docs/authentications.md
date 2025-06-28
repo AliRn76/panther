@@ -34,7 +34,7 @@ AUTHENTICATION = 'panther.authentications.JWTAuthentication'
 #### JWT Configuration
 You can customize JWT behavior by setting `JWT_CONFIG` in your configs. Example:
 
-```python
+```python title="core/configs.py" linenums="1"
 from datetime import timedelta
 from panther.utils import load_env  
 from pathlib import Path

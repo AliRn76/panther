@@ -20,7 +20,7 @@ Panther provides flexible ways to define serializers for your APIs. Serializers 
 
 Use a regular Pydantic class as your serializer. This is the most direct approach and is ideal for simple use cases or when you want full control over the fields.
 
-```python
+```python linenums="1"
 from pydantic import BaseModel, Field
 from panther.app import API
 from panther.request import Request
@@ -43,7 +43,7 @@ async def serializer_example(request: Request):
 
 Use Panther's `ModelSerializer` to automatically generate serializer fields from your model. This is useful for DRY code and consistency between your models and serializers.
 
-```python
+```python linenums="1"
 from pydantic import Field
 from panther import status
 from panther.app import API
@@ -75,7 +75,7 @@ class UserModelSerializer(ModelSerializer):
 
 @API(input_model=UserModelSerializer)
 async def model_serializer_example(request: Request):
-    return Response(data=request.validated_data, status_code=status.HTTP_202_ACCEPTED)
+    return Response(data=request.validated_data)
 ```
 
 ---
@@ -84,7 +84,7 @@ async def model_serializer_example(request: Request):
 
 Combine `ModelSerializer` with Pydantic features for advanced use cases. This allows you to add custom fields, validators, and configuration.
 
-```python
+```python linenums="1"
 from pydantic import Field, field_validator, ConfigDict
 from panther import status
 from panther.app import API
@@ -118,7 +118,7 @@ class UserModelSerializer(ModelSerializer):
 
 @API(input_model=UserModelSerializer)
 async def model_serializer_example(request: Request):
-    return Response(data=request.validated_data, status_code=status.HTTP_202_ACCEPTED)
+    return Response(data=request.validated_data)
 ```
 
 ---
