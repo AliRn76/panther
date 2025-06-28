@@ -62,7 +62,7 @@ class BaseUser(Model):
 
     @classmethod
     def insert_one(cls, _document: dict | None = None, /, **kwargs) -> Self:
-        kwargs['date_created'] = datetime.now()
+        kwargs['date_created'] = timezone_now()
         return super().insert_one(_document, **kwargs)
 
     async def login(self) -> dict:

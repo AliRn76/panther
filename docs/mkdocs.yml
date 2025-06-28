@@ -36,9 +36,9 @@ nav:
   - Database: 'database.md'
   - Query: 'query.md'
   - URLs: 'urls.md'
-  - Model: 'model.md'
-  - Serializer: 'serializer.md'
-  - API: 'api.md'
+  - Models: 'model.md'
+  - Serializers: 'serializer.md'
+  - APIs: 'api.md'
   - Redis: 'redis.md'
   - Events: 'events.md'
   - Background Tasks: 'background_tasks.md'
@@ -47,24 +47,17 @@ nav:
   - Authentications: 'authentications.md'
   - Single-File Application: 'single_file.md'
   - Cross-Origin Resource Sharing (CORS): 'cors.md'
+#  - Generic APIs: 'generic_api.md'  # TODO
+#  - Pagination: 'pagination.md'  # TODO: Maybe we have to move it inside generics ... or somewhere else
+#  - Open API (Swagger): 'open_api.md'  # TODO
   - Advance Configs:
+      - User Model: 'user_model.md'
       - Timezone: 'timezone.md'
       - Auto-Reformatting (Ruff): 'ruff.md'
       - Log Queries: 'log_queries.md'
       - Template Response: 'templates.md'
-
-
-
-  - How To CRUD:
-      - Function Base: 'function_first_crud.md'
-      - Class Base: 'class_first_crud.md'
-      - Generic: 'generic_crud.md'
-  - Pagination: 'pagination.md'
-  - Configs: 'configs.md'
-  - UserModel: 'user_model.md'
-  - Open API (Swagger): 'open_api.md'
+      - Admin Panel: 'admin_panel.md'
   - Roadmap: 'roadmap.md'
-
   - Release Notes: 'release_notes.md'
 
 markdown_extensions:

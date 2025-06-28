@@ -1,6 +1,6 @@
 # Panther API Guide
 
-This guide assumes you have successfully set up your project and created your first CRUD following the [First CRUD](/first_crud/) guide.
+This guide assumes you have successfully set up your project and created your first CRUD following the [First CRUD](first_crud.md) guide.
 
 In this guide, we discuss the features and structure of Panther's API system, including authentication, permissions, caching, throttling, middlewares, and more.
 
@@ -32,7 +32,7 @@ You can validate incoming data using the `input_model` parameter. Pass a seriali
 > Note: `request.data` is validated only for 'POST', 'PUT', and 'PATCH' methods.
 
 ??? question "How do serializers work in Panther?"
-    Refer to [Serializer](/serializer/) to learn more about serializers.
+    Refer to [Serializer](serializer.md) to learn more about serializers.
 
 === "Function-Base API"
 
@@ -72,7 +72,7 @@ You can validate incoming data using the `input_model` parameter. Pass a seriali
 To ensure that each request contains a valid authentication header, set `auth=True`. Panther will look for the `AUTHENTICATION` class from your config and use its `authentication()` method for this purpose.
 
 ??? question "How do authentications work in Panther?"
-    Refer to [Authentications](/authentications/) to learn more about authentications.
+    Refer to [Authentications](authentications.md) to learn more about authentications.
 
 === "Function-Base API"
 
@@ -324,7 +324,7 @@ class CustomMiddleware(HTTPMiddleware):
     ```
 
 ??? question "How do middlewares work in Panther?"
-    Refer to [Middlewares](/middlewares/) to learn more about middlewares.
+    Refer to [Middlewares](middlewares.md) to learn more about middlewares.
 
 ---
 
@@ -367,5 +367,5 @@ class UserSerializer(ModelSerializer):
     ```
 
 ??? question "How does OpenAPI work in Panther?"
-    Refer to [OpenAPI](/open_api/) to learn more about OpenAPI.
+    Refer to [OpenAPI](open_api.md) to learn more about OpenAPI.
 

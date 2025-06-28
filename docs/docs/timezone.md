@@ -36,7 +36,7 @@ print(current_time)  # 2024-01-15 14:30:00+00:00 (if TIMEZONE='UTC')
 
 The `timezone_now()` function is automatically used in several Panther components:
 
-- **User Authentication**: `BaseUser.login()` uses timezone-aware timestamps
+- **User Authentication**: `BaseUser.date_created` and `BaseUser.last_login` use timezone-aware timestamps
 - **Background Tasks**: DateTime checking for scheduled and queued tasks
 
 > Use `timezone_now()` Instead of `datetime.now()`, to maintain consistency across your application.

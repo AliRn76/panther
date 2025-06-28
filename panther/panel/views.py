@@ -15,11 +15,12 @@ logger = logging.getLogger('panther')
 
 
 class AdminPanelPermission(BasePermission):
+    """We didn't want to change AUTHENTICATION class of user, so we use permission class for this purpose."""
     @classmethod
     async def authorization(cls, request: Request) -> bool:
         from panther.authentications import CookieJWTAuthentication
 
-        try:  # We don't want to set AUTHENTICATION class, so we have to use permission classes
+        try:
             await CookieJWTAuthentication.authentication(request=request)
             return True
         except AuthenticationAPIError:
@@ -50,7 +51,7 @@ class LoginView(GenericAPI):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 context={'error': 'Authentication Error'},
             )
-        tokens = await JWTAuthentication.login(user.id)
+        tokens = await JWTAuthentication.login(user=user)
         return RedirectResponse(
             url=request.query_params.get('redirect_to', '..'),
             status_code=status.HTTP_302_FOUND,

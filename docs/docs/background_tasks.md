@@ -1,6 +1,6 @@
 # Background Tasks in Panther
 
-Panther can run background tasks in a separate thread at startup if you set `BACKGROUND_TASKS = True` in your configuration.
+Panther can run background tasks in a separate thread at startup if you set `BACKGROUND_TASKS` to `True` in your configuration.
 
 ## Quick Start
 
@@ -59,7 +59,7 @@ You can schedule tasks to run at specific intervals:
 
 Run a task at a specific time:
 
-```python
+```python linenums="1"
 from datetime import time
 from panther.background_tasks import BackgroundTask
 
@@ -75,7 +75,7 @@ BackgroundTask(do_something, name='Ali', age=26)\
 
 Run a task on a specific day of the week:
 
-```python
+```python linenums="1"
 from datetime import time
 from panther.background_tasks import BackgroundTask, WeekDay
 
@@ -115,7 +115,7 @@ BackgroundTask(do_something, 'Ali', 26)
 
 ## Example: Task
 
-```python
+```python linenums="1"
 import datetime
 from panther.background_tasks import BackgroundTask
 

@@ -1,4 +1,4 @@
-We assume you have successfully set up your project following the [Introduction](/#installation) guide.
+We assume you have successfully set up your project following the [Introduction](index.md#installation) guide.
 
 In this guide, we will create a `CRUD` (`Create`, `Retrieve`, `Update`, and `Delete`) API for managing `Book` entities.
 
@@ -21,7 +21,7 @@ The final structure of your project will be as follows:
 ## Configuring the Database
 
 !!! question "How does the database work in Panther?"
-    Refer to [[Database](/database/)] to learn about supported databases and their functionality.
+    Refer to [[Database](database.md)] to learn about supported databases and their functionality.
 
 Configure the `DATABASE` settings in `core/configs.py`. In this guide, we will use `PantherDB`.
 
@@ -40,7 +40,7 @@ DATABASE = {
 ## Defining the Model
 
 !!! question "How do models work in Panther?"
-    Refer to [[Model](/model/)] to learn more about defining models and how they function.
+    Refer to [Model](model.md) to learn more about defining models and how they function.
 
 Create a model named `Book` in `app/models.py`:
 
@@ -59,7 +59,7 @@ class Book(Model):
 ## Defining URLs
 
 !!! question "How do URLs work in Panther?"
-    Refer to [[URLs](/urls/)] to learn more about URL definitions.
+    Refer to [URLs](urls.md) to learn more about URL definitions.
 
 The base `urls` configuration should include all application URLs.
 
@@ -100,7 +100,7 @@ In `app/urls.py`, define the `Book` API URLs:
 ## Defining the Serializer
 
 !!! question "How do serializers work in Panther?"
-    Refer to [[Serializer](/serializer/)] to learn more about available serializers.
+    Refer to [Serializer](serializer.md) to learn more about available serializers.
 
 Serializers transform data between the application and API requests.
 
@@ -147,7 +147,7 @@ Serializers transform data between the application and API requests.
 
 ### APIs
 !!! question "How do APIs work in Panther?"
-    Refer to [[API](/api/)] to learn more about API types and their usage.
+    Refer to [API](api.md) to learn more about API types and their usage.
 
 #### Create
 
@@ -274,15 +274,11 @@ Serializers transform data between the application and API requests.
     ```
 
     1. `Pagination` class will look for the `limit` and `skip` in the `query params` and paginate your response and then return it on its own response template.
-    Check out: [Pagination](/pagination/) for more detail.
     2. The query will be changed and looking for the value of the `search` query param in these fields,
     e.g. query param is the `?search=TheLittlePrince`, we will looking for the Book with `name` or `author` of `TheLittlePrince`.
-    Check out: [Search Fields](/api/#search_fields/) for more detail.
     3. It will look for each value of the `filter_fields` in the `query params` and query on them, 
     e.g. `?name=Something&author=Ali`, it will looks for Book that its `author` is `Ali` and its `name` is `Something`.
-    Check out: [Filter Fields](/api/#filter_fields/) for more detail.
     4. The query will be sortalbe with the fields which is in `sort_fields`.
-    Check out: [Sort Fields](/api/#sort_fields/) for more detail.
 
 #### Retrieve
 

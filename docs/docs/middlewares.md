@@ -121,7 +121,7 @@ Panther provides several built-in middlewares to help with common tasks. Below a
 ### CORS Middleware
 - **Purpose:** Enables Cross-Origin Resource Sharing (CORS) for your APIs.
 - **Usage:** Add `panther.middlewares.CORSMiddleware` to your global `MIDDLEWARES` list.
-- **Configuration:** Requires specific global settings. See the [CORS Middleware documentation](/cors/) for configuration details.
+- **Configuration:** Requires specific global settings. See the [CORS Middleware documentation](cors.md) for configuration details.
 
 ### Monitoring Middleware
 - **Purpose:** Logs request and connection data for monitoring and analytics.

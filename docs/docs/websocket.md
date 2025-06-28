@@ -103,7 +103,7 @@ class MyWebSocket(GenericWebsocket):
 
 
 ### Multiple Workers & Redis
-- **Recommended:** For running WebSockets with multiple workers, add Redis to your configuration. [See Adding Redis](/redis/)
+- **Recommended:** For running WebSockets with multiple workers, add Redis to your configuration. [See Adding Redis](redis.md)
 - **Without Redis:** If you do not use Redis but want to run WebSockets with multiple workers (e.g., with Gunicorn), use the `--preload` flag:
   ```shell
   gunicorn -w 10 -k uvicorn.workers.UvicornWorker main:app --preload
