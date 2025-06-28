@@ -52,11 +52,12 @@ class Monitoring:
 
             for _ in watching:
                 for line in f.readlines():
-                    # line = date_time | method | path | ip:port | response_time(seconds) | status
+                    # line = datetime | method | path | ip:port | response_time(seconds) | status
                     columns = line.split('|')
-                    columns[4] = self._clean_response_time(columns[4])
-                    self.rows.append(columns)
-                    live.update(self.generate_table())
+                    if len(columns) != 2:  # Can be `datetime | ` on initiation.
+                        columns[4] = self._clean_response_time(columns[4])
+                        self.rows.append(columns)
+                        live.update(self.generate_table())
 
     def initialize(self) -> str:
         # Check requirements
@@ -67,7 +68,11 @@ class Monitoring:
 
         # Check log file
         if not self.monitoring_log_file.exists():
-            return f'`{self.monitoring_log_file}` file not found. (Make sure `panther.middlewares.monitoring.MonitoringMiddleware` is in your `MIDDLEWARES`)'
+            return (
+                f'`{self.monitoring_log_file}` file not found. '
+                f'Make sure `panther.middlewares.monitoring.MonitoringMiddleware` is in your `MIDDLEWARES`.\n'
+                f'documentation: https://PantherPy.github.io/middlewares/#monitoring-middleware'
+            )
 
         # Initialize Deque
         self.update_rows()

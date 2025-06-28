@@ -40,6 +40,10 @@ class TestThrottling(IsolatedAsyncioTestCase):
         app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
 
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
+
     async def test_without_throttling(self):
         throttling = config.THROTTLING
         config.THROTTLING = None  # Disable Global Throttling
@@ -96,7 +100,6 @@ class TestThrottling(IsolatedAsyncioTestCase):
         assert res.headers == {
             'Content-Type': 'application/json',
             'Content-Length': '29',
-            'Access-Control-Allow-Origin': '*',
             'Retry-After': str(int((reset_time - datetime.now()).total_seconds())),
             'X-RateLimit-Reset': str(int(reset_time.timestamp())),
         }

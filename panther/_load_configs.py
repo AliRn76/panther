@@ -43,6 +43,7 @@ __all__ = (
 )
 
 logger = logging.getLogger('panther')
+monitoring_logger = logging.getLogger('monitoring')
 
 
 def load_configs_module(module_name: str, /) -> dict:
@@ -183,6 +184,7 @@ def load_middlewares(_configs: dict, /) -> None:
                 )
 
         if issubclass(middleware, (MonitoringMiddleware, WebsocketMonitoringMiddleware)):
+            monitoring_logger.debug('')  # Initiated
             config.MONITORING = True
 
         if issubclass(middleware, HTTPMiddleware):

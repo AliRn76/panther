@@ -2,6 +2,7 @@ from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
+from panther.configs import config
 from panther.db import Model
 from panther.generics import CreateAPI, DeleteAPI, ListAPI, RetrieveAPI, UpdateAPI
 from panther.pagination import Pagination
@@ -84,6 +85,10 @@ class TestGeneric(IsolatedAsyncioTestCase):
 
     def tearDown(self) -> None:
         Path(self.DB_PATH).unlink()
+
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
 
     async def test_retrieve(self):
         user = await User.insert_one(name='Ali')

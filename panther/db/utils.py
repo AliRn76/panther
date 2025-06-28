@@ -20,7 +20,7 @@ def log_query(func):
         response = await func(*args, **kwargs)
         end = perf_counter()
         class_name = getattr(args[0], '__name__', args[0].__class__.__name__)
-        logger.info(f'\033[1mQuery -->\033[0m  {class_name}.{func.__name__}() --> {(end - start) * 1_000:.2} ms')
+        logger.info(f'[Query] {class_name}.{func.__name__}() takes {(end - start) * 1_000:.3} ms')
         return response
 
     return log

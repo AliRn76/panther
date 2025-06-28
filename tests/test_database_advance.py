@@ -7,6 +7,7 @@ import pytest
 from pydantic import BaseModel
 
 from panther import Panther
+from panther.configs import config
 from panther.db import Model
 from panther.db.connections import db
 from panther.exceptions import DatabaseError
@@ -32,7 +33,6 @@ class Author(Model):
     name: str
     books: list[Book]
     books2: List[Book]
-    # new_book: dict[str, Book]
     book: Book
     book2: None | Book = None
     book_detail: dict
@@ -278,6 +278,10 @@ class TestMongoDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
     def tearDown(self) -> None:
         db.session.drop_collection('Book')
         db.session.drop_collection('Author')
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        config.refresh()
 
     async def test_insert_one_raw_document(self):
         book = await Book.insert_one(name='my_test')

@@ -7,6 +7,7 @@ import pytest
 
 from panther import Panther
 from panther.app import API
+from panther.configs import config
 from panther.response import HTMLResponse
 from panther.test import APIClient
 
@@ -42,6 +43,10 @@ class TestInMemoryCaching(IsolatedAsyncioTestCase):
     def setUpClass(cls) -> None:
         app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
+
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
 
     async def test_without_cache(self):
         res1 = await self.client.get('without-cache')

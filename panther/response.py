@@ -85,7 +85,7 @@ class Response:
         :param set_cookies: single cookie or list of cookies you want to set on the client
             Set the `max_age` to `0` if you want to delete a cookie
         """
-        headers = headers or {}
+        self.headers = {'Content-Type': self.content_type} | (headers or {})
         self.pagination: Pagination | None = pagination
         if isinstance(data, Cursor):
             data = list(data)
@@ -108,35 +108,22 @@ class Response:
                 if cookie.max_age is not None:
                     c[cookie.key]['max-age'] = cookie.max_age
             self.cookies = [(b'Set-Cookie', cookie.OutputString().encode()) for cookie in c.values()]
-        self.headers = headers
 
     @property
     def body(self) -> bytes:
         if isinstance(self.data, bytes):
             return self.data
-
         if self.data is None:
             return b''
         return json.dumps(self.data)
 
     @property
-    def headers(self) -> dict:
-        return {
-            'Content-Type': self.content_type,
-            'Content-Length': len(self.body),
-            'Access-Control-Allow-Origin': '*',
-        } | self._headers
-
-    @property
     def bytes_headers(self) -> list[tuple[bytes, bytes]]:
-        result = [(k.encode(), str(v).encode()) for k, v in (self.headers or {}).items()]
+        headers = {'Content-Length': len(self.body)} | self.headers
+        result = [(k.encode(), str(v).encode()) for k, v in headers.items()]
         if self.cookies:
-            result.extend(self.cookies)
+            result += self.cookies
         return result
-
-    @headers.setter
-    def headers(self, headers: dict):
-        self._headers = headers
 
     @classmethod
     def prepare_data(cls, data: Any):
@@ -164,15 +151,9 @@ class Response:
             raise TypeError(error)
         return status_code
 
-    async def send_headers(self, send, /):
+    async def send(self, send, receive):
         await send({'type': 'http.response.start', 'status': self.status_code, 'headers': self.bytes_headers})
-
-    async def send_body(self, send, receive, /):
         await send({'type': 'http.response.body', 'body': self.body, 'more_body': False})
-
-    async def send(self, send, receive, /):
-        await self.send_headers(send)
-        await self.send_body(send, receive)
 
     def __str__(self):
         if len(data := str(self.data)) > 30:
@@ -203,15 +184,11 @@ class StreamingResponse(Response):
         raise TypeError(msg)
 
     @property
-    def headers(self) -> dict:
-        return {
-            'Content-Type': self.content_type,
-            'Access-Control-Allow-Origin': '*',
-        } | self._headers
-
-    @headers.setter
-    def headers(self, headers: dict):
-        self._headers = headers
+    def bytes_headers(self) -> list[tuple[bytes, bytes]]:
+        result = [(k.encode(), str(v).encode()) for k, v in self.headers.items()]
+        if self.cookies:
+            result += self.cookies
+        return result
 
     @property
     async def body(self) -> AsyncGenerator:
@@ -223,8 +200,11 @@ class StreamingResponse(Response):
             else:
                 yield json.dumps(chunk)
 
-    async def send_body(self, send, receive, /):
-        asyncio.create_task(self.listen_to_disconnection(receive))
+    async def send(self, send, receive):
+        # Send Headers
+        await send({'type': 'http.response.start', 'status': self.status_code, 'headers': self.bytes_headers})
+        # Send Body as chunks
+        asyncio.create_task(self.listen_to_disconnection(receive=receive))
         async for chunk in self.body:
             if self.connection_closed:
                 break

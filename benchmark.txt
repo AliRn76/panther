@@ -1,0 +1,36 @@
+"""
+Checkout profiler.py for more information
+"""
+
+Clock type: CPU
+Ordered by: totaltime, desc
+
+name                                                                                                  ncall       tsub        ttot        tavg        
+
+/home/ali/dev/panther/panther/main.py:78 Panther.__call__                                             1001        0.012665    0.811156    0.000810
+/home/ali/dev/panther/panther/main.py:161 Panther.handle_http                                         1000        0.035138    0.798476    0.000798
+/home/ali/dev/panther/panther/response.py:167 Response.send                                           1000        0.009427    0.473242    0.000473
+/home/ali/dev/panther/panther/response.py:161 Response.send_headers                                   1000        0.012985    0.287794    0.000288
+/home/ali/dev/panther/panther/middlewares/base.py:15 TestMiddleware.__call__                          1000        0.005173    0.239159    0.000239
+/home/ali/dev/panther/panther/main.py:142 handle_http_endpoint                                        1000        0.021648    0.233986    0.000234
+/home/ali/dev/panther/panther/response.py:164 Response.send_body                                      1000        0.009923    0.176022    0.000176
+/home/ali/dev/panther/panther/app.py:120 wrapper                                                      1000        0.008120    0.133374    0.000133
+/home/ali/dev/panther/panther/app.py:136 API.handle_endpoint                                          1000        0.042525    0.125255    0.000125
+/home/ali/dev/panther/panther/response.py:124 Response.bytes_headers                                  1000        0.024477    0.062525    0.000063
+/home/ali/dev/panther/panther/response.py:67 Response.__init__                                        1000        0.019294    0.059479    0.000059
+/home/ali/dev/panther/panther/routings.py:133 find_endpoint                                           1000        0.026393    0.043979    0.000044
+/home/ali/dev/panther/panther/request.py:40 Request.read_body                                         1000        0.011115    0.036803    0.000037
+/home/ali/dev/panther/panther/response.py:135 prepare_data                                            2000/1000   0.023992    0.031797    0.000016
+/home/ali/dev/panther/panther/base_request.py:129 Request.collect_path_variables                      1000        0.019701    0.031360    0.000031
+/home/ali/dev/panther/panther/response.py:116 Response.headers                                        1000        0.009755    0.025101    0.000025
+/home/ali/dev/panther/panther/response.py:107 Response.body                                           2000        0.011792    0.024099    0.000012
+/home/ali/dev/panther/panther/base_request.py:139 Request.clean_parameters                            1000        0.007809    0.011867    0.000012
+/home/ali/dev/panther/panther/request.py:14 Request.__init__                                          1000        0.008140    0.010023    0.000010
+/home/ali/dev/panther/panther/response.py:154 check_status_code                                       1000        0.003490    0.004959    0.000005
+/home/ali/dev/panther/panther/request.py:19 Request.method                                            3000        0.004952    0.004952    0.000002
+/home/ali/dev/panther/panther/middlewares/base.py:12 TestMiddleware.__init__                          1000        0.004111    0.004111    0.000004
+/home/ali/dev/panther/panther/base_request.py:109 Request.path                                        2000        0.003424    0.003424    0.000002
+/home/ali/dev/panther/panther/base_request.py:88 Request.__init__                                     1000        0.001883    0.001883    0.000002
+/home/ali/dev/panther/panther/app.py:189 API.handle_authentication                                    1000        0.001752    0.001752    0.000002
+/home/ali/dev/panther/panther/response.py:131 Response.headers                                        1000        0.001583    0.001583    0.000002
+/home/ali/dev/panther/panther/events.py:27 run_startups                                               1           0.000001    0.000001    0.000001

@@ -4,9 +4,9 @@ from unittest import TestCase
 
 import pytest
 
-from panther.background_tasks import BackgroundTask, BackgroundTasks, _background_tasks
+from panther.background_tasks import BackgroundTask, BackgroundTasks, WeekDay, _background_tasks
 from panther.configs import config
-from panther.utils import Singleton
+from panther.utils import Singleton, timezone_now
 
 
 @pytest.mark.slow
@@ -18,6 +18,10 @@ class TestBackgroundTasks(TestCase):
     def tearDown(self):
         del Singleton._instances[BackgroundTasks]
         config.BACKGROUND_TASKS = False
+
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
 
     def test_background_tasks_singleton(self):
         new_obj = BackgroundTasks()
@@ -194,11 +198,34 @@ class TestBackgroundTasks(TestCase):
         def func(_numbers):
             _numbers.append(1)
 
-        now = datetime.datetime.now()
+        now = timezone_now()
 
         _background_tasks.initialize()
         BackgroundTask(func, numbers).at((now + datetime.timedelta(seconds=3)).time()).submit()
         time.sleep(2)
         assert len(numbers) == 0
         time.sleep(2)
+        assert len(numbers) == 1
+
+    def test_task_on_specific_weekday(self):
+        numbers = []
+
+        def func(_numbers):
+            _numbers.append(1)
+
+        now = timezone_now()
+        week_days = {
+            0: WeekDay.MONDAY,
+            1: WeekDay.TUESDAY,
+            2: WeekDay.WEDNESDAY,
+            3: WeekDay.THURSDAY,
+            4: WeekDay.FRIDAY,
+            5: WeekDay.SATURDAY,
+            6: WeekDay.SUNDAY,
+        }
+
+        _background_tasks.initialize()
+        BackgroundTask(func, numbers).on(week_days[now.weekday()]).submit()
+        assert len(numbers) == 0
+        time.sleep(1)
         assert len(numbers) == 1

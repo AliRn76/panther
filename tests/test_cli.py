@@ -42,34 +42,38 @@ def interactive_cli_2_mock_responses(index=None):
 class TestCLI(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        config.refresh()
         sys.path.append('tests/sample_project')
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        config.refresh()
+        sys.path.pop()
 
     @skipIf(sys.platform.startswith('win'), 'Not supported in windows')
     def test_print_info(self):
         with patch('sys.stdout', new=StringIO()) as fake_out1:
             Panther(__name__)
 
-        base_dir = f'{Path(__name__).absolute().parent!s:<39}'
-        expected_value = rf"""╭──────────────────────────────────────────────────────────╮
-│    ____                 __    __                         │
-│   /\  _`\              /\ \__/\ \                        │
-│   \ \ \L\ \ __      ___\ \ ,_\ \ \___      __   _ __     │
-│    \ \ ,__/'__`\  /' _ `\ \ \/\ \  _ `\  /'__`\/\`'__\   │
-│     \ \ \/\ \L\.\_/\ \/\ \ \ \_\ \ \ \ \/\  __/\ \ \/    │
-│      \ \_\ \__/.\_\ \_\ \_\ \__\\ \_\ \_\ \____\\ \_\    │
-│       \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/    │
-│                                                          │
-│   Redis: False                                           │
-│   Websocket: False                                       │
-│   Monitoring: True                                       │
-│   Log Queries: True                                      │
-│   Background Tasks: False                                │
+        base_dir = f'{Path(__name__).absolute().parent!s:<41}'
+        expected_value = rf"""╭────────────────────────────────────────────────────────────╮
+│     ____                 __    __                          │
+│    /\  _`\              /\ \__/\ \                         │
+│    \ \ \L\ \ __      ___\ \ ,_\ \ \___      __   _ __      │
+│     \ \ ,__/'__`\  /' _ `\ \ \/\ \  _ `\  /'__`\/\`'__\    │
+│      \ \ \/\ \L\.\_/\ \/\ \ \ \_\ \ \ \ \/\  __/\ \ \/     │
+│       \ \_\ \__/.\_\ \_\ \_\ \__\\ \_\ \_\ \____\\ \_\     │
+│        \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/     │
+│                                                            │
+│   Redis: False                                             │
+│   Websocket: False                                         │
+│   Monitoring: True                                         │
+│   Log Queries: True                                        │
+│   Background Tasks: False                                  │
 │   Base directory: {base_dir}│
-│ * Run "panther monitor" in another session for Monitoring│
-│ * You may want to install `uvloop` for better performance│
-│   `pip install uvloop`                                   │
-╰──────────────────────────────────────────────────────────╯"""
+│ * Run "panther monitor" in another session for Monitoring  │
+│ * You may want to install `uvloop` for better performance  │
+│   `pip install uvloop`                                     │
+╰────────────────────────────────────────────────────────────╯"""
         with patch('sys.stdout', new=StringIO()) as fake_out2:
             rprint(expected_value)
         assert fake_out1.getvalue() == fake_out2.getvalue()

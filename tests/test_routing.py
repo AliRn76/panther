@@ -16,6 +16,10 @@ class TestRoutingFunctions(TestCase):
     def tearDown(self) -> None:
         config.refresh()
 
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
+
     # Collecting
     def test_flatten_urls_ellipsis_endpoints(self):
         urls1 = {

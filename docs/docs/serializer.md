@@ -1,130 +1,150 @@
-You can write your `serializer` in ۳ style:
+# Panther Serializers
 
+Panther provides flexible ways to define serializers for your APIs. Serializers are responsible for validating and transforming input data. This guide covers the three supported styles and when to use each.
 
-## Style 1 (Pydantic)
-Write a normal `pydantic` class and use it as serializer:
+---
 
-   ```python
-    from pydantic import BaseModel
-    from pydantic import Field
-    
-    from panther.app import API
-    from panther.request import Request
-    from panther.response import Response
-    
-    
-    class UserSerializer(BaseModel):
-        username: str
-        password: str
-        first_name: str = Field(default='', min_length=2)
-        last_name: str = Field(default='', min_length=4)
-    
-    
-    @API(input_model=UserSerializer)
-    async def serializer_example(request: Request):
-        return Response(data=request.validated_data)
-   ```
+## Introduction
 
-## Style 2 (Model Serializer)
-Use panther `ModelSerializer` to write your serializer which will use your `model` to create fields.
+**serializer** in Panther is a class that defines how input data is validated and (optionally) transformed before being processed by your API logic. Panther supports three main styles:
 
-   ```python
-    from pydantic import Field
+- **Pydantic Serializer**: Use a standard Pydantic model.
 
-    from panther import status
-    from panther.app import API
-    from panther.db import Model
-    from panther.request import Request
-    from panther.response import Response
-    from panther.serializer import ModelSerializer
-    
-    
-    class User(Model):
-        username: str
-        password: str
-        first_name: str = Field(default='', min_length=2)
-        last_name: str = Field(default='', min_length=4)
-    
-    # type 1 - using fields
-    class UserModelSerializer(ModelSerializer):
-        class Config:
-            model = User
-            fields = ['username', 'first_name', 'last_name']
-            required_fields = ['first_name']
-    
-    # type 2 - using exclude
-    class UserModelSerializer(ModelSerializer):
-        class Config:
-            model = User
-            fields = '*'
-            required_fields = ['first_name']
-            exclude = ['id', 'password']
-    
-    
-    @API(input_model=UserModelSerializer)
-    async def model_serializer_example(request: Request):
-        return Response(data=request.validated_data, status_code=status.HTTP_202_ACCEPTED)
-   ```
+- **ModelSerializer**: Generate fields from a Panther model.
 
-### Notes
-1. In the example above, `ModelSerializer` will look up for the value of `Config.fields` in the `User.model_fields` and use their `type` and `value` for the `validation`.
-2. `Config.model` and `Config.fields` are `required` when you are using `ModelSerializer`.
-3. You can force a field to be required with `Config.required_fields` 
-4. You can force a field to be optional with `Config.optional_fields` 
-5. `Config.required_fields` and `Config.optional_fields` can't include same fields 
-6. If you want to use `Config.required_fields` or `Config.optional_fields` you have to put their value in `Config.fields` too.
-7. `Config.fields` & `Config.required_fields` & `Config.optional_fields` can be `*` too (Include all the model fields)
-8. `Config.exclude` is mostly used when `Config.fields` is `'*'`
+- **ModelSerializer + Pydantic**: Combine model-based fields with Pydantic features and custom validation.
 
+---
 
+## Style 1: Pydantic Serializer
 
-## Style 3 (Model Serializer + Pydantic)
+Use a regular Pydantic class as your serializer. This is the most direct approach and is ideal for simple use cases or when you want full control over the fields.
 
-You can use `pydantic.BaseModel` features in `ModelSerializer` too.
+```python linenums="1"
+from pydantic import BaseModel, Field
+from panther.app import API
+from panther.request import Request
+from panther.response import Response
 
-   ```python
-    from pydantic import Field, field_validator, ConfigDict
+class UserSerializer(BaseModel):
+    username: str
+    password: str
+    first_name: str = Field(default='', min_length=2)
+    last_name: str = Field(default='', min_length=4)
 
-    from panther import status
-    from panther.app import API
-    from panther.db import Model
-    from panther.request import Request
-    from panther.response import Response
-    from panther.serializer import ModelSerializer
-    
-    
-    class User(Model):
-        username: str
-        password: str
-        first_name: str = Field(default='', min_length=2)
-        last_name: str = Field(default='', min_length=4)
-    
-    class UserModelSerializer(ModelSerializer):
-        model_config = ConfigDict(str_to_upper=True)
-        age: int = Field(default=20)
-        is_male: bool
-        username: str
-    
-        class Config:
-            model = User
-            fields = ['first_name', 'last_name']
-            required_fields = ['first_name']
-            optional_fields = ['last_name']
+@API(input_model=UserSerializer)
+async def serializer_example(request: Request):
+    return Response(data=request.validated_data)
+```
+
+---
+
+## Style 2: ModelSerializer
+
+Use Panther's `ModelSerializer` to automatically generate serializer fields from your model. This is useful for DRY code and consistency between your models and serializers.
+
+```python linenums="1"
+from pydantic import Field
+from panther import status
+from panther.app import API
+from panther.db import Model
+from panther.request import Request
+from panther.response import Response
+from panther.serializer import ModelSerializer
+
+class User(Model):
+    username: str
+    password: str
+    first_name: str = Field(default='', min_length=2)
+    last_name: str = Field(default='', min_length=4)
+
+# Option 1: Specify fields explicitly
+class UserModelSerializer(ModelSerializer):
+    class Config:
+        model = User
+        fields = ['username', 'first_name', 'last_name']
+        required_fields = ['first_name']
+
+# Option 2: Exclude specific fields
+class UserModelSerializer(ModelSerializer):
+    class Config:
+        model = User
+        fields = '*'
+        required_fields = ['first_name']
+        exclude = ['id', 'password']
+
+@API(input_model=UserModelSerializer)
+async def model_serializer_example(request: Request):
+    return Response(data=request.validated_data)
+```
+
+---
+
+## Style 3: ModelSerializer with Pydantic Features
+
+Combine `ModelSerializer` with Pydantic features for advanced use cases. This allows you to add custom fields, validators, and configuration.
+
+```python linenums="1"
+from pydantic import Field, field_validator, ConfigDict
+from panther import status
+from panther.app import API
+from panther.db import Model
+from panther.request import Request
+from panther.response import Response
+from panther.serializer import ModelSerializer
+
+class User(Model):
+    username: str
+    password: str
+    first_name: str = Field(default='', min_length=2)
+    last_name: str = Field(default='', min_length=4)
+
+class UserModelSerializer(ModelSerializer):
+    model_config = ConfigDict(str_to_upper=True)
+    age: int = Field(default=20)
+    is_male: bool
+    username: str
+
+    class Config:
+        model = User
+        fields = ['first_name', 'last_name']
+        required_fields = ['first_name']
+        optional_fields = ['last_name']
 
     @field_validator('username')
     def validate_username(cls, username):
         print(f'{username=}')
         return username
 
-    
-    @API(input_model=UserModelSerializer)
-    async def model_serializer_example(request: Request):
-        return Response(data=request.validated_data, status_code=status.HTTP_202_ACCEPTED)
-   ```
+@API(input_model=UserModelSerializer)
+async def model_serializer_example(request: Request):
+    return Response(data=request.validated_data)
+```
 
-### Notes
-1. You can add custom `fields` 
-2. You can add `model_config` as `attribute` or as `Config`
-3. You can use `@field_validator` and other `validators` of `pydantic`.
- 
+---
+
+## Comparison Table
+
+| Feature                | Pydantic Serializer | ModelSerializer | ModelSerializer + Pydantic |
+|------------------------|:------------------:|:--------------:|:-------------------------:|
+| Model-based fields     |         ❌          |       ✅        |            ✅             |
+| Custom fields          |         ✅          |       ❌        |            ✅             |
+| Pydantic validators    |         ✅          |       ❌        |            ✅             |
+| Field inclusion/exclude|         Manual      |   Configurable |        Configurable       |
+| Best for               |  Simple cases      |  DRY, model-aligned | Advanced/Hybrid      |
+
+---
+
+## Notes & Best Practices
+
+- `ModelSerializer` uses your model's field types and default values for validation.
+- `Config.model` and `Config.fields` are required for `ModelSerializer`.
+- Use `Config.required_fields` to force fields to be required.
+- Use `Config.optional_fields` to force fields to be optional.
+- A field cannot be in both `required_fields` and `optional_fields`.
+- If you use `required_fields` or `optional_fields`, those fields must also be listed in `fields`.
+- You can use `'*'` for `fields`, `required_fields`, or `optional_fields` to include all model fields.
+- `Config.exclude` is useful when `fields` is set to `'*'`.
+- You can add custom fields and validators when combining `ModelSerializer` with Pydantic features.
+
 

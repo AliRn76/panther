@@ -1,45 +1,45 @@
-Panther currently built-in supports 2 database (`MongoDB`, `PantherDB`), but you can define your own custom database connection and queries too.
+# Redis Integration
 
+Redis is a fast, in-memory key-value store commonly used for caching, session management, real-time analytics, and pub/sub messaging. Panther supports Redis natively, allowing you to leverage its power for authentication, caching, throttling, and websocket pub/sub features.
 
-### Structure
+## Configuration
 
-```python
-REDIS = {
-    'class': 'address of the class',
-    'arg1': 'value1',
-    ...
-}
-```
-
-### RedisConnection
+To enable Redis in Panther, fill out the `REDIS` block in your configuration file:
 
 ```python
 REDIS = {
     'class': 'panther.db.connections.RedisConnection',
-    'host': ...,  # default is localhost
-    'port': ...,  # default is 6379
-    'db': ...,  # default is 0
-    'websocket_db': ...,  # default is 0
-    ...
+    'host': 'localhost',  # Optional, default is 'localhost'
+    'port': 6379,         # Optional, default is 6379
+    'db': 0,              # Optional, default is 0
+    # Add any other redis-py supported parameters here
 }
 ```
 
-#### Notes
-- The arguments are same as `redis.Redis.__init__()` except `websocket_db`
-- You can specify which `db` is for your `websocket` connections 
+**Note:** The arguments are the same as those accepted by `redis.Redis.__init__()` from the [redis documentation](https://redis.readthedocs.io/en/latest/).
 
+## How It Works
 
-### How it works?
+- Panther creates an asynchronous Redis connection based on the `REDIS` block you define in your configuration.
+- You can access the Redis connection via:
 
-- Panther creates an async redis connection depends on `REDIS` block you defined in `configs`
-
-- You can access to it from `from panther.db.connections import redis`
-
-- Example: 
-    ```python  
+    ```python
     from panther.db.connections import redis
-    
+    ```
+
+- Example usage:
+
+    ```python
+    from panther.db.connections import redis
+
     await redis.set('name', 'Ali')
     result = await redis.get('name')
-    print(result)  
-    ```  
+    print(result)
+    ```
+
+## Features Using Redis
+
+- **Authentication:** Store and retrieve JWT tokens for logout functionality.
+- **Caching:** Cache responses for faster access.
+- **Throttling:** Track and limit request rates.
+- **WebSocket:** Manage pub/sub connections for real-time features.

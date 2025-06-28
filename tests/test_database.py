@@ -7,6 +7,7 @@ import pytest
 from pantherdb import Cursor as PantherDBCursor
 
 from panther import Panther
+from panther.configs import config
 from panther.db import Model
 from panther.db.connections import db
 from panther.db.cursor import Cursor as MongoCursor
@@ -513,6 +514,10 @@ class TestPantherDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
     def tearDown(self) -> None:
         Path(self.DB_PATH).unlink()
 
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
+
     async def test_aggregation(self):
         pass
 
@@ -536,3 +541,7 @@ class TestMongoDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
 
     def tearDown(self) -> None:
         db.session.drop_collection('Book')
+
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()

@@ -65,7 +65,7 @@ class UserAPI(GenericAPI):
         return Response(data=data, status_code=status_code)
 
 
-MIDDLEWARES = [TestMiddleware]
+MIDDLEWARES = [TestMiddleware, 'panther.middlewares.monitoring.MonitoringMiddleware']
 
 url_routing = {'': hello_world, 'info': info, 'user/': UserAPI, 'swagger': openapi_urls}
 

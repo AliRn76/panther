@@ -11,7 +11,7 @@ logger = logging.getLogger('monitoring')
 class MonitoringMiddleware(HTTPMiddleware):
     """
     Create Log Message Like Below:
-    date_time | method | path | ip:port | response_time(seconds) | status
+    datetime | method | path | ip:port | response_time(seconds) | status
     """
 
     async def __call__(self, request: Request):
@@ -28,7 +28,7 @@ class MonitoringMiddleware(HTTPMiddleware):
 class WebsocketMonitoringMiddleware(WebsocketMiddleware):
     """
     Create Log Message Like Below:
-    date_time | WS | path | ip:port | connection_time(seconds) | status
+    datetime | WS | path | ip:port | connection_time(seconds) | status
     """
 
     ConnectedConnectionTime = ' - '

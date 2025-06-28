@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from panther import Panther
 from panther.app import API
 from panther.db import Model
-from panther.panel.urls import urls as admin_url
+from panther.panel.urls import url_routing as admin_url
 
 f = Faker()
 

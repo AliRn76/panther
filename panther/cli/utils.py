@@ -23,43 +23,52 @@ else:
     br = '╯'
     bl = '╰'
 
-top = f'{tl}{58 * v}{tr}'
-bottom = f'{bl}{58 * v}{br}'
+top = f'{tl}{60 * v}{tr}'
+bottom = f'{bl}{60 * v}{br}'
 
 logo = rf"""{top}
-{h}    ____                 __    __                         {h}
-{h}   /\  _`\              /\ \__/\ \                        {h}
-{h}   \ \ \L\ \ __      ___\ \ ,_\ \ \___      __   _ __     {h}
-{h}    \ \ ,__/'__`\  /' _ `\ \ \/\ \  _ `\  /'__`\/\`'__\   {h}
-{h}     \ \ \/\ \L\.\_/\ \/\ \ \ \_\ \ \ \ \/\  __/\ \ \/    {h}
-{h}      \ \_\ \__/.\_\ \_\ \_\ \__\\ \_\ \_\ \____\\ \_\    {h}
-{h}       \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/    {h}
-{h}                                                          {h}"""
+{h}     ____                 __    __                          {h}
+{h}    /\  _`\              /\ \__/\ \                         {h}
+{h}    \ \ \L\ \ __      ___\ \ ,_\ \ \___      __   _ __      {h}
+{h}     \ \ ,__/'__`\  /' _ `\ \ \/\ \  _ `\  /'__`\/\`'__\    {h}
+{h}      \ \ \/\ \L\.\_/\ \/\ \ \ \_\ \ \ \ \/\  __/\ \ \/     {h}
+{h}       \ \_\ \__/.\_\ \_\ \_\ \__\\ \_\ \_\ \____\\ \_\     {h}
+{h}        \/_/\/__/\/_/\/_/\/_/\/__/ \/_/\/_/\/____/ \/_/     {h}
+{h}                                                            {h}"""
 
-help_message = f"""{logo}
-{h}   usage:                                                 {h}
-{h}       - panther create                                   {h}
-{h}           Create project interactive                     {h}
-{h}                                                          {h}
-{h}       - panther create <project_name> <directory>        {h}
-{h}           Default<directory> is `.`                      {h}
-{h}           * It will create the project non-interactive   {h}
-{h}                                                          {h}
-{h}       - panther run [--reload | --help]                  {h}
-{h}           Run your project with uvicorn                  {h}
-{h}                                                          {h}
-{h}       - panther shell <application file path>            {h}
-{h}           Run interactive python shell                   {h}
-{h}           * Example: `panther shell main.py`             {h}
-{h}                                                          {h}
-{h}       - panther monitor                                  {h}
-{h}           Show the monitor :)                            {h}
-{h}                                                          {h}
-{h}       - panther version | --version                      {h}
-{h}           Print the current version of Panther           {h}
-{h}                                                          {h}
-{h}       - panther h | help | --help | -h                   {h}
-{h}           Show this message and exit                     {h}
+help_message = rf"""{logo}
+{h}   Usage: panther <command> \[options]                       {h}
+{h}                                                            {h}
+{h}   Commands:                                                {h}
+{h}       - create \[project_name] \[directory]                  {h}
+{h}           Create a new Panther project.                    {h}
+{h}           * Interactive mode if no arguments provided.     {h}
+{h}           * Non-interactive if project_name and directory  {h}
+{h}             are specified (default directory: .).          {h}
+{h}           Example:                                         {h}
+{h}               - `panther create`                           {h}
+{h}               - `panther create myapp myapp`               {h}
+{h}                                                            {h}
+{h}       - run <app> \[options]                                {h}
+{h}           Run your Panther project using Uvicorn.          {h}
+{h}           * app: address of your application.              {h}
+{h}           * options: Check `uvicorn --help` for options.   {h}
+{h}           * `panther run` is alias of `uvicorn`.           {h}
+{h}           Example: `panther run main:app --reload`         {h}
+{h}                                                            {h}
+{h}       - shell <application_file>                           {h}       
+{h}           Start an interactive Python shell with your app. {h}
+{h}           * application_file: path to your main app file.  {h}           
+{h}           Example: `panther shell main.py`                 {h}
+{h}                                                            {h}
+{h}       - monitor                                            {h}
+{h}           Display real-time request monitoring.            {h}
+{h}                                                            {h}
+{h}       - version | --version                                {h}
+{h}           Display the current version of Panther.          {h}
+{h}                                                            {h}
+{h}       - help | h | --help | -h                             {h}
+{h}           Show this help message and exit.                 {h}
 {bottom}
 """
 
@@ -87,27 +96,8 @@ def cli_info(message: str) -> None:
     logger.info('Use "panther -h" for more help\n')
 
 
-def clean_args(args: list[str]) -> dict:
-    """
-    Input: ['--reload', '--host', '127.0.0.1', ...]
-    Output: {'--reload: None, 'host': '127.0.0.1', ...}
-    """
-    _args = {}
-    for i, arg in enumerate(args):
-        if arg.startswith('--'):
-            if (i + 1) < len(args):
-                _args[arg[2:]] = args[i + 1]
-            else:
-                _args[arg[2:]] = True
-    return _args
-
-
 def print_help_message():
     rprint(help_message)
-
-
-def print_uvicorn_help_message():
-    rprint('Run `uvicorn --help` for more help')
 
 
 def print_info(config: Config):
@@ -118,12 +108,12 @@ def print_info(config: Config):
     bt = config.BACKGROUND_TASKS
     ws = config.HAS_WS
     rd = redis.is_connected
-    bd = f'{config.BASE_DIR!s:<39}'
-    if len(bd) > 39:
-        bd = f'{bd[:36]}...'
+    bd = f'{config.BASE_DIR!s:<41}'
+    if len(bd) > 41:
+        bd = f'{bd[:38]}...'
 
     # Monitoring
-    monitor = f'{h} * Run "panther monitor" in another session for Monitoring{h}\n' if config.MONITORING else None
+    monitor = f'{h} * Run "panther monitor" in another session for Monitoring  {h}\n' if config.MONITORING else None
 
     # Uvloop
     uvloop_msg = None
@@ -132,8 +122,8 @@ def print_info(config: Config):
             import uvloop
         except ImportError:
             uvloop_msg = (
-                f'{h} * You may want to install `uvloop` for better performance{h}\n'
-                f'{h}   `pip install uvloop`                                   {h}\n'
+                f'{h} * You may want to install `uvloop` for better performance  {h}\n'
+                f'{h}   `pip install uvloop`                                     {h}\n'
             )
 
     # Gunicorn if Websocket
@@ -142,17 +132,17 @@ def print_info(config: Config):
         try:
             import gunicorn
 
-            gunicorn_msg = f'{h} * You have WS, so make sure to run gunicorn with --preload{h}\n'
+            gunicorn_msg = f'{h} * You have WS, so make sure to run gunicorn with --preload  {h}\n'
         except ImportError:
             pass
 
     # Message
     info_message = f"""{logo}
-{h}   Redis: {rd}                                       \t   {h}
-{h}   Websocket: {ws}                                   \t   {h}
-{h}   Monitoring: {mo}                                  \t   {h}
-{h}   Log Queries: {lq}                                 \t   {h}
-{h}   Background Tasks: {bt}                            \t   {h}
+{h}   Redis: {rd}                                       \t     {h}
+{h}   Websocket: {ws}                                   \t     {h}
+{h}   Monitoring: {mo}                                  \t     {h}
+{h}   Log Queries: {lq}                                 \t     {h}
+{h}   Background Tasks: {bt}                            \t     {h}
 {h}   Base directory: {bd}{h}
 """
     if monitor:

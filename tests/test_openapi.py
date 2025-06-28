@@ -2,7 +2,8 @@ from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther, status
 from panther.app import API, GenericAPI
-from panther.openapi.urls import urls
+from panther.configs import config
+from panther.openapi.urls import url_routing
 from panther.openapi.utils import ParseEndpoint
 from panther.response import Response
 from panther.test import APIClient
@@ -130,8 +131,12 @@ class API18(GenericAPI):
 class TestPanelAPIs(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        app = Panther(__name__, configs=__name__, urls={'swagger': urls})
+        app = Panther(__name__, configs=__name__, urls={'swagger': url_routing})
         cls.client = APIClient(app=app)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        config.refresh()
 
     async def test_swagger(self):
         response = await self.client.get('/swagger/')

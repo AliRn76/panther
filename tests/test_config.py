@@ -80,8 +80,6 @@ class TestConfig(TestCase):
             WEBSOCKET_CONNECTIONS, \
             BACKGROUND_TASKS, \
             HAS_WS, \
-            STARTUPS, \
-            SHUTDOWNS, \
             TIMEZONE, \
             TEMPLATES_DIR, \
             JINJA_ENVIRONMENT, \
@@ -131,8 +129,6 @@ class TestConfig(TestCase):
         assert config.WEBSOCKET_CONNECTIONS is None
         assert config.BACKGROUND_TASKS is False
         assert config.HAS_WS is True
-        assert len(config.STARTUPS) == 2  # This is ok.
-        assert len(config.SHUTDOWNS) == 2  # This is ok.
         assert config.TIMEZONE == 'UTC'
         assert config.TEMPLATES_DIR == '.'
         assert config.JINJA_ENVIRONMENT is None
@@ -161,8 +157,6 @@ class TestConfig(TestCase):
             'WEBSOCKET_CONNECTIONS',
             'BACKGROUND_TASKS',
             'HAS_WS',
-            'STARTUPS',
-            'SHUTDOWNS',
             'TIMEZONE',
             'TEMPLATES_DIR',
             'JINJA_ENVIRONMENT',
@@ -191,8 +185,6 @@ class TestConfig(TestCase):
         assert isinstance(config.WEBSOCKET_CONNECTIONS, WebsocketConnections)
         assert config.BACKGROUND_TASKS is True
         assert config.HAS_WS is True
-        assert len(config.STARTUPS) == 2
-        assert len(config.SHUTDOWNS) == 2
         assert config.TIMEZONE == 'Asia/Tehran'
         assert config.TEMPLATES_DIR == 'templates/'
         assert isinstance(config.JINJA_ENVIRONMENT, jinja2.environment.Environment)
@@ -246,8 +238,6 @@ class TestConfig(TestCase):
             WEBSOCKET_CONNECTIONS, \
             BACKGROUND_TASKS, \
             HAS_WS, \
-            STARTUPS, \
-            SHUTDOWNS, \
             TIMEZONE, \
             TEMPLATES_DIR, \
             JINJA_ENVIRONMENT, \
@@ -300,8 +290,6 @@ class TestConfig(TestCase):
         assert config.WEBSOCKET_CONNECTIONS is None
         assert config.BACKGROUND_TASKS is False
         assert config.HAS_WS is False
-        assert len(config.STARTUPS) == 0
-        assert len(config.SHUTDOWNS) == 0
         assert config.TIMEZONE == 'UTC'
         assert config.TEMPLATES_DIR == '.'
         assert config.JINJA_ENVIRONMENT is None

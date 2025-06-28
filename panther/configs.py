@@ -69,8 +69,6 @@ class Config:
     WEBSOCKET_CONNECTIONS: Callable | None = None
     BACKGROUND_TASKS: bool = False
     HAS_WS: bool = False
-    STARTUPS: list = field(default_factory=list)
-    SHUTDOWNS: list = field(default_factory=list)
     TIMEZONE: str = 'UTC'
     TEMPLATES_DIR: str | list[str] = '.'
     JINJA_ENVIRONMENT: jinja2.Environment | None = None

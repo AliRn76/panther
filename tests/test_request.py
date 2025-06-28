@@ -4,6 +4,7 @@ import orjson as json
 
 from panther import Panther
 from panther.app import API, GenericAPI
+from panther.configs import config
 from panther.request import Request
 from panther.response import Response
 from panther.test import APIClient
@@ -169,6 +170,10 @@ class TestRequest(IsolatedAsyncioTestCase):
     def setUpClass(cls) -> None:
         app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        config.refresh()
 
     async def test_path(self):
         res = await self.client.get('path/')

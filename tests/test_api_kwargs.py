@@ -2,6 +2,7 @@ from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
 from panther.app import API, GenericAPI
+from panther.configs import config
 from panther.request import Request
 from panther.test import APIClient
 
@@ -90,6 +91,10 @@ class TestKwargs(IsolatedAsyncioTestCase):
     def setUpClass(cls) -> None:
         app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
+
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
 
     async def test_request(self):
         res = await self.client.get('request')

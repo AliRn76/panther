@@ -33,6 +33,7 @@ def main():
     args = parser.parse_args()
 
     files = [os.path.join(TEST_DIR, f) for f in os.listdir(TEST_DIR) if f.startswith('test_') and f.endswith('.py')]
+
     flags = []
     if args.not_mongodb:
         flags.append('not mongodb')
@@ -46,14 +47,13 @@ def main():
         flags = ['-m', ' and '.join(f for f in flags)]
 
     results = [run_test_file(file, flags) for file in files]
-
     for code, file in zip(results, files):
         if code not in TEST_SUCCESS_CONDITIONS:
-            print(f'❌ Some tests failed in {os.path.basename(file)}', file=sys.stderr)
+            print(f'[FAIL] Some tests failed in {os.path.basename(file)}', file=sys.stderr)
 
     if any(code not in TEST_SUCCESS_CONDITIONS for code in results):
         sys.exit(1)
-    print('\n✅ All tests passed.')
+    print('\n[PASS] All tests passed.')
 
 
 if __name__ == '__main__':

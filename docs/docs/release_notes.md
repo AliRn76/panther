@@ -1,26 +1,28 @@
 # Panther Release Notes
 
 ### 5.0.0
-- Added Built-In `AdminPanel`
-- Added Built-In `OpenAPI`
+- Add Built-In `AdminPanel`
+- Add Built-In `OpenAPI`
 - Support `Set-Cookie` in Response
 - Support `application/x-www-form-urlencoded` Content Type
 - Support Different `Middlewares` Per API
+- Support `asyncio` in `panther shell`
+- Support `Boolean` type in `load_env()`
+- Add `CORSMiddleware`
+- Add `RedirectResponse`
 - Optimized `ORM` with smarter `ObjectID` handling
-- Added `asyncio` support in `panther shell`
-- Added `RedirectResponse`
-- Added `Boolean` support in `load_env()`
-- Change `path` to `name` in `TemplateResponse()`
-- Change `new_password` to `password` in `BaseUser.check_password()`
 - Deprecated:
-  - `DEFAULT_CACHE_EXP` in configs
-  - Rename `cache_exp_time` to `cache` in `@API` and `GenricAPI`
-  - Rename `panther.throttling.Throttling` to `panther.throttling.Throttle`
-  - Remove `MONITORING` and move its functionality as middleware in `panther.middelwares.monitoring.MonitoringMiddleware` 
-  - Pass args to Middlewares `__init__` 
-    - New Style of Middleware declaration [[Documentation]](https://pantherpy.github.io/middlewares)
-  - `output_model` in `API` and `GenericAPI` 
-  - `background_tasks.add_task(BackgroundTask(...))` --> `BackgroundTask(...).submit()`
+    - `DEFAULT_CACHE_EXP` in configs.
+    - Rename `cache_exp_time` to `cache` in `@API` and `GenricAPI`.
+    - Rename `panther.throttling.Throttling` to `panther.throttling.Throttle`.
+    - Remove `MONITORING` and move its functionality as middleware in `panther.middelwares.monitoring.MonitoringMiddleware` .
+    - `BaseUser.check_password(new_password=...)` is renamed to `password`.
+    - `TemplateResponse(path=...)` is renamed to `name`.
+    - Middlewares does not support custom args for their `__init__`.
+    - New Style of Middleware declaration [[Documentation]](middlewares.md).
+    - `API` and `GenericAPI` do not support `output_model` anymore, checkout `output_schema` .
+    - New background task declaration, `background_tasks.add_task(BackgroundTask(...))` --> `BackgroundTask(...).submit()`.
+    - `REDIS` block in configs does not support `websocket_db` anymore.
 
 ### 4.3.7
 - Improve MultiPart-FormData Regex

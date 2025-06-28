@@ -1,7 +1,8 @@
 import contextlib
 import os
+import sys
 from datetime import datetime
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, PlainSerializer, WrapValidator
@@ -13,6 +14,13 @@ from panther.utils import URANDOM_SIZE, scrypt, timezone_now
 with contextlib.suppress(ImportError):
     # Only required if user wants to use mongodb
     import bson
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing import TypeVar
+
+    Self = TypeVar('Self', bound='BaseUser')
 
 
 def validate_object_id(value, handler):
@@ -62,7 +70,7 @@ class BaseUser(Model):
 
     @classmethod
     def insert_one(cls, _document: dict | None = None, /, **kwargs) -> Self:
-        kwargs['date_created'] = datetime.now()
+        kwargs['date_created'] = timezone_now()
         return super().insert_one(_document, **kwargs)
 
     async def login(self) -> dict:

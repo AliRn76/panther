@@ -2,6 +2,7 @@ from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
 from panther.app import API, GenericAPI
+from panther.configs import config
 from panther.exceptions import PantherError
 from panther.permissions import BasePermission
 from panther.request import Request
@@ -57,6 +58,10 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         app = Panther(__name__, configs=__name__, urls=urls)
         self.client = APIClient(app=app)
+
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
 
     async def test_without_permission(self):
         res = await self.client.get('without')
