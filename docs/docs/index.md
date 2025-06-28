@@ -10,18 +10,17 @@
 ---
 
 ## Why Choose Panther?
-- One of the **fastest Python frameworks** available
-- Built-in **file-based** database ([PantherDB](https://pypi.org/project/pantherdb/))
+- One of the **Fastest Python Frameworks** available
+- Built-in **File-Based** database ([PantherDB](https://pypi.org/project/pantherdb/))
 - Built-in document-oriented database **ODM** (Supports **MongoDB** & PantherDB)
-- Built-in API **caching** system (Supports in-memory & **Redis**)
+- Built-in API **Caching** system (Supports in-memory & **Redis**)
 - Built-in support of **OpenAPI** (swagger)
-- Built-in **Admin Panel**
 - Native **WebSocket** support
-- Integrated **authentication** classes
-- Built-in **permission** handling
-- Supports custom **background tasks**, **middlewares**, and **throttling**
-- Offers both **function-based** and **class-based** APIs
-- Real-time API **monitoring** in the terminal
+- Integrated **Authentication** classes
+- Built-in **Permission** handling
+- Supports custom **Background Tasks**, **middlewares**, and **throttling**
+- Offers both **Function-Based** and **Class-Based** APIs
+- Real-time API **Monitoring** in the terminal
 
 ---
 

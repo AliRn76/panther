@@ -13,19 +13,19 @@
 
 ---
 
-### Why Use Panther ?
-- Include Simple **File-Base** Database ([PantherDB](https://pypi.org/project/pantherdb/))
-- Built-in Document-oriented Databases **ODM** (**MongoDB**, PantherDB)
-- Built-in **Websocket** Support
-- Built-in API **Caching** System (In Memory, **Redis**)
-- Built-in **Authentication** Classes
-- Built-in **Permission** Classes
-- Built-in Visual API **Monitoring** (In Terminal)
-- Support Custom **Background Tasks**
-- Support Custom **Middlewares**
-- Support Custom **Throttling**
-- Support **Function-Base** and **Class-Base** APIs
-- It's One Of The **Fastest Python Framework** ([Benchmark](https://www.techempower.com/benchmarks/#section=test&runid=d3364379-1bf7-465f-bcb1-e9c65b4840f9&hw=ph&test=fortune&l=zik0zj-6bi))
+## Why Choose Panther?
+- One of the **Fastest Python Frameworks** available
+- Built-in **File-Based** database ([PantherDB](https://pypi.org/project/pantherdb/))
+- Built-in document-oriented database **ODM** (Supports **MongoDB** & PantherDB)
+- Built-in API **Caching** system (Supports in-memory & **Redis**)
+- Built-in support of **OpenAPI** (swagger)
+- Native **WebSocket** support
+- Integrated **Authentication** classes
+- Built-in **Permission** handling
+- Supports custom **Background Tasks**, **middlewares**, and **throttling**
+- Offers both **Function-Based** and **Class-Based** APIs
+- Real-time API **Monitoring** in the terminal
+
 ---
 
 ### Supported by
@@ -37,137 +37,116 @@
 
 ---
 
-### Installation
-```shell
-$ pip install panther
+## Installation
+
+   ```shell
+   $ pip install panther
+   ```
+
+---
+
+
+## Getting Started
+
+### Quick Start Guide
+
+1. **Create a new project directory**
+   ```shell
+   $ mkdir my_panther_app
+   $ cd my_panther_app
+   ```
+
+2. **Set up your environment**
+   ```shell
+   $ python3 -m venv .venv
+   $ source .venv/bin/activate  # On Windows: .\.venv\Scripts\activate
+   $ pip install panther
+   ```
+
+3. **Create your first application**
+    
+    Create a `main.py` file with one of the examples below.
+
+### Basic API Example
+
+Here's a simple REST API endpoint that returns a "Hello World" message:
+
+```python title="main.py" linenums="1"
+from datetime import datetime, timedelta
+
+from panther import status, Panther
+from panther.app import GenericAPI
+from panther.openapi.urls import urls as openapi_urls
+from panther.response import Response
+
+
+class FirstAPI(GenericAPI):
+    # Response will be cached for 10 seconds for each user/ ip
+    cache = timedelta(seconds=10)
+
+    def get(self):
+        current = datetime.now().isoformat()
+        data = {'detail': f'Hello World | {current}'}
+        return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
+
+
+url_routing = {
+    '/': FirstAPI,
+    'swagger/': openapi_urls,  # Auto generated Swagger API documentation
+}
+app = Panther(__name__, configs=__name__, urls=url_routing)
 ```
 
-### Usage
+### WebSocket Example
 
-- #### Create Project
+Here's a simple WebSocket echo server that sends back any message it receives:
 
-    ```shell
-    $ panther create
-    ```
+```python title="main.py" linenums="1"
+from panther import Panther
+from panther.app import GenericAPI
+from panther.response import HTMLResponse
+from panther.websocket import GenericWebsocket
 
-- #### Run Project
-    
-    ```shell
-    $ panther run --reload
-    ```
-  _* Panther uses [Uvicorn](https://github.com/encode/uvicorn) as ASGI (Asynchronous Server Gateway Interface) but you can run the project with [Granian](https://pypi.org/project/granian/), [daphne](https://pypi.org/project/daphne/) or any ASGI server_
+class EchoWebsocket(GenericWebsocket):
+    async def connect(self, **kwargs):
+        await self.accept()
 
-- #### Monitoring Requests
+    async def receive(self, data: str | bytes):
+        await self.send(data)
 
-    ```shell
-    $ panther monitor 
-    ```
+class MainPage(GenericAPI):
+    def get(self):
+        template = """
+        <input id="msg"><button onclick="s.send(msg.value)">Send</button>
+        <ul id="log"></ul>
+        <script>
+            const s = new WebSocket('ws://127.0.0.1:8000/ws');
+            s.onmessage = e => log.innerHTML += `<li><- ${msg.value}</li><li>-> ${e.data}</li>`;
+        </script>
+        """
+        return HTMLResponse(template)
 
-- #### Python Shell
+url_routing = {
+    '': MainPage,
+    'ws': EchoWebsocket,
+}
+app = Panther(__name__, configs=__name__, urls=url_routing)
+```
 
-    ```shell
-    $ panther shell
-    ```
-  
----
+### Running Your Application
 
-### API Example
-  - Create `main.py`
+1. **Start the development server**
+   ```shell
+   $ panther run main:app --reload
+   ```
+   
+    > **Note:** Panther uses [Uvicorn](https://github.com/encode/uvicorn) as the default ASGI server, but you can also use [Granian](https://pypi.org/project/granian/), [Daphne](https://pypi.org/project/daphne/), or any ASGI-compatible server.
 
-    ```python
-    from datetime import datetime, timedelta
-    
-    from panther import status, Panther
-    from panther.app import GenericAPI
-    from panther.response import Response
-    
-    
-    class FirstAPI(GenericAPI):
-        # Cache Response For 10 Seconds
-        cache = True
-        cache_exp_time = timedelta(seconds=10)
-        
-        def get(self):
-            date_time = datetime.now().isoformat()
-            data = {'detail': f'Hello World | {date_time}'}
-            return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
-    
-    
-    url_routing = {'': FirstAPI}
-    app = Panther(__name__, configs=__name__, urls=url_routing)
-    ```
-
-  - Run the project:
-    - `$ panther run --reload` 
-  
-  - Checkout the [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
-
-### WebSocket Echo Example 
-  - Create `main.py`
-
-    ```python
-    from panther import Panther
-    from panther.app import GenericAPI
-    from panther.response import HTMLResponse
-    from panther.websocket import GenericWebsocket
-    
-    
-    class FirstWebsocket(GenericWebsocket):
-        async def connect(self, **kwargs):
-            await self.accept()
-    
-        async def receive(self, data: str | bytes):
-            await self.send(data)
-    
-    
-    class MainPage(GenericAPI):
-        def get(self):
-            template = """
-            <input type="text" id="messageInput">
-            <button id="sendButton">Send Message</button>
-            <ul id="messages"></ul>
-            <script>
-                var socket = new WebSocket('ws://127.0.0.1:8000/ws');
-                socket.addEventListener('message', function (event) {
-                    var li = document.createElement('li');
-                    document.getElementById('messages').appendChild(li).textContent = 'Server: ' + event.data;
-                });
-                function sendMessage() {
-                    socket.send(document.getElementById('messageInput').value);
-                }
-                document.getElementById('sendButton').addEventListener('click', sendMessage);
-            </script>
-            """
-            return HTMLResponse(template)
-    
-    url_routing = {
-        '': MainPage,
-        'ws': FirstWebsocket,
-    }
-    app = Panther(__name__, configs=__name__, urls=url_routing)
-
-    ```
-
-  - Run the project:
-    - `$ panther run --reload` 
-  - Go to [http://127.0.0.1:8000/](http://127.0.0.1:8000/) and work with your `websocket`
-
-
-
-> **Next Step: [First CRUD](https://pantherpy.github.io/function_first_crud)**
+2. **Test your application**
+    - For the _API_ example: Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) to see the "Hello World" response
+    - For the _WebSocket_ example: Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) and send a message. 
 
 ---
+**📚 Full Documentation:** [PantherPy.GitHub.io](https://pantherpy.github.io)
 
-### How Panther Works!
-
-![diagram](https://raw.githubusercontent.com/AliRn76/panther/master/docs/docs/images/diagram.png)
-
----
-
-### Roadmap
-
-![roadmap](https://raw.githubusercontent.com/AliRn76/panther/master/docs/docs/images/roadmap.jpg)
-
----
-
-**If you find this project useful, please give it a star ⭐️.**
+**⭐️ If you find this project useful, don't forget to give it a star :).**
