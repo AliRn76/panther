@@ -9,18 +9,19 @@
 
 ---
 
-## Why Choose Panther?
-- One of the **Fastest Python Frameworks** available
-- Built-in **File-Based** database ([PantherDB](https://pypi.org/project/pantherdb/))
-- Built-in document-oriented database **ODM** (Supports **MongoDB** & PantherDB)
-- Built-in API **Caching** system (Supports in-memory & **Redis**)
-- Built-in support of **OpenAPI** (swagger)
-- Native **WebSocket** support
-- Integrated **Authentication** classes
-- Built-in **Permission** handling
-- Supports custom **Background Tasks**, **middlewares**, and **throttling**
-- Offers both **Function-Based** and **Class-Based** APIs
-- Real-time API **Monitoring** in the terminal
+## 🐾 Why Choose Panther?
+
+Panther is designed to be **fast**, **simple**, and **powerful**. Here's what makes it special:
+
+- **One of the fastest Python frameworks** available
+- **File-based database** ([PantherDB](https://pypi.org/project/pantherdb/)) - No external database setup required
+- **Document-oriented ODM** - Supports MongoDB & PantherDB with familiar syntax
+- **API caching system** - In-memory and Redis support
+- **OpenAPI/Swagger** - Auto-generated API documentation
+- **WebSocket support** - Real-time communication out of the box
+- **Authentication & Permissions** - Built-in security features
+- **Background tasks** - Handle long-running operations
+- **Middleware & Throttling** - Extensible and configurable
 
 ---
 
@@ -79,27 +80,29 @@ Here's a simple REST API endpoint that returns a "Hello World" message:
 
 ```python title="main.py" linenums="1"
 from datetime import datetime, timedelta
-
 from panther import status, Panther
 from panther.app import GenericAPI
-from panther.openapi.urls import urls as openapi_urls
+from panther.openapi.urls import url_routing as openapi_url_routing
 from panther.response import Response
 
-
-class FirstAPI(GenericAPI):
-    # Response will be cached for 10 seconds for each user/ ip
+class HelloAPI(GenericAPI):
+    # Cache responses for 10 seconds
     cache = timedelta(seconds=10)
-
+    
     def get(self):
-        current = datetime.now().isoformat()
-        data = {'detail': f'Hello World | {current}'}
-        return Response(data=data, status_code=status.HTTP_202_ACCEPTED)
+        current_time = datetime.now().isoformat()
+        return Response(
+            data={'message': f'Hello from Panther! 🐾 | {current_time}'},
+            status_code=status.HTTP_200_OK
+        )
 
-
+# URL routing configuration
 url_routing = {
-    '/': FirstAPI,
-    'swagger/': openapi_urls,  # Auto generated Swagger API documentation
+    '/': HelloAPI,
+    'swagger/': openapi_url_routing,  # Auto-generated API docs
 }
+
+# Create your Panther app
 app = Panther(__name__, configs=__name__, urls=url_routing)
 ```
 
@@ -116,13 +119,16 @@ from panther.websocket import GenericWebsocket
 class EchoWebsocket(GenericWebsocket):
     async def connect(self, **kwargs):
         await self.accept()
-
+        await self.send("Connected to Panther WebSocket!")
+    
     async def receive(self, data: str | bytes):
-        await self.send(data)
+        # Echo back the received message
+        await self.send(f"Echo: {data}")
 
-class MainPage(GenericAPI):
+class WebSocketPage(GenericAPI):
     def get(self):
         template = """
+        <h2>🐾 Panther WebSocket Echo Server</h2>
         <input id="msg"><button onclick="s.send(msg.value)">Send</button>
         <ul id="log"></ul>
         <script>
@@ -133,7 +139,7 @@ class MainPage(GenericAPI):
         return HTMLResponse(template)
 
 url_routing = {
-    '': MainPage,
+    '': WebSocketPage,
     'ws': EchoWebsocket,
 }
 app = Panther(__name__, configs=__name__, urls=url_routing)
