@@ -90,7 +90,7 @@ class Response:
         if isinstance(data, Cursor):
             data = list(data)
         self.initial_data = data
-        self.data = self.prepare_data(data=data)
+        self.data = data
         self.status_code = self.check_status_code(status_code=status_code)
         self.cookies = None
         if set_cookies:
@@ -111,11 +111,16 @@ class Response:
 
     @property
     def body(self) -> bytes:
+        def default(obj: Any):
+            if isinstance(obj, BaseModel):
+                return obj.model_dump()
+            raise TypeError(f"Type {type(obj)} not serializable")
+
         if isinstance(self.data, bytes):
             return self.data
         if self.data is None:
             return b''
-        return json.dumps(self.data)
+        return json.dumps(self.data, default=default)
 
     @property
     def bytes_headers(self) -> list[tuple[bytes, bytes]]:
@@ -124,25 +129,6 @@ class Response:
         if self.cookies:
             result += self.cookies
         return result
-
-    @classmethod
-    def prepare_data(cls, data: Any):
-        """Make sure the response data is only ResponseDataTypes or Iterable of ResponseDataTypes"""
-        if isinstance(data, (int | float | str | bool | bytes | NoneType)):
-            return data
-
-        elif isinstance(data, dict):
-            return {key: cls.prepare_data(value) for key, value in data.items()}
-
-        elif issubclass(type(data), BaseModel):
-            return data.model_dump()
-
-        elif isinstance(data, IterableDataTypes):
-            return [cls.prepare_data(d) for d in data]
-
-        else:
-            msg = f'Invalid Response Type: {type(data)}'
-            raise TypeError(msg)
 
     @classmethod
     def check_status_code(cls, status_code: Any):
@@ -175,14 +161,6 @@ class StreamingResponse(Response):
         if message['type'] == 'http.disconnect':
             self.connection_closed = True
 
-    def prepare_data(self, data: any) -> AsyncGenerator:
-        if isinstance(data, AsyncGenerator):
-            return data
-        elif isinstance(data, Generator):
-            return to_async_generator(data)
-        msg = f'Invalid Response Type: {type(data)}'
-        raise TypeError(msg)
-
     @property
     def bytes_headers(self) -> list[tuple[bytes, bytes]]:
         result = [(k.encode(), str(v).encode()) for k, v in self.headers.items()]
@@ -192,6 +170,12 @@ class StreamingResponse(Response):
 
     @property
     async def body(self) -> AsyncGenerator:
+        if not isinstance(self.data, (Generator, AsyncGenerator)):
+            raise TypeError(f"Type {type(self.data)} is not streamable, should be `Generator` or `AsyncGenerator`.")
+
+        if isinstance(self.data, Generator):
+            self.data = to_async_generator(self.data)
+
         async for chunk in self.data:
             if isinstance(chunk, bytes):
                 yield chunk
