@@ -82,16 +82,16 @@ class Response:
         :param headers: should be dict of headers
         :param pagination: an instance of Pagination or None
             The `pagination.template()` method will be used
-        :param set_cookies: single cookie or list of cookies you want to set on the client
-            Set the `max_age` to `0` if you want to delete a cookie
+        :param set_cookies: single cookie or list of cookies you want to set on the client.
+            Set the `max-age` to `0` if you want to delete a cookie.
         """
-        self.headers = {'Content-Type': self.content_type} | (headers or {})
-        self.pagination: Pagination | None = pagination
-        if isinstance(data, Cursor):
+        if isinstance(data, (Cursor, PantherDBCursor)):
             data = list(data)
         self.initial_data = data
         self.data = data
-        self.status_code = self.check_status_code(status_code=status_code)
+        self.status_code = status_code
+        self.headers = {'Content-Type': self.content_type} | (headers or {})
+        self.pagination: Pagination | None = pagination
         self.cookies = None
         if set_cookies:
             c = cookies.SimpleCookie()
@@ -114,7 +114,7 @@ class Response:
         def default(obj: Any):
             if isinstance(obj, BaseModel):
                 return obj.model_dump()
-            raise TypeError(f"Type {type(obj)} not serializable")
+            raise TypeError(f'Type {type(obj)} not serializable')
 
         if isinstance(self.data, bytes):
             return self.data
@@ -129,13 +129,6 @@ class Response:
         if self.cookies:
             result += self.cookies
         return result
-
-    @classmethod
-    def check_status_code(cls, status_code: Any):
-        if not isinstance(status_code, int):
-            error = f'Response `status_code` Should Be `int`. (`{status_code}` is {type(status_code)})'
-            raise TypeError(error)
-        return status_code
 
     async def send(self, send, receive):
         await send({'type': 'http.response.start', 'status': self.status_code, 'headers': self.bytes_headers})
@@ -171,7 +164,7 @@ class StreamingResponse(Response):
     @property
     async def body(self) -> AsyncGenerator:
         if not isinstance(self.data, (Generator, AsyncGenerator)):
-            raise TypeError(f"Type {type(self.data)} is not streamable, should be `Generator` or `AsyncGenerator`.")
+            raise TypeError(f'Type {type(self.data)} is not streamable, should be `Generator` or `AsyncGenerator`.')
 
         if isinstance(self.data, Generator):
             self.data = to_async_generator(self.data)

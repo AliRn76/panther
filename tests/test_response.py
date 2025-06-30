@@ -132,31 +132,26 @@ class ReturnResponseNestedBaseModel(GenericAPI):
         return Response(
             data={
                 'name': 'Ali',
-                'book':
-                    CustomBook(
-                        title='Boo1',
-                        author=CustomUser(name='John', age=21, is_alive=True),
-                        readers=[CustomUser(name='Sara', age=22, is_alive=True),
-                                 CustomUser(name='Sam', age=5, is_alive=False)]
-                    ),
+                'book': CustomBook(
+                    title='Boo1',
+                    author=CustomUser(name='John', age=21, is_alive=True),
+                    readers=[
+                        CustomUser(name='Sara', age=22, is_alive=True),
+                        CustomUser(name='Sam', age=5, is_alive=False),
+                    ],
+                ),
                 'user': CustomUser(name='Ali', age=2, is_alive=True),
                 'books': [
-                    CustomBook(
-                        title='Book1',
-                        author=CustomUser(name='John1', age=21, is_alive=True),
-                        readers=[]
-                    ),
-                    CustomBook(
-                        title='Book2',
-                        author=CustomUser(name='John2', age=22, is_alive=True),
-                        readers=[]
-                    )
-                ]
+                    CustomBook(title='Book1', author=CustomUser(name='John1', age=21, is_alive=True), readers=[]),
+                    CustomBook(title='Book2', author=CustomUser(name='John2', age=22, is_alive=True), readers=[]),
+                ],
             }
         )
 
+
 class CustomProduct(Model):
     title: str
+
 
 class ReturnResponseModel(GenericAPI):
     def get(self):
@@ -211,11 +206,6 @@ class ReturnAsyncStreamingResponse(GenericAPI):
                 yield i
 
         return StreamingResponse(f())
-
-
-class ReturnInvalidStatusCode(GenericAPI):
-    def get(self):
-        return Response(status_code='ali')
 
 
 @API()
@@ -299,7 +289,6 @@ urls = {
     'plain-cls': ReturnPlainResponse,
     'stream': ReturnStreamingResponse,
     'async-stream': ReturnAsyncStreamingResponse,
-    'invalid-status-code': ReturnInvalidStatusCode,
     'full-cookies': full_cookie_api,
     'multiple-cookies': multiple_cookies_api,
     'default-cookies': default_cookies_api,
@@ -433,7 +422,6 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.headers['Content-Type'] == 'application/json'
         assert res.headers['Content-Length'] == '40'
 
-
     async def test_nested_basemodel(self):
         res = await self.client.get('nested-basemodel/')
         assert res.status_code == 200
@@ -444,14 +432,14 @@ class TestResponses(IsolatedAsyncioTestCase):
                 'author': {'name': 'John', 'age': 21, 'is_alive': True},
                 'readers': [
                     {'name': 'Sara', 'age': 22, 'is_alive': True},
-                    {'name': 'Sam', 'age': 5, 'is_alive': False}
-                ]
+                    {'name': 'Sam', 'age': 5, 'is_alive': False},
+                ],
             },
             'user': {'name': 'Ali', 'age': 2, 'is_alive': True},
             'books': [
                 {'title': 'Book1', 'author': {'name': 'John1', 'age': 21, 'is_alive': True}, 'readers': []},
-                {'title': 'Book2', 'author': {'name': 'John2', 'age': 22, 'is_alive': True}, 'readers': []}
-            ]
+                {'title': 'Book2', 'author': {'name': 'John2', 'age': 22, 'is_alive': True}, 'readers': []},
+            ],
         }
         assert res.body == (
             b'{"name":"Ali","book":{"title":"Boo1","author":{"name":"John","age":21,"is_alive":true},'
@@ -612,23 +600,6 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.headers['Content-Type'] == 'application/octet-stream'
         assert res.data == '012345'
         assert res.body == b'012345'
-
-    async def test_invalid_status_code(self):
-        with self.assertLogs(level='ERROR') as captured:
-            res = await self.client.get('invalid-status-code/')
-
-        assert len(captured.records) == 1
-        assert (
-            captured.records[0].getMessage().split('\n')[-2]
-            == "TypeError: Response `status_code` Should Be `int`. (`ali` is <class 'str'>)"
-        )
-
-        assert res.status_code == 500
-        assert res.data == {'detail': 'Internal Server Error'}
-        assert res.body == b'{"detail":"Internal Server Error"}'
-        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
-        assert res.headers['Content-Type'] == 'application/json'
-        assert res.headers['Content-Length'] == '34'
 
     async def test_full_cookie(self):
         res = await self.client.get('full-cookies/')

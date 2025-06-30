@@ -4,6 +4,7 @@ from unittest import IsolatedAsyncioTestCase
 from panther import Panther
 from panther.configs import config
 from panther.db import Model
+from panther.db.connections import db
 from panther.generics import CreateAPI, DeleteAPI, ListAPI, RetrieveAPI, UpdateAPI
 from panther.pagination import Pagination
 from panther.request import Request
@@ -84,7 +85,8 @@ class TestGeneric(IsolatedAsyncioTestCase):
         cls.client = APIClient(app=app)
 
     def tearDown(self) -> None:
-        Path(self.DB_PATH).unlink()
+        db.session.collection('User').drop()
+        db.session.collection('Person').drop()
 
     @classmethod
     def tearDownClass(cls):
