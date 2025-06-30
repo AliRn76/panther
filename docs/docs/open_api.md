@@ -17,6 +17,16 @@ url_routing = {
 
 This will make your OpenAPI documentation available at the `/swagger/` endpoint.
 
+## How Panther Determines Response Models and Status Codes
+
+Panther follows a specific logic to generate the OpenAPI YAML for your APIs:
+
+1. **`output_schema`**: Panther first looks for an `output_schema` attribute to generate the OpenAPI documentation. This is the recommended and most accurate way to specify your response model and status code.
+2. **`output_model`**: If `output_schema` does not exist, Panther looks for an `output_model` attribute to generate the response type. It will also attempt to extract the status code from your source code.
+3. **Source Code Analysis**: If neither `output_schema` nor `output_model` is available, Panther tries to extract the response data and status code directly from your source code using static analysis with `ast`.
+
+For best results and more accurate documentation, always specify `output_schema` in your APIs.
+
 ## How Panther Generates OpenAPI Docs
 
 Panther inspects your API views for an `output_schema` attribute. This attribute should be an instance of `panther.openapi.OutputSchema`, which describes the response model and status code for your endpoint.
@@ -59,8 +69,6 @@ Panther inspects your API views for an `output_schema` attribute. This attribute
         output_schema = OutputSchema(model=UserSerializer, status_code=status.HTTP_200_OK)
         ...
     ```
-
-If `output_schema` is not provided, Panther will attempt to infer the status code and response structure by analyzing your code with `ast`. However, for best results and more accurate documentation, it is recommended to always specify `output_schema`.
 
 ---
 

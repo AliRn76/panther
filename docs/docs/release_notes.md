@@ -1,8 +1,8 @@
 # Panther Release Notes
 
 ### 5.0.0
-- Add Built-In `AdminPanel`
 - Add Built-In `OpenAPI`
+- Add Built-In `AdminPanel`
 - Support `Set-Cookie` in Response
 - Support `application/x-www-form-urlencoded` Content Type
 - Support Different `Middlewares` Per API
@@ -20,7 +20,6 @@
     - `TemplateResponse(path=...)` is renamed to `name`.
     - Middlewares does not support custom args for their `__init__`.
     - New Style of Middleware declaration [[Documentation]](middlewares.md).
-    - `API` and `GenericAPI` do not support `output_model` anymore, checkout `output_schema` .
     - New background task declaration, `background_tasks.add_task(BackgroundTask(...))` --> `BackgroundTask(...).submit()`.
     - `REDIS` block in configs does not support `websocket_db` anymore.
 

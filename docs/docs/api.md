@@ -67,6 +67,45 @@ You can validate incoming data using the `input_model` parameter. Pass a seriali
 
 ---
 
+## Output Model
+
+Use the `output_model` parameter to automatically serialize your API response data using a specified serializer. This ensures that the response structure is consistent and validated.
+
+**Example Serializer:**
+
+```python title="app/serializers.py" linenums="1"
+from panther.serializer import ModelSerializer
+
+class UserSerializer(ModelSerializer):
+    ...
+```
+
+=== "Function-Base API"
+
+    ```python title="app/apis.py" linenums="1"
+    from panther.app import API
+    from app.serializers import UserSerializer
+    
+    @API(output_model=UserSerializer)
+    async def user_api():
+        ...
+    ```
+
+=== "Class-Base API"
+
+    ```python title="app/apis.py" linenums="1"
+    from panther.app import GenericAPI
+    from app.serializers import UserSerializer
+    
+    class UserAPI(GenericAPI):
+        output_model = UserSerializer
+        ...
+    ```
+
+> **Tip:** Use `output_model` to ensure your API always returns data in the expected format. For OpenAPI documentation, see the `output_schema` section.
+
+---
+
 ## Authentication
 
 To ensure that each request contains a valid authentication header, set `auth=True`. Panther will look for the `AUTHENTICATION` class from your config and use its `authentication()` method for this purpose.
@@ -330,7 +369,8 @@ class CustomMiddleware(HTTPMiddleware):
 
 ## Output Schema
 
-The `output_schema` attribute is used when generating OpenAPI (Swagger) documentation. It should be an instance of `panther.openapi.OutputSchema`, which specifies the desired response data structure and status code.
+The `output_schema` attribute is used when generating OpenAPI (Swagger) documentation. 
+It should be an instance of `panther.openapi.OutputSchema`, which specifies the desired response data structure and status code.
 
 **Example Serializer:**
 
