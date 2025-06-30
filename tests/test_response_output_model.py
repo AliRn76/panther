@@ -22,7 +22,7 @@ class OutputModelWithAlias(BaseModel):
 class OutputModelWithPrepare(BaseModel):
     value: int
 
-    async def prepare_response(self, instance, data):
+    async def to_response(self, instance, data):
         # Just return the data with a custom key for test
         return {'custom': data['value']}
 
@@ -58,31 +58,31 @@ class TestResponsesOutputModel(IsolatedAsyncioTestCase):
 
     async def test_dict(self):
         resp = Response(data={'_id': 1, 'name': 'foo'})
-        result = await resp.apply_output_model(OutputModelWithAlias)
+        result = await resp.serialize_output(OutputModelWithAlias)
         assert result == {'id': '1', 'name': 'foo'}
 
     async def test_iterable(self):
         resp = Response(data=[{'_id': 1, 'name': 'foo'}, {'_id': 2, 'name': 'bar'}])
-        result = await resp.apply_output_model(OutputModelWithAlias)
+        result = await resp.serialize_output(OutputModelWithAlias)
         assert result == [{'id': '1', 'name': 'foo'}, {'id': '2', 'name': 'bar'}]
 
-    async def test_prepare_response(self):
+    async def test_to_response(self):
         resp = Response(data={'value': 42})
-        result = await resp.apply_output_model(OutputModelWithPrepare)
+        result = await resp.serialize_output(OutputModelWithPrepare)
         assert result == {'custom': 42}
 
-    async def test_iterable_prepare_response(self):
+    async def test_iterable_to_response(self):
         resp = Response(data=[{'value': 1}, {'value': 2}])
-        result = await resp.apply_output_model(OutputModelWithPrepare)
+        result = await resp.serialize_output(OutputModelWithPrepare)
         assert result == [{'custom': 1}, {'custom': 2}]
 
     async def test_type_error(self):
         resp = Response(data='not a dict')
         with self.assertRaises(TypeError):
-            await resp.apply_output_model(OutputModelWithAlias)
+            await resp.serialize_output(OutputModelWithAlias)
 
     async def test_model(self):
         user = await User.insert_one(username='Ali', password='1234')
         resp = Response(data=user)
-        result = await resp.apply_output_model(UserOutputSerializer)
+        result = await resp.serialize_output(UserOutputSerializer)
         assert result == {'id': user.id, 'username': 'Ali'}

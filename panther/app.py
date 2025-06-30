@@ -178,7 +178,7 @@ class API:
         if not isinstance(response, Response):
             response = Response(data=response)
         if self.output_model and response.data:
-            response.data = await response.apply_output_model(output_model=self.output_model)
+            response.data = await response.serialize_output(output_model=self.output_model)
         if response.pagination:
             response.data = await response.pagination.template(response.data)
 
@@ -225,7 +225,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
     """
 
     input_model: type[ModelSerializer] | type[BaseModel] | None = None
-    output_model: type[ModelSerializer] | type[BaseModel] | None = None,
+    output_model: type[ModelSerializer] | type[BaseModel] | None = None
     output_schema: OutputSchema | None = None
     auth: bool = False
     permissions: list[type[BasePermission]] | None = None

@@ -109,6 +109,13 @@ class Response:
                     c[cookie.key]['max-age'] = cookie.max_age
             self.cookies = [(b'Set-Cookie', cookie.OutputString().encode()) for cookie in c.values()]
 
+    def __str__(self):
+        if len(data := str(self.data)) > 30:
+            data = f'{data:.27}...'
+        return f'Response(status_code={self.status_code}, data={data})'
+
+    __repr__ = __str__
+
     @property
     def body(self) -> bytes:
         def default(obj: Any):
@@ -134,53 +141,28 @@ class Response:
         await send({'type': 'http.response.start', 'status': self.status_code, 'headers': self.bytes_headers})
         await send({'type': 'http.response.body', 'body': self.body, 'more_body': False})
 
-    def __str__(self):
-        if len(data := str(self.data)) > 30:
-            data = f'{data:.27}...'
-        return f'Response(status_code={self.status_code}, data={data})'
+    async def serialize_output(self, output_model: type[BaseModel]):
+        """Serializes response data using the given output_model."""
 
-    __repr__ = __str__
-
-    async def apply_output_model(self, output_model: type[BaseModel]):
-        """This method is called in API.__call__"""
-
-        # Dict
-        if isinstance(self.data, dict):
-            # # Apply `validation_alias` (id -> _id)
-            # for field_name, field in output_model.model_fields.items():
-            #     if field.validation_alias and field_name in self.data:
-            #         self.data[field.validation_alias] = self.data.pop(field_name)
-            output = output_model(**self.data)
-            if hasattr(output_model, 'prepare_response'):
-                return await output.prepare_response(instance=self.initial_data, data=output.model_dump())
+        async def handle_output(obj):
+            output = output_model(**obj) if isinstance(obj, dict) else output_model(**obj.model_dump())
+            if hasattr(output_model, 'to_response'):
+                return await output.to_response(instance=self.initial_data, data=output.model_dump())
             return output.model_dump()
 
-        # BaseModel
-        if isinstance(self.data, BaseModel):
-            print(self.data.model_dump())
-            filtered_data = output_model(**self.data.model_dump())
-            if hasattr(output_model, 'prepare_response'):
-                return await filtered_data.prepare_response(instance=self.initial_data, data=filtered_data.model_dump())
-            return filtered_data.model_dump()
+        if isinstance(self.data, dict) or isinstance(self.data, BaseModel):
+            return await handle_output(self.data)
 
-        # Iterable
-        results = []
         if isinstance(self.data, IterableDataTypes):
-            for i, d in enumerate(self.data):
-                # # Apply `validation_alias` (id -> _id)
-                # for field_name, field in output_model.model_fields.items():
-                #     if field.validation_alias and field_name in d:
-                #         d[field.validation_alias] = d.pop(field_name)
-
-                output = output_model(**d)
-                if hasattr(output_model, 'prepare_response'):
-                    result = await output.prepare_response(instance=self.initial_data[i], data=output.model_dump())
+            results = []
+            for d in self.data:
+                if isinstance(d, dict) or isinstance(d, BaseModel):
+                    results.append(await handle_output(d))
                 else:
-                    result = output.model_dump()
-                results.append(result)
+                    msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'
+                    raise TypeError(msg)
             return results
 
-        # Str | Bool | Bytes
         msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'
         raise TypeError(msg)
 

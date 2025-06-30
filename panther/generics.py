@@ -130,13 +130,7 @@ class CreateAPI(GenericAPI):
     input_model: type[ModelSerializer]
 
     async def post(self, request: Request, **kwargs):
-        instance = await request.validated_data.create(
-            validated_data={
-                field: getattr(request.validated_data, field)
-                for field in request.validated_data.model_fields_set
-                if field != 'request'
-            },
-        )
+        instance = await request.validated_data.model.insert_one(request.validated_data.model_dump())
         return Response(data=instance, status_code=status.HTTP_201_CREATED)
 
 
@@ -147,20 +141,14 @@ class UpdateAPI(GenericAPI, ObjectRequired):
         instance = await self.object(request=request, **kwargs)
         self._check_object(instance)
 
-        await request.validated_data.update(
-            instance=instance,
-            validated_data=request.validated_data.model_dump(by_alias=True),
-        )
+        await instance.update(request.validated_data.model_dump())
         return Response(data=instance, status_code=status.HTTP_200_OK)
 
     async def patch(self, request: Request, **kwargs):
         instance = await self.object(request=request, **kwargs)
         self._check_object(instance)
 
-        await request.validated_data.partial_update(
-            instance=instance,
-            validated_data=request.validated_data.model_dump(exclude_none=True, by_alias=True),
-        )
+        await instance.update(request.validated_data.model_dump(exclude_none=True))
         return Response(data=instance, status_code=status.HTTP_200_OK)
 
 
