@@ -104,7 +104,7 @@ class BaseMongoDBQuery(BaseQuery):
     @classmethod
     async def _create_field(cls, model: type, field_name: str, value: Any) -> Any:
         # Handle primary key field directly
-        if field_name == '_id':
+        if field_name == 'id':
             return value
 
         if field_name not in model.model_fields:
@@ -155,6 +155,9 @@ class BaseMongoDBQuery(BaseQuery):
     @classmethod
     async def _create_model_instance(cls, document: dict) -> Self:
         """Prepares document and creates an instance of the model."""
+        if '_id' in document:
+            document['id'] = document.pop('_id')
+
         processed_document = {
             field_name: await cls._create_field(model=cls, field_name=field_name, value=field_value)
             for field_name, field_value in document.items()

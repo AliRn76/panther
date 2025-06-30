@@ -42,6 +42,7 @@ class API:
     methods: Specify the allowed methods.
     input_model: The `request.data` will be validated with this attribute, It will raise an
         `panther.exceptions.BadRequestAPIError` or put the validated data in the `request.validated_data`.
+    output_model: The `response.data` will be passed through this class to filter its attributes.
     output_schema: This attribute only used in creation of OpenAPI scheme which is available in `panther.openapi.urls`
         You may want to add its `url` to your urls.
     auth: It will authenticate the user with header of its request or raise an
@@ -59,6 +60,7 @@ class API:
         *,
         methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
         input_model: type[ModelSerializer] | type[BaseModel] | None = None,
+        output_model: type[ModelSerializer] | type[BaseModel] | None = None,
         output_schema: OutputSchema | None = None,
         auth: bool = False,
         permissions: list[type[BasePermission]] | None = None,
@@ -69,21 +71,14 @@ class API:
     ):
         self.methods = {m.upper() for m in methods} if methods else {'GET', 'POST', 'PUT', 'PATCH', 'DELETE'}
         self.input_model = input_model
+        self.output_model = output_model
         self.output_schema = output_schema
         self.auth = auth
         self.permissions = permissions or []
         self.throttling = throttling
         self.cache = cache
-        self.middlewares: list[[HTTPMiddleware]] | None = middlewares
+        self.middlewares = middlewares
         self.request: Request | None = None
-        if kwargs.pop('output_model', None):
-            deprecation_message = (
-                traceback.format_stack(limit=2)[0]
-                + '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
-                '\nPlease update your code to use the new approach. More info: '
-                'https://pantherpy.github.io/open_api/'
-            )
-            raise PantherError(deprecation_message)
         if kwargs.pop('cache_exp_time', None):
             deprecation_message = (
                 traceback.format_stack(limit=2)[0]
@@ -182,6 +177,8 @@ class API:
         # 9. Clean Response
         if not isinstance(response, Response):
             response = Response(data=response)
+        if self.output_model and response.data:
+            response.data = await response.serialize_output(output_model=self.output_model)
         if response.pagination:
             response.data = await response.pagination.template(response.data)
 
@@ -228,6 +225,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
     """
 
     input_model: type[ModelSerializer] | type[BaseModel] | None = None
+    output_model: type[ModelSerializer] | type[BaseModel] | None = None
     output_schema: OutputSchema | None = None
     auth: bool = False
     permissions: list[type[BasePermission]] | None = None
@@ -239,6 +237,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
         # Creating API instance to validate the attributes.
         API(
             input_model=cls.input_model,
+            output_model=cls.output_model,
             output_schema=cls.output_schema,
             auth=cls.auth,
             permissions=cls.permissions,
@@ -279,6 +278,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
 
         return await API(
             input_model=self.input_model,
+            output_model=self.output_model,
             output_schema=self.output_schema,
             auth=self.auth,
             permissions=self.permissions,

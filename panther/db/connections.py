@@ -73,6 +73,10 @@ class MongoDBConnection(BaseDatabaseConnection):
     def session(self):
         return self._database
 
+    @property
+    def client(self):
+        return self._client
+
 
 class PantherDBConnection(BaseDatabaseConnection):
     def init(self, path: str | None = None, encryption: bool = False):
@@ -90,11 +94,19 @@ class PantherDBConnection(BaseDatabaseConnection):
     def session(self):
         return self._connection
 
+    @property
+    def client(self):
+        return self._connection
+
 
 class DatabaseConnection(Singleton):
     @property
     def session(self):
         return config.DATABASE.session
+
+    @property
+    def client(self):
+        return config.DATABASE.client
 
 
 class RedisConnection(Singleton, _Redis):

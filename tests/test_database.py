@@ -512,11 +512,12 @@ class TestPantherDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
         Panther(__name__, configs=__name__, urls={})
 
     def tearDown(self) -> None:
-        Path(self.DB_PATH).unlink()
+        db.session.collection('Book').drop()
 
     @classmethod
     def tearDownClass(cls):
         config.refresh()
+        Path(cls.DB_PATH).unlink(missing_ok=True)
 
     async def test_aggregation(self):
         pass

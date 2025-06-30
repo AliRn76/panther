@@ -36,6 +36,9 @@ class Cursor(_Cursor):
     def __aiter__(self) -> Self:
         return self
 
+    def __iter__(self) -> Self:
+        return self
+
     async def next(self) -> Self:
         return await self.cls._create_model_instance(document=super().next())
 

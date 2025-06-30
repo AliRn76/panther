@@ -6,7 +6,7 @@ from panther import Panther, status, version
 from panther.app import API, GenericAPI
 from panther.middlewares.base import HTTPMiddleware
 from panther.openapi import OutputSchema
-from panther.openapi.urls import urls as openapi_urls
+from panther.openapi.urls import url_routing as openapi_urls
 from panther.request import Request
 from panther.response import Response
 from panther.throttling import Throttle

@@ -82,16 +82,15 @@ class Response:
         :param headers: should be dict of headers
         :param pagination: an instance of Pagination or None
             The `pagination.template()` method will be used
-        :param set_cookies: single cookie or list of cookies you want to set on the client
-            Set the `max_age` to `0` if you want to delete a cookie
+        :param set_cookies: single cookie or list of cookies you want to set on the client.
+            Set the `max-age` to `0` if you want to delete a cookie.
         """
+        if isinstance(data, (Cursor, PantherDBCursor)):
+            data = list(data)
+        self.data = data
+        self.status_code = status_code
         self.headers = {'Content-Type': self.content_type} | (headers or {})
         self.pagination: Pagination | None = pagination
-        if isinstance(data, Cursor):
-            data = list(data)
-        self.initial_data = data
-        self.data = self.prepare_data(data=data)
-        self.status_code = self.check_status_code(status_code=status_code)
         self.cookies = None
         if set_cookies:
             c = cookies.SimpleCookie()
@@ -109,13 +108,25 @@ class Response:
                     c[cookie.key]['max-age'] = cookie.max_age
             self.cookies = [(b'Set-Cookie', cookie.OutputString().encode()) for cookie in c.values()]
 
+    def __str__(self):
+        if len(data := str(self.data)) > 30:
+            data = f'{data:.27}...'
+        return f'Response(status_code={self.status_code}, data={data})'
+
+    __repr__ = __str__
+
     @property
     def body(self) -> bytes:
+        def default(obj: Any):
+            if isinstance(obj, BaseModel):
+                return obj.model_dump()
+            raise TypeError(f'Type {type(obj)} not serializable')
+
         if isinstance(self.data, bytes):
             return self.data
         if self.data is None:
             return b''
-        return json.dumps(self.data)
+        return json.dumps(self.data, default=default)
 
     @property
     def bytes_headers(self) -> list[tuple[bytes, bytes]]:
@@ -125,42 +136,34 @@ class Response:
             result += self.cookies
         return result
 
-    @classmethod
-    def prepare_data(cls, data: Any):
-        """Make sure the response data is only ResponseDataTypes or Iterable of ResponseDataTypes"""
-        if isinstance(data, (int | float | str | bool | bytes | NoneType)):
-            return data
-
-        elif isinstance(data, dict):
-            return {key: cls.prepare_data(value) for key, value in data.items()}
-
-        elif issubclass(type(data), BaseModel):
-            return data.model_dump()
-
-        elif isinstance(data, IterableDataTypes):
-            return [cls.prepare_data(d) for d in data]
-
-        else:
-            msg = f'Invalid Response Type: {type(data)}'
-            raise TypeError(msg)
-
-    @classmethod
-    def check_status_code(cls, status_code: Any):
-        if not isinstance(status_code, int):
-            error = f'Response `status_code` Should Be `int`. (`{status_code}` is {type(status_code)})'
-            raise TypeError(error)
-        return status_code
-
     async def send(self, send, receive):
         await send({'type': 'http.response.start', 'status': self.status_code, 'headers': self.bytes_headers})
         await send({'type': 'http.response.body', 'body': self.body, 'more_body': False})
 
-    def __str__(self):
-        if len(data := str(self.data)) > 30:
-            data = f'{data:.27}...'
-        return f'Response(status_code={self.status_code}, data={data})'
+    async def serialize_output(self, output_model: type[BaseModel]):
+        """Serializes response data using the given output_model."""
 
-    __repr__ = __str__
+        async def handle_output(obj):
+            output = output_model(**obj) if isinstance(obj, dict) else output_model(**obj.model_dump())
+            if hasattr(output_model, 'to_response'):
+                return await output.to_response(instance=obj, data=output.model_dump())
+            return output.model_dump()
+
+        if isinstance(self.data, dict) or isinstance(self.data, BaseModel):
+            return await handle_output(self.data)
+
+        if isinstance(self.data, IterableDataTypes):
+            results = []
+            for d in self.data:
+                if isinstance(d, dict) or isinstance(d, BaseModel):
+                    results.append(await handle_output(d))
+                else:
+                    msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'
+                    raise TypeError(msg)
+            return results
+
+        msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'
+        raise TypeError(msg)
 
 
 class StreamingResponse(Response):
@@ -175,14 +178,6 @@ class StreamingResponse(Response):
         if message['type'] == 'http.disconnect':
             self.connection_closed = True
 
-    def prepare_data(self, data: any) -> AsyncGenerator:
-        if isinstance(data, AsyncGenerator):
-            return data
-        elif isinstance(data, Generator):
-            return to_async_generator(data)
-        msg = f'Invalid Response Type: {type(data)}'
-        raise TypeError(msg)
-
     @property
     def bytes_headers(self) -> list[tuple[bytes, bytes]]:
         result = [(k.encode(), str(v).encode()) for k, v in self.headers.items()]
@@ -192,6 +187,12 @@ class StreamingResponse(Response):
 
     @property
     async def body(self) -> AsyncGenerator:
+        if not isinstance(self.data, (Generator, AsyncGenerator)):
+            raise TypeError(f'Type {type(self.data)} is not streamable, should be `Generator` or `AsyncGenerator`.')
+
+        if isinstance(self.data, Generator):
+            self.data = to_async_generator(self.data)
+
         async for chunk in self.data:
             if isinstance(chunk, bytes):
                 yield chunk

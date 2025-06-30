@@ -1,5 +1,6 @@
 import contextlib
 import logging
+from abc import abstractmethod
 
 from pantherdb import Cursor as PantherDBCursor
 
@@ -7,7 +8,9 @@ from panther import status
 from panther.app import GenericAPI
 from panther.configs import config
 from panther.db import Model
+from panther.db.connections import MongoDBConnection
 from panther.db.cursor import Cursor
+from panther.db.models import ID
 from panther.exceptions import APIError
 from panther.pagination import Pagination
 from panther.request import Request
@@ -21,56 +24,42 @@ with contextlib.suppress(ImportError):
 logger = logging.getLogger('panther')
 
 
-class ObjectRequired:
-    def _check_object(self, instance):
-        if instance and issubclass(type(instance), Model) is False:
-            logger.critical(f'`{self.__class__.__name__}.object()` should return instance of a Model --> `find_one()`')
-            raise APIError
-
-    async def object(self, request: Request, **kwargs):
+class RetrieveAPI(GenericAPI):
+    @abstractmethod
+    async def get_instance(self, request: Request, **kwargs) -> Model:
         """
-        Used in `RetrieveAPI`, `UpdateAPI`, `DeleteAPI`
+        Should return an instance of Model, e.g. `await User.find_one()`
         """
-        logger.error(f'`object()` method is not implemented in {self.__class__} .')
+        logger.error(f'`get_instance()` method is not implemented in {self.__class__} .')
         raise APIError(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
-
-class CursorRequired:
-    def _check_cursor(self, cursor):
-        if isinstance(cursor, (Cursor, PantherDBCursor)) is False:
-            logger.critical(f'`{self.__class__.__name__}.cursor()` should return a Cursor --> `find()`')
-            raise APIError
-
-    async def cursor(self, request: Request, **kwargs) -> Cursor | PantherDBCursor:
-        """
-        Used in `ListAPI`
-        Should return `.find()`
-        """
-        logger.error(f'`cursor()` method is not implemented in {self.__class__} .')
-        raise APIError(status_code=status.HTTP_501_NOT_IMPLEMENTED)
-
-
-class RetrieveAPI(GenericAPI, ObjectRequired):
     async def get(self, request: Request, **kwargs):
-        instance = await self.object(request=request, **kwargs)
-        self._check_object(instance)
-
+        instance = await self.get_instance(request=request, **kwargs)
         return Response(data=instance, status_code=status.HTTP_200_OK)
 
 
-class ListAPI(GenericAPI, CursorRequired):
-    sort_fields: list[str]
-    search_fields: list[str]
-    filter_fields: list[str]
-    pagination: type[Pagination]
+class ListAPI(GenericAPI):
+    sort_fields: list[str] = []
+    search_fields: list[str] = []
+    filter_fields: list[str] = []
+    pagination: type[Pagination] | None = None
+
+    async def get_query(self, request: Request, **kwargs) -> Cursor | PantherDBCursor:
+        """
+        Should return a Cursor, e.g. `await User.find()`
+        """
+        logger.error(f'`get_query()` method is not implemented in {self.__class__} .')
+        raise APIError(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
     async def get(self, request: Request, **kwargs):
         cursor, pagination = await self.prepare_cursor(request=request, **kwargs)
         return Response(data=cursor, pagination=pagination, status_code=status.HTTP_200_OK)
 
     async def prepare_cursor(self, request: Request, **kwargs) -> tuple[Cursor | PantherDBCursor, Pagination | None]:
-        cursor = await self.cursor(request=request, **kwargs)
-        self._check_cursor(cursor)
+        cursor = await self.get_query(request=request, **kwargs)
+        if not isinstance(cursor, (Cursor, PantherDBCursor)):
+            logger.error(f'`{self.__class__.__name__}.get_query()` should return a Cursor, e.g. `await Model.find()`')
+            raise APIError(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
         query = {}
         query |= self.process_filters(query_params=request.query_params, cursor=cursor)
@@ -89,106 +78,88 @@ class ListAPI(GenericAPI, CursorRequired):
 
     def process_filters(self, query_params: dict, cursor: Cursor | PantherDBCursor) -> dict:
         _filter = {}
-        if hasattr(self, 'filter_fields'):
-            for field in self.filter_fields:
-                if field in query_params:
-                    if config.DATABASE.__class__.__name__ == 'MongoDBConnection':
-                        with contextlib.suppress(Exception):
-                            # Change type of the value if it is ObjectId
-                            if cursor.cls.model_fields[field].metadata[0].func.__name__ == 'validate_object_id':
-                                _filter[field] = bson.ObjectId(query_params[field])
-                                continue
-                    _filter[field] = query_params[field]
+        for field in self.filter_fields:
+            if field in query_params:
+                _filter[field] = query_params[field]
+                if isinstance(config.DATABASE, MongoDBConnection) and cursor.cls.model_fields[field].annotation == ID:
+                    _filter[field] = bson.ObjectId(_filter[field])
         return _filter
 
     def process_search(self, query_params: dict) -> dict:
-        if hasattr(self, 'search_fields') and 'search' in query_params:
-            value = query_params['search']
-            if config.DATABASE.__class__.__name__ == 'MongoDBConnection':
-                if search := [{field: {'$regex': value}} for field in self.search_fields]:
-                    return {'$or': search}
-            else:
-                logger.warning(f'`?search={value} does not work well while using `PantherDB` as Database')
-                return {field: value for field in self.search_fields}
-        return {}
+        search_param = query_params.get('search')
+        if not self.search_fields or not search_param:
+            return {}
+        if isinstance(config.DATABASE, MongoDBConnection):
+            if search := [{field: {'$regex': search_param}} for field in self.search_fields]:
+                return {'$or': search}
+        return {field: search_param for field in self.search_fields}
 
     def process_sort(self, query_params: dict) -> list:
-        if hasattr(self, 'sort_fields') and 'sort' in query_params:
-            return [
-                (field, -1 if param[0] == '-' else 1)
-                for field in self.sort_fields
-                for param in query_params['sort'].split(',')
-                if field == param.removeprefix('-')
-            ]
+        sort_param = query_params.get('sort')
+        if not self.sort_fields or not sort_param:
+            return []
+        return [
+            (field, -1 if param.startswith('-') else 1)
+            for param in sort_param.split(',')
+            for field in self.sort_fields
+            if field == param.removeprefix('-')
+        ]
 
     def process_pagination(self, query_params: dict, cursor: Cursor | PantherDBCursor) -> Pagination | None:
-        if hasattr(self, 'pagination'):
+        if self.pagination:
             return self.pagination(query_params=query_params, cursor=cursor)
 
 
 class CreateAPI(GenericAPI):
-    input_model: type[ModelSerializer]
+    input_model: type[ModelSerializer] | None = None
 
     async def post(self, request: Request, **kwargs):
-        instance = await request.validated_data.create(
-            validated_data={
-                field: getattr(request.validated_data, field)
-                for field in request.validated_data.model_fields_set
-                if field != 'request'
-            },
-        )
+        instance = await request.validated_data.model.insert_one(request.validated_data.model_dump())
         return Response(data=instance, status_code=status.HTTP_201_CREATED)
 
 
-class UpdateAPI(GenericAPI, ObjectRequired):
-    input_model: type[ModelSerializer]
+class UpdateAPI(GenericAPI):
+    input_model: type[ModelSerializer] | None = None
+
+    @abstractmethod
+    async def get_instance(self, request: Request, **kwargs) -> Model:
+        """
+        Should return an instance of Model, e.g. `await User.find_one()`
+        """
+        logger.error(f'`get_instance()` method is not implemented in {self.__class__} .')
+        raise APIError(status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
     async def put(self, request: Request, **kwargs):
-        instance = await self.object(request=request, **kwargs)
-        self._check_object(instance)
-
-        await request.validated_data.update(
-            instance=instance,
-            validated_data=request.validated_data.model_dump(by_alias=True),
-        )
+        instance = await self.get_instance(request=request, **kwargs)
+        await instance.update(request.validated_data.model_dump())
         return Response(data=instance, status_code=status.HTTP_200_OK)
 
     async def patch(self, request: Request, **kwargs):
-        instance = await self.object(request=request, **kwargs)
-        self._check_object(instance)
-
-        await request.validated_data.partial_update(
-            instance=instance,
-            validated_data=request.validated_data.model_dump(exclude_none=True, by_alias=True),
-        )
+        instance = await self.get_instance(request=request, **kwargs)
+        await instance.update(request.validated_data.model_dump(exclude_none=True))
         return Response(data=instance, status_code=status.HTTP_200_OK)
 
 
-class DeleteAPI(GenericAPI, ObjectRequired):
+class DeleteAPI(GenericAPI):
+    @abstractmethod
+    async def get_instance(self, request: Request, **kwargs) -> Model:
+        """
+        Should return an instance of Model, e.g. `await User.find_one()`
+        """
+        logger.error(f'`get_instance()` method is not implemented in {self.__class__} .')
+        raise APIError(status_code=status.HTTP_501_NOT_IMPLEMENTED)
+
     async def pre_delete(self, instance, request: Request, **kwargs):
+        """Hook for logic before deletion."""
         pass
 
     async def post_delete(self, instance, request: Request, **kwargs):
+        """Hook for logic after deletion."""
         pass
 
     async def delete(self, request: Request, **kwargs):
-        instance = await self.object(request=request, **kwargs)
-        self._check_object(instance)
-
+        instance = await self.get_instance(request=request, **kwargs)
         await self.pre_delete(instance, request=request, **kwargs)
         await instance.delete()
         await self.post_delete(instance, request=request, **kwargs)
-
         return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-class ListCreateAPI(CreateAPI, ListAPI):
-    pass
-
-
-class UpdateDeleteAPI(UpdateAPI, DeleteAPI):
-    pass
-
-
-class RetrieveUpdateDeleteAPI(RetrieveAPI, UpdateAPI, DeleteAPI):
-    pass

@@ -37,7 +37,7 @@ def validate_object_id(value, handler):
         raise ValueError(msg) from e
 
 
-ID = Annotated[str, WrapValidator(validate_object_id), PlainSerializer(lambda x: str(x), return_type=str)]
+ID = Annotated[str, WrapValidator(validate_object_id), PlainSerializer(lambda x: str(x), return_type=str)] | None
 
 
 class Model(PydanticBaseModel, Query):
@@ -46,7 +46,7 @@ class Model(PydanticBaseModel, Query):
             return
         config.MODELS.append(cls)
 
-    id: ID | None = Field(None, validation_alias='_id', alias='_id')
+    id: ID = None
 
     @property
     def _id(self):
