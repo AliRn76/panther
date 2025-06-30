@@ -45,6 +45,8 @@ class BaseQuery:
     @classmethod
     async def _create_model_instance(cls, document: dict):
         """Prevent getting errors from document insertion"""
+        if '_id' in document:
+            document['id'] = document.pop('_id')
         try:
             return cls(**document)
         except ValidationError as validation_error:

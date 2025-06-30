@@ -141,6 +141,49 @@ class Response:
 
     __repr__ = __str__
 
+    async def apply_output_model(self, output_model: type[BaseModel]):
+        """This method is called in API.__call__"""
+
+        # Dict
+        if isinstance(self.data, dict):
+            # # Apply `validation_alias` (id -> _id)
+            # for field_name, field in output_model.model_fields.items():
+            #     if field.validation_alias and field_name in self.data:
+            #         self.data[field.validation_alias] = self.data.pop(field_name)
+            output = output_model(**self.data)
+            if hasattr(output_model, 'prepare_response'):
+                return await output.prepare_response(instance=self.initial_data, data=output.model_dump())
+            return output.model_dump()
+
+        # BaseModel
+        if isinstance(self.data, BaseModel):
+            print(self.data.model_dump())
+            filtered_data = output_model(**self.data.model_dump())
+            if hasattr(output_model, 'prepare_response'):
+                return await filtered_data.prepare_response(instance=self.initial_data, data=filtered_data.model_dump())
+            return filtered_data.model_dump()
+
+        # Iterable
+        results = []
+        if isinstance(self.data, IterableDataTypes):
+            for i, d in enumerate(self.data):
+                # # Apply `validation_alias` (id -> _id)
+                # for field_name, field in output_model.model_fields.items():
+                #     if field.validation_alias and field_name in d:
+                #         d[field.validation_alias] = d.pop(field_name)
+
+                output = output_model(**d)
+                if hasattr(output_model, 'prepare_response'):
+                    result = await output.prepare_response(instance=self.initial_data[i], data=output.model_dump())
+                else:
+                    result = output.model_dump()
+                results.append(result)
+            return results
+
+        # Str | Bool | Bytes
+        msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'
+        raise TypeError(msg)
+
 
 class StreamingResponse(Response):
     content_type = 'application/octet-stream'

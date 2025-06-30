@@ -517,6 +517,7 @@ class TestPantherDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
     @classmethod
     def tearDownClass(cls):
         config.refresh()
+        Path(cls.DB_PATH).unlink(missing_ok=True)
 
     async def test_aggregation(self):
         pass

@@ -46,7 +46,7 @@ class Model(PydanticBaseModel, Query):
             return
         config.MODELS.append(cls)
 
-    id: ID | None = Field(None, validation_alias='_id', alias='_id')
+    id: ID | None = None
 
     @property
     def _id(self):

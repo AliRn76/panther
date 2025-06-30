@@ -91,6 +91,7 @@ class TestGeneric(IsolatedAsyncioTestCase):
     @classmethod
     def tearDownClass(cls):
         config.refresh()
+        Path(cls.DB_PATH).unlink(missing_ok=True)
 
     async def test_retrieve(self):
         user = await User.insert_one(name='Ali')

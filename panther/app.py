@@ -177,6 +177,8 @@ class API:
         # 9. Clean Response
         if not isinstance(response, Response):
             response = Response(data=response)
+        if self.output_model and response.data:
+            response.data = await response.apply_output_model(output_model=self.output_model)
         if response.pagination:
             response.data = await response.pagination.template(response.data)
 
@@ -223,6 +225,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
     """
 
     input_model: type[ModelSerializer] | type[BaseModel] | None = None
+    output_model: type[ModelSerializer] | type[BaseModel] | None = None,
     output_schema: OutputSchema | None = None
     auth: bool = False
     permissions: list[type[BasePermission]] | None = None
@@ -234,6 +237,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
         # Creating API instance to validate the attributes.
         API(
             input_model=cls.input_model,
+            output_model=cls.output_model,
             output_schema=cls.output_schema,
             auth=cls.auth,
             permissions=cls.permissions,
@@ -274,6 +278,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
 
         return await API(
             input_model=self.input_model,
+            output_model=self.output_model,
             output_schema=self.output_schema,
             auth=self.auth,
             permissions=self.permissions,
