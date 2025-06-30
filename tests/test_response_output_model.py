@@ -1,17 +1,15 @@
 from pathlib import Path
+from typing import ClassVar
 from unittest import IsolatedAsyncioTestCase
 
-import pytest
 from pydantic import BaseModel, Field
 
 from panther import Panther
-from panther.app import API, GenericAPI
 from panther.configs import config
 from panther.db import Model
 from panther.db.connections import db
 from panther.db.models import ID
-from panther.response import Cookie, HTMLResponse, PlainTextResponse, Response, StreamingResponse, TemplateResponse
-from panther.test import APIClient
+from panther.response import Response
 
 
 class OutputModelWithAlias(BaseModel):
@@ -35,6 +33,25 @@ class User(Model):
 class UserOutputSerializer(BaseModel):
     id: str
     username: str
+
+
+class OutputModelWithInstanceCheck(BaseModel):
+    value: int
+    called_with: ClassVar = []  # class variable to record calls
+
+    async def to_response(self, instance, data):
+        # Record the arguments for assertion
+        OutputModelWithInstanceCheck.called_with.append((instance, data))
+        return {'value': data['value'], 'instance_type': type(instance).__name__}
+
+
+class OutputModelWithInstanceCheckIterable(BaseModel):
+    value: int
+    called_with: ClassVar = []
+
+    async def to_response(self, instance, data):
+        OutputModelWithInstanceCheckIterable.called_with.append((instance, data))
+        return {'value': data['value'], 'instance_type': type(instance).__name__}
 
 
 class TestResponsesOutputModel(IsolatedAsyncioTestCase):
@@ -86,3 +103,48 @@ class TestResponsesOutputModel(IsolatedAsyncioTestCase):
         resp = Response(data=user)
         result = await resp.serialize_output(UserOutputSerializer)
         assert result == {'id': user.id, 'username': 'Ali'}
+
+    async def test_to_response_instance_argument(self):
+        OutputModelWithInstanceCheck.called_with.clear()
+        resp = Response(data={'value': 123, 'etc': 'ok'})
+        result = await resp.serialize_output(OutputModelWithInstanceCheck)
+        # The instance should be the original data dict
+        assert result == {'value': 123, 'instance_type': 'dict'}
+        assert OutputModelWithInstanceCheck.called_with[0][0] == {'value': 123, 'etc': 'ok'}
+        assert OutputModelWithInstanceCheck.called_with[0][1] == {'value': 123}
+
+    async def test_iterable_to_response_instance_argument(self):
+        OutputModelWithInstanceCheckIterable.called_with.clear()
+        data = [{'value': 1, 'etc': 'ok'}, {'value': 2, 'etc': 'ok'}]
+        resp = Response(data=data)
+        result = await resp.serialize_output(OutputModelWithInstanceCheckIterable)
+        # The instance should be the original list for each call
+        assert result == [
+            {'value': 1, 'instance_type': 'dict'},
+            {'value': 2, 'instance_type': 'dict'},
+        ]
+        # Both calls should have the same instance (the dict)
+        assert OutputModelWithInstanceCheckIterable.called_with[0][0] == {'value': 1, 'etc': 'ok'}
+        assert OutputModelWithInstanceCheckIterable.called_with[1][0] == {'value': 2, 'etc': 'ok'}
+        assert OutputModelWithInstanceCheckIterable.called_with[0][1] == {'value': 1}
+        assert OutputModelWithInstanceCheckIterable.called_with[1][1] == {'value': 2}
+
+    async def test_model_instance_to_response_argument(self):
+        class UserOutputWithInstance(BaseModel):
+            id: str
+            username: str
+            called_with: ClassVar = []
+
+            async def to_response(self, instance, data):
+                UserOutputWithInstance.called_with.append((instance, data))
+                return {'id': data['id'], 'username': data['username'], 'instance_type': type(instance).__name__}
+
+        UserOutputWithInstance.called_with.clear()
+        user = await User.insert_one(username='Ali', password='1234')
+        resp = Response(data=user)
+        result = await resp.serialize_output(UserOutputWithInstance)
+        assert result['id'] == user.id
+        assert result['username'] == 'Ali'
+        assert result['instance_type'] == 'User'
+        assert UserOutputWithInstance.called_with[0][0] is user
+        assert UserOutputWithInstance.called_with[0][1]['id'] == user.id

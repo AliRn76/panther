@@ -42,7 +42,7 @@ class API:
     methods: Specify the allowed methods.
     input_model: The `request.data` will be validated with this attribute, It will raise an
         `panther.exceptions.BadRequestAPIError` or put the validated data in the `request.validated_data`.
-    output_model: The `response.data` will be goes through this class and filter its attributes.
+    output_model: The `response.data` will be passed through this class to filter its attributes.
     output_schema: This attribute only used in creation of OpenAPI scheme which is available in `panther.openapi.urls`
         You may want to add its `url` to your urls.
     auth: It will authenticate the user with header of its request or raise an
@@ -77,7 +77,7 @@ class API:
         self.permissions = permissions or []
         self.throttling = throttling
         self.cache = cache
-        self.middlewares: list[[HTTPMiddleware]] | None = middlewares
+        self.middlewares = middlewares
         self.request: Request | None = None
         if kwargs.pop('cache_exp_time', None):
             deprecation_message = (

@@ -87,7 +87,6 @@ class Response:
         """
         if isinstance(data, (Cursor, PantherDBCursor)):
             data = list(data)
-        self.initial_data = data
         self.data = data
         self.status_code = status_code
         self.headers = {'Content-Type': self.content_type} | (headers or {})
@@ -147,7 +146,7 @@ class Response:
         async def handle_output(obj):
             output = output_model(**obj) if isinstance(obj, dict) else output_model(**obj.model_dump())
             if hasattr(output_model, 'to_response'):
-                return await output.to_response(instance=self.initial_data, data=output.model_dump())
+                return await output.to_response(instance=obj, data=output.model_dump())
             return output.model_dump()
 
         if isinstance(self.data, dict) or isinstance(self.data, BaseModel):
