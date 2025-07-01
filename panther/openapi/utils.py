@@ -1,9 +1,14 @@
 import ast
 import inspect
+import inspect as pyinspect
+import types
 
 import pydantic
 
 from panther import status
+from panther.configs import config
+from panther.events import Event
+from panther.middlewares.cors import CORSMiddleware
 from panther.serializer import ModelSerializer
 
 
@@ -87,6 +92,7 @@ class ParseEndpoint:
                             # my_data = {...}
                             case ast.Dict(keys=keys, values=values):
                                 self.parse_dict_response(keys=keys, values=values)
+                            # TODO: Can be list, int, bool, set, tuple, BaseModel, Model, ...
 
                 case ast.Return(value=ast.Call(args=args, keywords=keywords, func=func)):
                     if func.id == 'TemplateResponse':
@@ -165,3 +171,252 @@ class ParseEndpoint:
                             case ast.Name(id=inner_name):
                                 if inner_name == name:
                                     yield value
+
+
+def get_model_name(model: type) -> str:
+    if hasattr(model, '__name__'):
+        return model.__name__
+    return model.__class__.__name__
+
+
+def extract_parameters_from_signature(endpoint, method: str) -> list:
+    params = []
+    sig = None
+    if isinstance(endpoint, types.FunctionType):
+        sig = pyinspect.signature(endpoint)
+    else:
+        func = getattr(endpoint, method, None)
+        if func:
+            sig = pyinspect.signature(func)
+    if not sig:
+        return params
+    for name, param in sig.parameters.items():
+        if name in ('self', 'request'):
+            continue
+        # TODO: Get this value from FLAT_URLS, function can have *args or **kwargs ...
+        param_schema = {'name': name, 'in': 'path', 'required': True, 'schema': {'type': 'string'}}
+        if param.annotation is int:
+            param_schema['schema']['type'] = 'integer'
+        elif param.annotation is bool:
+            param_schema['schema']['type'] = 'boolean'
+        elif param.annotation is float:
+            param_schema['schema']['type'] = 'number'
+        params.append(param_schema)
+    return params
+
+
+def parse_docstring(docstring: str) -> tuple[str, str]:
+    """Use first line as summary and rest of them as description"""
+    if not docstring:
+        return '', ''
+    lines = docstring.strip().split('\n')
+    summary = lines[0]
+    description = '\n'.join(lines[1:]).strip() if len(lines) > 1 else ''
+    return summary, description
+
+
+def get_example_from_model(model):
+    # TODO: Support example for models
+    return None
+
+
+def get_field_constraints(field):
+    # Extract constraints from Pydantic FieldInfo
+    constraints = {}
+    for attr in ['min_length', 'max_length', 'regex', 'ge', 'le', 'gt', 'lt']:
+        value = getattr(field, attr, None)
+        if value is not None:
+            constraints[attr] = value
+    return constraints
+
+
+def enrich_schema_with_constraints(schema, model):
+    # Add field constraints to OpenAPI schema
+    if hasattr(model, 'model_fields'):
+        for name, field in model.model_fields.items():
+            if 'properties' in schema and name in schema['properties']:
+                schema['properties'][name].update(get_field_constraints(field))
+    return schema
+
+
+class OpenAPI:
+    @classmethod
+    def extract_content(cls, endpoint, http_method, schemas):
+        if getattr(
+            endpoint.output_schema, 'exclude_in_open_api', False
+        ):  # TODO: Add `exclude_in_open_api` to output_schema
+            return {}
+        parsed = ParseEndpoint(endpoint=endpoint, method=http_method)
+        responses = {}
+        request_body = {}
+        parameters = extract_parameters_from_signature(endpoint, http_method)
+        # print(f'{parameters=}')  # TODO: What is this, path parameter? then its not correct.
+        operation_id = f'{parsed.title}_{http_method}'
+        tags = getattr(endpoint.output_schema, 'tags', None)  # TODO: Add `tags` to output_schema
+        if not tags:
+            tags = [parsed.title] if parsed.title else [endpoint.__module__]
+        summary, description = parse_docstring(docstring=endpoint.__doc__)
+        # Permissions, throttling, cache, middlewares
+        x_permissions = [p.__name__ for p in endpoint.permissions] if endpoint.permissions else None
+
+        x_throttling = None
+        if endpoint.throttling:
+            x_throttling = f'{endpoint.throttling.rate} per {endpoint.throttling.duration}'
+
+        x_cache = None
+        if endpoint.cache:
+            x_cache = str(endpoint.cache)
+
+        x_middlewares = None
+        if endpoint.middlewares:
+            x_middlewares = (
+                [m.__name__ if hasattr(m, '__name__') else str(m) for m in endpoint.middlewares]
+                if getattr(endpoint, 'middlewares', None)
+                else None
+            )
+
+        deprecated = getattr(endpoint.output_schema, 'deprecated', False)  # TODO: Add `deprecated` to output_schema
+
+        # Handle response schema
+        if endpoint.output_schema:
+            status_code = endpoint.output_schema.status_code
+            model = endpoint.output_schema.model
+            model_name = get_model_name(model)
+            if model_name not in schemas:
+                schema = model.schema(ref_template='#/components/schemas/{model}')
+                schema = enrich_schema_with_constraints(schema, model)
+                example = get_example_from_model(model)
+                if example:
+                    schema['example'] = example
+                schemas[model_name] = schema
+            schema_ref = {'$ref': f'#/components/schemas/{model_name}'}
+        elif endpoint.output_model:
+            status_code = parsed.status_code
+            model = endpoint.output_model
+            model_name = get_model_name(model)
+            if model_name not in schemas:
+                schema = model.schema(ref_template='#/components/schemas/{model}')
+                schema = enrich_schema_with_constraints(schema, model)
+                example = get_example_from_model(model)
+                if example:
+                    schema['example'] = example
+                schemas[model_name] = schema
+            schema_ref = {'$ref': f'#/components/schemas/{model_name}'}
+        else:
+            status_code = parsed.status_code
+            schema_ref = {'properties': {k: {'default': v} for k, v in parsed.data.items()}}
+        if schema_ref:
+            responses = {'responses': {status_code: {'content': {'application/json': {'schema': schema_ref}}}}}
+        # Add standard error responses
+        error_responses = {}
+        if endpoint.auth:
+            error_responses[401] = {'description': 'Unauthorized'}
+        if endpoint.permissions:
+            error_responses[403] = {'description': 'Forbidden'}
+        if endpoint.input_model:
+            error_responses[400] = {'description': 'Bad Request'}
+            error_responses[422] = {'description': 'Unprocessable Entity'}
+        if error_responses:
+            if 'responses' not in responses:
+                responses['responses'] = {}
+            responses['responses'].update(error_responses)
+
+        # Handle request body
+        if endpoint.input_model and http_method in ['post', 'put', 'patch']:
+            model = endpoint.input_model
+            model_name = get_model_name(model)
+            if model_name not in schemas:
+                schema = model.schema(ref_template='#/components/schemas/{model}')
+                schema = enrich_schema_with_constraints(schema, model)
+                example = get_example_from_model(model)
+                if example:
+                    schema['example'] = example
+                schemas[model_name] = schema
+            request_body = {
+                'requestBody': {
+                    'required': True,
+                    'content': {
+                        'application/json': {'schema': {'$ref': f'#/components/schemas/{model_name}'}},
+                    },
+                },
+            }
+        # Add security (empty for public endpoints)
+        security = [{'BearerAuth': []}] if endpoint.auth else []
+        if x_permissions:
+            # content['x-permissions'] = x_permissions # TODO: Not found in doc
+            description += f'\nPermissions: {x_permissions}'
+        if x_throttling:
+            description += f'\nThrottling: {x_throttling}'
+            # content['x-throttling'] = x_throttling # TODO: Not found in doc
+        if x_cache:
+            description += f'\nCache: {x_cache}'
+            # content['x-cache'] = x_cache # TODO: Not found in doc
+        if x_middlewares:
+            # content['x-middlewares'] = x_middlewares # TODO: Not found in doc
+            description += f'\nMiddlewares: {x_middlewares}'
+
+        content = {
+            'operationId': operation_id,
+            'summary': summary,
+            'description': description,
+            'tags': tags,
+            'parameters': parameters,
+            'security': security,
+            'deprecated': deprecated,
+        }
+
+        content |= responses
+        content |= request_body
+        return {http_method: content}
+
+    @classmethod
+    def get_content(cls):
+        from panther.app import GenericAPI
+
+        paths = {}
+        schemas = {}
+        # Detect if CORS middleware is present
+        cors_present = False
+
+        for m in config.HTTP_MIDDLEWARES:
+            if isinstance(m, CORSMiddleware):
+                cors_present = True  # TODO: Not found in doc
+
+        for url, endpoint in config.FLAT_URLS.items():
+            if not url.startswith('/'):
+                url = f'/{url}'
+            paths[url] = {}
+            if isinstance(endpoint, types.FunctionType):
+                for method in ['post', 'get', 'put', 'patch', 'delete']:
+                    if method.upper() in endpoint.methods:
+                        paths[url] |= cls.extract_content(endpoint, method, schemas)
+            else:
+                for method in ['post', 'get', 'put', 'patch', 'delete']:
+                    # endpoint.post is not GenericAPI.post --> Method has overridden.
+                    if getattr(endpoint, method) is not getattr(GenericAPI, method):
+                        paths[url] |= cls.extract_content(endpoint, method, schemas)
+        # Security Schemes
+        security_schemes = {
+            'BearerAuth': {  # TODO: extract this method from config.Authentication
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            },
+        }
+        openapi = {
+            'openapi': '3.0.0',
+            'info': {
+                'title': 'Panther API',
+                'version': '1.0.0',
+                'description': 'Auto-generated OpenAPI documentation for Panther project.',
+            },
+            'paths': paths,
+            'components': {'schemas': schemas, 'securitySchemes': security_schemes},
+            'security': [{'BearerAuth': []}],
+        }
+        if cors_present:
+            openapi['x-cors'] = True
+        # If Panther events are present, add x-events
+        if Event._startups or Event._shutdowns:
+            openapi['x-events'] = True  # TODO: Not found in doc
+        return openapi

@@ -20,9 +20,9 @@ from panther.exceptions import (
     APIError,
     AuthorizationAPIError,
     BadRequestAPIError,
-    JSONDecodeAPIError,
     MethodNotAllowedAPIError,
     PantherError,
+    UnprocessableEntityError,
 )
 from panther.middlewares import HTTPMiddleware
 from panther.openapi import OutputSchema
@@ -127,9 +127,13 @@ class API:
 
         # Store attributes on the function, so have the same behaviour as class-based (useful in `openapi.view.OpenAPI`)
         wrapper.auth = self.auth
+        wrapper.cache = self.cache
         wrapper.methods = self.methods
+        wrapper.throttling = self.throttling
         wrapper.permissions = self.permissions
+        wrapper.middlewares = self.middlewares
         wrapper.input_model = self.input_model
+        wrapper.output_model = self.output_model
         wrapper.output_schema = self.output_schema
         return wrapper
 
@@ -191,7 +195,7 @@ class API:
     @classmethod
     def validate_input(cls, model, request: Request):
         if isinstance(request.data, bytes):
-            raise BadRequestAPIError(detail='Content-Type is not valid')
+            raise UnprocessableEntityError(detail='Content-Type is not valid')
         if request.data is None:
             raise BadRequestAPIError(detail='Request body is required')
         try:
@@ -201,7 +205,7 @@ class API:
             error = {'.'.join(str(loc) for loc in e['loc']): e['msg'] for e in validation_error.errors()}
             raise BadRequestAPIError(detail=error)
         except JSONDecodeError:
-            raise JSONDecodeAPIError
+            raise UnprocessableEntityError(detail='JSON Decode Error')
 
 
 class MetaGenericAPI(type):

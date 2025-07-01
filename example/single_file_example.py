@@ -7,6 +7,7 @@ from panther.app import API, GenericAPI
 from panther.middlewares.base import HTTPMiddleware
 from panther.openapi import OutputSchema
 from panther.openapi.urls import url_routing as openapi_urls
+from panther.permissions import BasePermission
 from panther.request import Request
 from panther.response import Response
 from panther.throttling import Throttle
@@ -31,9 +32,13 @@ class UserSerializer(BaseModel):
     name: str = 'hi'
 
 
-@API(throttling=InfoThrottle, input_model=UserSerializer, methods=['GET', 'POST', 'delete'])
+@API(
+    throttling=InfoThrottle, input_model=UserSerializer, methods=['GET', 'POST', 'DELETE'], permissions=[BasePermission]
+)
 async def info(request: Request):
-    """Hi from info"""
+    """Hi from info
+    This is the first line of doc
+    this is the second line"""
     data = {
         'panther_version': version(),
         'datetime_now': datetime.now().isoformat(),
@@ -45,6 +50,7 @@ async def info(request: Request):
 class UserAPI(GenericAPI):
     """Hi from UserAPI"""
 
+    auth = True
     input_model = UserSerializer
     output_schema = OutputSchema(model=UserSerializer, status_code=status.HTTP_205_RESET_CONTENT)
 
@@ -67,6 +73,6 @@ class UserAPI(GenericAPI):
 
 MIDDLEWARES = [TestMiddleware, 'panther.middlewares.monitoring.MonitoringMiddleware']
 
-url_routing = {'': hello_world, 'info': info, 'user/': UserAPI, 'swagger': openapi_urls}
+url_routing = {'': hello_world, 'info': info, 'user/<user_id>/': UserAPI, 'swagger': openapi_urls}
 
 app = Panther(__name__, configs=__name__, urls=url_routing)

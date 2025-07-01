@@ -1,5 +1,5 @@
-from panther.openapi.views import OpenAPI
+from panther.openapi.views import SwaggerOpenAPI
 
 url_routing = {
-    '': OpenAPI,
+    '': SwaggerOpenAPI,
 }
