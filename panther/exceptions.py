@@ -59,8 +59,8 @@ class MethodNotAllowedAPIError(APIError):
     status_code = status.HTTP_405_METHOD_NOT_ALLOWED
 
 
-class JSONDecodeAPIError(APIError):
-    detail = 'JSON Decode Error'
+class UnprocessableEntityError(APIError):
+    detail = 'Unprocessable Entity Error'
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
 
 

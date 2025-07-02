@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+  <title>Stoplight Elements with CSS</title>
+  <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements/styles.min.css" />
+  <script type="module" src="https://unpkg.com/@stoplight/elements/web-components.min.js"></script>
+  <style>
+    body, html {
+      margin: 0; padding: 0; height: 100%;
+    }
+    elements-api {
+      display: block;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <elements-api id="api-viewer" router="hash"></elements-api>
+  <script>
+    customElements.whenDefined("elements-api").then(() => {
+      document.getElementById("api-viewer").apiDescriptionDocument = {{ openapi | tojson | safe }};
+    });
+  </script>
+</body>
+</html>

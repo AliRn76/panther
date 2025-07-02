@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+  <head>
+    <title>RapiDoc Inline JSON</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+    <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
+  </head>
+  <body>
+    <rapi-doc id="thedoc"
+      render-style = "read"
+      allow-try="false"
+      allow-authentication = "false"
+    > </rapi-doc>
+    <script>
+      document.addEventListener('readystatechange', (event) => {
+        let docEl = document.getElementById("thedoc");
+        docEl.loadSpec({{ openapi | tojson }});
+      })
+    </script>
+  </body>
+</html>
