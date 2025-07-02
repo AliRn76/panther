@@ -10,11 +10,13 @@ class ScalarOpenAPI(GenericAPI):
     def get(self):
         return TemplateResponse(name='scalar.html', context={'openapi': OpenAPIGenerator.generate_openapi_spec()})
 
+
 class SwaggerOpenAPI(GenericAPI):
     output_schema = OutputSchema(exclude_in_docs=True)
 
     def get(self):
         return TemplateResponse(name='swagger.html', context={'openapi': OpenAPIGenerator.generate_openapi_spec()})
+
 
 class RedocOpenAPI(GenericAPI):
     output_schema = OutputSchema(exclude_in_docs=True)
@@ -22,11 +24,13 @@ class RedocOpenAPI(GenericAPI):
     def get(self):
         return TemplateResponse(name='redoc.html', context={'openapi': OpenAPIGenerator.generate_openapi_spec()})
 
+
 class RapiDocOpenAPI(GenericAPI):
     output_schema = OutputSchema(exclude_in_docs=True)
 
     def get(self):
         return TemplateResponse(name='rapidoc.html', context={'openapi': OpenAPIGenerator.generate_openapi_spec()})
+
 
 class SpotlightOpenAPI(GenericAPI):
     output_schema = OutputSchema(exclude_in_docs=True)

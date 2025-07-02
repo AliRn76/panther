@@ -1,4 +1,4 @@
-from panther.openapi.views import ScalarOpenAPI, SwaggerOpenAPI, RedocOpenAPI, RapiDocOpenAPI, SpotlightOpenAPI
+from panther.openapi.views import RapiDocOpenAPI, RedocOpenAPI, ScalarOpenAPI, SpotlightOpenAPI, SwaggerOpenAPI
 
 url_routing = {
     'scalar/': ScalarOpenAPI,
