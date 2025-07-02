@@ -1,276 +1,450 @@
+"""
+OpenAPI utilities for parsing endpoints and generating OpenAPI documentation.
+
+This module provides classes and functions for analyzing Python endpoints
+and generating OpenAPI 3.0 specification documents.
+"""
+
 import ast
 import inspect
-import inspect as pyinspect
 import types
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+from pydantic import BaseModel
 
 from panther import status
 from panther.app import GenericAPI
 from panther.configs import config
 
 
-class ParseEndpoint:
+class EndpointParser:
     """
-    ParseEndpoint parses the endpoint (function-base/ class-base) and finds where it returns
-        and extract the `data` and `status_code` values.
+    Parses endpoint functions and classes to extract response data and status codes.
+    
+    This class analyzes the AST (Abstract Syntax Tree) of endpoint functions
+    to determine what data they return and what HTTP status codes they use.
     """
 
-    def __init__(self, endpoint, method):
-        self.tree = ast.parse(inspect.getsource(endpoint))
-        self.method = method
-
+    def __init__(self, endpoint: Any, http_method: str):
+        self.ast_tree = ast.parse(inspect.getsource(endpoint))
+        self.http_method = http_method
+        
+        # Default values
         self.status_code = status.HTTP_200_OK
-        self.title = None
-        self.data = {}
+        self.endpoint_name = None
+        self.response_data = {}
+        
+        self._parse_ast()
 
-        self.parse()
-
-    def parse(self):
-        for branch in self.tree.body:
-            match branch:
-                case ast.ClassDef(name=name, body=body):
+    def _parse_ast(self) -> None:
+        """Parse the AST to extract endpoint information."""
+        for node in self.ast_tree.body:
+            match node:
+                case ast.ClassDef(name=class_name, body=class_body):
+                    # Handle class-based endpoints
                     # class ...(GenericAPI):
-                    #     def get(...
-                    self.title = name
-                    for part in body:
-                        match part:
-                            case ast.FunctionDef(name=name, body=function_body):
-                                # def get(...
-                                if name == self.method:
-                                    self.parse_function(body=function_body)
-                                    break
-                            case ast.AsyncFunctionDef(name=name, body=function_body):
-                                # async def get(...
-                                if name == self.method:
-                                    self.parse_function(body=function_body)
-                                    break
-
-                case ast.FunctionDef(name=name, body=body):
+                    #     def get(self, ...
+                    self.endpoint_name = class_name
+                    self._parse_class_methods(class_body)
+                    
+                case ast.FunctionDef(name=func_name, body=func_body):
+                    # Handle function-based endpoints
                     # def api(...
-                    self.title = name
-                    self.parse_function(body=body)
-
-                case ast.AsyncFunctionDef(name=name, body=body):
+                    self.endpoint_name = func_name
+                    self._parse_function_body(func_body)
+                    
+                case ast.AsyncFunctionDef(name=func_name, body=func_body):
+                    # Handle async function-based endpoints
                     # async def api(...
-                    self.title = name
-                    self.parse_function(body=body)
+                    self.endpoint_name = func_name
+                    self._parse_function_body(func_body)
 
-    def parse_function(self, body):
-        for part in body:
-            match part:
-                case ast.Return(value=ast.Dict(keys=keys, values=values)):
+    def _parse_class_methods(self, class_body: List[ast.stmt]) -> None:
+        """Parse methods within a class-based endpoint."""
+        for node in class_body:
+            match node:
+                case ast.FunctionDef(name=method_name, body=method_body):
+                    # def get(self, ...
+                    if method_name == self.http_method:
+                        self._parse_function_body(method_body)
+                        break
+                        
+                case ast.AsyncFunctionDef(name=method_name, body=method_body):
+                    # async def get(self, ...
+                    if method_name == self.http_method:
+                        self._parse_function_body(method_body)
+                        break
+
+    def _parse_function_body(self, function_body: List[ast.stmt]) -> None:
+        """Parse the body of a function to extract return statements."""
+        for node in function_body:
+            match node:
+                case ast.Return(value=ast.Dict(keys=dict_keys, values=dict_values)):
                     # return {...}
-                    self.status_code = 200
-                    self.parse_dict_response(keys=keys, values=values)
-
-                case ast.Return(value=ast.Name(id=name)):
-                    # return my_data
-                    self.status_code = 200
-                    for value in self.searching_variable(body=body, name=name):
-                        match value:
-                            # my_data = {...}
-                            case ast.Dict(keys=keys, values=values):
-                                self.parse_dict_response(keys=keys, values=values)
-                            # TODO: Can be list, int, bool, set, tuple, BaseModel, Model, ...
-
-                case ast.Return(value=ast.Call(args=args, keywords=keywords, func=func)):
+                    self.status_code = status.HTTP_200_OK
+                    self._extract_dict_data(dict_keys, dict_values)
+                    
+                case ast.Return(value=ast.Name(id=variable_name)):
+                    # return variable_name # TODO: We assume this is list, which is wrong, chheck its type and set status code if not Response
+                    self.status_code = status.HTTP_200_OK
+                    self._extract_variable_data(function_body, variable_name)
+                    
+                case ast.Return(value=ast.Call(args=call_args, keywords=call_keywords, func=func)):
+                    # return Response(...)
                     if func.id == 'TemplateResponse':
                         return
-                    # return Response(...
-                    self.parse_response(body=body, args=args, keywords=keywords)
+                    self._parse_response_call(function_body, call_args, call_keywords)
 
-    def parse_dict_response(self, keys, values):
-        for k, v in zip(keys, values):
-            final_value = None
-            match v:
-                case ast.Constant(value=value):
-                    final_value = value
-            self.data[k.value] = final_value
+    def _extract_dict_data(self, keys: List[ast.expr], values: List[ast.expr]) -> None:
+        """Extract data from a dictionary return statement."""
+        for key, value in zip(keys, values):
+            extracted_value = None
+            match value:
+                case ast.Constant(value=constant_value):
+                    extracted_value = constant_value
+            if hasattr(key, 'value'):
+                self.response_data[key.value] = extracted_value
 
-    def parse_response(self, body, args, keywords):
+    def _extract_variable_data(self, function_body: List[ast.stmt], variable_name: str) -> None:
+        """Extract data from a variable that contains a dictionary."""
+        for variable_value in self._find_variable_assignments(function_body, variable_name):
+            match variable_value:
+                # TODO: Can be list, int, bool, set, tuple, BaseModel, Model, ... or even Response
+                case ast.Dict(keys=dict_keys, values=dict_values):
+                    self._extract_dict_data(dict_keys, dict_values)
+
+    def _parse_response_call(self, function_body: List[ast.stmt], args: List[ast.expr], keywords: List[ast.keyword]) -> None:
+        """Parse Response() function calls."""
+        # Handle keyword arguments
         for keyword in keywords:
             if keyword.arg == 'data':
-                self.parse_data(body=body, value=keyword.value)
-            if keyword.arg == 'status_code':
-                self.parse_status_code(body=body, value=keyword.value)
+                self._parse_data_argument(function_body, keyword.value)
+            elif keyword.arg == 'status_code':
+                self._parse_status_code_argument(function_body, keyword.value)
+        
+        # Handle positional arguments
+        for index, arg in enumerate(args):
+            if index == 0:  # First argument is data
+                self._parse_data_argument(function_body, arg)
+            elif index == 1:  # Second argument is status_code
+                self._parse_status_code_argument(function_body, arg)
 
-        for i, arg in enumerate(args):
-            if i == 0:  # index 0 is `data`
-                self.parse_data(body=body, value=arg)
-            elif i == 1:  # index 1 is `status_code`
-                self.parse_status_code(body=body, value=arg)
-
-    def parse_status_code(self, body, value):
+    def _parse_status_code_argument(self, function_body: List[ast.stmt], value: ast.expr) -> None:
+        """Parse status code from various AST patterns."""
         match value:
             # return Response(?, status_code=my_status)
             # return Response(?, my_status)
-            case ast.Name():
-                for inner_value in self.searching_variable(body=body, name=value.id):
-                    match inner_value:
-                        # my_status = status.HTTP_202_ACCEPTED
-                        case ast.Attribute(value=inner_inner_value, attr=attr):
-                            if inner_inner_value.id == 'status':
-                                self.status_code = getattr(status, attr)
-                        # my_status = 202
-                        case ast.Constant(value=inner_inner_value):
-                            self.status_code = inner_inner_value
+            case ast.Name(id=variable_name):
+                for variable_value in self._find_variable_assignments(function_body, variable_name):
+                    self._extract_status_code_from_value(variable_value)
 
             # return Response(?, status_code=status.HTTP_202_ACCEPTED)
             # return Response(?, status.HTTP_202_ACCEPTED)
-            case ast.Attribute(value=value, attr=attr):
-                if value.id == 'status':
-                    self.status_code = getattr(status, attr)
+            case ast.Attribute(value=ast.Name(id=module_name), attr=attribute_name):
+                # Handle: my_status = status.HTTP_202_ACCEPTED
+                if module_name == 'status':
+                    self.status_code = getattr(status, attribute_name)
+
             # return Response(?, status_code=202)
             # return Response(?, 202)
-            case ast.Constant(value=value):
-                self.status_code = value
+            case ast.Constant(value=constant_value):
+                # Handle: my_status = 202
+                self.status_code = constant_value
 
-    def parse_data(self, body, value):
+    def _parse_data_argument(self, function_body: List[ast.stmt], value: ast.expr) -> None:
+        """Parse data argument from various AST patterns."""
         match value:
             # return Response(data=my_data, ?)
             # return Response(my_data, ?)
-            case ast.Name():
-                for value in self.searching_variable(body=body, name=value.id):
-                    match value:
+            case ast.Name(id=variable_name):
+                # Handle: data=variable_name
+                for variable_value in self._find_variable_assignments(function_body, variable_name):
+                    match variable_value:
                         # my_data = {...}
-                        case ast.Dict(keys=keys, values=values):
-                            self.parse_dict_response(keys=keys, values=values)
+                        case ast.Dict(keys=dict_keys, values=dict_values):
+                            self._extract_dict_data(dict_keys, dict_values)
 
             # return Response(data={...}, ?)
             # return Response({...}, ?)
-            case ast.Dict(keys=keys, values=values):
-                self.parse_dict_response(keys=keys, values=values)
+            case ast.Dict(keys=dict_keys, values=dict_values):
+                # Handle: data={...}
+                self._extract_dict_data(dict_keys, dict_values)
 
-    def searching_variable(self, body, name):
-        for part in body:
-            match part:
+    def _extract_status_code_from_value(self, value: ast.expr) -> None:
+        """Extract status code from a variable assignment value."""
+        match value:
+            case ast.Attribute(value=ast.Name(id=module_name), attr=attribute_name):
+                # my_status = status.HTTP_202_ACCEPTED
+                if module_name == 'status':
+                    self.status_code = getattr(status, attribute_name)
+            case ast.Constant(value=constant_value):
+                # my_status = 202
+                self.status_code = constant_value
+
+    def _find_variable_assignments(self, function_body: List[ast.stmt], variable_name: str):
+        """Find all assignments to a specific variable name."""
+        for node in function_body:
+            match node:
                 case ast.Assign(targets=targets, value=value):
                     for target in targets:
                         match target:
-                            case ast.Name(id=inner_name):
-                                if inner_name == name:
+                            case ast.Name(id=target_name):
+                                if target_name == variable_name:
                                     yield value
 
 
-class OpenAPI:
+class OpenAPIGenerator:
+    """
+    Generates OpenAPI 3.0 specification documents from Panther endpoints.
+    
+    This class analyzes registered endpoints and generates comprehensive
+    OpenAPI documentation including schemas, paths, and security definitions.
+    """
+
+    HTTP_METHODS = ['post', 'get', 'put', 'patch', 'delete']
+    REQUEST_BODY_METHODS = ['post', 'put', 'patch']
+
     @classmethod
-    def get_model_name(cls, model: type) -> str:
+    def get_model_name(cls, model: type[BaseModel]) -> str:
+        """Get the name of a model class."""
         if hasattr(model, '__name__'):
             return model.__name__
         return model.__class__.__name__
 
     @classmethod
-    def extract_parameters_from_signature(cls, endpoint, method: str) -> list:
-        params = []
-        sig = None
-        if isinstance(endpoint, types.FunctionType):
-            sig = pyinspect.signature(endpoint)
-        else:
-            func = getattr(endpoint, method, None)
-            if func:
-                sig = pyinspect.signature(func)
-        if not sig:
-            return params
-        for name, param in sig.parameters.items():
-            if name in ('self', 'request'):
+    def extract_path_parameters(cls, endpoint: Any, http_method: str) -> List[Dict[str, Any]]:
+        """
+        Extract path parameters from endpoint function signature.
+        
+        Args:
+            endpoint: The endpoint function or class
+            http_method: The HTTP method
+            
+        Returns:
+            List of parameter schemas for OpenAPI
+        """
+        # TODO: Get this value from FLAT_URLS, function can have *args or **kwargs ...
+        parameters = []
+        signature = cls._get_function_signature(endpoint, http_method)
+        
+        if not signature:
+            return parameters
+            
+        for param_name, param_info in signature.parameters.items():
+            if param_name in ('self', 'request'):
                 continue
-            # TODO: Get this value from FLAT_URLS, function can have *args or **kwargs ...
-            param_schema = {'name': name, 'in': 'path', 'required': True, 'schema': {'type': 'string'}}
-            if param.annotation is int:
-                param_schema['schema']['type'] = 'integer'
-            elif param.annotation is bool:
-                param_schema['schema']['type'] = 'boolean'
-            elif param.annotation is float:
-                param_schema['schema']['type'] = 'number'
-            params.append(param_schema)
-        return params
+                
+            param_schema = cls._create_parameter_schema(param_name, param_info)
+            parameters.append(param_schema)
+            
+        return parameters
+
+    @classmethod
+    def _get_function_signature(cls, endpoint: Any, http_method: str):
+        """Get the function signature for an endpoint."""
+        if isinstance(endpoint, types.FunctionType):
+            return inspect.signature(endpoint)
+        else:
+            method_func = getattr(endpoint, http_method, None)
+            if method_func:
+                return inspect.signature(method_func)
+        return None
+
+    @classmethod
+    def _create_parameter_schema(cls, param_name: str, param_info: inspect.Parameter) -> Dict[str, Any]:
+        """Create OpenAPI parameter schema from function parameter."""
+        param_schema = {
+            'name': param_name,
+            'in': 'path',
+            'required': True,
+            'schema': {'type': 'string'}
+        }
+        
+        # Map Python types to OpenAPI types
+        if param_info.annotation is int:
+            param_schema['schema']['type'] = 'integer'
+        elif param_info.annotation is bool:
+            param_schema['schema']['type'] = 'boolean'
+        elif param_info.annotation is float:
+            param_schema['schema']['type'] = 'number'
+            
+        return param_schema
 
     @classmethod
     def parse_docstring(cls, docstring: str) -> tuple[str, str]:
-        """Use first line as summary and rest of them as description"""
+        """Parse docstring into summary and description."""
         if not docstring:
             return '', ''
+
         lines = docstring.strip().split('\n')
         summary = lines[0]
-        description = '\n'.join(lines[1:]).strip() if len(lines) > 1 else ''
+        description = '<br>'.join(lines[1:]).strip() if len(lines) > 1 else ''
+        
         return summary, description
 
     @classmethod
-    def get_field_constraints(cls, field):
-        # Extract constraints from Pydantic FieldInfo
+    def extract_field_constraints(cls, field: Any) -> dict[str, Any]:
+        """Extract validation constraints from Pydantic field."""
+        constraint_attributes = [
+            'min_length', 'max_length', 'regex', 
+            'ge', 'le', 'gt', 'lt'
+        ]
+        
         constraints = {}
-        for attr in ['min_length', 'max_length', 'regex', 'ge', 'le', 'gt', 'lt']:
+        for attr in constraint_attributes:
             value = getattr(field, attr, None)
             if value is not None:
                 constraints[attr] = value
+                
         return constraints
 
     @classmethod
-    def enrich_schema_with_constraints(cls, schema, model):
-        # Add field constraints to OpenAPI schema
-        for name, field in model.model_fields.items():
-            if 'properties' in schema and name in schema['properties']:
-                schema['properties'][name].update(cls.get_field_constraints(field))
+    def enrich_schema_with_constraints(cls, schema: dict[str, Any], model: Any) -> dict[str, Any]:
+        """Add field constraints to OpenAPI schema."""
+        if 'properties' not in schema:
+            return schema
+            
+        for field_name, field in model.model_fields.items():
+            if field_name in schema['properties']:
+                constraints = cls.extract_field_constraints(field)
+                schema['properties'][field_name].update(constraints)
+                
         return schema
 
     @classmethod
-    def extract_content(cls, endpoint, http_method, schemas):
+    def generate_operation_content(cls, endpoint: Any, http_method: str, schemas: dict[str, Any]) -> dict[str, Any]:
+        """Generate OpenAPI operation content for an endpoint."""
+        # Skip if endpoint is excluded from docs
         if endpoint.output_schema and endpoint.output_schema.exclude_in_docs:
             return {}
-        parsed = ParseEndpoint(endpoint=endpoint, method=http_method)
-        responses = {}
-        request_body = {}
-        parameters = cls.extract_parameters_from_signature(endpoint, http_method)
-        operation_id = f'{parsed.title}_{http_method}'
-        if endpoint.output_schema and endpoint.output_schema.tags:
-            tags = endpoint.output_schema.tags
-        else:
-            tags = [parsed.title] if parsed.title else [endpoint.__module__]
-        summary, description = cls.parse_docstring(docstring=endpoint.__doc__)
-        # Permissions, throttling, cache, middlewares
-        x_permissions = [p.__name__ for p in endpoint.permissions] if endpoint.permissions else None
-
-        x_throttling = None
-        if endpoint.throttling:
-            x_throttling = f'{endpoint.throttling.rate} per {endpoint.throttling.duration}'
-
-        x_cache = None
-        if endpoint.cache:
-            x_cache = str(endpoint.cache)
-
-        x_middlewares = None
-        if endpoint.middlewares:
-            x_middlewares = [getattr(m, '__name__', str(m)) for m in endpoint.middlewares]
-
-        deprecated = False
-        if endpoint.output_schema:
-            deprecated = endpoint.output_schema.deprecated
-
+            
+        # Parse endpoint response
+        response_parser = EndpointParser(endpoint, http_method)
+        
+        # Extract basic operation info
+        operation_id = f'{response_parser.endpoint_name}_{http_method}'
+        parameters = cls.extract_path_parameters(endpoint, http_method)
+        summary, description = cls.parse_docstring(endpoint.__doc__)
+        
+        # Extract tags
+        tags = cls._extract_operation_tags(endpoint, response_parser)
+        
+        # Extract metadata
+        metadata = cls._extract_endpoint_metadata(endpoint, description)
+        
         # Handle response schema
+        response_schema = cls._build_response_schema(endpoint, response_parser, schemas)
+        
+        # Handle request body
+        request_body = cls._build_request_body(endpoint, http_method, schemas)
+        
+        # Build operation content
+        operation_content = {
+            'operationId': operation_id,
+            'summary': summary,
+            'description': metadata['description'],
+            'tags': tags,
+            'parameters': parameters,
+            'security': metadata['security'],
+            'deprecated': metadata['deprecated'],
+        }
+        
+        operation_content.update(response_schema)
+        operation_content.update(request_body)
+        
+        return {http_method: operation_content}
+
+    @classmethod
+    def _extract_operation_tags(cls, endpoint: Any, response_parser: EndpointParser) -> List[str]:
+        """Extract tags for operation grouping."""
+        if endpoint.output_schema and endpoint.output_schema.tags:
+            return endpoint.output_schema.tags
+        return [response_parser.endpoint_name] if response_parser.endpoint_name else [endpoint.__module__]
+
+    @classmethod
+    def _extract_endpoint_metadata(cls, endpoint: Any, description: str) -> Dict[str, Any]:
+        """Extract metadata like permissions, throttling, etc."""
+        # Extract permissions
+        permissions = [p.__name__ for p in endpoint.permissions] if endpoint.permissions else None
+        
+        # Extract throttling
+        throttling = None
+        if endpoint.throttling:
+            throttling = f'{endpoint.throttling.rate} per {endpoint.throttling.duration}'
+            
+        # Extract cache
+        cache = str(endpoint.cache) if endpoint.cache else None
+        
+        # Extract middlewares
+        middlewares = None
+        if endpoint.middlewares:
+            middlewares = [getattr(m, '__name__', str(m)) for m in endpoint.middlewares]
+            
+        # Extract deprecated status
+        deprecated = endpoint.output_schema.deprecated if endpoint.output_schema else False
+        
+        # Build security
+        security = [{'BearerAuth': []}] if endpoint.auth else []
+        
+        # Enhance description with metadata
+        if permissions:
+            description += f'<br>  - Permissions: {permissions}'
+        if throttling:
+            description += f'<br>  - Throttling: {throttling}'
+        if cache:
+            description += f'<br>  - Cache: {cache}'
+        if middlewares:
+            description += f'<br>  - Middlewares: {middlewares}'
+            
+        return {
+            'description': description,
+            'security': security,
+            'deprecated': deprecated,
+        }
+
+    @classmethod
+    def _build_response_schema(cls, endpoint: Any, response_parser: EndpointParser, schemas: dict[str, Any]) -> dict[str, Any]:
+        """Build response schema for the endpoint."""
         if endpoint.output_schema:
             status_code = endpoint.output_schema.status_code
             model = endpoint.output_schema.model
-            model_name = cls.get_model_name(model)
-            if model_name not in schemas:
-                schema = model.schema(ref_template='#/components/schemas/{model}')
-                schema = cls.enrich_schema_with_constraints(schema, model)
-                schemas[model_name] = schema
-            schema_ref = {'$ref': f'#/components/schemas/{model_name}'}
         elif endpoint.output_model:
-            status_code = parsed.status_code
+            status_code = response_parser.status_code
             model = endpoint.output_model
-            model_name = cls.get_model_name(model)
-            if model_name not in schemas:
-                schema = model.schema(ref_template='#/components/schemas/{model}')
-                schema = cls.enrich_schema_with_constraints(schema, model)
-                schemas[model_name] = schema
-            schema_ref = {'$ref': f'#/components/schemas/{model_name}'}
         else:
-            status_code = parsed.status_code
-            schema_ref = {'properties': {k: {'default': v} for k, v in parsed.data.items()}}
-        if schema_ref:
-            responses = {'responses': {status_code: {'content': {'application/json': {'schema': schema_ref}}}}}
-        # Add standard error responses
+            status_code = response_parser.status_code
+            schema_ref = {'properties': {k: {'default': v} for k, v in response_parser.response_data.items()}}
+            return {'responses': {status_code: {'content': {'application/json': {'schema': schema_ref}}}}}
+            
+        # Add model to schemas if not present
+        model_name = cls.get_model_name(model)
+        if model_name not in schemas:
+            schema = model.schema(ref_template='#/components/schemas/{model}')
+            schema = cls.enrich_schema_with_constraints(schema, model)
+            schemas[model_name] = schema
+            
+        schema_ref = {'$ref': f'#/components/schemas/{model_name}'}
+        
+        # Build responses
+        responses = {
+            'responses': {
+                status_code: {
+                    'content': {'application/json': {'schema': schema_ref}}
+                }
+            }
+        }
+        
+        # Add error responses
+        if error_responses := cls._build_error_responses(endpoint):
+            responses['responses'] |= error_responses
+            
+        return responses
+
+    @classmethod
+    def _build_error_responses(cls, endpoint: Any) -> dict[int, dict[str, str]]:
+        """Build standard error responses for the endpoint."""
         error_responses = {}
+        
         if endpoint.auth:
             error_responses[401] = {'description': 'Unauthorized'}
         if endpoint.permissions:
@@ -278,80 +452,76 @@ class OpenAPI:
         if endpoint.input_model:
             error_responses[400] = {'description': 'Bad Request'}
             error_responses[422] = {'description': 'Unprocessable Entity'}
-        if error_responses:
-            if 'responses' not in responses:
-                responses['responses'] = {}
-            responses['responses'] |= error_responses
-
-        # Handle request body
-        if endpoint.input_model and http_method in ['post', 'put', 'patch']:
-            model = endpoint.input_model
-            model_name = cls.get_model_name(model)
-            if model_name not in schemas:
-                schema = model.schema(ref_template='#/components/schemas/{model}')
-                schema = cls.enrich_schema_with_constraints(schema, model)
-                schemas[model_name] = schema
-            request_body = {
-                'requestBody': {
-                    'required': True,
-                    'content': {
-                        'application/json': {'schema': {'$ref': f'#/components/schemas/{model_name}'}},
-                    },
-                },
-            }
-        # Add security (empty for public endpoints)
-        security = [{'BearerAuth': []}] if endpoint.auth else []
-        if x_permissions:
-            description += f'<br>Permissions: {x_permissions}'
-        if x_throttling:
-            description += f'<br>Throttling: {x_throttling}'
-        if x_cache:
-            description += f'<br>Cache: {x_cache}'
-        if x_middlewares:
-            description += f'<br>Middlewares: {x_middlewares}'
-
-        content = {
-            'operationId': operation_id,
-            'summary': summary,
-            'description': description,
-            'tags': tags,
-            'parameters': parameters,
-            'security': security,
-            'deprecated': deprecated,
-        }
-
-        content |= responses
-        content |= request_body
-        return {http_method: content}
+            
+        return error_responses
 
     @classmethod
-    def get_content(cls):
+    def _build_request_body(cls, endpoint: Any, http_method: str, schemas: Dict[str, Any]) -> Dict[str, Any]:
+        """Build request body schema for the endpoint."""
+        if not (endpoint.input_model and http_method in cls.REQUEST_BODY_METHODS):
+            return {}
+            
+        model = endpoint.input_model
+        model_name = cls.get_model_name(model)
+        
+        # Add model to schemas if not present
+        if model_name not in schemas:
+            schema = model.schema(ref_template='#/components/schemas/{model}')
+            schema = cls.enrich_schema_with_constraints(schema, model)
+            schemas[model_name] = schema
+            
+        return {
+            'requestBody': {
+                'required': True,
+                'content': {
+                    'application/json': {
+                        'schema': {'$ref': f'#/components/schemas/{model_name}'}
+                    }
+                }
+            }
+        }
 
+    @classmethod
+    def generate_openapi_spec(cls) -> Dict[str, Any]:
+        """
+        Generate complete OpenAPI 3.0 specification.
+        
+        Returns:
+            Complete OpenAPI specification dictionary
+        """
         paths = {}
         schemas = {}
-
+        
+        # Process all registered endpoints
         for url, endpoint in config.FLAT_URLS.items():
             if not url.startswith('/'):
                 url = f'/{url}'
+                
             paths[url] = {}
+            
             if isinstance(endpoint, types.FunctionType):
-                for method in ['post', 'get', 'put', 'patch', 'delete']:
+                # Function-based endpoints
+                for method in cls.HTTP_METHODS:
                     if method.upper() in endpoint.methods:
-                        paths[url] |= cls.extract_content(endpoint, method, schemas)
+                        paths[url].update(cls.generate_operation_content(endpoint, method, schemas))
             else:
-                for method in ['post', 'get', 'put', 'patch', 'delete']:
-                    # endpoint.post is not GenericAPI.post --> Method has overridden.
+                # Class-based endpoints
+                for method in cls.HTTP_METHODS:
+                    # Check if method is overridden (not the default GenericAPI method)
                     if getattr(endpoint, method) is not getattr(GenericAPI, method):
-                        paths[url] |= cls.extract_content(endpoint, method, schemas)
-        # Security Schemes
+                        paths[url].update(cls.generate_operation_content(endpoint, method, schemas))
+        
+        # Build security schemes
         security_schemes = {
-            'BearerAuth': {  # TODO: extract this method from config.Authentication
+            'BearerAuth': {
                 'type': 'http',
                 'scheme': 'bearer',
                 'bearerFormat': 'JWT',
-            },
+            }
         }
-        openapi = {
+        
+        # Build complete OpenAPI specification
+        openapi_spec = {
             'openapi': '3.0.0',
             'info': {
                 'title': 'Panther API',
@@ -359,7 +529,11 @@ class OpenAPI:
                 'description': 'Auto-generated OpenAPI documentation for Panther project.',
             },
             'paths': paths,
-            'components': {'schemas': schemas, 'securitySchemes': security_schemes},
+            'components': {
+                'schemas': schemas,
+                'securitySchemes': security_schemes
+            },
             'security': [{'BearerAuth': []}],
         }
-        return openapi
+        
+        return openapi_spec

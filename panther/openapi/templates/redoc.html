@@ -15,7 +15,7 @@
     <div id="redoc-container"></div>
     <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"></script>
     <script>
-      Redoc.init({{ openapi_content | tojson }}, {}, document.getElementById("redoc-container"));
+      Redoc.init({{ openapi | tojson }}, {}, document.getElementById("redoc-container"));
     </script>
   </body>
 </html>

@@ -15,7 +15,7 @@
     <script>
       document.addEventListener('readystatechange', (event) => {
         let docEl = document.getElementById("thedoc");
-        docEl.loadSpec({{ openapi_content | tojson }});
+        docEl.loadSpec({{ openapi | tojson }});
       })
     </script>
   </body>

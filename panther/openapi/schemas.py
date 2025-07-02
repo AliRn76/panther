@@ -1,21 +1,29 @@
 import pydantic
-
-from panther import status
 from panther.serializer import ModelSerializer
 
 
-class EmptyResponseModel(pydantic.BaseModel):
-    pass
-
-
 class OutputSchema:
+    """
+    Configuration class for defining API endpoint output schemas.
+    
+    This class allows you to specify the response model, status code, and other
+    metadata for API endpoints to generate proper OpenAPI documentation.
+    
+    Attributes:
+        model: The Pydantic model or ModelSerializer class for the response
+        status_code: HTTP status code for the response
+        exclude_in_docs: Whether to exclude this endpoint from OpenAPI docs (defaults to False)
+        tags: List of tags for grouping endpoints in documentation (defaults to Function Name/ Class Name)
+        deprecated: Whether this endpoint is marked as deprecated (defaults to False)
+    """
+    
     def __init__(
         self,
-        model: type[ModelSerializer] | type[pydantic.BaseModel] = EmptyResponseModel,
-        status_code: int = status.HTTP_200_OK,
+        model: type[ModelSerializer] | type[pydantic.BaseModel] | None = None,
+        status_code: int | None = None,
         exclude_in_docs: bool = False,
-        tags: list[str] | None = None,  # If None, we use parsed.title or endpoint.__module__
-        deprecated: bool = False,  # Marked as deprecated endpoint
+        tags: str | None = None,
+        deprecated: bool = False,
     ):
         self.model = model
         self.status_code = status_code

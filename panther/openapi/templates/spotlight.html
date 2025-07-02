@@ -18,7 +18,7 @@
   <elements-api id="api-viewer" router="hash"></elements-api>
   <script>
     customElements.whenDefined("elements-api").then(() => {
-      document.getElementById("api-viewer").apiDescriptionDocument = {{ openapi_content | tojson | safe }};
+      document.getElementById("api-viewer").apiDescriptionDocument = {{ openapi | tojson | safe }};
     });
   </script>
 </body>

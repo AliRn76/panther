@@ -4,7 +4,7 @@ from panther import Panther, status
 from panther.app import API, GenericAPI
 from panther.configs import config
 from panther.openapi.urls import url_routing
-from panther.openapi.utils import ParseEndpoint
+from panther.openapi.utils import EndpointParser
 from panther.response import Response
 from panther.test import APIClient
 
@@ -172,111 +172,111 @@ class TestOpenAPI(IsolatedAsyncioTestCase):
 #         assert expected_response == response.data
 
     async def test_my_api1(self):
-        parsed = ParseEndpoint(my_api1, 'get')
+        parsed = EndpointParser(my_api1, 'get')
         assert parsed.status_code == 200
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api2(self):
-        parsed = ParseEndpoint(my_api2, 'get')
+        parsed = EndpointParser(my_api2, 'get')
         assert parsed.status_code == 200
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api3(self):
-        parsed = ParseEndpoint(my_api3, 'get')
+        parsed = EndpointParser(my_api3, 'get')
         assert parsed.status_code == 200
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api4(self):
-        parsed = ParseEndpoint(my_api4, 'get')
+        parsed = EndpointParser(my_api4, 'get')
         assert parsed.status_code == 200
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api5(self):
-        parsed = ParseEndpoint(my_api5, 'get')
+        parsed = EndpointParser(my_api5, 'get')
         assert parsed.status_code == 201
-        assert parsed.data == {}
+        assert parsed.response_data == {}
 
     async def test_my_api6(self):
-        parsed = ParseEndpoint(my_api6, 'get')
+        parsed = EndpointParser(my_api6, 'get')
         assert parsed.status_code == 207
-        assert parsed.data == {}
+        assert parsed.response_data == {}
 
     async def test_my_api7(self):
-        parsed = ParseEndpoint(my_api7, 'get')
+        parsed = EndpointParser(my_api7, 'get')
         assert parsed.status_code == 207
-        assert parsed.data == {}
+        assert parsed.response_data == {}
 
     async def test_my_api8(self):
-        parsed = ParseEndpoint(my_api8, 'get')
+        parsed = EndpointParser(my_api8, 'get')
         assert parsed.status_code == 207
-        assert parsed.data == {}
+        assert parsed.response_data == {}
 
     async def test_my_api9(self):
-        parsed = ParseEndpoint(my_api9, 'get')
+        parsed = EndpointParser(my_api9, 'get')
         assert parsed.status_code == 200
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api10(self):
-        parsed = ParseEndpoint(my_api10, 'get')
+        parsed = EndpointParser(my_api10, 'get')
         assert parsed.status_code == 200
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api11(self):
-        parsed = ParseEndpoint(my_api11, 'get')
+        parsed = EndpointParser(my_api11, 'get')
         assert parsed.status_code == 207
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api12(self):
-        parsed = ParseEndpoint(my_api12, 'get')
+        parsed = EndpointParser(my_api12, 'get')
         assert parsed.status_code == 207
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api13(self):
-        parsed = ParseEndpoint(my_api13, 'get')
+        parsed = EndpointParser(my_api13, 'get')
         assert parsed.status_code == 207
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api14(self):
-        parsed = ParseEndpoint(my_api14, 'get')
+        parsed = EndpointParser(my_api14, 'get')
         assert parsed.status_code == 207
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api15(self):
-        parsed = ParseEndpoint(my_api15, 'get')
+        parsed = EndpointParser(my_api15, 'get')
         assert parsed.status_code == 207
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api16(self):
-        parsed = ParseEndpoint(my_api16, 'get')
+        parsed = EndpointParser(my_api16, 'get')
         assert parsed.status_code == 207
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api17(self):
-        parsed = ParseEndpoint(my_api17, 'get')
+        parsed = EndpointParser(my_api17, 'get')
         assert parsed.status_code == 207
-        assert parsed.data == {}
+        assert parsed.response_data == {}
 
     async def test_my_api15_get(self):
-        parsed = ParseEndpoint(API18, 'get')
+        parsed = EndpointParser(API18, 'get')
         assert parsed.status_code == 200
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api15_post(self):
-        parsed = ParseEndpoint(API18, 'post')
+        parsed = EndpointParser(API18, 'post')
         assert parsed.status_code == 200
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api15_put(self):
-        parsed = ParseEndpoint(API18, 'put')
+        parsed = EndpointParser(API18, 'put')
         assert parsed.status_code == 200
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api15_patch(self):
-        parsed = ParseEndpoint(API18, 'patch')
+        parsed = EndpointParser(API18, 'patch')
         assert parsed.status_code == 201
-        assert parsed.data == {'detail': 'ok'}
+        assert parsed.response_data == {'detail': 'ok'}
 
     async def test_my_api15_delete(self):
-        parsed = ParseEndpoint(API18, 'delete')
+        parsed = EndpointParser(API18, 'delete')
         assert parsed.status_code == 204
-        assert parsed.data == {}
+        assert parsed.response_data == {}
