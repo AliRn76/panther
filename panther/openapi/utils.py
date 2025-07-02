@@ -255,7 +255,6 @@ class OpenAPIGenerator:
     HTTP_METHODS = ['post', 'get', 'put', 'patch', 'delete']
     REQUEST_BODY_METHODS = ['post', 'put', 'patch']
 
-
     @classmethod
     def get_model_name(cls, model: type[BaseModel]) -> str:
         """Get the name of a model class."""
@@ -371,7 +370,8 @@ class OpenAPIGenerator:
         # Extract basic operation info
         operation_id = f'{response_parser.endpoint_name}_{http_method}'
         parameters = cls.extract_path_parameters(
-            endpoint=endpoint, endpoint_name=response_parser.endpoint_name, http_method=http_method)
+            endpoint=endpoint, endpoint_name=response_parser.endpoint_name, http_method=http_method
+        )
         summary, description = cls.parse_docstring(endpoint.__doc__)
 
         # Extract tags
@@ -381,7 +381,9 @@ class OpenAPIGenerator:
         metadata = cls._extract_endpoint_metadata(endpoint=endpoint, description=description)
 
         # Handle response schema
-        response_schema = cls._build_response_schema(endpoint=endpoint, response_parser=response_parser, schemas=schemas)
+        response_schema = cls._build_response_schema(
+            endpoint=endpoint, response_parser=response_parser, schemas=schemas
+        )
 
         # Handle request body
         request_body = cls._build_request_body(endpoint=endpoint, http_method=http_method, schemas=schemas)

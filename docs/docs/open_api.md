@@ -45,6 +45,7 @@ url_routing = {
 ```
 
 This will make the following endpoints available:
+
 - `/docs/scalar/` - Scalar UI
 - `/docs/swagger/` - Swagger UI  
 - `/docs/redoc/` - ReDoc UI
