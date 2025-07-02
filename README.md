@@ -20,7 +20,7 @@ Panther is designed to be **fast**, **simple**, and **powerful**. Here's what ma
 - **File-based database** ([PantherDB](https://pypi.org/project/pantherdb/)) - No external database setup required
 - **Document-oriented ODM** - Supports MongoDB & PantherDB with familiar syntax
 - **API caching system** - In-memory and Redis support
-- **OpenAPI/Swagger** - Auto-generated API documentation
+- **OpenAPI** - Auto-generated API documentation with multiple UI options
 - **WebSocket support** - Real-time communication out of the box
 - **Authentication & Permissions** - Built-in security features
 - **Background tasks** - Handle long-running operations
@@ -63,7 +63,7 @@ class HelloAPI(GenericAPI):
 # URL routing configuration
 url_routing = {
     '/': HelloAPI,
-    'swagger/': openapi_url_routing,  # Auto-generated API docs
+    'docs/': openapi_url_routing,  # Auto-generated API docs
 }
 
 # Create your Panther app

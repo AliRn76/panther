@@ -1,1 +1,1 @@
-from panther.openapi.utils import OutputSchema
+from panther.openapi.schemas import OutputSchema

@@ -1,21 +1,55 @@
-# OpenAPI (Swagger) Integration in Panther
+# OpenAPI Integration in Panther
 
-Panther automatically generates an OpenAPI (Swagger) specification for your APIs. This makes it easy to document, test, and share your API endpoints.
+Panther automatically generates an OpenAPI specification for your APIs. This makes it easy to document, test, and share your API endpoints.
 
 ## How to Enable OpenAPI in Your Project
 
-To enable OpenAPI documentation, simply add the Panther OpenAPI URL routing to your project's URL configuration:
+Panther provides multiple OpenAPI UI options that you can import directly into your project. You don't need to add the bundled `openapi.urls.url_routing` - instead, you can choose the specific UI component you prefer.
 
-```python title="core/urls.py" linenums="1"
-from panther.openapi.urls import url_routing as openapi_url_routing
+### Available OpenAPI UI Components
+
+Panther offers several OpenAPI UI options available in `panther.openapi.views`:
+
+- **`ScalarOpenAPI`** - Modern, customizable API documentation UI
+- **`SwaggerOpenAPI`** - Classic Swagger UI interface
+- **`RedocOpenAPI`** - Clean, responsive documentation interface
+- **`RapiDocOpenAPI`** - Fast, lightweight API documentation
+- **`SpotlightOpenAPI`** - Stoplight Elements integration
+
+### Adding OpenAPI to Your Project
+
+You can import and use any of these UI components directly in your URL configuration:
+
+```python title="urls.py" linenums="1"
+from panther.openapi.views import ScalarOpenAPI, SwaggerOpenAPI, RedocOpenAPI
 
 url_routing = {
-    'swagger/': openapi_url_routing,
+    'docs/scalar/': ScalarOpenAPI,    # Modern UI at /docs/scalar/
+    'docs/swagger/': SwaggerOpenAPI,  # Classic Swagger at /docs/swagger/
+    'docs/redoc/': RedocOpenAPI,      # Clean interface at /docs/redoc/
     # Other urls
 }
 ```
 
-This will make your OpenAPI documentation available at the `/swagger/` endpoint.
+### Alternative: Using All UI Components
+
+If you want to include all OpenAPI UI options at once, you can still use the bundled routing:
+
+```python title="urls.py" linenums="1"
+from panther.openapi.urls import url_routing as openapi_url_routing
+
+url_routing = {
+    'docs/': openapi_url_routing,  # Includes all UI options
+    # Other urls
+}
+```
+
+This will make the following endpoints available:
+- `/docs/scalar/` - Scalar UI
+- `/docs/swagger/` - Swagger UI  
+- `/docs/redoc/` - ReDoc UI
+- `/docs/rapidoc/` - RapiDoc UI
+- `/docs/spotlight/` - Spotlight UI
 
 ## How Panther Determines Response Models and Status Codes
 

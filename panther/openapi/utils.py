@@ -3,31 +3,9 @@ import inspect
 import inspect as pyinspect
 import types
 
-import pydantic
-
 from panther import status
+from panther.app import GenericAPI
 from panther.configs import config
-from panther.events import Event
-from panther.middlewares.cors import CORSMiddleware
-from panther.serializer import ModelSerializer
-
-
-class EmptyResponseModel(pydantic.BaseModel):
-    pass
-
-
-class OutputSchema:
-    """
-    Its values only used in OpenAPI response schema
-    """
-
-    def __init__(
-        self,
-        model: type[ModelSerializer] | type[pydantic.BaseModel] = EmptyResponseModel,
-        status_code: int = status.HTTP_200_OK,
-    ):
-        self.model = model
-        self.status_code = status_code
 
 
 class ParseEndpoint:
@@ -173,89 +151,81 @@ class ParseEndpoint:
                                     yield value
 
 
-def get_model_name(model: type) -> str:
-    if hasattr(model, '__name__'):
-        return model.__name__
-    return model.__class__.__name__
-
-
-def extract_parameters_from_signature(endpoint, method: str) -> list:
-    params = []
-    sig = None
-    if isinstance(endpoint, types.FunctionType):
-        sig = pyinspect.signature(endpoint)
-    else:
-        func = getattr(endpoint, method, None)
-        if func:
-            sig = pyinspect.signature(func)
-    if not sig:
-        return params
-    for name, param in sig.parameters.items():
-        if name in ('self', 'request'):
-            continue
-        # TODO: Get this value from FLAT_URLS, function can have *args or **kwargs ...
-        param_schema = {'name': name, 'in': 'path', 'required': True, 'schema': {'type': 'string'}}
-        if param.annotation is int:
-            param_schema['schema']['type'] = 'integer'
-        elif param.annotation is bool:
-            param_schema['schema']['type'] = 'boolean'
-        elif param.annotation is float:
-            param_schema['schema']['type'] = 'number'
-        params.append(param_schema)
-    return params
-
-
-def parse_docstring(docstring: str) -> tuple[str, str]:
-    """Use first line as summary and rest of them as description"""
-    if not docstring:
-        return '', ''
-    lines = docstring.strip().split('\n')
-    summary = lines[0]
-    description = '\n'.join(lines[1:]).strip() if len(lines) > 1 else ''
-    return summary, description
-
-
-def get_example_from_model(model):
-    # TODO: Support example for models
-    return None
-
-
-def get_field_constraints(field):
-    # Extract constraints from Pydantic FieldInfo
-    constraints = {}
-    for attr in ['min_length', 'max_length', 'regex', 'ge', 'le', 'gt', 'lt']:
-        value = getattr(field, attr, None)
-        if value is not None:
-            constraints[attr] = value
-    return constraints
-
-
-def enrich_schema_with_constraints(schema, model):
-    # Add field constraints to OpenAPI schema
-    if hasattr(model, 'model_fields'):
-        for name, field in model.model_fields.items():
-            if 'properties' in schema and name in schema['properties']:
-                schema['properties'][name].update(get_field_constraints(field))
-    return schema
-
-
 class OpenAPI:
     @classmethod
+    def get_model_name(cls, model: type) -> str:
+        if hasattr(model, '__name__'):
+            return model.__name__
+        return model.__class__.__name__
+
+    @classmethod
+    def extract_parameters_from_signature(cls, endpoint, method: str) -> list:
+        params = []
+        sig = None
+        if isinstance(endpoint, types.FunctionType):
+            sig = pyinspect.signature(endpoint)
+        else:
+            func = getattr(endpoint, method, None)
+            if func:
+                sig = pyinspect.signature(func)
+        if not sig:
+            return params
+        for name, param in sig.parameters.items():
+            if name in ('self', 'request'):
+                continue
+            # TODO: Get this value from FLAT_URLS, function can have *args or **kwargs ...
+            param_schema = {'name': name, 'in': 'path', 'required': True, 'schema': {'type': 'string'}}
+            if param.annotation is int:
+                param_schema['schema']['type'] = 'integer'
+            elif param.annotation is bool:
+                param_schema['schema']['type'] = 'boolean'
+            elif param.annotation is float:
+                param_schema['schema']['type'] = 'number'
+            params.append(param_schema)
+        return params
+
+    @classmethod
+    def parse_docstring(cls, docstring: str) -> tuple[str, str]:
+        """Use first line as summary and rest of them as description"""
+        if not docstring:
+            return '', ''
+        lines = docstring.strip().split('\n')
+        summary = lines[0]
+        description = '\n'.join(lines[1:]).strip() if len(lines) > 1 else ''
+        return summary, description
+
+    @classmethod
+    def get_field_constraints(cls, field):
+        # Extract constraints from Pydantic FieldInfo
+        constraints = {}
+        for attr in ['min_length', 'max_length', 'regex', 'ge', 'le', 'gt', 'lt']:
+            value = getattr(field, attr, None)
+            if value is not None:
+                constraints[attr] = value
+        return constraints
+
+    @classmethod
+    def enrich_schema_with_constraints(cls, schema, model):
+        # Add field constraints to OpenAPI schema
+        for name, field in model.model_fields.items():
+            if 'properties' in schema and name in schema['properties']:
+                schema['properties'][name].update(cls.get_field_constraints(field))
+        return schema
+
+    @classmethod
     def extract_content(cls, endpoint, http_method, schemas):
-        if getattr(
-            endpoint.output_schema, 'exclude_in_open_api', False
-        ):  # TODO: Add `exclude_in_open_api` to output_schema
+        if endpoint.output_schema and endpoint.output_schema.exclude_in_docs:
             return {}
         parsed = ParseEndpoint(endpoint=endpoint, method=http_method)
         responses = {}
         request_body = {}
-        parameters = extract_parameters_from_signature(endpoint, http_method)
-        # print(f'{parameters=}')  # TODO: What is this, path parameter? then its not correct.
+        parameters = cls.extract_parameters_from_signature(endpoint, http_method)
         operation_id = f'{parsed.title}_{http_method}'
-        tags = getattr(endpoint.output_schema, 'tags', None)  # TODO: Add `tags` to output_schema
-        if not tags:
+        if endpoint.output_schema and endpoint.output_schema.tags:
+            tags = endpoint.output_schema.tags
+        else:
             tags = [parsed.title] if parsed.title else [endpoint.__module__]
-        summary, description = parse_docstring(docstring=endpoint.__doc__)
+        summary, description = cls.parse_docstring(docstring=endpoint.__doc__)
         # Permissions, throttling, cache, middlewares
         x_permissions = [p.__name__ for p in endpoint.permissions] if endpoint.permissions else None
 
@@ -269,37 +239,29 @@ class OpenAPI:
 
         x_middlewares = None
         if endpoint.middlewares:
-            x_middlewares = (
-                [m.__name__ if hasattr(m, '__name__') else str(m) for m in endpoint.middlewares]
-                if getattr(endpoint, 'middlewares', None)
-                else None
-            )
+            x_middlewares = [getattr(m, '__name__', str(m)) for m in endpoint.middlewares]
 
-        deprecated = getattr(endpoint.output_schema, 'deprecated', False)  # TODO: Add `deprecated` to output_schema
+        deprecated = False
+        if endpoint.output_schema:
+            deprecated = endpoint.output_schema.deprecated
 
         # Handle response schema
         if endpoint.output_schema:
             status_code = endpoint.output_schema.status_code
             model = endpoint.output_schema.model
-            model_name = get_model_name(model)
+            model_name = cls.get_model_name(model)
             if model_name not in schemas:
                 schema = model.schema(ref_template='#/components/schemas/{model}')
-                schema = enrich_schema_with_constraints(schema, model)
-                example = get_example_from_model(model)
-                if example:
-                    schema['example'] = example
+                schema = cls.enrich_schema_with_constraints(schema, model)
                 schemas[model_name] = schema
             schema_ref = {'$ref': f'#/components/schemas/{model_name}'}
         elif endpoint.output_model:
             status_code = parsed.status_code
             model = endpoint.output_model
-            model_name = get_model_name(model)
+            model_name = cls.get_model_name(model)
             if model_name not in schemas:
                 schema = model.schema(ref_template='#/components/schemas/{model}')
-                schema = enrich_schema_with_constraints(schema, model)
-                example = get_example_from_model(model)
-                if example:
-                    schema['example'] = example
+                schema = cls.enrich_schema_with_constraints(schema, model)
                 schemas[model_name] = schema
             schema_ref = {'$ref': f'#/components/schemas/{model_name}'}
         else:
@@ -319,18 +281,15 @@ class OpenAPI:
         if error_responses:
             if 'responses' not in responses:
                 responses['responses'] = {}
-            responses['responses'].update(error_responses)
+            responses['responses'] |= error_responses
 
         # Handle request body
         if endpoint.input_model and http_method in ['post', 'put', 'patch']:
             model = endpoint.input_model
-            model_name = get_model_name(model)
+            model_name = cls.get_model_name(model)
             if model_name not in schemas:
                 schema = model.schema(ref_template='#/components/schemas/{model}')
-                schema = enrich_schema_with_constraints(schema, model)
-                example = get_example_from_model(model)
-                if example:
-                    schema['example'] = example
+                schema = cls.enrich_schema_with_constraints(schema, model)
                 schemas[model_name] = schema
             request_body = {
                 'requestBody': {
@@ -343,17 +302,13 @@ class OpenAPI:
         # Add security (empty for public endpoints)
         security = [{'BearerAuth': []}] if endpoint.auth else []
         if x_permissions:
-            # content['x-permissions'] = x_permissions # TODO: Not found in doc
-            description += f'\nPermissions: {x_permissions}'
+            description += f'<br>Permissions: {x_permissions}'
         if x_throttling:
-            description += f'\nThrottling: {x_throttling}'
-            # content['x-throttling'] = x_throttling # TODO: Not found in doc
+            description += f'<br>Throttling: {x_throttling}'
         if x_cache:
-            description += f'\nCache: {x_cache}'
-            # content['x-cache'] = x_cache # TODO: Not found in doc
+            description += f'<br>Cache: {x_cache}'
         if x_middlewares:
-            # content['x-middlewares'] = x_middlewares # TODO: Not found in doc
-            description += f'\nMiddlewares: {x_middlewares}'
+            description += f'<br>Middlewares: {x_middlewares}'
 
         content = {
             'operationId': operation_id,
@@ -371,16 +326,9 @@ class OpenAPI:
 
     @classmethod
     def get_content(cls):
-        from panther.app import GenericAPI
 
         paths = {}
         schemas = {}
-        # Detect if CORS middleware is present
-        cors_present = False
-
-        for m in config.HTTP_MIDDLEWARES:
-            if isinstance(m, CORSMiddleware):
-                cors_present = True  # TODO: Not found in doc
 
         for url, endpoint in config.FLAT_URLS.items():
             if not url.startswith('/'):
@@ -414,9 +362,4 @@ class OpenAPI:
             'components': {'schemas': schemas, 'securitySchemes': security_schemes},
             'security': [{'BearerAuth': []}],
         }
-        if cors_present:
-            openapi['x-cors'] = True
-        # If Panther events are present, add x-events
-        if Event._startups or Event._shutdowns:
-            openapi['x-events'] = True  # TODO: Not found in doc
         return openapi
