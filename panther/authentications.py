@@ -8,7 +8,7 @@ from panther.base_websocket import Websocket
 from panther.cli.utils import import_error
 from panther.configs import config
 from panther.db.connections import redis
-from panther.db.models import BaseUser, Model
+from panther.db.models import Model
 from panther.exceptions import AuthenticationAPIError
 from panther.request import Request
 from panther.utils import generate_hash_value_from_string

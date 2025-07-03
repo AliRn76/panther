@@ -420,18 +420,11 @@ class Query(BaseQuery):
             >>> await user.save()
 
         """
-        document = {
-            field: getattr(self, field).model_dump(by_alias=True)
-            if issubclass(type(getattr(self, field)), BaseModel)
-            else getattr(self, field)
-            for field in self.model_fields
-            if field != 'request'
-        }
-
+        document = self.model_dump(exclude={'id'})
         if self.id:
             await self.update(document)
         else:
-            await self.insert_one(document)
+            self.id = (await self.insert_one(document)).id
 
     async def reload(self) -> Self:
         new_obj = await self.find_one(id=self.id)

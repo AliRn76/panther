@@ -5,6 +5,7 @@ from unittest import IsolatedAsyncioTestCase
 import faker
 import pytest
 from pantherdb import Cursor as PantherDBCursor
+from pydantic import BaseModel
 
 from panther import Panther
 from panther.configs import config
@@ -20,6 +21,13 @@ class Book(Model):
     author: str
     pages_count: int
 
+class Viewer(BaseModel):
+    first_name: str
+
+class Library(Model):
+    name: str
+    books: list[Book]
+    viewer: Viewer
 
 class _BaseDatabaseTestCase:
     # # # Insert
@@ -475,6 +483,57 @@ class _BaseDatabaseTestCase:
 
         # Count Them After Update
         assert await Book.count() == insert_count
+
+    async def test_save_update(self):
+        await self._insert_many()
+
+        # Insert With Specific Name
+        name = f.name()
+        author = f.name()
+        pages_count = random.randint(0, 10)
+        book = await Book.insert_one(name=name, author=author, pages_count=pages_count)
+
+        # Save
+        assert book.id
+        assert book.author == author
+        book.author = 'New'
+        await book.save()
+
+        # Make sure instance is updated
+        assert book.author == 'New'
+
+        # Make sure database is updated
+        book = await Book.find_one(name=name)
+        assert isinstance(book, Book)
+        assert book.author == 'New'
+        assert book.pages_count == pages_count
+
+    async def test_save_insert(self):
+        name = f.name()
+        author = f.name()
+        pages_count = random.randint(0, 10)
+
+        book = Book(name=name, author=author, pages_count=pages_count)
+        await book.save()
+
+        assert book.id
+        assert book.author == author
+        assert book.pages_count == pages_count
+
+
+    async def test_save_nested_models(self):
+        library = await Library.insert_one(
+            name='Name1',
+            viewer=Viewer(first_name='Ali'),
+            books=[Book(name='Book1', author='Author1', pages_count=1)]
+        )
+        assert library.id
+        assert library.name == 'Name1'
+        assert library.viewer.first_name == 'Ali'
+        assert library.books[0].name == 'Book1'
+        assert library.books[0].author == 'Author1'
+        assert library.books[0].pages_count == 1
+
 
     @classmethod
     async def _insert_many(cls) -> int:

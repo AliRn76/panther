@@ -131,7 +131,7 @@ class BaseMongoDBQuery(BaseQuery):
 
         if isinstance(unwrapped_type, type) and issubclass(unwrapped_type, Model):
             if obj := await unwrapped_type.first(id=value):
-                return obj.model_dump(by_alias=True)
+                return obj.model_dump()
             return None
 
         if isinstance(unwrapped_type, type) and issubclass(unwrapped_type, BaseModel):
@@ -169,25 +169,24 @@ class BaseMongoDBQuery(BaseQuery):
             raise DatabaseError(error) from validation_error
 
     @classmethod
-    def clean_value(cls, field: str | None, value: Any) -> dict[str, Any] | list[Any]:
+    async def clean_value(cls, value: Any) -> dict[str, Any] | list[Any]:
         match value:
             case None:
                 return None
             case Model() as model:
                 if model.id is None:
-                    raise DatabaseError(f'Model instance{" in " + field if field else ""} has no ID.')
+                    await model.save()
                 # We save full object because user didn't specify the type.
                 return model._id
             case BaseModel() as model:
                 return {
-                    field_name: cls.clean_value(field=field_name, value=getattr(model, field_name))
+                    field_name: await cls.clean_value(value=getattr(model, field_name))
                     for field_name in model.model_fields
                 }
             case dict() as d:
-                return {k: cls.clean_value(field=k, value=v) for k, v in d.items()}
+                return {k: await cls.clean_value(value=v) for k, v in d.items()}
             case list() as l:
-                return [cls.clean_value(field=None, value=item) for item in l]
-
+                return [await cls.clean_value(value=item) for item in l]
         return value
 
     # # # # # Find # # # # #
@@ -229,7 +228,7 @@ class BaseMongoDBQuery(BaseQuery):
     async def insert_one(cls, _document: dict | None = None, /, **kwargs) -> Self:
         document = cls._merge(_document, kwargs)
         cls._validate_data(data=document)
-        final_document = {field: cls.clean_value(field=field, value=value) for field, value in document.items()}
+        final_document = {field: await cls.clean_value(value=value) for field, value in document.items()}
         result = await cls._create_model_instance(document=final_document)
         insert_one_result: InsertOneResult = await db.session[cls.__name__].insert_one(final_document)
         result.id = insert_one_result.inserted_id
@@ -242,7 +241,7 @@ class BaseMongoDBQuery(BaseQuery):
         for document in documents:
             prepare_id_for_query(document, is_mongo=True)
             cls._validate_data(data=document)
-            cleaned_document = {field: cls.clean_value(field=field, value=value) for field, value in document.items()}
+            cleaned_document = {field: await cls.clean_value(value=value) for field, value in document.items()}
             final_documents.append(cleaned_document)
             results.append(await cls._create_model_instance(document=cleaned_document))
         insert_many_result: InsertManyResult = await db.session[cls.__name__].insert_many(final_documents)

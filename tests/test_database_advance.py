@@ -50,7 +50,7 @@ class _BaseDatabaseTestCase:
             name='ali',
             books=[book],
             books2=[book, book],
-            book=book,
+            book=Book(name='test_book1'),
             book2=None,
             book_detail={'book1': book},
             our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]]),
@@ -72,7 +72,8 @@ class _BaseDatabaseTestCase:
         assert author.books2[1] == book
 
         assert isinstance(author.book, Book)
-        assert author.book == book
+        assert author.book.id
+        assert author.book.name == 'test_book1'
 
         assert author.book2 is None
 
@@ -98,7 +99,7 @@ class _BaseDatabaseTestCase:
                     'name': 'ali',
                     'books': [book],
                     'books2': [book, book],
-                    'book': book,
+                    'book': Book(name='test_book1'),
                     'book2': None,
                     'book_detail': {'book1': book},
                     'our_book_detail': BookDetail(detail='ok', book=book, more_books=[[book, book]]),
@@ -107,7 +108,7 @@ class _BaseDatabaseTestCase:
                     'name': 'ali',
                     'books': [book],
                     'books2': [book, book],
-                    'book': book,
+                    'book': Book(name='test_book2'),
                     'book2': None,
                     'book_detail': {'book1': book},
                     'our_book_detail': BookDetail(detail='ok', book=book, more_books=[[book, book]]),
@@ -132,7 +133,8 @@ class _BaseDatabaseTestCase:
             assert author.books2[1] == book
 
             assert isinstance(author.book, Book)
-            assert author.book == book
+            assert author.book.id
+            assert author.book.name in ['test_book1', 'test_book2']
 
             assert author.book2 is None
 
@@ -156,7 +158,7 @@ class _BaseDatabaseTestCase:
             name='ali',
             books=[book],
             books2=[book, book],
-            book=book,
+            book=Book(name='test_book1'),
             book2=None,
             book_detail={'book1': book},
             our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]]),
@@ -179,7 +181,8 @@ class _BaseDatabaseTestCase:
         assert author.books2[1] == book
 
         assert isinstance(author.book, Book)
-        assert author.book == book
+        assert author.book.id
+        assert author.book.name == 'test_book1'
 
         assert author.book2 is None
 
@@ -203,7 +206,7 @@ class _BaseDatabaseTestCase:
             name='ali',
             books=[book],
             books2=[book, book],
-            book=book,
+            book=Book(name='test_book1'),
             book2=None,
             book_detail={'book1': book},
             our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]]),
@@ -229,7 +232,8 @@ class _BaseDatabaseTestCase:
         assert author.books2[1] == book
 
         assert isinstance(author.book, Book)
-        assert author.book == book
+        assert author.book.id
+        assert author.book.name == 'test_book1'
 
         assert author.book2 is None
 

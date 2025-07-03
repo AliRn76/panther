@@ -44,7 +44,8 @@ class ListAPI(GenericAPI):
     filter_fields: list[str] = []
     pagination: type[Pagination] | None = None
 
-    async def get_query(self, request: Request, **kwargs) -> Cursor | PantherDBCursor:
+    @abstractmethod
+    async def get_query(self, request: Request, **kwargs):
         """
         Should return a Cursor, e.g. `await User.find()`
         """

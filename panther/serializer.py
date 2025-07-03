@@ -2,11 +2,10 @@ import typing
 from typing import Any
 
 from pydantic import BaseModel, create_model
-from pydantic.fields import Field, FieldInfo
+from pydantic.fields import FieldInfo
 from pydantic_core._pydantic_core import PydanticUndefined
 
 from panther.db import Model
-from panther.request import Request
 
 
 class MetaModelSerializer:
@@ -14,9 +13,8 @@ class MetaModelSerializer:
 
     def __new__(cls, cls_name: str, bases: tuple[type[typing.Any], ...], namespace: dict[str, typing.Any], **kwargs):
         if cls_name == 'ModelSerializer':
-            # Put `model` and `request` to the main class with `create_model()`
+            # Put `model` to the main class with `create_model()`
             namespace['__annotations__'].pop('model')
-            namespace['__annotations__'].pop('request')
             cls.model_serializer = type(cls_name, (), namespace)
             return super().__new__(cls)
 
@@ -38,7 +36,6 @@ class MetaModelSerializer:
             __validators__=namespace,
             __base__=(cls.model_serializer, BaseModel),
             model=(typing.ClassVar[type[BaseModel]], config.model),
-            request=(Request, Field(None, exclude=True)),
             **field_definitions,
         )
 
@@ -202,7 +199,6 @@ class ModelSerializer(metaclass=MetaModelSerializer):
     """
 
     model: type[BaseModel]
-    request: Request
 
     async def to_response(self, instance: Any, data: dict) -> dict:
         return data
