@@ -49,6 +49,8 @@ def prepare_id_for_query(*args, is_mongo: bool = False):
 
 
 def _convert_to_object_id(_id):
+    if _id is None:
+        return None
     if isinstance(_id, bson.ObjectId):
         return _id
     try:

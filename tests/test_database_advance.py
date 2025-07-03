@@ -1,4 +1,5 @@
 import contextlib
+from pathlib import Path
 from typing import List
 from unittest import IsolatedAsyncioTestCase
 
@@ -50,7 +51,7 @@ class _BaseDatabaseTestCase:
             name='ali',
             books=[book],
             books2=[book, book],
-            book=book,
+            book=Book(name='test_book1'),
             book2=None,
             book_detail={'book1': book},
             our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]]),
@@ -72,7 +73,8 @@ class _BaseDatabaseTestCase:
         assert author.books2[1] == book
 
         assert isinstance(author.book, Book)
-        assert author.book == book
+        assert author.book.id
+        assert author.book.name == 'test_book1'
 
         assert author.book2 is None
 
@@ -98,7 +100,7 @@ class _BaseDatabaseTestCase:
                     'name': 'ali',
                     'books': [book],
                     'books2': [book, book],
-                    'book': book,
+                    'book': Book(name='test_book1'),
                     'book2': None,
                     'book_detail': {'book1': book},
                     'our_book_detail': BookDetail(detail='ok', book=book, more_books=[[book, book]]),
@@ -107,7 +109,7 @@ class _BaseDatabaseTestCase:
                     'name': 'ali',
                     'books': [book],
                     'books2': [book, book],
-                    'book': book,
+                    'book': Book(name='test_book2'),
                     'book2': None,
                     'book_detail': {'book1': book},
                     'our_book_detail': BookDetail(detail='ok', book=book, more_books=[[book, book]]),
@@ -132,7 +134,8 @@ class _BaseDatabaseTestCase:
             assert author.books2[1] == book
 
             assert isinstance(author.book, Book)
-            assert author.book == book
+            assert author.book.id
+            assert author.book.name in ['test_book1', 'test_book2']
 
             assert author.book2 is None
 
@@ -156,7 +159,7 @@ class _BaseDatabaseTestCase:
             name='ali',
             books=[book],
             books2=[book, book],
-            book=book,
+            book=Book(name='test_book1'),
             book2=None,
             book_detail={'book1': book},
             our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]]),
@@ -179,7 +182,8 @@ class _BaseDatabaseTestCase:
         assert author.books2[1] == book
 
         assert isinstance(author.book, Book)
-        assert author.book == book
+        assert author.book.id
+        assert author.book.name == 'test_book1'
 
         assert author.book2 is None
 
@@ -203,7 +207,7 @@ class _BaseDatabaseTestCase:
             name='ali',
             books=[book],
             books2=[book, book],
-            book=book,
+            book=Book(name='test_book1'),
             book2=None,
             book_detail={'book1': book},
             our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]]),
@@ -229,7 +233,8 @@ class _BaseDatabaseTestCase:
         assert author.books2[1] == book
 
         assert isinstance(author.book, Book)
-        assert author.book == book
+        assert author.book.id
+        assert author.book.name == 'test_book1'
 
         assert author.book2 is None
 
@@ -256,6 +261,27 @@ class _BaseDatabaseTestCase:
                 e.args[0]
                 == 'Panther does not support dict[str, tests.test_database_advance.Book] as a field type for unwrapping.'
             )
+
+
+class TestPantherDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
+    DB_PATH = 'test.pdb'
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        global DATABASE
+        DATABASE = {
+            'engine': {'class': 'panther.db.connections.PantherDBConnection', 'path': cls.DB_PATH},
+        }
+        Panther(__name__, configs=__name__, urls={})
+
+    def tearDown(self) -> None:
+        db.session.collection('Book').drop()
+        db.session.collection('Author').drop()
+
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
+        Path(cls.DB_PATH).unlink(missing_ok=True)
 
 
 @pytest.mark.mongodb

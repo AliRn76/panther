@@ -212,14 +212,9 @@ class MetaGenericAPI(type):
     def __new__(cls, cls_name: str, bases: tuple[type[typing.Any], ...], namespace: dict[str, typing.Any], **kwargs):
         if cls_name == 'GenericAPI':
             return super().__new__(cls, cls_name, bases, namespace)
-        if 'output_model' in namespace:
-            deprecation_message = (
-                traceback.format_stack(limit=2)[0]
-                + '\nThe `output_model` argument has been removed in Panther v5 and is no longer available.'
-                '\nPlease update your code to use the new approach. More info: '
-                'https://pantherpy.github.io/open_api/'
-            )
-            raise PantherError(deprecation_message)
+        # Deprecated messages can be here
+        # e.g. if 'something' in namespace:
+        #          raise PantherError(deprecated_message)
         return super().__new__(cls, cls_name, bases, namespace)
 
 
