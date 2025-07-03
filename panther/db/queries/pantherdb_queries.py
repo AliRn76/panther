@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 from collections.abc import Iterable
 from sys import version_info
 
 from pantherdb import Cursor
 
 from panther.db.connections import db
+from panther.db.cursor import Cursor
 from panther.db.queries.base_queries import BaseQuery
 from panther.db.utils import prepare_id_for_query
 from panther.exceptions import DatabaseError
@@ -60,22 +63,17 @@ class BasePantherDBQuery(BaseQuery):
     # # # # # Insert # # # # #
     @classmethod
     async def insert_one(cls, _document: dict | None = None, /, **kwargs) -> Self:
-        _document = cls._merge(_document, kwargs)
-        cls._validate_data(data=_document)
-
-        document = db.session.collection(cls.__name__).insert_one(**_document)
-        return await cls._create_model_instance(document=document)
+        document = cls._merge(_document, kwargs)
+        cls._validate_data(data=document)
+        final_document = {field: await cls._clean_value(value=value) for field, value in document.items()}
+        result = await cls._create_model_instance(document=final_document)
+        insert_one_result = db.session.collection(cls.__name__).insert_one(**final_document)
+        result.id = insert_one_result['_id']
+        return result
 
     @classmethod
     async def insert_many(cls, documents: Iterable[dict]) -> list[Self]:
-        result = []
-        for document in documents:
-            prepare_id_for_query(document, is_mongo=False)
-            cls._validate_data(data=document)
-            inserted_document = db.session.collection(cls.__name__).insert_one(**document)
-            document['_id'] = inserted_document['_id']
-            result.append(await cls._create_model_instance(document=document))
-        return result
+        return [await cls.insert_one(document) for document in documents]
 
     # # # # # Delete # # # # #
     async def delete(self) -> None:

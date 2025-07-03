@@ -1,4 +1,5 @@
 import contextlib
+from pathlib import Path
 from typing import List
 from unittest import IsolatedAsyncioTestCase
 
@@ -260,6 +261,27 @@ class _BaseDatabaseTestCase:
                 e.args[0]
                 == 'Panther does not support dict[str, tests.test_database_advance.Book] as a field type for unwrapping.'
             )
+
+
+class TestPantherDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
+    DB_PATH = 'test.pdb'
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        global DATABASE
+        DATABASE = {
+            'engine': {'class': 'panther.db.connections.PantherDBConnection', 'path': cls.DB_PATH},
+        }
+        Panther(__name__, configs=__name__, urls={})
+
+    def tearDown(self) -> None:
+        db.session.collection('Book').drop()
+        db.session.collection('Author').drop()
+
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
+        Path(cls.DB_PATH).unlink(missing_ok=True)
 
 
 @pytest.mark.mongodb

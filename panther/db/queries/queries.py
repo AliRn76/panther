@@ -2,7 +2,6 @@ import sys
 from collections.abc import Iterable, Sequence
 
 from pantherdb import Cursor as PantherDBCursor
-from pydantic import BaseModel
 
 from panther.configs import QueryObservable
 from panther.db.cursor import Cursor

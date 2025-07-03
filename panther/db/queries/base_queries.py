@@ -1,9 +1,16 @@
+from __future__ import annotations
+
 import operator
+import types
+import typing
 from abc import abstractmethod
 from collections.abc import Iterator
 from functools import reduce
 from sys import version_info
+from typing import Any, Union, get_args, get_origin
 
+from pantherdb import Cursor
+from pydantic import BaseModel, ValidationError
 from pydantic_core._pydantic_core import ValidationError
 
 from panther.db.cursor import Cursor
@@ -43,15 +50,153 @@ class BaseQuery:
                 raise DatabaseError(error)
 
     @classmethod
-    async def _create_model_instance(cls, document: dict):
-        """Prevent getting errors from document insertion"""
+    def _get_annotation_type(cls, annotation: Any) -> type | None:
+        """
+        Extracts the underlying, non-optional type from a type annotation.
+        Handles basic types, Pydantic BaseModels, lists, and unions (optionals).
+        Returns None if no single underlying type can be determined (e.g., for list[NoneType]).
+        Raises DatabaseError for unsupported annotations.
+        """
+        origin = get_origin(annotation)
+
+        # Handle list[T] and Union[T, None] (T | None or typing.Union[T, None])
+        if origin is list or origin is types.UnionType or origin is Union:
+            # Extracts the first non-None type from a tuple of type arguments.
+            for arg in get_args(annotation):
+                if arg is not type(None):
+                    return arg
+            return None
+
+        # Handle basic types (str, int, bool, dict) and Pydantic BaseModel subclasses
+        if isinstance(annotation, type) and (annotation in (str, int, bool, dict) or issubclass(annotation, BaseModel)):
+            return annotation
+
+        raise DatabaseError(f'Panther does not support {annotation} as a field type for unwrapping.')
+
+    @classmethod
+    async def _create_list(cls, field_type: type, value: Any) -> Any:
+        from panther.db import Model
+
+        # `field_type` is the expected type of items in the list (e.g., int, Model, list[str])
+        # `value` is a single item from the input list that needs processing.
+
+        # Handles list[list[int]], list[dict[str,int]] etc.
+        if isinstance(field_type, (types.GenericAlias, typing._GenericAlias)):
+            element_type = cls._get_annotation_type(field_type)  # Unwrap further (e.g. list[str] -> str)
+            if element_type is None:
+                raise DatabaseError(f'Cannot determine element type for generic list item: {field_type}')
+            if not isinstance(value, list):  # Or check if iterable, matching the structure
+                raise DatabaseError(f'Expected a list for nested generic type {field_type}, got {type(value)}')
+            return [await cls._create_list(field_type=element_type, value=item) for item in value]
+
+        # Make sure Model condition is before BaseModel.
+        if isinstance(field_type, type) and issubclass(field_type, Model):
+            # `value` is assumed to be an ID for the Model instance.
+            return await field_type.first(id=value)
+
+        if isinstance(field_type, type) and issubclass(field_type, BaseModel):
+            if not isinstance(value, dict):
+                raise DatabaseError(f'Expected a dictionary for BaseModel {field_type.__name__}, got {type(value)}')
+
+            return {
+                field_name: await cls._create_field(model=field_type, field_name=field_name, value=value[field_name])
+                for field_name in value
+            }
+
+        # Base case: value is a primitive type (str, int, etc.)
+        return value
+
+    @classmethod
+    async def _create_field(cls, model: type, field_name: str, value: Any) -> Any:
+        from panther.db import Model
+
+        # Handle primary key field directly
+        if field_name == 'id':
+            return value
+
+        if field_name not in model.model_fields:
+            # Field from input data is not defined in the model.
+            # Pydantic's `extra` config on the model will handle this upon instantiation.
+            return value
+
+        field_annotation = model.model_fields[field_name].annotation
+        unwrapped_type = cls._get_annotation_type(field_annotation)
+
+        if unwrapped_type is None:
+            raise DatabaseError(
+                f"Could not determine a valid underlying type for field '{field_name}' "
+                f'with annotation {field_annotation} in model {model.__name__}.',
+            )
+
+        if get_origin(field_annotation) is list:
+            # Or check for general iterables if applicable
+            if not isinstance(value, list):
+                raise DatabaseError(
+                    f"Field '{field_name}' expects a list, got {type(value)} for model {model.__name__}",
+                )
+            return [await cls._create_list(field_type=unwrapped_type, value=item) for item in value]
+
+        if isinstance(unwrapped_type, type) and issubclass(unwrapped_type, Model):
+            if obj := await unwrapped_type.first(id=value):
+                return obj.model_dump()
+            return None
+
+        if isinstance(unwrapped_type, type) and issubclass(unwrapped_type, BaseModel):
+            if not isinstance(value, dict):
+                raise DatabaseError(
+                    f"Field '{field_name}' expects a dictionary for BaseModel {unwrapped_type.__name__}, "
+                    f'got {type(value)} in model {model.__name__}',
+                )
+            return {
+                nested_field_name: await cls._create_field(
+                    model=unwrapped_type,
+                    field_name=nested_field_name,
+                    value=value[nested_field_name],
+                )
+                for nested_field_name in unwrapped_type.model_fields
+                if nested_field_name in value
+            }
+
+        return value
+
+    @classmethod
+    async def _create_model_instance(cls, document: dict) -> Self:
+        """Prepares document and creates an instance of the model."""
         if '_id' in document:
             document['id'] = document.pop('_id')
+
+        processed_document = {
+            field_name: await cls._create_field(model=cls, field_name=field_name, value=field_value)
+            for field_name, field_value in document.items()
+        }
         try:
-            return cls(**document)
+            return cls(**processed_document)
         except ValidationError as validation_error:
-            if error := cls._clean_error_message(validation_error=validation_error):
-                raise DatabaseError(error)
+            error = cls._clean_error_message(validation_error=validation_error)
+            raise DatabaseError(error) from validation_error
+
+    @classmethod
+    async def _clean_value(cls, value: Any) -> dict[str, Any] | list[Any]:
+        from panther.db import Model
+
+        match value:
+            case None:
+                return None
+            case Model() as model:
+                if model.id is None:
+                    await model.save()
+                # We save full object because user didn't specify the type.
+                return model._id
+            case BaseModel() as model:
+                return {
+                    field_name: await cls._clean_value(value=getattr(model, field_name))
+                    for field_name in model.model_fields
+                }
+            case dict() as d:
+                return {k: await cls._clean_value(value=v) for k, v in d.items()}
+            case list() as l:
+                return [await cls._clean_value(value=item) for item in l]
+        return value
 
     @classmethod
     @abstractmethod

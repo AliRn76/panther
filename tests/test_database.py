@@ -21,13 +21,16 @@ class Book(Model):
     author: str
     pages_count: int
 
+
 class Viewer(BaseModel):
     first_name: str
+
 
 class Library(Model):
     name: str
     books: list[Book]
     viewer: Viewer
+
 
 class _BaseDatabaseTestCase:
     # # # Insert
@@ -520,12 +523,9 @@ class _BaseDatabaseTestCase:
         assert book.author == author
         assert book.pages_count == pages_count
 
-
     async def test_save_nested_models(self):
         library = await Library.insert_one(
-            name='Name1',
-            viewer=Viewer(first_name='Ali'),
-            books=[Book(name='Book1', author='Author1', pages_count=1)]
+            name='Name1', viewer=Viewer(first_name='Ali'), books=[Book(name='Book1', author='Author1', pages_count=1)]
         )
         assert library.id
         assert library.name == 'Name1'
@@ -533,7 +533,6 @@ class _BaseDatabaseTestCase:
         assert library.books[0].name == 'Book1'
         assert library.books[0].author == 'Author1'
         assert library.books[0].pages_count == 1
-
 
     @classmethod
     async def _insert_many(cls) -> int:
