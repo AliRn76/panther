@@ -3,8 +3,7 @@ from panther.request import Request
 
 
 class UserPermission(BasePermission):
-    @classmethod
-    async def authorization(cls, request: Request) -> bool:
+    async def __call__(self, request: Request) -> bool:
         if request.user.username == 'Ali':
             return True
         return False

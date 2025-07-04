@@ -1,31 +1,16 @@
 import logging
 
 from panther import status
-from panther.app import API, GenericAPI
+from panther.app import GenericAPI
 from panther.configs import config
 from panther.db.models import BaseUser
-from panther.exceptions import AuthenticationAPIError, RedirectAPIError
+from panther.panel.authentications import AdminCookieJWTAuthentication
 from panther.panel.middlewares import RedirectToSlashMiddleware
 from panther.panel.utils import clean_model_schema, get_models
-from panther.permissions import BasePermission
 from panther.request import Request
 from panther.response import Cookie, RedirectResponse, Response, TemplateResponse
 
 logger = logging.getLogger('panther')
-
-
-class AdminPanelPermission(BasePermission):
-    """We didn't want to change AUTHENTICATION class of user, so we use permission class for this purpose."""
-
-    @classmethod
-    async def authorization(cls, request: Request) -> bool:
-        from panther.authentications import CookieJWTAuthentication
-
-        try:
-            await CookieJWTAuthentication.authentication(request=request)
-            return True
-        except AuthenticationAPIError:
-            raise RedirectAPIError(url=f'login?redirect_to={request.path}')
 
 
 class LoginView(GenericAPI):
@@ -64,14 +49,14 @@ class LoginView(GenericAPI):
 
 
 class HomeView(GenericAPI):
-    permissions = [AdminPanelPermission]
+    auth = AdminCookieJWTAuthentication
 
     def get(self):
         return TemplateResponse(name='home.html', context={'tables': get_models()})
 
 
 class TableView(GenericAPI):
-    permissions = [AdminPanelPermission]
+    auth = AdminCookieJWTAuthentication
     middlewares = [RedirectToSlashMiddleware]
 
     async def get(self, request: Request, index: int):
@@ -92,7 +77,7 @@ class TableView(GenericAPI):
 
 
 class CreateView(GenericAPI):
-    permissions = [AdminPanelPermission]
+    auth = AdminCookieJWTAuthentication
     middlewares = [RedirectToSlashMiddleware]
 
     async def get(self, request: Request, index: int):
@@ -107,15 +92,15 @@ class CreateView(GenericAPI):
 
     async def post(self, request: Request, index: int):
         model = config.MODELS[index]
-        validated_data = API.validate_input(model=model, request=request)
-        instance = await model.insert_one(validated_data.model_dump())
+        request.validate_data(model=model)
+        instance = await model.insert_one(request.validated_data.model_dump())
         if issubclass(model, BaseUser):
             await instance.set_password(password=instance.password)
         return instance
 
 
 class DetailView(GenericAPI):
-    permissions = [AdminPanelPermission]
+    auth = AdminCookieJWTAuthentication
     middlewares = [RedirectToSlashMiddleware]
 
     async def get(self, index: int, document_id: str):
@@ -128,8 +113,8 @@ class DetailView(GenericAPI):
 
     async def put(self, request: Request, index: int, document_id: str):
         model = config.MODELS[index]
-        validated_data = API.validate_input(model=model, request=request)
-        return await model.update_one({'id': document_id}, validated_data.model_dump())
+        request.validate_data(model=model)
+        return await model.update_one({'id': document_id}, request.validated_data.model_dump())
 
     async def delete(self, index: int, document_id: str):
         model = config.MODELS[index]

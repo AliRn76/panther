@@ -4,9 +4,12 @@ from typing import Literal
 from urllib.parse import parse_qsl
 
 import orjson as json
+from orjson import JSONDecodeError
+from pydantic import ValidationError
 
 from panther._utils import read_multipart_form_data
 from panther.base_request import BaseRequest
+from panther.exceptions import BadRequestAPIError, UnprocessableEntityError
 
 logger = logging.getLogger('panther')
 
@@ -46,3 +49,17 @@ class Request(BaseRequest):
             message = await self.asgi_receive()
             self.__body += message.get('body', b'')
             more_body = message.get('more_body', False)
+
+    def validate_data(self, model):
+        if isinstance(self.data, bytes):
+            raise UnprocessableEntityError(detail='Content-Type is not valid')
+        if self.data is None:
+            raise BadRequestAPIError(detail='Request body is required')
+        try:
+            # `request` will be ignored in regular `BaseModel`
+            self.validated_data = model(**self.data)
+        except ValidationError as validation_error:
+            error = {'.'.join(str(loc) for loc in e['loc']): e['msg'] for e in validation_error.errors()}
+            raise BadRequestAPIError(detail=error)
+        except JSONDecodeError:
+            raise UnprocessableEntityError(detail='JSON Decode Error')

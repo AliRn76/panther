@@ -269,7 +269,7 @@ Serializers transform data between the application and API requests.
         filter_fields = ['name', 'author']  #(3)!
         sort_fields = ['name', 'pages_count']  #(4)!
     
-        async def cursor(self, request: Request, **kwargs):
+        async def get_query(self, request: Request, **kwargs):
             return await Book.find()
     ```
 
@@ -327,7 +327,7 @@ Serializers transform data between the application and API requests.
     
     
     class SingleBookAPI(RetrieveAPI):
-        async def object(self, request: Request, **kwargs):
+        async def get_instance(self, request: Request, **kwargs):
             return await Book.find_one_or_raise(id=kwargs['book_id'])
     ```
 
@@ -386,7 +386,7 @@ Serializers transform data between the application and API requests.
     class SingleBookAPI(RetrieveAPI, UpdateAPI):
         input_model = BookSerializer
 
-        async def object(self, request: Request, **kwargs):
+        async def get_instance(self, request: Request, **kwargs):
             return await Book.find_one_or_raise(id=kwargs['book_id'])
     ```
 
@@ -442,7 +442,7 @@ Serializers transform data between the application and API requests.
     class SingleBookAPI(RetrieveAPI, UpdateAPI, DeleteAPI):
         input_model = BookSerializer
 
-        async def object(self, request: Request, **kwargs):
+        async def get_instance(self, request: Request, **kwargs):
             return await Book.find_one_or_raise(id=kwargs['book_id'])
     ```
 

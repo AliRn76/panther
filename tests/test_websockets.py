@@ -3,6 +3,7 @@ from unittest import TestCase
 import orjson as json
 
 from panther import Panther, status
+from panther.authentications import QueryParamJWTAuthentication
 from panther.configs import config
 from panther.test import WebsocketClient
 from panther.websocket import GenericWebsocket
@@ -51,10 +52,6 @@ class PathVariableWebsocket(GenericWebsocket):
 class SendAllTypesWebsocket(GenericWebsocket):
     async def connect(self):
         await self.accept()
-        # Nothing
-        await self.send()
-        # None
-        await self.send(None)
         # String
         await self.send('Hello Again')
         # Int
@@ -67,6 +64,11 @@ class SendAllTypesWebsocket(GenericWebsocket):
         await self.send((1, 2, 3, 'Ali', 4))
         # Bytes
         await self.send(b'It Is Value Of A File')
+        # Nothing
+        await self.send()
+        # None
+        await self.send(None)
+        # Close
         await self.close()
 
 
@@ -78,7 +80,7 @@ class WebsocketWithoutAuthentication(GenericWebsocket):
 
 
 class WebsocketWithAuthentication(GenericWebsocket):
-    auth = True
+    auth = QueryParamJWTAuthentication
 
     async def connect(self):
         await self.accept()
@@ -87,8 +89,7 @@ class WebsocketWithAuthentication(GenericWebsocket):
 
 
 class Permission:
-    @classmethod
-    async def authorization(cls, connection) -> bool:
+    async def __call__(self, connection) -> bool:
         return connection.path == '/with-permission'
 
 
@@ -240,11 +241,19 @@ class TestWebsocket(TestCase):
         assert responses[6]['type'] == 'websocket.send'
         assert responses[6]['bytes'] == b'It Is Value Of A File'
         assert 'text' not in responses[6]
+        # Nothing
+        assert responses[7]['type'] == 'websocket.send'
+        assert responses[7]['text'] == 'null'
+        assert 'bytes' not in responses[7]
+        # None
+        assert responses[8]['type'] == 'websocket.send'
+        assert responses[8]['text'] == 'null'
+        assert 'bytes' not in responses[8]
 
         # Close
-        assert responses[7]['type'] == 'websocket.close'
-        assert responses[7]['code'] == 1000
-        assert responses[7]['reason'] == ''
+        assert responses[9]['type'] == 'websocket.close'
+        assert responses[9]['code'] == 1000
+        assert responses[9]['reason'] == ''
 
     def test_without_auth(self):
         ws = WebsocketClient(app=self.app)
@@ -264,21 +273,16 @@ class TestWebsocket(TestCase):
         ws = WebsocketClient(app=self.app)
         responses = ws.connect('with-auth')
 
-        assert responses[0]['type'] == 'websocket.close'
-        assert responses[0]['code'] == 1000
-        assert responses[0]['reason'] == ''
+        assert responses[0]['type'] == 'websocket.accept'
+        assert responses[0]['subprotocol'] is None
+        assert responses[0]['headers'] == {}
 
-    def test_with_auth_not_defined(self):
-        ws = WebsocketClient(app=self.app)
-        with self.assertLogs(level='ERROR') as captured:
-            responses = ws.connect('with-auth?authorization=Bearer token')
+        assert responses[1]['type'] == 'websocket.send'
+        assert responses[1]['text'] == 'null'
 
-        assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == '`WS_AUTHENTICATION` has not been set in configs'
-
-        assert responses[0]['type'] == 'websocket.close'
-        assert responses[0]['code'] == 1000
-        assert responses[0]['reason'] == ''
+        assert responses[2]['type'] == 'websocket.close'
+        assert responses[2]['code'] == 1000
+        assert responses[2]['reason'] == ''
 
     def test_with_auth_success(self):
         global WS_AUTHENTICATION, SECRET_KEY, DATABASE

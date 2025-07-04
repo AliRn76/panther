@@ -57,8 +57,11 @@ urls = {
 ## Advanced Usage
 
 ### Authentication
-You can enable authentication in your WebSocket class by setting `auth = True` and specifying your authentication class in the configuration with `WS_AUTHENTICATION`. 
-Panther will use the `authentication()` method of this class to authenticate the user. 
+You can enable authentication in your WebSocket class by setting `auth` to an async function or a class with an async `__call__` method. Panther will use this callable to authenticate the user. 
+
+- If you do not set `auth`, Panther will use the default `WS_AUTHENTICATION` from your configuration **only if the request contains an authorization header/ cookie/ param/ etc.**. 
+- If there is no authorization header, authentication is bypassed and `self.user` will be `None`.
+
 There are several built-in options, but we recommend `QueryParamJWTAuthentication` for WebSocket authentication.
 
 ```python
@@ -69,38 +72,59 @@ This will set `self.user` to a `UserModel` instance or `None`. The connection wi
 
 ```python title="app/websockets.py" linenums="1"
 from panther.websocket import GenericWebsocket
+from app.authentications import MyAuthenticationClass
 
 class MyWebSocket(GenericWebsocket):
-    auth = True
+    auth = MyAuthenticationClass  # Or use an async function
     
     async def connect(self):
         print(self.user)
         ...
 ```
 
+> **Note:** When authentication is bypassed (no authorization header), `self.user` will be `None` and you must rely on permissions to check the user and their authorization.
+
 ### Permissions
-You can implement your authorization logic using permission classes. Any class that inherits from `panther.permissions.BasePermission` or implements an `authorization()` method can be used as a permission class.
+You can implement your authorization logic using permission classes or functions. Any async function or class with an async `__call__` method can be used as a permission. Panther will call each permission (asynchronously). 
 
-Pass a list of permission classes to your WebSocket class, and Panther will call each class's `authorization()` method. If any return `False`, the connection will be rejected.
+- If any return `False`, the connection will be rejected.
 
-> The `authorization()` method should be an `async classmethod`.
+Pass a list of permission callables to your WebSocket class. 
 
-```python title="app/websockets.py" linenums="1"
-from panther.websocket import Websocket, GenericWebsocket
+- If you pass a single permission, it will be automatically wrapped in a list.
+
+> Each permission must be async (either an async function or a class with an async `__call__`).
+
+**Example Permission Function:**
+
+```python title="app/permissions.py" linenums="1"
+from panther.websocket import Websocket
+
+async def custom_permission(request: Websocket) -> bool:
+    return True
+```
+
+**Example Permission Class:**
+
+```python title="app/permissions.py" linenums="1"
+from panther.websocket import Websocket
 from panther.permissions import BasePermission
 
-class MyPermission(BasePermission):
-    @classmethod
-    async def authorization(cls, request: Websocket) -> bool:
+class CustomPermission(BasePermission):
+    async def __call__(self, request: Websocket) -> bool:
         return True
+```
+
+```python title="app/websockets.py" linenums="1"
+from panther.websocket import GenericWebsocket
+from app.permissions import custom_permission, CustomPermission
 
 class MyWebSocket(GenericWebsocket):
-    permissions = [MyPermission]
+    permissions = [custom_permission, CustomPermission]  # Or just one
     
     async def connect(self):
         ...
 ```
-
 
 ### Multiple Workers & Redis
 - **Recommended:** For running WebSockets with multiple workers, add Redis to your configuration. [See Adding Redis](redis.md)

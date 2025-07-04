@@ -150,9 +150,9 @@ class Response:
             return output.model_dump()
 
         if isinstance(self.data, dict) or isinstance(self.data, BaseModel):
-            return await handle_output(self.data)
+            self.data = await handle_output(self.data)
 
-        if isinstance(self.data, IterableDataTypes):
+        elif isinstance(self.data, IterableDataTypes):
             results = []
             for d in self.data:
                 if isinstance(d, dict) or isinstance(d, BaseModel):
@@ -160,10 +160,13 @@ class Response:
                 else:
                     msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'
                     raise TypeError(msg)
-            return results
+            self.data = results
 
-        msg = 'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'
-        raise TypeError(msg)
+        else:
+            msg = (
+                'Type of Response data is not match with `output_model`.\n*hint: You may want to remove `output_model`'
+            )
+            raise TypeError(msg)
 
 
 class StreamingResponse(Response):

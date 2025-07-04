@@ -1,15 +1,14 @@
 import functools
+import inspect
 import logging
-import traceback
 import typing
 from collections.abc import Callable
 from datetime import timedelta
 from typing import Literal
 
-from orjson import JSONDecodeError
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
-from panther._utils import is_function_async
+from panther._utils import check_api_deprecations, is_function_async, validate_api_auth, validate_api_permissions
 from panther.base_request import BaseRequest
 from panther.caching import (
     get_response_from_cache,
@@ -17,12 +16,8 @@ from panther.caching import (
 )
 from panther.configs import config
 from panther.exceptions import (
-    APIError,
     AuthorizationAPIError,
-    BadRequestAPIError,
     MethodNotAllowedAPIError,
-    PantherError,
-    UnprocessableEntityError,
 )
 from panther.middlewares import HTTPMiddleware
 from panther.openapi import OutputSchema
@@ -62,8 +57,8 @@ class API:
         input_model: type[ModelSerializer] | type[BaseModel] | None = None,
         output_model: type[ModelSerializer] | type[BaseModel] | None = None,
         output_schema: OutputSchema | None = None,
-        auth: bool = False,
-        permissions: list[type[BasePermission]] | None = None,
+        auth: Callable | None = None,
+        permissions: list[Callable] | Callable | None = None,
         throttling: Throttle | None = None,
         cache: timedelta | None = None,
         middlewares: list[type[HTTPMiddleware]] | None = None,
@@ -74,41 +69,17 @@ class API:
         self.output_model = output_model
         self.output_schema = output_schema
         self.auth = auth
-        self.permissions = permissions or []
+        self.permissions = permissions
+        if self.permissions is not None and not isinstance(self.permissions, list):
+            self.permissions = [self.permissions]
         self.throttling = throttling
         self.cache = cache
         self.middlewares = middlewares
         self.request: Request | None = None
-        if kwargs.pop('cache_exp_time', None):
-            deprecation_message = (
-                traceback.format_stack(limit=2)[0]
-                + '\nThe `cache_exp_time` argument has been removed in Panther v5 and is no longer available.'
-                '\nYou may want to use `cache` instead.'
-            )
-            raise PantherError(deprecation_message)
-        # Validate Cache
-        if self.cache and not isinstance(self.cache, timedelta):
-            deprecation_message = (
-                traceback.format_stack(limit=2)[0] + '\nThe `cache` argument has been changed in Panther v5, '
-                'it should be an instance of `datetime.timedelta()`.'
-            )
-            raise PantherError(deprecation_message)
-        assert self.cache is None or isinstance(self.cache, timedelta)
-        # Validate Permissions
-        for perm in self.permissions:
-            if is_function_async(perm.authorization) is False:
-                msg = f'{perm.__name__}.authorization() should be `async`'
-                logger.error(msg)
-                raise PantherError(msg)
-            if type(perm.authorization).__name__ != 'method':
-                msg = f'{perm.__name__}.authorization() should be `@classmethod`'
-                logger.error(msg)
-                raise PantherError(msg)
-        # Check kwargs
-        if kwargs:
-            msg = f'Unknown kwargs: {kwargs.keys()}'
-            logger.error(msg)
-            raise PantherError(msg)
+        if self.auth is not None:
+            validate_api_auth(self.auth)
+        validate_api_permissions(self.permissions)
+        check_api_deprecations(self.cache, **kwargs)
 
     def __call__(self, func):
         self.func = func
@@ -145,16 +116,18 @@ class API:
             raise MethodNotAllowedAPIError
 
         # 2. Authentication
-        if self.auth:
-            if not config.AUTHENTICATION:
-                logger.critical('"AUTHENTICATION" has not been set in configs')
-                raise APIError
-            self.request.user = await config.AUTHENTICATION.authentication(self.request)
+        if auth := (self.auth or config.AUTHENTICATION):
+            if inspect.isclass(auth):
+                auth = auth()
+            self.request.user = await auth(self.request)
 
         # 3. Permissions
-        for perm in self.permissions:
-            if await perm.authorization(self.request) is False:
-                raise AuthorizationAPIError
+        if self.permissions:
+            for perm in self.permissions:
+                if inspect.isclass(perm):
+                    perm = perm()
+                if await perm(self.request) is False:
+                    raise AuthorizationAPIError
 
         # 4. Throttle
         if throttling := self.throttling or config.THROTTLING:
@@ -162,7 +135,7 @@ class API:
 
         # 5. Validate Input
         if self.input_model and self.request.method in {'POST', 'PUT', 'PATCH'}:
-            self.request.validated_data = self.validate_input(model=self.input_model, request=self.request)
+            self.request.validate_data(model=self.input_model)
 
         # 6. Get Cached Response
         if self.cache and self.request.method == 'GET':
@@ -182,7 +155,7 @@ class API:
         if not isinstance(response, Response):
             response = Response(data=response)
         if self.output_model and response.data:
-            response.data = await response.serialize_output(output_model=self.output_model)
+            await response.serialize_output(output_model=self.output_model)
         if response.pagination:
             response.data = await response.pagination.template(response.data)
 
@@ -191,21 +164,6 @@ class API:
             await set_response_in_cache(request=self.request, response=response, duration=self.cache)
 
         return response
-
-    @classmethod
-    def validate_input(cls, model, request: Request):
-        if isinstance(request.data, bytes):
-            raise UnprocessableEntityError(detail='Content-Type is not valid')
-        if request.data is None:
-            raise BadRequestAPIError(detail='Request body is required')
-        try:
-            # `request` will be ignored in regular `BaseModel`
-            return model(**request.data, request=request)
-        except ValidationError as validation_error:
-            error = {'.'.join(str(loc) for loc in e['loc']): e['msg'] for e in validation_error.errors()}
-            raise BadRequestAPIError(detail=error)
-        except JSONDecodeError:
-            raise UnprocessableEntityError(detail='JSON Decode Error')
 
 
 class MetaGenericAPI(type):
@@ -226,7 +184,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
     input_model: type[ModelSerializer] | type[BaseModel] | None = None
     output_model: type[ModelSerializer] | type[BaseModel] | None = None
     output_schema: OutputSchema | None = None
-    auth: bool = False
+    auth: Callable | None = None
     permissions: list[type[BasePermission]] | None = None
     throttling: Throttle | None = None
     cache: timedelta | None = None

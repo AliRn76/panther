@@ -23,8 +23,8 @@ async def documents_api(request: Request, index: int):
     model = config.MODELS[index]
 
     if request.method == 'POST':
-        validated_data = API.validate_input(model=model, request=request)
-        document = model.insert_one(**validated_data.model_dump(exclude=['id']))
+        request.validate_data(model=model)
+        document = model.insert_one(**request.validated_data.model_dump(exclude=['id']))
         return Response(data=document, status_code=status.HTTP_201_CREATED)
 
     else:
@@ -44,8 +44,8 @@ async def single_document_api(request: Request, index: int, document_id: int | s
 
     if document := model.find_one(id=document_id):
         if request.method == 'PUT':
-            validated_data = API.validate_input(model=model, request=request)
-            document.update(**validated_data.model_dump(exclude=['id']))
+            request.validate_data(model=model)
+            document.update(**request.validated_data.model_dump(exclude=['id']))
             return Response(data=document, status_code=status.HTTP_202_ACCEPTED)
 
         elif request.method == 'DELETE':

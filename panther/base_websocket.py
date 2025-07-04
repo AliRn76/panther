@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import logging
 from multiprocessing.managers import SyncManager
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Callable, Literal
 
 import orjson as json
 import ulid
@@ -193,33 +194,33 @@ class WebsocketConnections(Singleton):
 
     @classmethod
     async def handle_authentication(cls, connection: Websocket):
-        """Return True if connection is closed, False otherwise."""
-        if connection.auth:
-            if not config.WS_AUTHENTICATION:
-                logger.critical('`WS_AUTHENTICATION` has not been set in configs')
+        if auth := (connection.auth or config.WS_AUTHENTICATION):
+            if inspect.isclass(auth):
+                auth = auth()
+            try:
+                connection.user = await auth(connection)
+            except BaseError as e:
+                connection.change_state(state='Rejected', message=e.detail)
                 await connection.close()
-            else:
-                try:
-                    connection.user = await config.WS_AUTHENTICATION.authentication(connection)
-                except BaseError as e:
-                    connection.change_state(state='Rejected', message=e.detail)
-                    await connection.close()
 
     @classmethod
     async def handle_permissions(cls, connection: Websocket):
-        """Return True if connection is closed, False otherwise."""
-        for perm in connection.permissions:
-            if type(perm.authorization).__name__ != 'method':
-                logger.critical(f'{perm.__name__}.authorization should be "classmethod"')
-                await connection.close()
-            elif await perm.authorization(connection) is False:
-                connection.change_state(state='Rejected', message='Permission Denied')
-                await connection.close()
+        permissions = connection.permissions
+        if permissions is not None and not isinstance(permissions, list):
+            permissions = [permissions]
+
+        if permissions:
+            for perm in permissions:
+                if inspect.isclass(perm):
+                    perm = perm()
+                if await perm(connection) is False:
+                    connection.change_state(state='Rejected', message='Permission Denied')
+                    await connection.close()
 
 
 class Websocket(BaseRequest):
-    auth: bool = False
-    permissions: list = []
+    auth: Callable | None = None
+    permissions: list[Callable] | Callable | None = None
     state: str = 'Connected'
     _connection_id: str = ''
     _is_rejected: bool = False
@@ -240,13 +241,12 @@ class Websocket(BaseRequest):
 
     async def send(self, data: any = None) -> None:
         logger.debug(f'Sending WS Message to {self.connection_id}')
-        if data:
-            if isinstance(data, bytes):
-                await self.send_bytes(bytes_data=data)
-            elif isinstance(data, str):
-                await self.send_text(text_data=data)
-            else:
-                await self.send_text(text_data=json.dumps(data).decode())
+        if isinstance(data, bytes):
+            await self.send_bytes(bytes_data=data)
+        elif isinstance(data, str):
+            await self.send_text(text_data=data)
+        else:
+            await self.send_text(text_data=json.dumps(data).decode())
 
     async def send_text(self, text_data: str) -> None:
         await self.asgi_send({'type': 'websocket.send', 'text': text_data})

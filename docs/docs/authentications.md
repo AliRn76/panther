@@ -6,11 +6,14 @@ Authentication in Panther ensures that only authorized users can access your API
 
 ## How Authentication Works
 
-- When `auth=True` is set for an API or WebSocket, Panther will use the configured authentication class to verify the user.
+- The `auth` parameter for an API or WebSocket should be an async function or a class with an async `__call__` method. Panther will use this callable to verify the user.
+- If you do not set `auth`, Panther will use the default `AUTHENTICATION` from your config **only if the request contains an authorization header**. If there is no authorization header, authentication is bypassed and `request.user` will be `None`.
 - If authentication fails, Panther raises `HTTP_401_UNAUTHORIZED`.
 - The authenticated user is available as:
   - `request.user` in API views
   - `self.user` in WebSocket connections
+
+> **Note:** When authentication is bypassed (no authorization header), `request.user` will be `None` and you must rely on permissions to check the user and their authorization.
 
 ---
 
@@ -95,21 +98,41 @@ WS_AUTHENTICATION = 'panther.authentications.QueryParamJWTAuthentication'
 
 ## Custom Authentication
 
-You can implement your own authentication logic by creating a custom class that inherits from `panther.authentications.BaseAuthentication`.
+You can implement your own authentication logic by either:
+- Inheriting from `panther.authentications.BaseAuthentication` and implementing an async `__call__` method (recommended for consistency), or
+- Providing any async function or class with an async `__call__` method.
 
 ### Steps to create a custom authentication class:
-1. **Inherit from `BaseAuthentication`**
-2. **Implement the class method:**
+1. **Inherit from `BaseAuthentication` and implement async `__call__`**
    ```python
-   @classmethod
-   async def authentication(cls, request: Request | Websocket):
+   from panther.request import Request
+   from panther.exceptions import AuthenticationAPIError
+   from panther.authentications import BaseAuthentication
+
+   class CustomAuthentication(BaseAuthentication):
+       async def __call__(self, request: Request):
+           # Your authentication logic here
+           # Return an instance of USER_MODEL (default: BaseUser)
+           # Or raise AuthenticationAPIError on failure
+           ...
+   ```
+   Or as a function or plain class:
+   ```python
+   async def custom_authentication(request: Request):
        # Your authentication logic here
        # Return an instance of USER_MODEL (default: BaseUser)
-       # Or raise panther.exceptions.AuthenticationAPIError on failure
+       # Or raise AuthenticationAPIError on failure
+       ...
    ```
-3. **Configure your custom authentication class in your configs:**
+2. **Configure your custom authentication class or function in your configs (if you want it as default):**
    ```python
    AUTHENTICATION = 'project_name.core.authentications.CustomAuthentication'
+   ```
+3. **Or set it per API using the `auth` parameter:**
+   ```python
+   @API(auth=CustomAuthentication)
+   async def my_api(request: Request):
+       ...
    ```
 
 ---
@@ -121,7 +144,8 @@ You can implement your own authentication logic by creating a custom class that 
 ---
 
 ## Summary
-- Choose and configure the appropriate authentication class for your use case.
+- Choose and configure the appropriate authentication class or function for your use case.
 - Use JWT configuration options to control token behavior.
 - For WebSocket, prefer query parameter-based authentication.
-- Implement custom authentication by inheriting from `BaseAuthentication` and overriding the `authentication` method.
+- Implement custom authentication as an async function or a class with an async `__call__` method.
+- If authentication is bypassed, `request.user` will be `None` and you must use permissions to check the user and their authorization.

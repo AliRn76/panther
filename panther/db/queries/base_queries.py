@@ -68,9 +68,13 @@ class BaseQuery:
             return None
 
         # Handle basic types (str, int, bool, dict) and Pydantic BaseModel subclasses
-        if isinstance(annotation, type) and (annotation in (str, int, bool, dict) or issubclass(annotation, BaseModel)):
-            return annotation
-
+        try:
+            if isinstance(annotation, type) and (annotation in (str, int, bool, dict) or issubclass(annotation, BaseModel)):
+                return annotation
+        except TypeError:
+            # issubclass(dict[str, tests.test_database_advance.Book], BaseModel) in Python3.10 gives us TypeError and
+            # works just fine in other versions, so we have to raise DatabaseError in this situation anyway.
+            pass
         raise DatabaseError(f'Panther does not support {annotation} as a field type for unwrapping.')
 
     @classmethod
