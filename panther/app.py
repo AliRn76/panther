@@ -80,6 +80,41 @@ class API:
         self.cache = cache
         self.middlewares = middlewares
         self.request: Request | None = None
+        if self.auth is not None:
+            if not callable(self.auth):
+                msg = (
+                    f'`{self.auth}` is not valid for authentication, it should be a callable, a Class with __call__ '
+                    f'method or a single function.'
+                )
+                logger.error(msg)
+                raise PantherError(msg)
+
+            if inspect.isclass(self.auth):
+                if not inspect.isfunction(self.auth.__call__):
+                    msg = f'{self.auth.__name__}.__call__() is required.'
+                    logger.error(msg)
+                    raise PantherError(msg)
+
+                if len(inspect.signature(self.auth.__call__).parameters) != 2:
+                    msg = f'{self.auth.__name__}.__call__() required one positional argument for Request.'
+                    logger.error(msg)
+                    raise PantherError(msg)
+
+                if not is_function_async(self.auth.__call__):
+                    msg = f'{self.auth.__name__}.__call__() should be `async`'
+                    logger.error(msg)
+                    raise PantherError(msg)
+            else:
+                if len(inspect.signature(self.auth).parameters) != 1:
+                    msg = f'{self.auth.__name__}() required one positional argument for Request.'
+                    logger.error(msg)
+                    raise PantherError(msg)
+
+                if not is_function_async(self.auth):
+                    msg = f'{self.auth.__name__}() should be `async`'
+                    logger.error(msg)
+                    raise PantherError(msg)
+
         # Validate Cache
         if kwargs.pop('cache_exp_time', None):
             deprecation_message = (
@@ -225,7 +260,7 @@ class GenericAPI(metaclass=MetaGenericAPI):
     input_model: type[ModelSerializer] | type[BaseModel] | None = None
     output_model: type[ModelSerializer] | type[BaseModel] | None = None
     output_schema: OutputSchema | None = None
-    auth: bool = False
+    auth: Callable | None = None
     permissions: list[type[BasePermission]] | None = None
     throttling: Throttle | None = None
     cache: timedelta | None = None

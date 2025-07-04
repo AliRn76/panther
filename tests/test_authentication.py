@@ -2,12 +2,17 @@ from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
 
 from panther import Panther
-from panther.app import API
+from panther.app import API, GenericAPI
 from panther.authentications import CookieJWTAuthentication, QueryParamJWTAuthentication
 from panther.configs import config
 from panther.db.models import BaseUser
 from panther.request import Request
 from panther.test import APIClient
+
+
+class CustomAuth:
+    async def __call__(self, request: Request):
+        return 'THIS IS USER'
 
 
 @API()
@@ -25,10 +30,26 @@ async def logout_api(request: Request):
     return await request.user.logout()
 
 
+@API(auth=CustomAuth)
+async def custom_auth_api(request: Request):
+    return request.user
+
+
+async def custom_auth(req):
+    return 'THIS IS USER'
+
+
+@API(auth=custom_auth)
+async def custom_auth_function_api(request: Request):
+    return request.user
+
+
 urls = {
     'auth-required': auth_required_api,
     'refresh-token': refresh_token_api,
     'logout': logout_api,
+    'custom-auth': custom_auth_api,
+    'custom-auth-function': custom_auth_function_api,
 }
 
 
@@ -369,6 +390,162 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
         assert res.data.keys() == {'access_token', 'refresh_token'}
 
         config.AUTHENTICATION = auth_config
+
+    async def test_custom_auth_class(self):
+        with self.assertNoLogs(level='ERROR'):
+            res = await self.client.get('custom-auth')
+
+        assert res.status_code == 200
+        assert res.data == 'THIS IS USER'
+
+    async def test_custom_auth_function(self):
+        with self.assertNoLogs(level='ERROR'):
+            res = await self.client.get('custom-auth-function')
+
+        assert res.status_code == 200
+        assert res.data == 'THIS IS USER'
+
+    async def test_invalid_custom_auth_class(self):
+        class SyncCustomAuth:
+            def __call__(self, request: Request):
+                return 'THIS IS USER'
+
+        try:
+
+            @API(auth=SyncCustomAuth)
+            async def invalid_custom_auth_api(request: Request):
+                return request.user
+        except Exception as e:
+            assert e.args[0] == 'SyncCustomAuth.__call__() should be `async`'
+        else:
+            assert False
+
+    async def test_no_param_custom_auth_class(self):
+        class InvalidCustomAuth:
+            async def __call__(self):
+                return 'THIS IS USER'
+
+        try:
+
+            @API(auth=InvalidCustomAuth)
+            async def invalid_custom_auth_api(request: Request):
+                return request.user
+        except Exception as e:
+            assert e.args[0] == 'InvalidCustomAuth.__call__() required one positional argument for Request.'
+        else:
+            assert False
+
+    async def test_invalid_custom_auth_function(self):
+        def auth(req: str):
+            pass
+
+        try:
+
+            @API(auth=auth)
+            async def invalid_custom_auth_api(request: Request):
+                return request.user
+        except Exception as e:
+            assert e.args[0] == 'auth() should be `async`'
+        else:
+            assert False
+
+    async def test_no_param_custom_auth_function(self):
+        def auth1():
+            pass
+
+        try:
+
+            @API(auth=auth1)
+            async def invalid_custom_auth_api(request: Request):
+                return request.user
+        except Exception as e:
+            assert e.args[0] == 'auth1() required one positional argument for Request.'
+        else:
+            assert False
+
+    async def test_class_based_api_invalid_auth_type(self):
+        def auth():
+            pass
+
+        try:
+
+            class MyAPI(GenericAPI):
+                auth = True
+        except Exception as e:
+            assert e.args[0] == (
+                '`True` is not valid for authentication, it should be a callable, a Class with __call__ '
+                'method or a single function.'
+            )
+        else:
+            assert False
+
+    async def test_class_based_api_sync_function_auth(self):
+        def auth_func(req):
+            pass
+
+        try:
+
+            class MyAPI(GenericAPI):
+                auth = auth_func
+        except Exception as e:
+            assert e.args[0] == 'auth_func() should be `async`'
+        else:
+            assert False
+
+    async def test_class_based_api_no_param_function_auth(self):
+        def auth_func2():
+            pass
+
+        try:
+
+            class MyAPI(GenericAPI):
+                auth = auth_func2
+        except Exception as e:
+            assert e.args[0] == 'auth_func2() required one positional argument for Request.'
+        else:
+            assert False
+
+    async def test_class_based_api_sync_class_auth(self):
+        class CustomAuth1:
+            def __call__(self, req):
+                pass
+
+        try:
+
+            class MyAPI(GenericAPI):
+                auth = CustomAuth1
+        except Exception as e:
+            assert e.args[0] == 'CustomAuth1.__call__() should be `async`'
+        else:
+            assert False
+
+    async def test_class_based_api_no_param_class_auth(self):
+        class CustomAuth2:
+            def __call__(self):
+                pass
+
+        try:
+
+            class MyAPI(GenericAPI):
+                auth = CustomAuth2
+        except Exception as e:
+            assert e.args[0] == 'CustomAuth2.__call__() required one positional argument for Request.'
+        else:
+            assert False
+
+    async def test_class_based_api_class_without_call(self):
+        class CustomAuth3:
+            pass
+
+        try:
+
+            class MyAPI(GenericAPI):
+                auth = CustomAuth3
+        except Exception as e:
+            print(e.args[0])
+            assert e.args[0] == 'CustomAuth3.__call__() is required.'
+        else:
+            assert False
 
     async def test_logout(self):
         user = await User.insert_one(username='Username', password='Password')
