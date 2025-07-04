@@ -107,8 +107,8 @@ class CreateView(GenericAPI):
 
     async def post(self, request: Request, index: int):
         model = config.MODELS[index]
-        validated_data = API.validate_input(model=model, request=request)
-        instance = await model.insert_one(validated_data.model_dump())
+        request.validate_data(model=model)
+        instance = await model.insert_one(request.validated_data.model_dump())
         if issubclass(model, BaseUser):
             await instance.set_password(password=instance.password)
         return instance
@@ -128,8 +128,8 @@ class DetailView(GenericAPI):
 
     async def put(self, request: Request, index: int, document_id: str):
         model = config.MODELS[index]
-        validated_data = API.validate_input(model=model, request=request)
-        return await model.update_one({'id': document_id}, validated_data.model_dump())
+        request.validate_data(model=model)
+        return await model.update_one({'id': document_id}, request.validated_data.model_dump())
 
     async def delete(self, index: int, document_id: str):
         model = config.MODELS[index]

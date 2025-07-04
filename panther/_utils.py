@@ -1,10 +1,13 @@
 import asyncio
 import importlib
+import inspect
 import logging
 import re
 import subprocess
+import traceback
 import types
 from collections.abc import AsyncGenerator, Callable, Generator, Iterator
+from datetime import timedelta
 from traceback import TracebackException
 from typing import Any
 
@@ -142,3 +145,78 @@ async def to_async_generator(generator: Generator) -> AsyncGenerator:
             yield await asyncio.to_thread(async_next, iter(generator))
         except StopAsyncIteration:
             break
+
+
+def validate_api_auth(auth):
+    """Validate the auth callable or class for correct async signature and argument count."""
+    if auth is None:
+        return None
+
+    if not callable(auth):
+        msg = (
+            f'`{type(auth).__name__}` is not valid for authentication, it should be a callable, a Class with __call__ '
+            f'method or a single function.'
+        )
+        logger.error(msg)
+        raise PantherError(msg)
+
+    # If it's a class, validate its __call__
+    if inspect.isclass(auth):
+        call_method = getattr(auth, '__call__', None)
+        if not inspect.isfunction(call_method):
+            msg = f'{auth.__name__} must implement __call__() method.'
+            logger.error(msg)
+            raise PantherError(msg)
+        func = call_method
+        expected_args = 2  # self, request
+        func_name = f'{auth.__name__}.__call__()'
+    else:
+        func = auth
+        expected_args = 1  # request
+        func_name = f'{auth.__name__}()'
+
+    sig = inspect.signature(func)
+    if len(sig.parameters) != expected_args:
+        msg = f'{func_name} requires {expected_args} positional argument(s) ({"self, " if expected_args == 2 else ""}request).'
+        logger.error(msg)
+        raise PantherError(msg)
+
+    # Check if async
+    if not is_function_async(func):
+        msg = f'{func_name} should be `async`'
+        logger.error(msg)
+        raise PantherError(msg)
+
+
+def validate_api_permissions(permissions):
+    for perm in permissions:
+        if is_function_async(perm.authorization) is False:
+            msg = f'{perm.__name__}.authorization() should be `async`'
+            logger.error(msg)
+            raise PantherError(msg)
+        if type(perm.authorization).__name__ != 'method':
+            msg = f'{perm.__name__}.authorization() should be `@classmethod`'
+            logger.error(msg)
+            raise PantherError(msg)
+
+
+def check_api_deprecations(cache, **kwargs):
+    # Check Cache Usage
+    if kwargs.pop('cache_exp_time', None):
+        deprecation_message = (
+            traceback.format_stack(limit=2)[0]
+            + '\nThe `cache_exp_time` argument has been removed in Panther v5 and is no longer available.'
+            '\nYou may want to use `cache` instead.'
+        )
+        raise PantherError(deprecation_message)
+    if cache and not isinstance(cache, timedelta):
+        deprecation_message = (
+            traceback.format_stack(limit=2)[0] + '\nThe `cache` argument has been changed in Panther v5, '
+            'it should be an instance of `datetime.timedelta()`.'
+        )
+        raise PantherError(deprecation_message)
+    # Check Others
+    if kwargs:
+        msg = f'Unknown kwargs: {kwargs.keys()}'
+        logger.error(msg)
+        raise PantherError(msg)

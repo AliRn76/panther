@@ -431,7 +431,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
             async def invalid_custom_auth_api(request: Request):
                 return request.user
         except Exception as e:
-            assert e.args[0] == 'InvalidCustomAuth.__call__() required one positional argument for Request.'
+            assert e.args[0] == 'InvalidCustomAuth.__call__() requires 2 positional argument(s) (self, request).'
         else:
             assert False
 
@@ -459,7 +459,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
             async def invalid_custom_auth_api(request: Request):
                 return request.user
         except Exception as e:
-            assert e.args[0] == 'auth1() required one positional argument for Request.'
+            assert e.args[0] == 'auth1() requires 1 positional argument(s) (request).'
         else:
             assert False
 
@@ -473,7 +473,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
                 auth = True
         except Exception as e:
             assert e.args[0] == (
-                '`True` is not valid for authentication, it should be a callable, a Class with __call__ '
+                '`bool` is not valid for authentication, it should be a callable, a Class with __call__ '
                 'method or a single function.'
             )
         else:
@@ -501,7 +501,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
             class MyAPI(GenericAPI):
                 auth = auth_func2
         except Exception as e:
-            assert e.args[0] == 'auth_func2() required one positional argument for Request.'
+            assert e.args[0] == 'auth_func2() requires 1 positional argument(s) (request).'
         else:
             assert False
 
@@ -529,7 +529,7 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
             class MyAPI(GenericAPI):
                 auth = CustomAuth2
         except Exception as e:
-            assert e.args[0] == 'CustomAuth2.__call__() required one positional argument for Request.'
+            assert e.args[0] == 'CustomAuth2.__call__() requires 2 positional argument(s) (self, request).'
         else:
             assert False
 
@@ -542,8 +542,23 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
             class MyAPI(GenericAPI):
                 auth = CustomAuth3
         except Exception as e:
-            print(e.args[0])
-            assert e.args[0] == 'CustomAuth3.__call__() is required.'
+            assert e.args[0] == 'CustomAuth3 must implement __call__() method.'
+        else:
+            assert False
+
+    async def test_class_based_api_class_with_initiated_auth(self):
+        class CustomAuth4:
+            pass
+
+        try:
+
+            class MyAPI(GenericAPI):
+                auth = CustomAuth4()
+        except Exception as e:
+            assert (
+                e.args[0]
+                == '`CustomAuth4` is not valid for authentication, it should be a callable, a Class with __call__ method or a single function.'
+            )
         else:
             assert False
 

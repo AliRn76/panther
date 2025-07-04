@@ -1,16 +1,14 @@
 import functools
 import inspect
 import logging
-import traceback
 import typing
 from collections.abc import Callable
 from datetime import timedelta
 from typing import Literal
 
-from orjson import JSONDecodeError
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
-from panther._utils import is_function_async
+from panther._utils import check_api_deprecations, is_function_async, validate_api_auth, validate_api_permissions
 from panther.base_request import BaseRequest
 from panther.caching import (
     get_response_from_cache,
@@ -19,10 +17,7 @@ from panther.caching import (
 from panther.configs import config
 from panther.exceptions import (
     AuthorizationAPIError,
-    BadRequestAPIError,
     MethodNotAllowedAPIError,
-    PantherError,
-    UnprocessableEntityError,
 )
 from panther.middlewares import HTTPMiddleware
 from panther.openapi import OutputSchema
@@ -62,9 +57,8 @@ class API:
         input_model: type[ModelSerializer] | type[BaseModel] | None = None,
         output_model: type[ModelSerializer] | type[BaseModel] | None = None,
         output_schema: OutputSchema | None = None,
-        # TODO: Add test cases with this attr
-        auth: Callable | None = None,  # TODO:: Check type of auth and make sure does not initiated the class
-        permissions: list[type[BasePermission]] | None = None,  # TOOD: Can be list of single
+        auth: Callable | None = None,
+        permissions: list[type[BasePermission]] | None = None,  # TODO: Can be list of single
         throttling: Throttle | None = None,
         cache: timedelta | None = None,
         middlewares: list[type[HTTPMiddleware]] | None = None,
@@ -81,69 +75,9 @@ class API:
         self.middlewares = middlewares
         self.request: Request | None = None
         if self.auth is not None:
-            if not callable(self.auth):
-                msg = (
-                    f'`{self.auth}` is not valid for authentication, it should be a callable, a Class with __call__ '
-                    f'method or a single function.'
-                )
-                logger.error(msg)
-                raise PantherError(msg)
-
-            if inspect.isclass(self.auth):
-                if not inspect.isfunction(self.auth.__call__):
-                    msg = f'{self.auth.__name__}.__call__() is required.'
-                    logger.error(msg)
-                    raise PantherError(msg)
-
-                if len(inspect.signature(self.auth.__call__).parameters) != 2:
-                    msg = f'{self.auth.__name__}.__call__() required one positional argument for Request.'
-                    logger.error(msg)
-                    raise PantherError(msg)
-
-                if not is_function_async(self.auth.__call__):
-                    msg = f'{self.auth.__name__}.__call__() should be `async`'
-                    logger.error(msg)
-                    raise PantherError(msg)
-            else:
-                if len(inspect.signature(self.auth).parameters) != 1:
-                    msg = f'{self.auth.__name__}() required one positional argument for Request.'
-                    logger.error(msg)
-                    raise PantherError(msg)
-
-                if not is_function_async(self.auth):
-                    msg = f'{self.auth.__name__}() should be `async`'
-                    logger.error(msg)
-                    raise PantherError(msg)
-
-        # Validate Cache
-        if kwargs.pop('cache_exp_time', None):
-            deprecation_message = (
-                traceback.format_stack(limit=2)[0]
-                + '\nThe `cache_exp_time` argument has been removed in Panther v5 and is no longer available.'
-                '\nYou may want to use `cache` instead.'
-            )
-            raise PantherError(deprecation_message)
-        if self.cache and not isinstance(self.cache, timedelta):
-            deprecation_message = (
-                traceback.format_stack(limit=2)[0] + '\nThe `cache` argument has been changed in Panther v5, '
-                'it should be an instance of `datetime.timedelta()`.'
-            )
-            raise PantherError(deprecation_message)
-        # Validate Permissions
-        for perm in self.permissions:
-            if is_function_async(perm.authorization) is False:
-                msg = f'{perm.__name__}.authorization() should be `async`'
-                logger.error(msg)
-                raise PantherError(msg)
-            if type(perm.authorization).__name__ != 'method':
-                msg = f'{perm.__name__}.authorization() should be `@classmethod`'
-                logger.error(msg)
-                raise PantherError(msg)
-        # Check kwargs
-        if kwargs:
-            msg = f'Unknown kwargs: {kwargs.keys()}'
-            logger.error(msg)
-            raise PantherError(msg)
+            validate_api_auth(self.auth)
+        validate_api_permissions(self.permissions)
+        check_api_deprecations(self.cache, **kwargs)
 
     def __call__(self, func):
         self.func = func
@@ -196,7 +130,7 @@ class API:
 
         # 5. Validate Input
         if self.input_model and self.request.method in {'POST', 'PUT', 'PATCH'}:
-            self.request.validated_data = self.validate_input(model=self.input_model, request=self.request)
+            self.request.validate_data(model=self.input_model)
 
         # 6. Get Cached Response
         if self.cache and self.request.method == 'GET':
@@ -216,7 +150,7 @@ class API:
         if not isinstance(response, Response):
             response = Response(data=response)
         if self.output_model and response.data:
-            response.data = await response.serialize_output(output_model=self.output_model)
+            await response.serialize_output(output_model=self.output_model)
         if response.pagination:
             response.data = await response.pagination.template(response.data)
 
@@ -225,21 +159,6 @@ class API:
             await set_response_in_cache(request=self.request, response=response, duration=self.cache)
 
         return response
-
-    @classmethod
-    def validate_input(cls, model, request: Request):
-        if isinstance(request.data, bytes):
-            raise UnprocessableEntityError(detail='Content-Type is not valid')
-        if request.data is None:
-            raise BadRequestAPIError(detail='Request body is required')
-        try:
-            # `request` will be ignored in regular `BaseModel`
-            return model(**request.data, request=request)
-        except ValidationError as validation_error:
-            error = {'.'.join(str(loc) for loc in e['loc']): e['msg'] for e in validation_error.errors()}
-            raise BadRequestAPIError(detail=error)
-        except JSONDecodeError:
-            raise UnprocessableEntityError(detail='JSON Decode Error')
 
 
 class MetaGenericAPI(type):

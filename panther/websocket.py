@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from typing import Callable
+
 from panther import status
 from panther.base_websocket import Websocket
 from panther.configs import config
 
 
 class GenericWebsocket(Websocket):
-    auth: bool = False
+    auth: Callable | None = None
     permissions: list = []
 
     def __init__(self, parent):
