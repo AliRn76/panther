@@ -34,6 +34,12 @@ You can validate incoming data using the `input_model` parameter. Pass a seriali
 ??? question "How do serializers work in Panther?"
     Refer to [Serializer](serializer.md) to learn more about serializers.
 
+```python title="app/serializers.py" linenums="1"
+from panther.serializer import ModelSerializer
+
+class UserInputSerializer(ModelSerializer):
+    ...
+```
 === "Function-Base API"
 
     ```python title="app/apis.py" linenums="1"
@@ -42,11 +48,13 @@ You can validate incoming data using the `input_model` parameter. Pass a seriali
     from panther.request import Request
     from panther.response import Response
     
+    from app.serializers import UserInputSerializer
     
-    @API(auth=True)
+
+    @API(input_model=UserInputSerializer)
     async def user_api(request: Request):
-        user = request.user
-        return Response(data=user, status_code=status.HTTP_200_OK)
+        request.validated_data  # This is now available
+        ...
     ```
 
 === "Class-Base API"
@@ -56,13 +64,15 @@ You can validate incoming data using the `input_model` parameter. Pass a seriali
     from panther.app import GenericAPI
     from panther.response import Response
     
+    from app.serializers import UserInputSerializer
+    
     
     class UserAPI(GenericAPI):
-        auth = True
+        input_model = UserInputSerializer
     
         async def get(self, request: Request):
-            user = request.user
-            return Response(data=user, status_code=status.HTTP_200_OK)
+            request.validated_data  # This is now available
+            ...
     ```
 
 ---
@@ -108,7 +118,12 @@ class UserSerializer(ModelSerializer):
 
 ## Authentication
 
-To ensure that each request contains a valid authentication header, set `auth=True`. Panther will look for the `AUTHENTICATION` class from your config and use its `authentication()` method for this purpose.
+To ensure that each request contains a valid authentication header, use the `auth` parameter. 
+
+- The `auth` parameter can be an any async function or a class with an async `__call__` method.
+- If you set `auth`, Panther will use your specified authentication class or function. 
+- If you do not set `auth`, Panther will use the default `AUTHENTICATION` from your config **only if the request contains an authorization header**. 
+- If there is no authorization header in the request, authentication is bypassed, `request.user` will be `None` and you must rely on permissions to check the user and their authorization.
 
 ??? question "How do authentications work in Panther?"
     Refer to [Authentications](authentications.md) to learn more about authentications.
@@ -120,12 +135,14 @@ To ensure that each request contains a valid authentication header, set `auth=Tr
     from panther.app import API
     from panther.request import Request
     from panther.response import Response
+    from app.authentications import MyAuthenticationClass
     
-    @API(auth=True)
+    @API(auth=MyAuthenticationClass)  # You can also use a function
     async def user_api(request: Request):
         user = request.user
         return Response(data=user, status_code=status.HTTP_200_OK)
     ```
+
 
 === "Class-Base API"
 
@@ -133,9 +150,10 @@ To ensure that each request contains a valid authentication header, set `auth=Tr
     from panther import status
     from panther.app import GenericAPI
     from panther.response import Response
+    from app.authentications import MyAuthenticationClass
     
     class UserAPI(GenericAPI):
-        auth = True
+        auth = MyAuthenticationClass  # You can also use a function
     
         async def get(self, request: Request):
             user = request.user
@@ -184,11 +202,20 @@ You can specify which HTTP methods are allowed for an endpoint by setting `metho
 
 ## Permissions
 
-You can implement your authorization logic using permission classes. Any class that inherits from `panther.permissions.BasePermission` or implements an `authorization()` method can be used as a permission class.
+You can implement your authorization logic using permission classes or functions. Any async function or class with an async `__call__` method can be used as a permission. Panther will call each permission (asynchronously).
 
-Pass a list of permission classes to your API, and Panther will call each class's `authorization()` method. If any return `False`, a `panther.exceptions.AuthorizationAPIError` will be raised.
+Pass a list of permission callables to your API using the `permissions` parameter. If you pass a single permission, it will be automatically wrapped in a list.
 
-> The `authorization()` method should be an `async classmethod`.
+> Each permission must be async (either an async function or a class with an async `__call__`).
+
+**Example Permission Function:**
+
+```python title="app/permissions.py" linenums="1"
+from panther.request import Request
+
+async def custom_permission(request: Request) -> bool:
+    return True
+```
 
 **Example Permission Class:**
 
@@ -197,8 +224,7 @@ from panther.permissions import BasePermission
 from panther.request import Request
 
 class CustomPermission(BasePermission):
-    @classmethod
-    async def authorization(cls, request: Request) -> bool:
+    async def __call__(self, request: Request) -> bool:
         return True
 ```
 
@@ -206,12 +232,22 @@ class CustomPermission(BasePermission):
 
     ```python title="app/apis.py" linenums="1"
     from panther.app import API
-    from app.permissions import CustomPermission
+    from app.permissions import custom_permission, CustomPermission
     
-    @API(permissions=[CustomPermission])
+    @API(permissions=[custom_permission, CustomPermission])
     async def user_api():
         ...
     ```
+    Or, if you have only one permission:
+    ```python title="app/apis.py" linenums="1"
+    from panther.app import API
+    from app.permissions import custom_permission
+    
+    @API(permissions=custom_permission)
+    async def user_api():
+        ...
+    ```
+    Panther will treat it as a list internally.
 
 === "Class-Base API"
 
@@ -223,6 +259,16 @@ class CustomPermission(BasePermission):
         permissions = [CustomPermission]
         ...
     ```
+    Or, if you have only one permission:
+    ```python title="app/apis.py" linenums="1"
+    from panther.app import GenericAPI
+    from app.permissions import custom_permission
+    
+    class UserAPI(GenericAPI):
+        permissions = custom_permission
+        ...
+    ```
+    Panther will treat it as a list internally.
 
 ---
 

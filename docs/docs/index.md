@@ -82,7 +82,7 @@ Here's a simple REST API endpoint that returns a "Hello World" message:
 from datetime import datetime, timedelta
 from panther import status, Panther
 from panther.app import GenericAPI
-from panther.openapi.urls import url_routing as openapi_url_routing
+from panther.openapi.views import ScalarOpenAPI
 from panther.response import Response
 
 class HelloAPI(GenericAPI):
@@ -99,7 +99,7 @@ class HelloAPI(GenericAPI):
 # URL routing configuration
 url_routing = {
     '/': HelloAPI,
-    'swagger/': openapi_url_routing,  # Auto-generated API docs
+    'docs/': ScalarOpenAPI,  # Auto-generated API docs
 }
 
 # Create your Panther app
