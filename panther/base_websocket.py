@@ -194,7 +194,6 @@ class WebsocketConnections(Singleton):
 
     @classmethod
     async def handle_authentication(cls, connection: Websocket):
-        """Return True if connection is closed, False otherwise."""
         if auth := (connection.auth or config.WS_AUTHENTICATION):
             if inspect.isclass(auth):
                 auth = auth()
@@ -206,19 +205,22 @@ class WebsocketConnections(Singleton):
 
     @classmethod
     async def handle_permissions(cls, connection: Websocket):
-        """Return True if connection is closed, False otherwise."""
-        for perm in connection.permissions:
-            if type(perm.authorization).__name__ != 'method':
-                logger.critical(f'{perm.__name__}.authorization should be "classmethod"')
-                await connection.close()
-            elif await perm.authorization(connection) is False:
-                connection.change_state(state='Rejected', message='Permission Denied')
-                await connection.close()
+        permissions = connection.permissions
+        if permissions is not None and not isinstance(permissions, list):
+            permissions = [permissions]
+
+        if permissions:
+            for perm in permissions:
+                if inspect.isclass(perm):
+                    perm = perm()
+                if await perm(connection) is False:
+                    connection.change_state(state='Rejected', message='Permission Denied')
+                    await connection.close()
 
 
 class Websocket(BaseRequest):
     auth: Callable | None = None
-    permissions: list[Callable[[Any], bool]] | Callable[[Any], bool] = []
+    permissions: list[Callable] | Callable | None = None
     state: str = 'Connected'
     _connection_id: str = ''
     _is_rejected: bool = False

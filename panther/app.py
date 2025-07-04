@@ -58,7 +58,7 @@ class API:
         output_model: type[ModelSerializer] | type[BaseModel] | None = None,
         output_schema: OutputSchema | None = None,
         auth: Callable | None = None,
-        permissions: list[type[BasePermission]] | None = None,  # TODO: Can be list of single
+        permissions: list[Callable] | Callable | None = None,
         throttling: Throttle | None = None,
         cache: timedelta | None = None,
         middlewares: list[type[HTTPMiddleware]] | None = None,
@@ -69,7 +69,9 @@ class API:
         self.output_model = output_model
         self.output_schema = output_schema
         self.auth = auth
-        self.permissions = permissions or []
+        self.permissions = permissions
+        if self.permissions is not None and not isinstance(self.permissions, list):
+            self.permissions = [self.permissions]
         self.throttling = throttling
         self.cache = cache
         self.middlewares = middlewares
@@ -120,9 +122,12 @@ class API:
             self.request.user = await auth(self.request)
 
         # 3. Permissions
-        for perm in self.permissions:
-            if await perm.authorization(self.request) is False:
-                raise AuthorizationAPIError
+        if self.permissions:
+            for perm in self.permissions:
+                if inspect.isclass(perm):
+                    perm = perm()
+                if await perm(self.request) is False:
+                    raise AuthorizationAPIError
 
         # 4. Throttle
         if throttling := self.throttling or config.THROTTLING:

@@ -189,13 +189,42 @@ def validate_api_auth(auth):
 
 
 def validate_api_permissions(permissions):
+    if permissions is None:
+        return permissions
+
     for perm in permissions:
-        if is_function_async(perm.authorization) is False:
-            msg = f'{perm.__name__}.authorization() should be `async`'
+        if not callable(perm):
+            msg = (
+                f'`{type(perm).__name__}` is not valid for permission, it should be a callable, a Class with __call__ '
+                f'method or a single function.'
+            )
             logger.error(msg)
             raise PantherError(msg)
-        if type(perm.authorization).__name__ != 'method':
-            msg = f'{perm.__name__}.authorization() should be `@classmethod`'
+
+        # If it's a class, validate its __call__
+        if inspect.isclass(perm):
+            call_method = getattr(perm, '__call__', None)
+            if not inspect.isfunction(call_method):
+                msg = f'{perm.__name__} must implement __call__() method.'
+                logger.error(msg)
+                raise PantherError(msg)
+            func = call_method
+            expected_args = 2  # self, request
+            func_name = f'{perm.__name__}.__call__()'
+        else:
+            func = perm
+            expected_args = 1  # request
+            func_name = f'{perm.__name__}()'
+
+        sig = inspect.signature(func)
+        if len(sig.parameters) != expected_args:
+            msg = f'{func_name} requires {expected_args} positional argument(s) ({"self, " if expected_args == 2 else ""}request).'
+            logger.error(msg)
+            raise PantherError(msg)
+
+        # Check if async
+        if not is_function_async(func):
+            msg = f'{func_name} should be `async`'
             logger.error(msg)
             raise PantherError(msg)
 
