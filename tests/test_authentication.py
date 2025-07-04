@@ -11,27 +11,21 @@ from panther.test import APIClient
 
 
 @API()
-async def without_auth_api(request: Request):
-    return request.user
-
-
-@API(auth=True)
 async def auth_required_api(request: Request):
     return request.user
 
 
-@API(auth=True)
+@API()
 async def refresh_token_api(request: Request):
     return await request.user.refresh_tokens()
 
 
-@API(auth=True)
+@API()
 async def logout_api(request: Request):
     return await request.user.logout()
 
 
 urls = {
-    'without': without_auth_api,
     'auth-required': auth_required_api,
     'refresh-token': refresh_token_api,
     'logout': logout_api,
@@ -82,34 +76,21 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
     def tearDownClass(cls):
         config.refresh()
 
-    async def test_user_without_auth(self):
-        res = await self.client.get('without')
-        assert res.status_code == 200
-        assert res.data is None
-
-        res = await self.client.get('without', headers={'Authorization': 'Token'})
-        assert res.status_code == 200
-        assert res.data is None
-
     async def test_user_auth_required_without_auth_class(self):
         auth_config = config.AUTHENTICATION
         config.AUTHENTICATION = None
-        with self.assertLogs(level='ERROR') as captured:
+        with self.assertNoLogs(level='ERROR'):
             res = await self.client.get('auth-required')
-        assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == '"AUTHENTICATION" has not been set in configs'
-        assert res.status_code == 500
-        assert res.data['detail'] == 'Internal Server Error'
+        assert res.status_code == 200
+        assert res.data is None
         config.AUTHENTICATION = auth_config
 
     async def test_user_auth_required_without_token(self):
-        with self.assertLogs(level='ERROR') as captured:
+        with self.assertNoLogs(level='ERROR'):
             res = await self.client.get('auth-required')
 
-        assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'JWTAuthentication Error: "Authorization is required"'
-        assert res.status_code == 401
-        assert res.data['detail'] == 'Authentication Error'
+        assert res.status_code == 200
+        assert res.data is None
 
     async def test_user_auth_required_with_bad_token_1(self):
         with self.assertLogs(level='ERROR') as captured:
@@ -231,11 +212,26 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
         user = await User.insert_one(username='Username', password='Password')
         tokens = await user.login()
 
-        with self.assertLogs(level='ERROR') as captured:
+        with self.assertNoLogs(level='ERROR'):
             res = await self.client.get('auth-required', headers={'Authorization': f'Bearer {tokens["access_token"]}'})
 
+        assert res.status_code == 200
+        assert res.data is None
+
+        config.AUTHENTICATION = auth_config
+
+    async def test_cookie_authentication_invalid_token(self):
+        auth_config = config.AUTHENTICATION
+        config.AUTHENTICATION = CookieJWTAuthentication
+
+        user = await User.insert_one(username='Username', password='Password')
+        tokens = await user.login()
+
+        with self.assertLogs(level='ERROR') as captured:
+            res = await self.client.get('auth-required', {'cookie': f'access_token=s'})
+
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == 'CookieJWTAuthentication Error: "`access_token` Cookie not found."'
+        assert captured.records[0].getMessage() == 'CookieJWTAuthentication Error: "Not enough segments"'
         assert res.status_code == 401
         assert res.data['detail'] == 'Authentication Error'
 
@@ -307,16 +303,11 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
         auth_config = config.AUTHENTICATION
         config.AUTHENTICATION = QueryParamJWTAuthentication
 
-        with self.assertLogs(level='ERROR') as captured:
+        with self.assertNoLogs(level='ERROR'):
             res = await self.client.get('auth-required')
 
-        assert len(captured.records) == 1
-        assert (
-            captured.records[0].getMessage()
-            == 'QueryParamJWTAuthentication Error: "`authorization` query param not found."'
-        )
-        assert res.status_code == 401
-        assert res.data['detail'] == 'Authentication Error'
+        assert res.status_code == 200
+        assert res.data is None
 
         config.AUTHENTICATION = auth_config
 

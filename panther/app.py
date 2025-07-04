@@ -1,4 +1,5 @@
 import functools
+import inspect
 import logging
 import traceback
 import typing
@@ -17,7 +18,6 @@ from panther.caching import (
 )
 from panther.configs import config
 from panther.exceptions import (
-    APIError,
     AuthorizationAPIError,
     BadRequestAPIError,
     MethodNotAllowedAPIError,
@@ -62,8 +62,9 @@ class API:
         input_model: type[ModelSerializer] | type[BaseModel] | None = None,
         output_model: type[ModelSerializer] | type[BaseModel] | None = None,
         output_schema: OutputSchema | None = None,
-        auth: bool = False,
-        permissions: list[type[BasePermission]] | None = None,
+        # TODO: Add test cases with this attr
+        auth: Callable | None = None,  # TODO:: Check type of auth and make sure does not initiated the class
+        permissions: list[type[BasePermission]] | None = None,  # TOOD: Can be list of single
         throttling: Throttle | None = None,
         cache: timedelta | None = None,
         middlewares: list[type[HTTPMiddleware]] | None = None,
@@ -79,6 +80,7 @@ class API:
         self.cache = cache
         self.middlewares = middlewares
         self.request: Request | None = None
+        # Validate Cache
         if kwargs.pop('cache_exp_time', None):
             deprecation_message = (
                 traceback.format_stack(limit=2)[0]
@@ -86,14 +88,12 @@ class API:
                 '\nYou may want to use `cache` instead.'
             )
             raise PantherError(deprecation_message)
-        # Validate Cache
         if self.cache and not isinstance(self.cache, timedelta):
             deprecation_message = (
                 traceback.format_stack(limit=2)[0] + '\nThe `cache` argument has been changed in Panther v5, '
                 'it should be an instance of `datetime.timedelta()`.'
             )
             raise PantherError(deprecation_message)
-        assert self.cache is None or isinstance(self.cache, timedelta)
         # Validate Permissions
         for perm in self.permissions:
             if is_function_async(perm.authorization) is False:
@@ -145,11 +145,10 @@ class API:
             raise MethodNotAllowedAPIError
 
         # 2. Authentication
-        if self.auth:
-            if not config.AUTHENTICATION:
-                logger.critical('"AUTHENTICATION" has not been set in configs')
-                raise APIError
-            self.request.user = await config.AUTHENTICATION.authentication(self.request)
+        if auth := (self.auth or config.AUTHENTICATION):
+            if inspect.isclass(auth):
+                auth = auth()
+            self.request.user = await auth(self.request)
 
         # 3. Permissions
         for perm in self.permissions:

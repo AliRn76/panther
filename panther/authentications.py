@@ -22,12 +22,11 @@ logger = logging.getLogger('panther')
 
 
 class BaseAuthentication:
-    @classmethod
     @abstractmethod
-    async def authentication(cls, request: Request | Websocket):
+    async def __call__(self, request: Request | Websocket):
         """Return Instance of User"""
-        msg = f'{cls.__name__}.authentication() is not implemented.'
-        raise cls.exception(msg) from None
+        msg = f'{self.__class__.__name__}.__call__() is not implemented.'
+        raise self.exception(msg) from None
 
     @classmethod
     def exception(cls, message: str | Exception, /) -> type[AuthenticationAPIError]:
@@ -47,28 +46,28 @@ class JWTAuthentication(BaseAuthentication):
     algorithm = 'HS256'
     HTTP_HEADER_ENCODING = 'iso-8859-1'  # RFC5987
 
+    async def __call__(self, request: Request | Websocket) -> Model | None:
+        """Authenticate the user based on the JWT token in the Authorization header."""
+        auth_header = self.get_authorization_header(request)
+        # Set None as `request.user`
+        if auth_header is None:
+            return None
+
+        token = self.get_token(auth_header=auth_header)
+        if redis.is_connected and await self.is_token_revoked(token=token):
+            msg = 'User logged out'
+            raise self.exception(msg) from None
+        payload = await self.decode_jwt(token)
+        user = await self.get_user(payload)
+        user._auth_token = token
+        return user
+
     @classmethod
-    def get_authorization_header(cls, request: Request | Websocket) -> list[str]:
+    def get_authorization_header(cls, request: Request | Websocket) -> list[str] | None:
         """Retrieve the Authorization header from the request."""
         if auth := request.headers.authorization:
             return auth.split()
-        msg = 'Authorization is required'
-        raise cls.exception(msg) from None
-
-    @classmethod
-    async def authentication(cls, request: Request | Websocket) -> Model:
-        """Authenticate the user based on the JWT token in the Authorization header."""
-        auth_header = cls.get_authorization_header(request)
-        token = cls.get_token(auth_header=auth_header)
-
-        if redis.is_connected and await cls.is_token_revoked(token=token):
-            msg = 'User logged out'
-            raise cls.exception(msg) from None
-
-        payload = await cls.decode_jwt(token)
-        user = await cls.get_user(payload)
-        user._auth_token = token
-        return user
+        return None
 
     @classmethod
     def get_token(cls, auth_header):
@@ -192,11 +191,10 @@ class QueryParamJWTAuthentication(JWTAuthentication):
     """
 
     @classmethod
-    def get_authorization_header(cls, request: Request | Websocket) -> list[str]:
-        if auth := request.query_params.get('authorization'):
-            return auth
-        msg = '`authorization` query param not found.'
-        raise cls.exception(msg) from None
+    def get_authorization_header(cls, request: Request | Websocket) -> str | None:
+        if 'authorization' in request.query_params:
+            return request.query_params['authorization']
+        return None
 
     @classmethod
     def get_token(cls, auth_header) -> str:
@@ -210,20 +208,18 @@ class CookieJWTAuthentication(JWTAuthentication):
         Cookies: access_token=the_jwt_without_bearer
     """
 
-    @classmethod
-    async def authentication(cls, request: Request | Websocket) -> Model:
-        user = await super().authentication(request=request)
+    async def __call__(self, request: Request | Websocket) -> Model:
+        user = await super().__call__(request=request)
         if refresh_token := request.headers.get_cookies().get('refresh_token'):
             # It's used in `cls.refresh()`
             user._auth_refresh_token = refresh_token
         return user
 
     @classmethod
-    def get_authorization_header(cls, request: Request | Websocket) -> str:
+    def get_authorization_header(cls, request: Request | Websocket) -> str | None:
         if token := request.headers.get_cookies().get('access_token'):
             return token
-        msg = '`access_token` Cookie not found.'
-        raise cls.exception(msg) from None
+        return None
 
     @classmethod
     def get_token(cls, auth_header) -> str:
