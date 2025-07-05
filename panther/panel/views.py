@@ -6,7 +6,7 @@ from panther.configs import config
 from panther.db.models import BaseUser
 from panther.panel.authentications import AdminCookieJWTAuthentication
 from panther.panel.middlewares import RedirectToSlashMiddleware
-from panther.panel.utils import clean_model_schema, get_models
+from panther.panel.utils import clean_model_schema, get_models, prepare_data
 from panther.request import Request
 from panther.response import Cookie, RedirectResponse, Response, TemplateResponse
 
@@ -71,7 +71,7 @@ class TableView(GenericAPI):
             context={
                 'fields': clean_model_schema(model.schema()),
                 'tables': get_models(),
-                'records': Response.prepare_data(data),
+                'records': prepare_data(data),
             },
         )
 

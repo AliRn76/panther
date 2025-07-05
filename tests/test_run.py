@@ -23,8 +23,6 @@ class TestRun(TestCase):
         assert isinstance(app, Panther)
 
     def test_load_configs(self):
-        from panther.panel.apis import documents_api, healthcheck_api, models_api, single_document_api
-
         base_dir = Path(__name__).resolve().parent
         secret_key = 'fHrIYx3yK0J_UG0K0zD6miLPNy1esoYXzVsvif6e7rY='
         Panther(__name__)
@@ -39,6 +37,7 @@ class TestRun(TestCase):
         assert len(config.HTTP_MIDDLEWARES) == 1
         assert len(config.WS_MIDDLEWARES) == 0
 
+        assert config.QUERY_ENGINE.__name__ == 'BasePantherDBQuery'
         assert config.USER_MODEL.__name__ == tests.sample_project.app.models.User.__name__
         assert config.USER_MODEL.__module__.endswith('app.models')
         assert config.JWT_CONFIG.algorithm == 'HS256'
@@ -47,20 +46,6 @@ class TestRun(TestCase):
 
         assert '' in config.URLS
         config.URLS.pop('')
-
         assert 'second' in config.URLS
         config.URLS.pop('second')
-
-        urls = {
-            '_panel': {
-                '': models_api,
-                '<index>': {
-                    '': documents_api,
-                    '<document_id>': single_document_api,
-                },
-                'health': healthcheck_api,
-            },
-        }
-        # TODO: Fix this line, at the end of this task
-        # assert config.URLS == urls
-        assert config.QUERY_ENGINE.__name__ == 'BasePantherDBQuery'
+        assert config.URLS == {}
