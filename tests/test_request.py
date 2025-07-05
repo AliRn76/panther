@@ -41,13 +41,23 @@ async def request_header(request: Request):
 
 
 @API()
+async def request_header_str(request: Request):
+    return request.headers.__str__(), request.headers.__repr__()
+
+
+@API()
+async def request_header_contains(request: Request, header: str):
+    return header in request.headers
+
+
+@API()
 async def request_header_by_attr(request: Request):
     return request.headers.authorization
 
 
 @API()
 async def request_header_by_item(request: Request):
-    return request.headers['Authorization']
+    return request.headers['Authorization'], request.headers['authorization']
 
 
 # # # Methods
@@ -146,8 +156,10 @@ urls = {
     'data': request_data,
     'path/<name>/variable/<age>/<is_alive>/': request_path_variables,
     'header': request_header,
+    'header-str': request_header_str,
     'header-attr': request_header_by_attr,
     'header-item': request_header_by_item,
+    'header-contains/<header>/': request_header_contains,
     'all-func': all_methods,
     'all-class': AllMethods,
     'get-func': get_method,
@@ -264,7 +276,17 @@ class TestRequest(IsolatedAsyncioTestCase):
             'Authorization': 'Token xxx',
         }
         res = await self.client.post('header-item', headers=headers)
-        assert res.data == 'Token xxx'
+        assert res.data == ['Token xxx', 'Token xxx']
+
+    async def test_headers_str(self):
+        res = await self.client.post('header-str')
+        assert res.data == ['Headers(content-type=application/json)', 'Headers(content-type=application/json)']
+
+    async def test_headers_contains(self):
+        res = await self.client.post('header-contains/content-type/')
+        assert res.data is True
+        res = await self.client.post('header-contains/accept/')
+        assert res.data is False
 
     # # # Methods
     async def test_method_all(self):

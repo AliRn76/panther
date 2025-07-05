@@ -7,15 +7,26 @@ from panther import Panther
 from panther.app import API
 from panther.configs import config
 from panther.db import Model
+from panther.db.connections import db
 from panther.request import Request
 from panther.serializer import ModelSerializer
 from panther.test import APIClient
+
+DB_PATH = 'test_db.pdb'
+DATABASE = {
+    'engine': {'class': 'panther.db.connections.PantherDBConnection', 'path': DB_PATH},
+}
 
 
 class Book(Model):
     name: str
     author: str = Field('default_author')
     pages_count: int = Field(0)
+
+
+class Author(Model):
+    name: str
+    book: Book
 
 
 class NotRequiredFieldsSerializer(ModelSerializer):
@@ -61,6 +72,12 @@ class WithClassFieldsSerializer(ModelSerializer):
         required_fields = ['author', 'pages_count']
 
 
+class WithForeignKeySerializer(ModelSerializer):
+    class Config:
+        model = Author
+        fields = ['name', 'book']
+
+
 @API(input_model=NotRequiredFieldsSerializer)
 async def not_required(request: Request):
     return request.validated_data
@@ -86,31 +103,35 @@ async def with_class_fields(request: Request):
     return request.validated_data
 
 
+@API(input_model=WithForeignKeySerializer)
+async def with_foreign_key(request: Request):
+    return request.validated_data
+
+
 urls = {
     'not-required': not_required,
     'required': required,
     'only-required': only_required,
     'with-validators': with_validators,
     'class-fields': with_class_fields,
+    'foreign-key': with_foreign_key,
 }
 
 
 class TestModelSerializer(IsolatedAsyncioTestCase):
-    DB_PATH = 'test.pdb'
-
     @classmethod
     def setUpClass(cls) -> None:
-        global DATABASES
-        DATABASES = {'engine': 'panther.db.connections.PantherDBConnection'}
         app = Panther(__name__, configs=__name__, urls=urls)
         cls.client = APIClient(app=app)
 
     def tearDown(self) -> None:
-        Path(self.DB_PATH).unlink(missing_ok=True)
+        db.session.collection('Book').drop()
+        db.session.collection('Author').drop()
 
     @classmethod
     def tearDownClass(cls) -> None:
         config.refresh()
+        Path(DB_PATH).unlink(missing_ok=True)
 
     # # # Class Usage
 
@@ -168,6 +189,17 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
         res = await self.client.post('class-fields', payload=payload2)
         assert res.status_code == 200
         assert res.data == {'name': 'how to code', 'author': 'ali', 'pages_count': 12, 'age': 30}
+
+    async def test_foreign_key(self):
+        book = await Book.insert_one(name='Book1', author='Ali', pages_count=2)
+        await Author.insert_one(name='AnotherAli', book=book)
+        payload = {'name': 'Something', 'book': book.id}
+        res = await self.client.post('foreign-key', payload=payload)
+        assert res.status_code == 200
+        assert res.data == {
+            'name': 'Something',
+            'book': {'id': book.id, 'name': 'Book1', 'author': 'Ali', 'pages_count': 2},
+        }
 
     # # # Class Definition
 

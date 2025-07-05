@@ -1,7 +1,11 @@
 from collections import defaultdict
+from types import NoneType
+from typing import Any
+
+from pydantic import BaseModel
 
 from panther.configs import config
-from panther.db.models import Model
+from panther.response import IterableDataTypes
 
 
 def _ref_name(ref: str) -> str:
@@ -91,23 +95,6 @@ def clean_model_schema(schema: dict) -> dict:
     return dict(result)
 
 
-# TODO: Remove this
-def get_model_fields(model):
-    result = {}
-
-    for k, v in model.model_fields.items():
-        try:
-            is_model = issubclass(v.annotation, Model)
-        except TypeError:
-            is_model = False
-
-        if is_model:
-            result[k] = get_model_fields(v.annotation)
-        else:
-            result[k] = getattr(v.annotation, '__name__', str(v.annotation))
-    return result
-
-
 def get_models():
     return [
         {
@@ -117,3 +104,11 @@ def get_models():
         }
         for i, model in enumerate(config.MODELS)
     ]
+
+
+def serialize_models(data: Any):
+    if issubclass(type(data), BaseModel):
+        return data.model_dump()
+
+    elif isinstance(data, IterableDataTypes):
+        return [serialize_models(d) for d in data]

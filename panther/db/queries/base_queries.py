@@ -190,7 +190,7 @@ class BaseQuery:
             case None:
                 return None
             case Model() as model:
-                if model.id is None:
+                if model.id in [None, '']:
                     await model.save()
                 # We save full object because user didn't specify the type.
                 return model._id

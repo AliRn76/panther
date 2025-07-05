@@ -32,8 +32,6 @@ __all__ = (
     'load_other_configs',
     'load_redis',
     'load_secret_key',
-    'load_shutdown',
-    'load_startup',
     'load_templates_dir',
     'load_throttling',
     'load_timezone',
@@ -71,16 +69,6 @@ def load_redis(_configs: dict, /) -> None:
         args = redis_config.copy()
         args.pop('class', None)
         redis_class(**args, init=True)
-
-
-def load_startup(_configs: dict, /) -> None:
-    if startup := _configs.get('STARTUP'):
-        config.STARTUP = import_class(startup)
-
-
-def load_shutdown(_configs: dict, /) -> None:
-    if shutdown := _configs.get('SHUTDOWN'):
-        config.SHUTDOWN = import_class(shutdown)
 
 
 def load_timezone(_configs: dict, /) -> None:
