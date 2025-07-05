@@ -12,6 +12,7 @@
 - Add `RedirectResponse`
 - Optimized `ORM` with smarter `ObjectID` handling
 - Deprecated:
+    - Usage of `auth` and `permissions` in `API`, `GenericAPI` and `GenericWebsocket` has been change, make sure to check the docs. 
     - `DEFAULT_CACHE_EXP` in configs.
     - Rename `cache_exp_time` to `cache` in `@API` and `GenricAPI`.
     - Rename `panther.throttling.Throttling` to `panther.throttling.Throttle`.

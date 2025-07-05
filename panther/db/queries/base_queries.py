@@ -69,7 +69,9 @@ class BaseQuery:
 
         # Handle basic types (str, int, bool, dict) and Pydantic BaseModel subclasses
         try:
-            if isinstance(annotation, type) and (annotation in (str, int, bool, dict) or issubclass(annotation, BaseModel)):
+            if isinstance(annotation, type) and (
+                annotation in (str, int, bool, dict) or issubclass(annotation, BaseModel)
+            ):
                 return annotation
         except TypeError:
             # issubclass(dict[str, tests.test_database_advance.Book], BaseModel) in Python3.10 gives us TypeError and
@@ -107,7 +109,7 @@ class BaseQuery:
                 for field_name in value
             }
 
-        # Base case: value is a primitive type (str, int, etc.)
+        # `value` is a primitive type (str, int, etc.)
         return value
 
     @classmethod
@@ -141,6 +143,7 @@ class BaseQuery:
             return [await cls._create_list(field_type=unwrapped_type, value=item) for item in value]
 
         if isinstance(unwrapped_type, type) and issubclass(unwrapped_type, Model):
+            # `value` is assumed to be an ID for the Model instance.
             if obj := await unwrapped_type.first(id=value):
                 return obj.model_dump()
             return None
@@ -201,6 +204,44 @@ class BaseQuery:
             case list() as l:
                 return [await cls._clean_value(value=item) for item in l]
         return value
+
+    @classmethod
+    async def _extract_type(cls, field_name: str) -> Any:
+        if field_name not in cls.model_fields:
+            return None
+        field_annotation = cls.model_fields[field_name].annotation
+        unwrapped_type = cls._get_annotation_type(field_annotation)
+
+        if (
+            get_origin(field_annotation) is list
+            and isinstance(unwrapped_type, type)
+            and issubclass(unwrapped_type, BaseModel)
+        ):
+            return list[unwrapped_type]
+
+        if isinstance(unwrapped_type, type) and issubclass(unwrapped_type, BaseModel):
+            return unwrapped_type
+
+    @classmethod
+    async def _process_document(cls, document):
+        # 1. Check type expected type and cast to that
+        # 2. Check type of field_value and do the stuff (save() or return ._id)
+        processed_document = {}
+        for field_name, field_value in document.items():
+            field_type = await cls._extract_type(field_name)
+            if field_type:
+                if get_origin(field_type) is list:
+                    cls_type = cls._get_annotation_type(field_type)
+                    value = [cls_type(**v) if isinstance(v, dict) else v for v in field_value]
+                else:
+                    if isinstance(field_value, dict):
+                        value = field_type(**field_value)
+                    else:
+                        value = field_value
+            else:
+                value = field_value
+            processed_document[field_name] = await cls._clean_value(value)
+        return processed_document
 
     @classmethod
     @abstractmethod

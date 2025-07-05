@@ -182,7 +182,20 @@ class Query(BaseQuery):
             >>> await User.insert_one({'age': 18}, name='Ali')
 
         """
-        return await super().insert_one(_document, **kwargs)
+        # 1. Merge document
+        # 2. Convert first layer to dict
+        document = cls._merge(_document, kwargs)
+        # 3. Validate the incoming data types
+        # 4. Ignore if user sent ID instead of Model instance (We are ok insertion
+        # and will retrieve its instance from database on cls._create_model_instance())
+        # 5. Process Each type and put ID of Model instead of whole object
+        final_document = await cls._process_document(document)
+        # 6. Retrieve Model instances from database from int value
+        result = await cls._create_model_instance(document=final_document)
+        # 7. Insert into database
+        result.id = await super().insert_one(final_document)
+        # 8. Return inserted object
+        return result
 
     @classmethod
     @check_connection

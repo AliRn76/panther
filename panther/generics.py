@@ -112,16 +112,12 @@ class ListAPI(GenericAPI):
 
 
 class CreateAPI(GenericAPI):
-    input_model: type[ModelSerializer] | None = None
-
     async def post(self, request: Request, **kwargs):
         instance = await request.validated_data.model.insert_one(request.validated_data.model_dump())
         return Response(data=instance, status_code=status.HTTP_201_CREATED)
 
 
 class UpdateAPI(GenericAPI):
-    input_model: type[ModelSerializer] | None = None
-
     @abstractmethod
     async def get_instance(self, request: Request, **kwargs) -> Model:
         """

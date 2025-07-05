@@ -62,14 +62,9 @@ class BasePantherDBQuery(BaseQuery):
 
     # # # # # Insert # # # # #
     @classmethod
-    async def insert_one(cls, _document: dict | None = None, /, **kwargs) -> Self:
-        document = cls._merge(_document, kwargs)
-        cls._validate_data(data=document)
-        final_document = {field: await cls._clean_value(value=value) for field, value in document.items()}
-        result = await cls._create_model_instance(document=final_document)
-        insert_one_result = db.session.collection(cls.__name__).insert_one(**final_document)
-        result.id = insert_one_result['_id']
-        return result
+    async def insert_one(cls, document: dict) -> Self:
+        insert_one_result = db.session.collection(cls.__name__).insert_one(**document)
+        return insert_one_result['_id']
 
     @classmethod
     async def insert_many(cls, documents: Iterable[dict]) -> list[Self]:

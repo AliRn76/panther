@@ -76,14 +76,9 @@ class BaseMongoDBQuery(BaseQuery):
 
     # # # # # Insert # # # # #
     @classmethod
-    async def insert_one(cls, _document: dict | None = None, /, **kwargs) -> Self:
-        document = cls._merge(_document, kwargs)
-        cls._validate_data(data=document)
-        final_document = {field: await cls._clean_value(value=value) for field, value in document.items()}
-        result = await cls._create_model_instance(document=final_document)
-        insert_one_result: InsertOneResult = await db.session[cls.__name__].insert_one(final_document)
-        result.id = insert_one_result.inserted_id
-        return result
+    async def insert_one(cls, document: dict) -> Self:
+        insert_one_result: InsertOneResult = await db.session[cls.__name__].insert_one(document)
+        return insert_one_result.inserted_id
 
     @classmethod
     async def insert_many(cls, documents: Iterable[dict]) -> list[Self]:
@@ -91,13 +86,12 @@ class BaseMongoDBQuery(BaseQuery):
         results = []
         for document in documents:
             prepare_id_for_query(document, is_mongo=True)
-            cls._validate_data(data=document)
-            cleaned_document = {field: await cls._clean_value(value=value) for field, value in document.items()}
-            final_documents.append(cleaned_document)
-            results.append(await cls._create_model_instance(document=cleaned_document))
+            final_document = await cls._process_document(document)
+            final_documents.append(final_document)
+            results.append(await cls._create_model_instance(document=final_document))
         insert_many_result: InsertManyResult = await db.session[cls.__name__].insert_many(final_documents)
-        for obj, _id in zip(results, insert_many_result.inserted_ids):
-            obj.id = _id
+        for obj, inserted_id in zip(results, insert_many_result.inserted_ids):
+            obj.id = inserted_id
         return results
 
     # # # # # Delete # # # # #

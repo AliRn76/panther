@@ -1,11 +1,12 @@
 import typing
 from typing import Any
 
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, BeforeValidator, create_model
 from pydantic.fields import FieldInfo
 from pydantic_core._pydantic_core import PydanticUndefined
 
 from panther.db import Model
+from panther.utils import run_coroutine
 
 
 class MetaModelSerializer:
@@ -169,6 +170,15 @@ class MetaModelSerializer:
             field_info = namespace.pop(key, FieldInfo(annotation=value))
             field_definitions[key] = (value, field_info)
 
+        # Check Foreign Keys
+        for field_name, field_config in field_definitions.items():
+            try:
+                if issubclass(field_config[0], Model):
+                    validator = BeforeValidator(cls.convert_str_to_model(field_config[0]))
+                    ann = typing.Annotated[field_config[0], validator]
+                    field_definitions[field_name] = (ann, field_config[1])
+            except TypeError:
+                pass
         return field_definitions
 
     @classmethod
@@ -182,6 +192,15 @@ class MetaModelSerializer:
             | namespace.pop('model_config', {})
             | {'arbitrary_types_allowed': True}
         )
+
+    @classmethod
+    def convert_str_to_model(cls, model_cls):
+        def _convert(v: Any) -> Any:
+            if isinstance(v, str):
+                return run_coroutine(model_cls.find_one(id=v))
+            return v
+
+        return _convert
 
 
 class ModelSerializer(metaclass=MetaModelSerializer):

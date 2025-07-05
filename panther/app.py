@@ -21,7 +21,6 @@ from panther.exceptions import (
 )
 from panther.middlewares import HTTPMiddleware
 from panther.openapi import OutputSchema
-from panther.permissions import BasePermission
 from panther.request import Request
 from panther.response import Response
 from panther.serializer import ModelSerializer
@@ -185,12 +184,14 @@ class GenericAPI(metaclass=MetaGenericAPI):
     output_model: type[ModelSerializer] | type[BaseModel] | None = None
     output_schema: OutputSchema | None = None
     auth: Callable | None = None
-    permissions: list[type[BasePermission]] | None = None
+    permissions: list[Callable] | Callable | None = None
     throttling: Throttle | None = None
     cache: timedelta | None = None
     middlewares: list[HTTPMiddleware] | None = None
 
     def __init_subclass__(cls, **kwargs):
+        if cls.permissions is not None and not isinstance(cls.permissions, list):
+            cls.permissions = [cls.permissions]
         # Creating API instance to validate the attributes.
         API(
             input_model=cls.input_model,

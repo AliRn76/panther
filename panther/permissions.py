@@ -10,9 +10,9 @@ class BasePermission:
         return True
 
 
-class IsAdmin(BasePermission):
+class IsAuthenticated(BasePermission):
     async def __call__(self, request: Request) -> bool:
-        return request.user and getattr(request.user, 'is_admin', False)
+        return bool(request.user)
 
 
 class IsAuthenticatedOrReadonly(BasePermission):

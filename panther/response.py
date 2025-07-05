@@ -120,6 +120,8 @@ class Response:
         def default(obj: Any):
             if isinstance(obj, BaseModel):
                 return obj.model_dump()
+            if isinstance(obj, (Cursor, PantherDBCursor)):
+                return list(obj)
             raise TypeError(f'Type {type(obj)} not serializable')
 
         if isinstance(self.data, bytes):

@@ -48,9 +48,9 @@ class _BaseDatabaseTestCase:
     async def test_insert_one(self):
         book = await Book.insert_one(name='my_test')
         author = await Author.insert_one(
-            name='ali',
+            {'name': 'ali'},
             books=[book],
-            books2=[book, book],
+            books2=[book.id, book.model_dump()],
             book=Book(name='test_book1'),
             book2=None,
             book_detail={'book1': book},
@@ -92,6 +92,103 @@ class _BaseDatabaseTestCase:
         assert author.our_book_detail.more_books[0][0] == book
         assert author.our_book_detail.more_books[0][1] == book
 
+    async def test_insert_one_with_model_obj(self):
+        book = await Book.insert_one(name='my_test')
+        author = await Author.insert_one(
+            Author(
+                name='ali',
+                books=[book],
+                books2=[book, book],
+                book=Book(name='test_book1'),
+                book2=None,
+                book_detail={'book1': book},
+                our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]]),
+            )
+        )
+
+        assert isinstance(book, Book)
+        assert book.id
+        assert book.name == 'my_test'
+
+        assert author.name == 'ali'
+        assert isinstance(author.books, list)
+        assert len(author.books) == 1
+        assert author.books[0] == book
+        assert author.books[0]
+
+        assert isinstance(author.books2, list)
+        assert len(author.books2) == 2
+        assert author.books2[0] == book
+        assert author.books2[1] == book
+
+        assert isinstance(author.book, Book)
+        assert author.book.id
+        assert author.book.name == 'test_book1'
+
+        assert author.book2 is None
+
+        assert isinstance(author.book_detail, dict)
+        assert list(author.book_detail.keys()) == ['book1']
+        assert author.book_detail['book1'] == book.id  # Known Issue
+
+        assert isinstance(author.our_book_detail, BookDetail)
+        assert author.our_book_detail.detail == 'ok'
+        assert author.our_book_detail.book == book
+        assert isinstance(author.our_book_detail.more_books, list)
+        assert len(author.our_book_detail.more_books) == 1
+        assert isinstance(author.our_book_detail.more_books[0], list)
+        assert len(author.our_book_detail.more_books[0]) == 2
+        assert author.our_book_detail.more_books[0][0] == book
+        assert author.our_book_detail.more_books[0][1] == book
+
+    async def test_insert_one_with_model_dump(self):
+        book = await Book.insert_one(name='my_test')
+        author = await Author.insert_one(
+            Author(
+                name='ali',
+                books=[book],
+                books2=[book, book],
+                book=book,
+                book2=None,
+                book_detail={'book1': book},
+                our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]]),
+            ).model_dump()
+        )
+
+        assert isinstance(book, Book)
+        assert book.id
+        assert book.name == 'my_test'
+
+        assert author.name == 'ali'
+        assert isinstance(author.books, list)
+        assert len(author.books) == 1
+        assert author.books[0] == book
+        assert author.books[0]
+
+        assert isinstance(author.books2, list)
+        assert len(author.books2) == 2
+        assert author.books2[0] == book
+        assert author.books2[1] == book
+
+        assert isinstance(author.book, Book)
+        assert author.book == book
+
+        assert author.book2 is None
+
+        assert isinstance(author.book_detail, dict)
+        assert list(author.book_detail.keys()) == ['book1']
+        assert author.book_detail['book1'] == book.model_dump()
+
+        assert isinstance(author.our_book_detail, BookDetail)
+        assert author.our_book_detail.detail == 'ok'
+        assert author.our_book_detail.book == book
+        assert isinstance(author.our_book_detail.more_books, list)
+        assert len(author.our_book_detail.more_books) == 1
+        assert isinstance(author.our_book_detail.more_books[0], list)
+        assert len(author.our_book_detail.more_books[0]) == 2
+        assert author.our_book_detail.more_books[0][0] == book
+        assert author.our_book_detail.more_books[0][1] == book
+
     async def test_insert_many(self):
         book = await Book.insert_one(name='my_test')
         authors = await Author.insert_many(
@@ -99,19 +196,19 @@ class _BaseDatabaseTestCase:
                 {
                     'name': 'ali',
                     'books': [book],
-                    'books2': [book, book],
+                    'books2': [book.id, book],
                     'book': Book(name='test_book1'),
                     'book2': None,
-                    'book_detail': {'book1': book},
+                    'book_detail': {'book1': book.model_dump()},
                     'our_book_detail': BookDetail(detail='ok', book=book, more_books=[[book, book]]),
                 },
                 {
                     'name': 'ali',
                     'books': [book],
-                    'books2': [book, book],
+                    'books2': [book.id, book],
                     'book': Book(name='test_book2'),
                     'book2': None,
-                    'book_detail': {'book1': book},
+                    'book_detail': {'book1': book.model_dump()},
                     'our_book_detail': BookDetail(detail='ok', book=book, more_books=[[book, book]]),
                 },
             ],
@@ -141,7 +238,7 @@ class _BaseDatabaseTestCase:
 
             assert isinstance(author.book_detail, dict)
             assert list(author.book_detail.keys()) == ['book1']
-            assert author.book_detail['book1'] == book.id  # Known Issue
+            assert author.book_detail['book1'] == book.model_dump()
 
             assert isinstance(author.our_book_detail, BookDetail)
             assert author.our_book_detail.detail == 'ok'
@@ -313,9 +410,9 @@ class TestMongoDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
         book = await Book.insert_one(name='my_test')
         author = await Author.insert_one(
             name='ali',
-            books=[book],
-            books2=[book, book],
-            book=book,
+            books=[book.model_dump()],
+            books2=[book.id, book],
+            book=Book(name='test_book1'),
             book2=None,
             book_detail={'book1': book},
             our_book_detail=BookDetail(detail='ok', book=book, more_books=[[book, book]]),
@@ -351,7 +448,7 @@ class TestMongoDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
         assert document['books2'][1] == book._id
 
         assert isinstance(document['book'], bson.ObjectId)
-        assert document['book'] == book._id
+        assert document['book'] != book._id  # A new book
 
         assert document['book2'] is None
 
