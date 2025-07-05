@@ -1,0 +1,29 @@
+volumes:
+  redis_volume:
+
+services:
+  application:
+    build: .
+    restart: always
+    volumes:
+      - ./:/app
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_HOST: redis
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000" ]
+
+  redis:
+    image: redis:7.4-bookworm
+    restart: always
+    volumes:
+      - redis_volume:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

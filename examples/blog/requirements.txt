@@ -1,0 +1,4 @@
+panther==5.0.0b8
+redis==6.2.0
+python-jose==3.5.0
+uvloop==0.21.0
