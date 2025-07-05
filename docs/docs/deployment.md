@@ -96,19 +96,33 @@ Panther can be efficiently containerized using a multi-stage Docker build and th
 ### Example Multi-Stage Dockerfile with uv
 
 ```dockerfile
+# --- Builder ---
 FROM python:3.12 AS builder
 WORKDIR /app
-RUN python -m venv /opt/venv
-RUN pip install --no-cache-dir uv
-COPY requirements.txt .
-RUN /opt/venv/bin/uv pip install -r requirements.txt --system
 
+# Create virtual environment
+RUN python -m venv /opt/venv
+
+# Install uv into system (can be reused)
+RUN pip install --no-cache-dir uv
+
+# Copy requirements and install into the venv
+COPY requirements.txt .
+RUN /usr/local/bin/uv pip install -r requirements.txt --python /opt/venv/bin/python
+
+# --- Final image ---
 FROM python:3.12-slim AS production
+
 ENV PYTHONUNBUFFERED=1
 ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy venv from builder
 COPY --from=builder /opt/venv /opt/venv
+
+# Copy app source
 WORKDIR /app
 COPY . /app
 
+# Run the app
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
