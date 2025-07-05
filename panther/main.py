@@ -58,8 +58,6 @@ class Panther:
         self._configs_module = load_configs_module(self._configs_module_name)
 
         load_redis(self._configs_module)
-        load_startup(self._configs_module)
-        load_shutdown(self._configs_module)
         load_timezone(self._configs_module)
         load_database(self._configs_module)
         load_secret_key(self._configs_module)

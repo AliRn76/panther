@@ -1,10 +1,10 @@
-import typing
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 from urllib.parse import parse_qsl
 
 from panther.exceptions import InvalidPathVariableAPIError
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from panther.db import Model
 
 
