@@ -106,19 +106,9 @@ def get_models():
     ]
 
 
-def prepare_data(data: Any):
-    if isinstance(data, (int | float | str | bool | bytes | NoneType)):
-        return data
-
-    elif isinstance(data, dict):
-        return {key: prepare_data(value) for key, value in data.items()}
-
-    elif issubclass(type(data), BaseModel):
+def serialize_models(data: Any):
+    if issubclass(type(data), BaseModel):
         return data.model_dump()
 
     elif isinstance(data, IterableDataTypes):
-        return [prepare_data(d) for d in data]
-
-    else:
-        msg = f'Invalid Response Type: {type(data)}'
-        raise TypeError(msg)
+        return [serialize_models(d) for d in data]

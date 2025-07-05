@@ -6,7 +6,8 @@ from panther.configs import config
 from panther.db.models import BaseUser
 from panther.panel.authentications import AdminCookieJWTAuthentication
 from panther.panel.middlewares import RedirectToSlashMiddleware
-from panther.panel.utils import clean_model_schema, get_models, prepare_data
+from panther.panel.permissions import IsAuthenticated
+from panther.panel.utils import clean_model_schema, get_models, serialize_models
 from panther.request import Request
 from panther.response import Cookie, RedirectResponse, Response, TemplateResponse
 
@@ -50,6 +51,7 @@ class LoginView(GenericAPI):
 
 class HomeView(GenericAPI):
     auth = AdminCookieJWTAuthentication
+    permissions = IsAuthenticated
 
     def get(self):
         return TemplateResponse(name='home.html', context={'tables': get_models()})
@@ -57,6 +59,7 @@ class HomeView(GenericAPI):
 
 class TableView(GenericAPI):
     auth = AdminCookieJWTAuthentication
+    permissions = IsAuthenticated
     middlewares = [RedirectToSlashMiddleware]
 
     async def get(self, request: Request, index: int):
@@ -71,13 +74,14 @@ class TableView(GenericAPI):
             context={
                 'fields': clean_model_schema(model.schema()),
                 'tables': get_models(),
-                'records': prepare_data(data),
+                'records': serialize_models(data),
             },
         )
 
 
 class CreateView(GenericAPI):
     auth = AdminCookieJWTAuthentication
+    permissions = IsAuthenticated
     middlewares = [RedirectToSlashMiddleware]
 
     async def get(self, request: Request, index: int):
@@ -101,6 +105,7 @@ class CreateView(GenericAPI):
 
 class DetailView(GenericAPI):
     auth = AdminCookieJWTAuthentication
+    permissions = IsAuthenticated
     middlewares = [RedirectToSlashMiddleware]
 
     async def get(self, index: int, document_id: str):
@@ -114,7 +119,8 @@ class DetailView(GenericAPI):
     async def put(self, request: Request, index: int, document_id: str):
         model = config.MODELS[index]
         request.validate_data(model=model)
-        return await model.update_one({'id': document_id}, request.validated_data.model_dump())
+        await model.update_one({'id': document_id}, request.validated_data.model_dump())
+        return await model.find_one(id=document_id)
 
     async def delete(self, index: int, document_id: str):
         model = config.MODELS[index]

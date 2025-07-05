@@ -46,4 +46,3 @@ class CommentAPI(GenericAPI):
             raise BadRequestAPIError('Post with this ID does not exists.')
         instance = await request.validated_data.model.insert_one(request.validated_data, post_id=post_id)
         return Response(data=instance, status_code=status.HTTP_201_CREATED)
-
