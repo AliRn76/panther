@@ -16,7 +16,7 @@ from panther.utils import run_coroutine
 
 def get_password(prompt: str):
     rich_print(f'[b]{prompt}: [/b]', end='')
-    password = ""
+    password = ''
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
 
@@ -24,17 +24,17 @@ def get_password(prompt: str):
         tty.setraw(fd)
         while True:
             ch = sys.stdin.read(1)
-            if ch == "\n" or ch == "\r":
+            if ch == '\n' or ch == '\r':
                 print()  # Newline after Enter
                 break
-            elif ch == "\x7f":  # Backspace
+            elif ch == '\x7f':  # Backspace
                 if len(password) > 0:
                     password = password[:-1]
-                    sys.stdout.write("\b \b")
+                    sys.stdout.write('\b \b')
                     sys.stdout.flush()
             else:
                 password += ch
-                sys.stdout.write("*")
+                sys.stdout.write('*')
                 sys.stdout.flush()
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
@@ -42,7 +42,16 @@ def get_password(prompt: str):
     return password
 
 
-def load_file(file_location: str):
+def get_username(prompt: str, user_model: BaseUser, username_field: str):
+    console = Console(style='bold')
+    username = Prompt.ask(prompt=prompt, console=console)
+    while run_coroutine(user_model.exists({username_field: username})):
+        console.print(f'{user_model.__name__} with this {username_field} already exists.', style='bold red')
+        username = Prompt.ask(prompt=prompt, console=console)
+    return username
+
+
+def load_application_file(file_location: str):
     file_name = file_location.removesuffix('.py')
     script_path = os.path.abspath(path=file_location)
     script_dir = os.path.dirname(script_path)
@@ -62,24 +71,14 @@ def create_user(args) -> None:
         )
     elif len(args) != 1:
         return cli_error('Too Many Arguments.')
-
-    load_file(file_location=args[0])
-
+    load_application_file(file_location=args[0])
     # Initialization
     User: BaseUser = config.USER_MODEL
     user_model_name = User.__name__
     username_field = User.USERNAME_FIELD
     console = Console()
-    input_console = Console(style='bold')
-
     try:
-        # Get Username
-        username = Prompt.ask(f'Enter your `{username_field}`', console=input_console)
-        while run_coroutine(User.exists({username_field: username})):
-            console.print(f'{user_model_name} with this {username_field} already exists.', style='bold red')
-            username = Prompt.ask(f'Enter your `{username_field}`', console=input_console)
-
-        # Get Password
+        username = get_username(f'Enter your `{username_field}`', user_model=User, username_field=username_field)
         password = get_password('Enter your `password`')
     except KeyboardInterrupt:
         console.print('\nKeyboard Interrupt', style='bold red')

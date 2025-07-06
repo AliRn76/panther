@@ -3,18 +3,24 @@ import shutil
 import sys
 from io import StringIO
 from pathlib import Path
-from unittest import TestCase, skipIf
+from unittest import skipIf
+from unittest.async_case import IsolatedAsyncioTestCase
 from unittest.mock import patch
 
 from rich import print as rprint
 
 from panther import Panther
 from panther.cli.create_command import CreateProject
+from panther.cli.create_user_command import create_user
 from panther.cli.template import SINGLE_FILE_TEMPLATE, TEMPLATE
 from panther.configs import config
+from panther.db.connections import db
+from panther.db.models import BaseUser
 
 interactive_cli_1_index = 0
 interactive_cli_2_index = 0
+
+DB_PATH = 'test_db.pdb'
 
 
 # 0.ProjectName, 1.BaseDir, 2.IsSingleFile, 3.Database,
@@ -39,10 +45,14 @@ def interactive_cli_2_mock_responses(index=None):
     return response
 
 
-class TestCLI(TestCase):
+class TestCLI(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         sys.path.append('tests/sample_project')
+
+    def tearDown(self) -> None:
+        if db.is_defined:
+            db.session.collection('BaseUser').drop()
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -50,7 +60,7 @@ class TestCLI(TestCase):
         sys.path.pop()
 
     @skipIf(sys.platform.startswith('win'), 'Not supported in windows')
-    def test_print_info(self):
+    async def test_print_info(self):
         with patch('sys.stdout', new=StringIO()) as fake_out1:
             Panther(__name__)
 
@@ -79,7 +89,7 @@ class TestCLI(TestCase):
         assert fake_out1.getvalue() == fake_out2.getvalue()
 
     @patch('builtins.input', interactive_cli_1_mock_responses)
-    def test_create_normal_template_with_interactive_cli(self):
+    async def test_create_normal_template_with_interactive_cli(self):
         CreateProject().create([])
 
         project_path = interactive_cli_1_mock_responses(1)
@@ -94,7 +104,7 @@ class TestCLI(TestCase):
         shutil.rmtree(project_path)
 
     @patch('builtins.input', interactive_cli_2_mock_responses)
-    def test_create_single_file_template_with_interactive_cli(self):
+    async def test_create_single_file_template_with_interactive_cli(self):
         CreateProject().create([])
 
         project_path = interactive_cli_2_mock_responses(1)
@@ -108,7 +118,7 @@ class TestCLI(TestCase):
                     assert Path(file_path).exists()
         shutil.rmtree(project_path)
 
-    def test_create_on_existence_directory(self):
+    async def test_create_on_existence_directory(self):
         project_path = 'test-project-directory'
         os.mkdir(project_path)
 
@@ -130,7 +140,7 @@ class TestCLI(TestCase):
         finally:
             os.removedirs(project_path)
 
-    def test_create_project(self):
+    async def test_create_project(self):
         project_path = 'test-project-directory'
         CreateProject().create(['test_project', project_path])
 
@@ -144,3 +154,61 @@ class TestCLI(TestCase):
                     assert Path(file_path).exists()
 
         shutil.rmtree(project_path)
+
+    @patch('panther.cli.create_user_command.get_password', return_value='testpass')
+    @patch('panther.cli.create_user_command.get_username', return_value='testuser')
+    @patch('panther.cli.create_user_command.load_application_file')
+    async def test_create_user_success(self, mock_load_application_file, mock_get_username, mock_get_password):
+        global DATABASE
+        # Setup
+        mock_get_username.side_effect = ['testuser']
+        DATABASE = {'engine': {'class': 'panther.db.connections.PantherDBConnection', 'path': DB_PATH}}
+        Panther(__name__, configs=__name__, urls={})
+
+        # Run
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            create_user(['dummy.py'])
+        # Check user created
+        user = await BaseUser.find_one({'username': 'testuser'})
+        assert user is not None
+        assert user.check_password('testpass')
+        # Cleanup
+        await user.delete()
+        # Check output
+        output = fake_out.getvalue()
+        assert 'Created Successfully' in output
+
+    @patch('panther.cli.create_user_command.get_password', return_value='testpass')
+    @patch('panther.cli.create_user_command.get_username', return_value='testuser')
+    @patch('panther.cli.create_user_command.load_application_file')
+    async def test_create_user_duplicate(self, mock_load_application_file, mock_get_username, mock_get_password):
+        global DATABASE
+        # Setup
+        mock_get_username.side_effect = ['testuser', 'testuser2']
+        DATABASE = {'engine': {'class': 'panther.db.connections.PantherDBConnection', 'path': DB_PATH}}
+        Panther(__name__, configs=__name__, urls={})
+
+        # Run 1
+        create_user(['dummy.py'])
+        assert await BaseUser.exists(username='testuser')
+        assert not await BaseUser.exists(username='testuser2')
+
+        # Run 2
+        create_user(['dummy.py'])
+        assert await BaseUser.exists(username='testuser')
+        assert await BaseUser.exists(username='testuser2')
+
+    @patch('panther.cli.create_user_command.get_password', side_effect=KeyboardInterrupt)
+    @patch('panther.cli.create_user_command.get_username', return_value='testuser')
+    @patch('panther.cli.create_user_command.load_application_file')
+    async def test_create_user_keyboard_interrupt(self, mock_load_application_file, mock_get_username,
+                                                  mock_get_password):
+        global DATABASE
+        DATABASE = {'engine': {'class': 'panther.db.connections.PantherDBConnection', 'path': DB_PATH}}
+        Panther(__name__, configs=__name__, urls={})
+
+        # Run
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            create_user(['dummy.py'])
+        output = fake_out.getvalue()
+        assert 'Keyboard Interrupt' in output

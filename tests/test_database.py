@@ -564,9 +564,7 @@ class TestPantherDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         global DATABASE
-        DATABASE = {
-            'engine': {'class': 'panther.db.connections.PantherDBConnection', 'path': cls.DB_PATH},
-        }
+        DATABASE = {'engine': {'class': 'panther.db.connections.PantherDBConnection', 'path': cls.DB_PATH}}
         Panther(__name__, configs=__name__, urls={})
 
     def tearDown(self) -> None:
