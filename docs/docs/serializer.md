@@ -45,7 +45,6 @@ Use Panther's `ModelSerializer` to automatically generate serializer fields from
 
 ```python linenums="1"
 from pydantic import Field
-from panther import status
 from panther.app import API
 from panther.db import Model
 from panther.request import Request
@@ -86,7 +85,6 @@ Combine `ModelSerializer` with Pydantic features for advanced use cases. This al
 
 ```python linenums="1"
 from pydantic import Field, field_validator, ConfigDict
-from panther import status
 from panther.app import API
 from panther.db import Model
 from panther.request import Request

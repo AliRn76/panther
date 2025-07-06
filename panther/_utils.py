@@ -107,7 +107,7 @@ def reformat_code(base_dir):
         raise PantherError("No module named 'ruff', Hint: `pip install ruff`")
 
 
-def check_function_type_endpoint(endpoint: types.FunctionType) -> Callable:
+def check_function_type_endpoint(endpoint: types.FunctionType):
     # Function Doesn't Have @API Decorator
     if not hasattr(endpoint, '__wrapped__'):
         raise PantherError(
@@ -115,7 +115,7 @@ def check_function_type_endpoint(endpoint: types.FunctionType) -> Callable:
         )
 
 
-def check_class_type_endpoint(endpoint: Callable) -> Callable:
+def check_class_type_endpoint(endpoint: Callable):
     from panther.app import GenericAPI
     from panther.websocket import GenericWebsocket
 
