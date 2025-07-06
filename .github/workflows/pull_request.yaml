@@ -2,7 +2,8 @@ name: Pull Request
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [ opened, synchronize ]
+
 jobs:
 
   tests-linux:
@@ -40,7 +41,7 @@ jobs:
   tests-windows:
     name: Test Windows
     runs-on: windows-latest
-    needs: [tests-linux]
+    needs: [ tests-linux ]
 
     steps:
       - name: Checkout source
@@ -57,12 +58,12 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: python tests --not_mongodb
+        run: python tests --not_mongodb --not_slow
 
   tests-macos:
     name: Test MacOS
     runs-on: macos-latest
-    needs: [tests-linux]
+    needs: [ tests-linux ]
 
     steps:
       - name: Checkout source
@@ -79,4 +80,4 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: python tests --not_mongodb
+        run: python tests --not_mongodb --not_slow

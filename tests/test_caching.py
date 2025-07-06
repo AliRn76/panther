@@ -37,7 +37,6 @@ urls = {
 }
 
 
-@pytest.mark.slow
 class TestInMemoryCaching(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls) -> None:
