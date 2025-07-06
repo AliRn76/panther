@@ -11,6 +11,7 @@
 - Add `CORSMiddleware`
 - Add `RedirectResponse`
 - Optimized `ORM` with smarter `ObjectID` handling
+- Add CLI `createuser` command
 - Deprecated:
     - Usage of `auth` and `permissions` in `API`, `GenericAPI` and `GenericWebsocket` has been change, make sure to check the docs. 
     - `DEFAULT_CACHE_EXP` in configs.

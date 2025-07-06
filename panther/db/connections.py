@@ -105,6 +105,10 @@ class DatabaseConnection(Singleton):
         return config.DATABASE.session
 
     @property
+    def is_defined(self):
+        return bool(config.DATABASE)
+
+    @property
     def client(self):
         return config.DATABASE.client
 

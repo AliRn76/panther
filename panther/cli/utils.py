@@ -61,6 +61,12 @@ help_message = rf"""{logo}
 {h}           * application_file: path to your main app file.  {h}           
 {h}           Example: `panther shell main.py`                 {h}
 {h}                                                            {h}
+{h}       - createuser <application_file>                      {h}       
+{h}           Create a new user based on USER_MODEl from your, {h}
+{h}           configs. (default is panther.db.models.BaseUser) {h}
+{h}           * application_file: path to your main app file.  {h}           
+{h}           Example: `panther createuser main.py`            {h}
+{h}                                                            {h}
 {h}       - monitor                                            {h}
 {h}           Display real-time request monitoring.            {h}
 {h}                                                            {h}
