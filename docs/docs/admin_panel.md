@@ -48,3 +48,15 @@ Open your browser and navigate to:
 [http://127.0.0.1:8000/panel/](http://127.0.0.1:8000/panel/)
 
 You should see the Panther Admin Panel interface, where you can manage your database models. 
+
+### 5. Create an Admin User
+
+To access the admin panel, you need at least one user account. You can create a user using the following command:
+
+```bash
+panther createuser main.py
+```
+
+Replace `main.py` with the path to your main application file if it is different. This command will create a new user based on your `USER_MODEL` (by default, `panther.db.models.BaseUser`).
+
+Once the user is created, you can log in to the admin panel using the credentials you set during user creation. 

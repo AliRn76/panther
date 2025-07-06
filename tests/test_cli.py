@@ -201,8 +201,9 @@ class TestCLI(IsolatedAsyncioTestCase):
     @patch('panther.cli.create_user_command.get_password', side_effect=KeyboardInterrupt)
     @patch('panther.cli.create_user_command.get_username', return_value='testuser')
     @patch('panther.cli.create_user_command.load_application_file')
-    async def test_create_user_keyboard_interrupt(self, mock_load_application_file, mock_get_username,
-                                                  mock_get_password):
+    async def test_create_user_keyboard_interrupt(
+        self, mock_load_application_file, mock_get_username, mock_get_password
+    ):
         global DATABASE
         DATABASE = {'engine': {'class': 'panther.db.connections.PantherDBConnection', 'path': DB_PATH}}
         Panther(__name__, configs=__name__, urls={})
