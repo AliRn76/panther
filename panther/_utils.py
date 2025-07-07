@@ -16,6 +16,10 @@ from panther.file_handler import File
 
 logger = logging.getLogger('panther')
 
+ENDPOINT_FUNCTION_BASED_API = 0
+ENDPOINT_CLASS_BASED_API = 1
+ENDPOINT_WEBSOCKET = 2
+
 
 def import_class(dotted_path: str, /) -> type[Any]:
     """

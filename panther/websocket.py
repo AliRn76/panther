@@ -3,11 +3,13 @@ from __future__ import annotations
 from typing import Callable
 
 from panther import status
+from panther._utils import ENDPOINT_WEBSOCKET
 from panther.base_websocket import Websocket
 from panther.configs import config
 
 
 class GenericWebsocket(Websocket):
+    _endpoint_type = ENDPOINT_WEBSOCKET
     auth: Callable | None = None
     permissions: list = []
 

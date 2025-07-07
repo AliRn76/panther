@@ -1,6 +1,5 @@
 import logging
 import sys
-import types
 from collections.abc import Callable
 from logging.config import dictConfig
 from pathlib import Path
@@ -8,8 +7,7 @@ from pathlib import Path
 import panther.logging
 from panther import status
 from panther._load_configs import *
-from panther._utils import reformat_code, traceback_message
-from panther.app import GenericAPI
+from panther._utils import ENDPOINT_CLASS_BASED_API, ENDPOINT_FUNCTION_BASED_API, reformat_code, traceback_message
 from panther.base_websocket import Websocket
 from panther.cli.utils import print_info
 from panther.configs import config
@@ -94,8 +92,8 @@ class Panther:
         func = self.handle_http if scope['type'] == 'http' else self.handle_ws
         await func(scope=scope, receive=receive, send=send)
 
-    @classmethod
-    async def handle_ws_endpoint(cls, connection: Websocket):
+    @staticmethod
+    async def handle_ws_endpoint(connection: Websocket):
         # Find Endpoint
         endpoint, found_path = find_endpoint(path=connection.path)
         if endpoint is None:
@@ -118,12 +116,13 @@ class Panther:
 
         return await config.WEBSOCKET_CONNECTIONS.listen(connection=final_connection)
 
-    async def handle_ws(self, scope: dict, receive: Callable, send: Callable) -> None:
+    @classmethod
+    async def handle_ws(cls, scope: dict, receive: Callable, send: Callable) -> None:
         # Create Temp Connection
         connection = Websocket(scope=scope, receive=receive, send=send)
 
         # Create Middlewares chain
-        chained_func = self.handle_ws_endpoint
+        chained_func = cls.handle_ws_endpoint
         for middleware in reversed(config.WS_MIDDLEWARES):
             chained_func = middleware(dispatch=chained_func)
 
@@ -137,8 +136,8 @@ class Panther:
             logger.error(traceback_message(exception=e))
             await connection.close()
 
-    @classmethod
-    async def handle_http_endpoint(cls, request: Request) -> Response:
+    @staticmethod
+    async def handle_http_endpoint(request: Request) -> Response:
         # Find Endpoint
         endpoint, found_path = find_endpoint(path=request.path)
         if endpoint is None:
@@ -147,22 +146,22 @@ class Panther:
         # Collect Path Variables
         request.collect_path_variables(found_path=found_path)
 
-        # Prepare the method
-        if not isinstance(endpoint, types.FunctionType):
-            if not issubclass(endpoint, GenericAPI):
-                raise UpgradeRequiredError
+        if endpoint._endpoint_type is ENDPOINT_FUNCTION_BASED_API:
+            return await endpoint(request=request)
+        if endpoint._endpoint_type is ENDPOINT_CLASS_BASED_API:
+            return await endpoint().call_method(request=request)
 
-            endpoint = endpoint().call_method
-        # Call Endpoint
-        return await endpoint(request=request)
+        # ENDPOINT_WEBSOCKET
+        raise UpgradeRequiredError
 
-    async def handle_http(self, scope: dict, receive: Callable, send: Callable) -> None:
+    @classmethod
+    async def handle_http(cls, scope: dict, receive: Callable, send: Callable) -> None:
         # Create `Request` and its body
         request = Request(scope=scope, receive=receive, send=send)
         await request.read_body()
 
         # Create Middlewares chain
-        chained_func = self.handle_http_endpoint
+        chained_func = cls.handle_http_endpoint
         for middleware in reversed(config.HTTP_MIDDLEWARES):
             chained_func = middleware(dispatch=chained_func)
 

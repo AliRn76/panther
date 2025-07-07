@@ -8,7 +8,14 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from panther._utils import check_api_deprecations, is_function_async, validate_api_auth, validate_api_permissions
+from panther._utils import (
+    ENDPOINT_CLASS_BASED_API,
+    ENDPOINT_FUNCTION_BASED_API,
+    check_api_deprecations,
+    is_function_async,
+    validate_api_auth,
+    validate_api_permissions,
+)
 from panther.base_request import BaseRequest
 from panther.caching import (
     get_response_from_cache,
@@ -105,6 +112,7 @@ class API:
         wrapper.input_model = self.input_model
         wrapper.output_model = self.output_model
         wrapper.output_schema = self.output_schema
+        wrapper._endpoint_type = ENDPOINT_FUNCTION_BASED_API
         return wrapper
 
     async def handle_endpoint(self, request: Request) -> Response:
@@ -129,7 +137,7 @@ class API:
                     raise AuthorizationAPIError
 
         # 4. Throttle
-        if throttling := self.throttling or config.THROTTLING:
+        if throttling := (self.throttling or config.THROTTLING):
             await throttling.check_and_increment(request=self.request)
 
         # 5. Validate Input
@@ -179,6 +187,8 @@ class GenericAPI(metaclass=MetaGenericAPI):
     """
     Check out the documentation of `panther.app.API()`.
     """
+
+    _endpoint_type = ENDPOINT_CLASS_BASED_API
 
     input_model: type[ModelSerializer] | type[BaseModel] | None = None
     output_model: type[ModelSerializer] | type[BaseModel] | None = None
