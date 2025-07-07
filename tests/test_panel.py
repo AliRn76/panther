@@ -10,12 +10,12 @@ from panther.panel.urls import url_routing
 from panther.test import APIClient
 
 
-class TestUser(BaseUser):
+class CustomUser(BaseUser):
     username: str
     password: str
 
 
-class TestModel(Model):
+class CustomModel(Model):
     name: str
     description: str = 'Default description'
     is_active: bool = True
@@ -31,7 +31,7 @@ DATABASE = {
         'path': DB_PATH,
     },
 }
-USER_MODEL = 'tests.test_panel.TestUser'
+USER_MODEL = 'tests.test_panel.CustomUser'
 
 
 class TestPanel(IsolatedAsyncioTestCase):
@@ -41,8 +41,8 @@ class TestPanel(IsolatedAsyncioTestCase):
         cls.client = APIClient(app=app)
 
     def tearDown(self) -> None:
-        db.session.collection('TestUser').drop()
-        db.session.collection('TestModel').drop()
+        db.session.collection('CustomUser').drop()
+        db.session.collection('CustomModel').drop()
 
     @classmethod
     def tearDownClass(cls):
@@ -68,7 +68,7 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_login_view_post_success(self):
         """Test successful login POST request"""
         # Create a test user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
 
         # Test successful login
@@ -92,7 +92,7 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_login_view_post_wrong_password(self):
         """Test login POST request with wrong password"""
         # Create a test user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
 
         # Test wrong password
@@ -107,7 +107,7 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_login_view_post_with_redirect(self):
         """Test login POST request with redirect_to parameter"""
         # Create a test user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
 
         # Test login with redirect
@@ -128,7 +128,7 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_home_view_with_auth(self):
         """Test home view with authentication"""
         # Create and login user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
         tokens = await user.login()
 
@@ -146,7 +146,7 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_table_view_with_auth_empty_data(self):
         """Test table view with authentication but no data"""
         # Create and login user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
         tokens = await user.login()
 
@@ -159,17 +159,17 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_table_view_with_auth_with_data(self):
         """Test table view with authentication and data"""
         # Create and login user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
         tokens = await user.login()
 
         # Create some test data
-        await TestModel.insert_one(name='Test Item 1', description='Description 1')
-        await TestModel.insert_one(name='Test Item 2', description='Description 2')
+        await CustomModel.insert_one(name='Test Item 1', description='Description 1')
+        await CustomModel.insert_one(name='Test Item 2', description='Description 2')
 
         # Test table view with auth and data
         res = await self.client.get(
-            path='1/',  # TestModel should be at index 1 (after TestUser at index 0)
+            path='1/',  # CustomModel should be at index 1 (after CustomUser at index 0)
             headers={'Cookie': f'access_token={tokens["access_token"]}'},
         )
 
@@ -184,7 +184,7 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_create_view_get_with_auth(self):
         """Test create view GET with authentication"""
         # Create and login user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
         tokens = await user.login()
 
@@ -202,7 +202,7 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_create_view_post_with_auth_user_model(self):
         """Test create view POST with authentication for user model"""
         # Create and login user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
         tokens = await user.login()
 
@@ -221,7 +221,7 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_create_view_post_with_auth_regular_model(self):
         """Test create view POST with authentication for regular model"""
         # Create and login user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
         tokens = await user.login()
 
@@ -245,12 +245,12 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_detail_view_get_with_auth(self):
         """Test detail view GET with authentication"""
         # Create and login user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
         tokens = await user.login()
 
         # Create a test item
-        test_item = await TestModel.insert_one(name='Test Item', description='Test Description')
+        test_item = await CustomModel.insert_one(name='Test Item', description='Test Description')
 
         # Test detail view GET with auth
         res = await self.client.get(
@@ -268,12 +268,12 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_detail_view_put_with_auth(self):
         """Test detail view PUT with authentication"""
         # Create and login user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
         tokens = await user.login()
 
         # Create a test item
-        test_item = await TestModel.insert_one(name='Test Item', description='Test Description')
+        test_item = await CustomModel.insert_one(name='Test Item', description='Test Description')
 
         # Test detail view PUT with auth
         res = await self.client.put(
@@ -294,12 +294,12 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_detail_view_delete_with_auth(self):
         """Test detail view DELETE with authentication"""
         # Create and login user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
         tokens = await user.login()
 
         # Create a test item
-        test_item = await TestModel.insert_one(name='Test Item', description='Test Description')
+        test_item = await CustomModel.insert_one(name='Test Item', description='Test Description')
 
         # Test detail view DELETE with auth
         res = await self.client.delete(
@@ -309,13 +309,13 @@ class TestPanel(IsolatedAsyncioTestCase):
         assert res.status_code == 204  # No content
 
         # Verify item was deleted
-        deleted_item = await TestModel.find_one(id=test_item.id)
+        deleted_item = await CustomModel.find_one(id=test_item.id)
         assert deleted_item is None
 
     async def test_invalid_model_index(self):
         """Test accessing invalid model index"""
         # Create and login user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
         tokens = await user.login()
 
@@ -327,7 +327,7 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_invalid_document_id(self):
         """Test accessing invalid document ID"""
         # Create and login user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
         tokens = await user.login()
 
@@ -339,7 +339,7 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_middleware_redirect_to_slash(self):
         """Test RedirectToSlashMiddleware functionality"""
         # Create and login user
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
         tokens = await user.login()
 
@@ -356,7 +356,7 @@ class TestPanel(IsolatedAsyncioTestCase):
     async def test_cookie_authentication_expired_token(self):
         """Test cookie authentication with expired token"""
         # Create a user but don't use their token
-        user = await TestUser.insert_one(username='testuser', password='testpass')
+        user = await CustomUser.insert_one(username='testuser', password='testpass')
         await user.set_password('testpass')
 
         # Use an expired token

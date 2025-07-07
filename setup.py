@@ -14,13 +14,13 @@ with open('README.md', encoding='utf-8') as file:
     DESCRIPTION = file.read()
 
 INSTALL_REQUIRES = [
-    'pantherdb~=2.3.0',
-    'orjson~=3.9.15',
-    'pydantic~=2.10.6',
-    'rich~=13.9.4',
-    'uvicorn~=0.34.0',
+    'pantherdb~=2.3.1',
+    'orjson~=3.10.18',
+    'pydantic~=2.11.7',
+    'rich~=14.0.0',
+    'uvicorn~=0.35.0',
     'pytz~=2025.2',
-    'Jinja2~=3.1',
+    'Jinja2~=3.1.6',
     'simple-ulid~=1.0.0',
 ]
 if sys.version_info <= (3, 12):
@@ -28,16 +28,15 @@ if sys.version_info <= (3, 12):
 
 EXTRAS_REQUIRE = {
     'full': [
-        'redis==5.2.1',
-        'motor~=3.7.0',
-        'ipython~=9.0.2',
-        'python-jose~=3.4.0',
-        'ruff~=0.11.2',
+        'redis==6.2.0',
+        'motor~=3.7.1',
+        'ipython~=9.4.0',
+        'python-jose~=3.5.0',
+        'ruff~=0.12.2',
         'websockets~=15.0.1',
-        'cryptography~=44.0.2',
-        'watchfiles~=1.0.4',
+        'cryptography~=45.0.5',
+        'watchfiles~=1.1.0',
     ],
-    'dev': ['ruff~=0.11.2', 'pytest~=8.3.5'],
 }
 
 setup(

@@ -197,7 +197,7 @@ class BaseQuery:
             case BaseModel() as model:
                 return {
                     field_name: await cls._clean_value(value=getattr(model, field_name))
-                    for field_name in model.model_fields
+                    for field_name in model.__class__.model_fields
                 }
             case dict() as d:
                 return {k: await cls._clean_value(value=v) for k, v in d.items()}

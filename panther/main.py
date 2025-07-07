@@ -74,23 +74,19 @@ class Panther:
         check_endpoints_inheritance()
 
     async def __call__(self, scope: dict, receive: Callable, send: Callable) -> None:
-        if scope['type'] == 'lifespan':
+        if scope['type'] == 'http':
+            await self.handle_http(scope=scope, receive=receive, send=send)
+        elif scope['type'] == 'websocket':
+            await self.handle_ws(scope=scope, receive=receive, send=send)
+        elif scope['type'] == 'lifespan':
             message = await receive()
             if message['type'] == 'lifespan.startup':
                 if config.HAS_WS:
                     await config.WEBSOCKET_CONNECTIONS.start()
-                try:
-                    await Event.run_startups()
-                except Exception as e:
-                    logger.error(e)
-                    raise
+                await Event.run_startups()
             elif message['type'] == 'lifespan.shutdown':
-                # It's not happening :\, so handle the shutdowns in __del__ ...
                 pass
             return
-
-        func = self.handle_http if scope['type'] == 'http' else self.handle_ws
-        await func(scope=scope, receive=receive, send=send)
 
     @staticmethod
     async def handle_ws_endpoint(connection: Websocket):

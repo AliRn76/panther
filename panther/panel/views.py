@@ -72,7 +72,7 @@ class TableView(GenericAPI):
         return TemplateResponse(
             name='table.html',
             context={
-                'fields': clean_model_schema(model.schema()),
+                'fields': clean_model_schema(model.model_json_schema()),
                 'tables': get_models(),
                 'records': serialize_models(data),
             },
@@ -89,7 +89,7 @@ class CreateView(GenericAPI):
         return TemplateResponse(
             name='create.html',
             context={
-                'fields': clean_model_schema(model.schema()),
+                'fields': clean_model_schema(model.model_json_schema()),
                 'tables': get_models(),
             },
         )
@@ -113,7 +113,7 @@ class DetailView(GenericAPI):
         obj = await model.find_one_or_raise(id=document_id)
         return TemplateResponse(
             name='detail.html',
-            context={'fields': clean_model_schema(model.schema()), 'data': obj.model_dump()},
+            context={'fields': clean_model_schema(model.model_json_schema()), 'data': obj.model_dump()},
         )
 
     async def put(self, request: Request, index: int, document_id: str):

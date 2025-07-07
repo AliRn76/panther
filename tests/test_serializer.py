@@ -274,7 +274,9 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
                     fields = ['name', 'author', 'pages_count']
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == '`Serializer5.Config.model` is not subclass of `panther.db.Model`.'
+            assert (
+                e.args[0] == '`Serializer5.Config.model` is not subclass of `panther.db.Model` or `pydantic.BaseModel`.'
+            )
         else:
             assert False
 
