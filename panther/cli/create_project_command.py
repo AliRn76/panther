@@ -9,13 +9,17 @@ from rich.prompt import Prompt
 from panther import version
 from panther.cli.template import (
     AUTHENTICATION_PART,
+    BASE_DIR_PART,
     DATABASE_MONGODB_PART,
     DATABASE_PANTHERDB_PART,
+    IMPORT_COMPLETE_LOAD_ENV_PART,
+    IMPORT_LOAD_ENV_PART,
+    IMPORT_PATH_PART,
     REDIS_PART,
+    SECRET_KEY_PART,
     SINGLE_FILE_TEMPLATE,
     TEMPLATE,
-    USER_MODEL_PART, SECRET_KEY_PART, BASE_DIR_PART, IMPORT_PATH_PART, IMPORT_LOAD_ENV_PART,
-    IMPORT_COMPLETE_LOAD_ENV_PART,
+    USER_MODEL_PART,
 )
 from panther.cli.utils import cli_error
 
@@ -72,7 +76,7 @@ class CreateProject:
                 'field': 'authentication',
                 'message': 'Do you want to use JWT Authentication (Required `python-jose`)',
                 'is_boolean': True,
-            }
+            },
         ]
         self.progress_len = len(self.questions)
         self.bar = ProgressBar(total=self.progress_len, width=40)
@@ -145,7 +149,7 @@ class CreateProject:
 
         data = data.replace('{PROJECT_NAME}', self.project_name)
         data = data.replace('{PANTHER_VERSION}', version())
-        with Path(path).open('x') as file:
+        with Path(path).open('x', encoding='utf-8') as file:
             file.write(data)
 
     def collect_creation_data(self):

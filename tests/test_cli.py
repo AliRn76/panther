@@ -10,7 +10,7 @@ from unittest.mock import patch
 from rich import print as rprint
 
 from panther import Panther
-from panther.cli.create_command import CreateProject
+from panther.cli.create_project_command import CreateProject
 from panther.cli.create_user_command import create_user
 from panther.cli.template import SINGLE_FILE_TEMPLATE, TEMPLATE
 from panther.configs import config
@@ -130,10 +130,10 @@ class TestCLI(IsolatedAsyncioTestCase):
 
         try:
             assert len(captured_error.records) == 1
-            assert captured_info.records[0].getMessage() == f'"{project_path}" Directory Already Exists.'
+            assert captured_info.records[0].getMessage() == f'"{project_path}" directory already exists.'
 
             assert len(captured_info.records) == 2
-            assert captured_info.records[0].getMessage() == f'"{project_path}" Directory Already Exists.'
+            assert captured_info.records[0].getMessage() == f'"{project_path}" directory already exists.'
             assert captured_info.records[1].getMessage() == 'Use "panther -h" for more help'
         except AssertionError:
             raise
