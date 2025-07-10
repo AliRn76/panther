@@ -132,6 +132,7 @@ class MyWebSocket(GenericWebsocket):
   ```shell
   gunicorn -w 10 -k uvicorn.workers.UvicornWorker main:app --preload
   ```
+- **Uvicorn Limitation:** WebSockets do not work properly when using uvicorn directly with the `--workers` flag (e.g., `uvicorn main:app --workers 4`). This is because each worker process maintains its own separate WebSocket connections, and there's no shared state between workers. Use Gunicorn with the `--preload` flag or add Redis for proper WebSocket support with multiple workers.
 
 ### Closing Connections
 - **Within the WebSocket class:**
