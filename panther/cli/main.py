@@ -2,7 +2,7 @@ import logging
 import sys
 
 from panther import version as panther_version
-from panther.cli.create_command import create
+from panther.cli.create_project_command import create
 from panther.cli.create_user_command import create_user
 from panther.cli.monitor_command import monitor
 from panther.cli.run_command import run
