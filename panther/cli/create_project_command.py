@@ -15,6 +15,7 @@ from panther.cli.template import (
     SINGLE_FILE_TEMPLATE,
     TEMPLATE,
     USER_MODEL_PART, SECRET_KEY_PART, BASE_DIR_PART, IMPORT_PATH_PART, IMPORT_LOAD_ENV_PART,
+    IMPORT_COMPLETE_LOAD_ENV_PART,
 )
 from panther.cli.utils import cli_error
 
@@ -94,6 +95,8 @@ class CreateProject:
             if existence is not True:
                 return cli_error(f'"{existence}" directory already exists.')
 
+        self.project_name = self.project_name.lower().replace(' ', '_')
+        self.base_directory = self.base_directory.replace(' ', '_')
         template = SINGLE_FILE_TEMPLATE if self.single_file else TEMPLATE
 
         # Create Base Directory
@@ -117,6 +120,7 @@ class CreateProject:
     def _create_file(self, *, path: str, data: str):
         base_dir_part = BASE_DIR_PART if self.authentication or self.database == '1' else ''
         import_load_env_part = IMPORT_LOAD_ENV_PART if self.authentication else ''
+        import_complete_load_env_part = IMPORT_COMPLETE_LOAD_ENV_PART if self.authentication else ''
         import_path_part = IMPORT_PATH_PART if self.authentication or self.database == '1' else ''
         user_model_part = USER_MODEL_PART if self.authentication else ''
         authentication_part = AUTHENTICATION_PART if self.authentication else ''
@@ -130,6 +134,7 @@ class CreateProject:
             database_part = ''
 
         data = data.replace('{IMPORT_LOAD_ENV}', import_load_env_part)
+        data = data.replace('{IMPORT_COMPLETE_LOAD_ENV}', import_complete_load_env_part)
         data = data.replace('{IMPORT_PATH}', import_path_part)
         data = data.replace('{BASE_DIR}', base_dir_part)
         data = data.replace('{SECRET_KEY}', secret_key_part)
@@ -138,7 +143,7 @@ class CreateProject:
         data = data.replace('{DATABASE}', database_part)
         data = data.replace('{REDIS}', redis_part)
 
-        data = data.replace('{PROJECT_NAME}', self.project_name.lower().replace(' ', '_'))
+        data = data.replace('{PROJECT_NAME}', self.project_name)
         data = data.replace('{PANTHER_VERSION}', version())
         with Path(path).open('x') as file:
             file.write(data)

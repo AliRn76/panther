@@ -206,7 +206,7 @@ class MetaModelSerializer:
 class ModelSerializer(metaclass=MetaModelSerializer):
     """
     Doc:
-        https://pantherpy.github.io/serializer/#style-2-model-serializer
+        https://pantherpy.github.io/serializer/#style-2-modelserializer
     Example:
         class PersonSerializer(ModelSerializer):
             class Config:
