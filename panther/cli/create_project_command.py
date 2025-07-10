@@ -9,15 +9,12 @@ from rich.prompt import Prompt
 from panther import version
 from panther.cli.template import (
     AUTHENTICATION_PART,
-    AUTO_REFORMAT_PART,
     DATABASE_MONGODB_PART,
     DATABASE_PANTHERDB_PART,
-    LOG_QUERIES_PART,
-    MONITORING_PART,
     REDIS_PART,
     SINGLE_FILE_TEMPLATE,
     TEMPLATE,
-    USER_MODEL_PART,
+    USER_MODEL_PART, SECRET_KEY_PART, BASE_DIR_PART, IMPORT_PATH_PART, IMPORT_LOAD_ENV_PART,
 )
 from panther.cli.utils import cli_error
 
@@ -39,65 +36,42 @@ class CreateProject:
         self.authentication = False
         self.monitoring = True
         self.log_queries = True
-        self.auto_reformat = False
         self.single_file = False
         self.questions = [
             {
                 'field': 'project_name',
                 'message': 'Project Name',
                 'validation_func': lambda x: x != '',
-                'error_message': "'{}' Is Not Valid, Can't Be Empty.",
+                'error_message': "'{}' is not valid, Can't be empty.",
             },
             {
                 'field': 'base_directory',
-                'message': 'Directory (default is .)',
+                'message': 'Directory (default is ./)',
                 'validation_func': self._check_all_directories,
-                'error_message': '"{}" Directory Already Exists.',
+                'error_message': '"{}" directory already exists.',
                 'show_validation_error': True,
             },
             {
                 'field': 'single_file',
-                'message': 'Do You Want To Work With Single File Structure',
+                'message': 'Do you want Single-File project',
                 'is_boolean': True,
             },
             {
                 'field': 'database',
-                'message': '    0: PantherDB (File-Base, No Requirements)\n    1: MongoDB (Required `motor`)\n    2: No Database\nChoose Your Database (default is 0)',
+                'message': '    0: PantherDB (File-Base, No Requirements)\n    1: MongoDB (Required `motor`)\n    2: No Database\nChoose your database (default is 0)',
                 'validation_func': lambda x: x in ['0', '1', '2'],
-                'error_message': "Invalid Choice, '{}' not in ['0', '1', '2']",
-            },
-            {
-                'field': 'database_encryption',
-                'message': 'Do You Want Encryption For Your Database (Required `cryptography`)',
-                'is_boolean': True,
-                'condition': "self.database == '0'",
+                'error_message': "Invalid choice, '{}' not in ['0', '1', '2']",
             },
             {
                 'field': 'redis',
-                'message': 'Do You Want To Use Redis (Required `redis`)',
+                'message': 'Do you want to use Redis (Required `redis`)',
                 'is_boolean': True,
             },
             {
                 'field': 'authentication',
-                'message': 'Do You Want To Use JWT Authentication (Required `python-jose`)',
+                'message': 'Do you want to use JWT Authentication (Required `python-jose`)',
                 'is_boolean': True,
-            },
-            {
-                'field': 'monitoring',
-                'message': 'Do You Want To Use Built-in Monitoring (Required `watchfiles`)',
-                'is_boolean': True,
-            },
-            {
-                'field': 'log_queries',
-                'message': 'Do You Want To Log Queries',
-                'is_boolean': True,
-                'condition': "self.database != '2'",
-            },
-            {
-                'field': 'auto_reformat',
-                'message': 'Do You Want To Use Auto Code Reformat (Required `ruff`)',
-                'is_boolean': True,
-            },
+            }
         ]
         self.progress_len = len(self.questions)
         self.bar = ProgressBar(total=self.progress_len, width=40)
@@ -118,7 +92,7 @@ class CreateProject:
 
             existence = self._check_all_directories(self.base_directory, return_error=True)
             if existence is not True:
-                return cli_error(f'"{existence}" Directory Already Exists.')
+                return cli_error(f'"{existence}" directory already exists.')
 
         template = SINGLE_FILE_TEMPLATE if self.single_file else TEMPLATE
 
@@ -141,13 +115,12 @@ class CreateProject:
                     self._create_file(path=inner_path, data=sub_data)
 
     def _create_file(self, *, path: str, data: str):
+        base_dir_part = BASE_DIR_PART if self.authentication or self.database == '1' else ''
+        import_load_env_part = IMPORT_LOAD_ENV_PART if self.authentication else ''
+        import_path_part = IMPORT_PATH_PART if self.authentication or self.database == '1' else ''
         user_model_part = USER_MODEL_PART if self.authentication else ''
         authentication_part = AUTHENTICATION_PART if self.authentication else ''
-        monitoring_part = MONITORING_PART if self.monitoring else ''
-        log_queries_part = LOG_QUERIES_PART if self.log_queries else ''
-        auto_reformat_part = AUTO_REFORMAT_PART if self.auto_reformat else ''
-        database_encryption = 'True' if self.database_encryption else 'False'
-        database_extension = 'pdb' if self.database_encryption else 'json'
+        secret_key_part = SECRET_KEY_PART if self.authentication else ''
         redis_part = REDIS_PART if self.redis else ''
         if self.database == '0':
             database_part = DATABASE_PANTHERDB_PART
@@ -156,17 +129,16 @@ class CreateProject:
         else:
             database_part = ''
 
+        data = data.replace('{IMPORT_LOAD_ENV}', import_load_env_part)
+        data = data.replace('{IMPORT_PATH}', import_path_part)
+        data = data.replace('{BASE_DIR}', base_dir_part)
+        data = data.replace('{SECRET_KEY}', secret_key_part)
         data = data.replace('{USER_MODEL}', user_model_part)
         data = data.replace('{AUTHENTICATION}', authentication_part)
-        data = data.replace('{MONITORING}', monitoring_part)
-        data = data.replace('{LOG_QUERIES}', log_queries_part)
-        data = data.replace('{AUTO_REFORMAT}', auto_reformat_part)
         data = data.replace('{DATABASE}', database_part)
-        data = data.replace('{PANTHERDB_ENCRYPTION}', database_encryption)  # Should be after `DATABASE`
-        data = data.replace('{PANTHERDB_EXTENSION}', database_extension)  # Should be after `DATABASE`
         data = data.replace('{REDIS}', redis_part)
 
-        data = data.replace('{PROJECT_NAME}', self.project_name.lower())
+        data = data.replace('{PROJECT_NAME}', self.project_name.lower().replace(' ', '_'))
         data = data.replace('{PANTHER_VERSION}', version())
         with Path(path).open('x') as file:
             file.write(data)
@@ -183,7 +155,7 @@ class CreateProject:
             if is_boolean:
                 question['message'] += f' (default is {self._to_str(question["default"])})'
                 question['validation_func'] = self._is_boolean
-                question['error_message'] = "Invalid Choice, '{}' not in ['y', 'n']"
+                question['error_message'] = "Invalid choice, '{}' not in ['y', 'n']"
                 convert_output = self._to_boolean
 
             # Check Question Condition
