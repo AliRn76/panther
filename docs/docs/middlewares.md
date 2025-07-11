@@ -6,7 +6,11 @@ Middlewares allow you to process requests and responses globally or for all or s
 
 ## Global Middlewares
 
-To apply middlewares globally, define a `MIDDLEWARES` list in your configs. Each item can be either a string (dotted path to the middleware class) or the class itself (useful for single-file applications):
+To apply middlewares globally, define a `MIDDLEWARES` list in your configs for HTTP middlewares, and a `WS_MIDDLEWARE` list for WebSocket middlewares. **Only HTTP-related middlewares should be placed in `MIDDLEWARES`, and WebSocket middlewares must be placed in `WS_MIDDLEWARE`.**
+
+> **Note:** Previously, WebSocket middlewares were also defined in `MIDDLEWARES`. Now, you must define them in `WS_MIDDLEWARE` instead.
+
+Each item can be either a string (dotted path to the middleware class) or the class itself (useful for single-file applications):
 
 ```python
 class Middleware(HTTPMiddleware):
@@ -15,6 +19,11 @@ class Middleware(HTTPMiddleware):
 MIDDLEWARES = [
     'core.middlewares.MyMiddleware',  # Import by dotted path
     Middleware,                       # Or directly by class
+]
+
+WS_MIDDLEWARE = [
+    'core.middlewares.MyWebsocketMiddleware',  # WebSocket middleware by dotted path
+    MyWebsocketMiddleware,                     # Or directly by class
 ]
 ```
 

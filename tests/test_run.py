@@ -18,6 +18,9 @@ class TestRun(TestCase):
         config.refresh()
         sys.path.pop()
 
+    def tearDown(self) -> None:
+        config.refresh()
+
     def test_init(self):
         app = Panther(__name__)
         assert isinstance(app, Panther)
@@ -33,7 +36,6 @@ class TestRun(TestCase):
         assert config.THROTTLING.rate == 10
         assert config.THROTTLING.duration == timedelta(seconds=10)
         assert secret_key == config.SECRET_KEY
-
         assert len(config.HTTP_MIDDLEWARES) == 1
         assert len(config.WS_MIDDLEWARES) == 0
 
