@@ -2,6 +2,7 @@ import asyncio
 import importlib
 import inspect
 import logging
+import mimetypes
 import re
 import subprocess
 import traceback
@@ -253,3 +254,38 @@ def check_api_deprecations(cache, **kwargs):
         msg = f'Unknown kwargs: {kwargs.keys()}'
         logger.error(msg)
         raise PantherError(msg)
+
+
+def detect_mime_type(file_path: str) -> str:
+    # Try extension-based detection
+    mime_type, _ = mimetypes.guess_type(file_path)
+    if mime_type:
+        return mime_type
+
+    # Try content-based detection (magic numbers)
+    try:
+        with open(file_path, 'rb') as f:
+            header = f.read(16)
+            if header.startswith(b'\x89PNG\r\n\x1a\n'):
+                return 'image/png'
+            elif header.startswith(b'%PDF'):
+                return 'application/pdf'
+            elif header.startswith(b'PK\x03\x04'):
+                return 'application/zip'
+            elif header.startswith(b'\xff\xd8\xff'):
+                return 'image/jpeg'
+            elif header.startswith(b'GIF87a') or header.startswith(b'GIF89a'):
+                return 'image/gif'
+            elif header.startswith(b'BM'):
+                return 'image/bmp'
+            elif header.startswith(b'\x00\x00\x01\x00'):
+                return 'image/x-icon'  # ICO file
+            elif header.startswith(b'II*\x00') or header.startswith(b'MM\x00*'):
+                return 'image/tiff'
+            elif header[:4] == b'\x00\x00\x00\x18' and b'ftyp' in header:
+                return 'video/mp4'
+    except Exception:
+        pass
+
+    # Fallback if no match
+    return 'application/octet-stream'

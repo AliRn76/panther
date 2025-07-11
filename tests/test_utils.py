@@ -354,7 +354,10 @@ class TestLoadConfigs(TestCase):
                 MIDDLEWARES = []
 
         assert len(captured.records) == 1
-        assert captured.records[0].getMessage() == "Invalid 'MIDDLEWARES': <class 'tests.test_utils.TestMiddleware'> is not a sub class of `HTTPMiddleware`"
+        assert (
+            captured.records[0].getMessage()
+            == "Invalid 'MIDDLEWARES': <class 'tests.test_utils.TestMiddleware'> is not a sub class of `HTTPMiddleware`"
+        )
 
     def test_jwt_auth_without_secret_key(self):
         global AUTHENTICATION

@@ -42,6 +42,9 @@ DATABASE = {
 !!! question "How do models work in Panther?"
     Refer to [Models](model.md) to learn more about defining models and how they function.
 
+!!! tip "File Handling in Models"
+    For models that need to handle file uploads, see [File Handling](file_handling.md) for detailed information about using `File` and `Image` types in your models.
+
 Create a model named `Book` in `app/models.py`:
 
 ```python title="app/models.py" linenums="1"
@@ -102,6 +105,9 @@ In `app/urls.py`, define the `Book` API URLs:
 !!! question "How do serializers work in Panther?"
     Refer to [Serializer](serializer.md) to learn more about available serializers.
 
+!!! tip "File Handling in Serializers"
+    For serializers that need to handle file uploads, see [File Handling](file_handling.md) for information about validating and processing files in your serializers.
+
 Serializers transform data between the application and API requests.
 
 === "Function-Base/ Class-Base API"
@@ -148,6 +154,9 @@ Serializers transform data between the application and API requests.
 ### APIs
 !!! question "How do APIs work in Panther?"
     Refer to [API](api.md) to learn more about API types and their usage.
+
+!!! tip "File Upload APIs"
+    For APIs that handle file uploads, see [File Handling](file_handling.md) for comprehensive examples of file upload endpoints and processing.
 
 #### Create
 

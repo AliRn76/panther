@@ -261,7 +261,7 @@ class TestModelSerializer(IsolatedAsyncioTestCase):
                     required_fields = ['pages_count']
         except Exception as e:
             assert isinstance(e, AttributeError)
-            assert e.args[0] == '`Serializer4.Config.required_fields.pages_count` should be in `Config.fields` too.'
+            assert e.args[0] == '`Serializer4.Config.required_fields.pages_count` is not defined in `Config.fields`.'
         else:
             assert False
 

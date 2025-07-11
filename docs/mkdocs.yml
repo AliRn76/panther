@@ -37,6 +37,7 @@ nav:
   - Serializers: 'serializer.md'
   - URLs: 'urls.md'
   - Models: 'model.md'
+  - File Handling: 'file_handling.md'
   - Database: 'database.md'
   - Query: 'query.md'
   - Redis: 'redis.md'

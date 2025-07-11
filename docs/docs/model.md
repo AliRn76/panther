@@ -116,4 +116,54 @@ class Article(Model):
     summary: str | None = None  # Optional attribute with default value
 ```
 
+### File Types
+- **panther.file_handler.File**: Handles file uploads and provides file manipulation capabilities.
+- **panther.file_handler.Image**: Specialized File class for image uploads with automatic MIME type validation.
+
+!!! tip "Comprehensive File Handling Guide"
+    For detailed information about file handling, including advanced features, best practices, and troubleshooting, see the dedicated [File Handling](file_handling.md) documentation.
+
+**Example:**
+```python title="app/models.py" linenums="1"
+from datetime import datetime
+from panther.db import Model
+from panther.file_handler import File, Image
+
+class Document(Model):
+    title: str
+    file: File
+    uploaded_at: datetime
+
+class Profile(Model):
+    name: str
+    avatar: Image
+    bio: str | None = None
+```
+
+When using File types in models:
+
+- The file metadata (name, content type) is preserved
+- The file path is stored in the database
+- The actual file content is automatically saved to disk when inserting the model
+- You can access file properties and methods on the model instance
+
+**Example usage:**
+```python
+# Create a document with file
+document = await Document.insert_one({
+    'title': 'My Document',
+    'file': File(file_name='document.pdf', content_type='application/pdf', file=file_bytes),
+    'uploaded_at': datetime.now()
+})
+
+# Access file properties
+print(document.file.file_name)  # 'document.pdf'
+print(document.file.content_type)  # 'application/pdf'
+print(document.file.size)  # File size in bytes
+
+# Read file content
+with document.file as f:
+    content = f.read()
+```
+
 

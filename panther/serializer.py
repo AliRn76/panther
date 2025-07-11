@@ -1,3 +1,4 @@
+import datetime
 import typing
 from typing import Any
 
@@ -6,7 +7,7 @@ from pydantic.fields import FieldInfo
 from pydantic_core._pydantic_core import PydanticUndefined
 
 from panther.db import Model
-from panther.utils import run_coroutine
+from panther.utils import run_coroutine, timezone_now
 
 
 class MetaModelSerializer:
@@ -29,7 +30,6 @@ class MetaModelSerializer:
         # 3. Collect `pydantic.model_config`
         model_config = cls.collect_model_config(config=config, namespace=namespace)
         namespace |= {'model_config': model_config}
-
         # 4. Create a serializer
         return create_model(
             cls_name,
@@ -83,21 +83,27 @@ class MetaModelSerializer:
         if not hasattr(config, 'required_fields'):
             config.required_fields = []
 
-        if config.required_fields != '*':
-            for required in config.required_fields:
-                if required not in config.fields:
-                    msg = f'`{cls_name}.Config.required_fields.{required}` should be in `Config.fields` too.'
-                    raise AttributeError(msg) from None
+        for required in config.required_fields:
+            if required not in model.model_fields:
+                msg = f'`{cls_name}.Config.required_fields.{required}` is not valid.'
+                raise AttributeError(msg) from None
+
+            if config.fields != '*' and required not in config.fields:
+                msg = f'`{cls_name}.Config.required_fields.{required}` is not defined in `Config.fields`.'
+                raise AttributeError(msg) from None
 
         # Check `optional_fields`
         if not hasattr(config, 'optional_fields'):
             config.optional_fields = []
 
-        if config.optional_fields != '*':
-            for optional in config.optional_fields:
-                if optional not in config.fields:
-                    msg = f'`{cls_name}.Config.optional_fields.{optional}` should be in `Config.fields` too.'
-                    raise AttributeError(msg) from None
+        for optional in config.optional_fields:
+            if optional not in model.model_fields:
+                msg = f'`{cls_name}.Config.optional_fields.{optional}` is not valid.'
+                raise AttributeError(msg) from None
+
+            if config.fields != '*' and optional not in config.fields:
+                msg = f'`{cls_name}.Config.optional_fields.{optional}` is not defined in `Config.fields`.'
+                raise AttributeError(msg) from None
 
         # Check `required_fields` and `optional_fields` together
         if (config.optional_fields == '*' and config.required_fields != []) or (
@@ -163,8 +169,10 @@ class MetaModelSerializer:
                 value[1].default = value[0]()
         else:
             for field_name in config.optional_fields:
-                field_definitions[field_name][1].default = field_definitions[field_name][0]()
-
+                if issubclass(field_definitions[field_name][0], datetime.datetime):
+                    field_definitions[field_name][1].default = timezone_now()
+                else:
+                    field_definitions[field_name][1].default = field_definitions[field_name][0]()
         # Collect and Override `Class Fields`
         for key, value in namespace.pop('__annotations__', {}).items():
             field_info = namespace.pop(key, FieldInfo(annotation=value))
@@ -205,16 +213,32 @@ class MetaModelSerializer:
 
 class ModelSerializer(metaclass=MetaModelSerializer):
     """
-    Doc:
+    A serializer class that automatically generates Pydantic models from database models.
+
+    Documentation:
         https://pantherpy.github.io/serializer/#style-2-modelserializer
+
     Example:
         class PersonSerializer(ModelSerializer):
             class Config:
+                # Required: The model class to serialize
                 model = Person
-                fields = '*'
-                exclude = ['created_date']  # Optional
-                required_fields = ['first_name', 'last_name']  # Optional
-                optional_fields = ['age']  # Optional
+
+                # Required: Fields to include in serialization
+                # Use '*' for all fields, or specify a list of field names
+                fields = '*'  # or ['id', 'name', 'email']
+
+                # Optional: Fields to exclude from serialization
+                # Must be a list of field names (cannot be '*')
+                exclude = ['created_date', 'updated_date']
+
+                # Optional: Fields that are required (no default value)
+                # Can be a list of field names or '*' for all fields
+                required_fields = ['first_name', 'last_name']
+
+                # Optional: Fields that are optional (with default values)
+                # Can be a list of field names or '*' for all fields
+                optional_fields = ['age', 'bio']
     """
 
     model: type[BaseModel]

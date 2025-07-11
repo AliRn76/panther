@@ -5,6 +5,7 @@ import types
 import typing
 from abc import abstractmethod
 from collections.abc import Iterator
+from datetime import datetime
 from functools import reduce
 from sys import version_info
 from typing import Any, Union, get_args, get_origin
@@ -13,9 +14,11 @@ from pantherdb import Cursor
 from pydantic import BaseModel, ValidationError
 from pydantic_core._pydantic_core import ValidationError
 
+from panther._utils import detect_mime_type
 from panther.db.cursor import Cursor
 from panther.db.utils import prepare_id_for_query
 from panther.exceptions import DatabaseError
+from panther.file_handler import File
 
 if version_info >= (3, 11):
     from typing import Self
@@ -67,10 +70,10 @@ class BaseQuery:
                     return arg
             return None
 
-        # Handle basic types (str, int, bool, dict) and Pydantic BaseModel subclasses
+        # Handle basic types (str, int, bool, dict, datetime) and Pydantic.BaseModel and File subclasses
         try:
             if isinstance(annotation, type) and (
-                annotation in (str, int, bool, dict) or issubclass(annotation, BaseModel)
+                annotation in (str, int, bool, dict, datetime) or issubclass(annotation, (BaseModel, File))
             ):
                 return annotation
         except TypeError:
@@ -142,6 +145,14 @@ class BaseQuery:
                 )
             return [await cls._create_list(field_type=unwrapped_type, value=item) for item in value]
 
+        # Condition of `File` should be on top of `BaseModel`
+        if isinstance(unwrapped_type, type) and issubclass(unwrapped_type, File):
+            # `value` is assumed to be the path of the File.
+            content_type = detect_mime_type(file_path=value)
+            with open(value, 'rb') as f:
+                return File(file_name=value, content_type=content_type, file=f.read()).model_dump()
+
+        # Condition of `Model` should be on top of `BaseModel`
         if isinstance(unwrapped_type, type) and issubclass(unwrapped_type, Model):
             # `value` is assumed to be an ID for the Model instance.
             if obj := await unwrapped_type.first(id=value):
@@ -194,6 +205,9 @@ class BaseQuery:
                     await model.save()
                 # We save full object because user didn't specify the type.
                 return model._id
+            case File() as file:
+                # Write file to disk
+                return file.save()
             case BaseModel() as model:
                 return {
                     field_name: await cls._clean_value(value=getattr(model, field_name))
@@ -228,6 +242,8 @@ class BaseQuery:
         # 2. Check type of field_value and do the stuff (save() or return ._id)
         processed_document = {}
         for field_name, field_value in document.items():
+            if field_name == 'id':
+                continue
             field_type = await cls._extract_type(field_name)
             if field_type:
                 if get_origin(field_type) is list:

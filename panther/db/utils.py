@@ -31,7 +31,7 @@ def check_connection(func):
         if config.QUERY_ENGINE is None:
             msg = (
                 "You don't have active database connection, Check your DATABASE block in configs"
-                "\nMore Info: https://PantherPy.GitHub.io/database/"
+                '\nMore Info: https://PantherPy.GitHub.io/database/'
             )
             raise NotImplementedError(msg)
         return await func(*args, **kwargs)

@@ -455,3 +455,42 @@ class UserSerializer(ModelSerializer):
 ??? question "How does OpenAPI work in Panther?"
     Refer to [OpenAPI](open_api.md) to learn more about OpenAPI.
 
+---
+
+## File Handling
+
+Panther provides built-in support for file uploads through the `File` and `Image` classes.
+
+!!! tip "Comprehensive File Handling Guide"
+    For detailed information about file handling, including advanced features, best practices, and troubleshooting, see the dedicated [File Handling](file_handling.md) documentation.
+
+```python title="app/apis.py" linenums="1"
+from panther.app import API
+from panther.db import Model
+from panther.file_handler import File
+from panther.request import Request
+from panther.response import Response
+from panther.serializer import ModelSerializer
+
+class FileUpload(Model):
+    file: File
+    description: str
+
+class FileUploadSerializer(ModelSerializer):
+    class Config:
+        model = FileUpload
+        fields = '*'
+
+@API(input_model=FileUploadSerializer)
+async def upload_file(request: Request):
+    file_data = request.validated_data
+    file = file_data.file
+    
+    # Save file to disk
+    saved_path = file.save("uploads/")
+    
+    return Response(data={
+        "message": "File uploaded successfully",
+        "saved_path": saved_path
+    })
+```

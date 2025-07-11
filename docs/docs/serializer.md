@@ -145,4 +145,64 @@ async def model_serializer_example(request: Request):
 - `Config.exclude` is useful when `fields` is set to `'*'`.
 - You can add custom fields and validators when combining `ModelSerializer` with Pydantic features.
 
+---
 
+## File Handling in Serializers
+
+When working with file uploads, Panther's `File` and `Image` classes integrate seamlessly with serializers.
+
+!!! tip "Comprehensive File Handling Guide"
+    For detailed information about file handling, including advanced features, best practices, and troubleshooting, see the dedicated [File Handling](file_handling.md) documentation.
+
+### Basic File Serialization
+
+```python title="app/serializers.py" linenums="1"
+from panther.serializer import ModelSerializer
+
+class FileUploadSerializer(ModelSerializer):
+    class Config:
+        model = FileUpload
+        fields = ['file', 'description']
+        required_fields = ['file']
+
+class ImageUploadSerializer(ModelSerializer):
+    class Config:
+        model = ImageUpload
+        fields = ['image', 'title']
+        required_fields = ['image']
+```
+
+### File Validation
+
+```python title="app/serializers.py" linenums="1"
+from pydantic import field_validator
+from panther import status
+from panther.exceptions import APIError
+from panther.file_handler import File
+from panther.serializer import ModelSerializer
+
+class DocumentUploadSerializer(ModelSerializer):
+    class Config:
+        model = DocumentUpload
+        fields = ['file', 'title']
+        required_fields = ['file']
+
+    @field_validator('file')
+    @classmethod
+    def validate_file_size(cls, file: File) -> File:
+        if file.size > 10 * 1024 * 1024:  # 10MB limit
+            raise APIError(
+                detail='File size must be less than 10MB',
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+            )
+        return file
+```
+
+### File Properties
+
+When working with `File` objects in serializers, you have access to:
+
+- `file.file_name`: The original filename
+- `file.content_type`: The MIME type
+- `file.size`: File size in bytes
+- `file.file`: The file content as bytes

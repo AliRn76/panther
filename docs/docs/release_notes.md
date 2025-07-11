@@ -3,6 +3,12 @@
 ### 5.0.0
 - Add Built-In `OpenAPI`
 - Add Built-In `AdminPanel`
+- **File Handling Improvements**:
+    - Make `File.save()` method **idempotent** - multiple calls return the same path
+    - Add directory path support - paths ending with `/` are treated as directories
+    - Automatic directory creation when saving files
+    - Enhanced file path handling for both string and Path objects
+
 - Support `Set-Cookie` in Response
 - Support `application/x-www-form-urlencoded` Content Type
 - Support Different `Middlewares` Per API

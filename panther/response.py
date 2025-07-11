@@ -66,6 +66,15 @@ class Cookie:
 
 
 class Response:
+    """
+    Usage Example:
+        from panther.response import Response
+
+        def my_api():
+            data = {"message": "Hello, World!"}
+            return Response(data=data)
+    """
+
     content_type = 'application/json'
 
     def __init__(
@@ -122,6 +131,8 @@ class Response:
                 return obj.model_dump()
             if isinstance(obj, (Cursor, PantherDBCursor)):
                 return list(obj)
+            if isinstance(obj, bytes):
+                return f'raw bytes is not JSON serializable ({len(obj)} bytes)'
             raise TypeError(f'Type {type(obj)} not serializable')
 
         if isinstance(self.data, bytes):
@@ -172,6 +183,20 @@ class Response:
 
 
 class StreamingResponse(Response):
+    """
+    Usage Example:
+        from panther.response import StreamingResponse
+        import time
+
+        def my_generator():
+            for i in range(5):
+                time.sleep(1)
+                yield f"Chunk {i}\n"
+
+        def my_api():
+            return StreamingResponse(data=my_generator())
+    """
+
     content_type = 'application/octet-stream'
 
     def __init__(self, *args, **kwargs):
@@ -220,6 +245,15 @@ class StreamingResponse(Response):
 
 
 class HTMLResponse(Response):
+    """
+    Usage Example:
+        from panther.response import HTMLResponse
+
+        def my_api():
+            html = "<h1>Hello, World!</h1>"
+            return HTMLResponse(data=html)
+    """
+
     content_type = 'text/html; charset=utf-8'
 
     @property
@@ -230,6 +264,14 @@ class HTMLResponse(Response):
 
 
 class PlainTextResponse(Response):
+    """
+    Usage Example:
+        from panther.response import PlainTextResponse
+
+        def my_api():
+            return PlainTextResponse(data="Hello, World!")
+    """
+
     content_type = 'text/plain; charset=utf-8'
 
     @property
@@ -240,6 +282,15 @@ class PlainTextResponse(Response):
 
 
 class TemplateResponse(HTMLResponse):
+    """
+    Usage Example:
+        from panther.response import TemplateResponse
+
+        def my_api():
+            context = {"name": "Ali"}
+            return TemplateResponse(name="index.html", context=context)
+    """
+
     """
     You may want to declare `TEMPLATES_DIR` in your configs, default is '.'
 
@@ -288,6 +339,14 @@ class TemplateResponse(HTMLResponse):
 
 
 class RedirectResponse(Response):
+    """
+    Usage Example:
+        from panther.response import RedirectResponse
+
+        def my_api():
+            return RedirectResponse(url="/new-location")
+    """
+
     def __init__(
         self,
         url: str,

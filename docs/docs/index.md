@@ -22,6 +22,7 @@ Panther is designed to be **fast**, **simple**, and **powerful**. Here's what ma
 - **Authentication & Permissions** - Built-in security features
 - **Background tasks** - Handle long-running operations
 - **Middleware & Throttling** - Extensible and configurable
+- **File upload handling** - Built-in File and Image classes for easy file processing
 
 ---
 
