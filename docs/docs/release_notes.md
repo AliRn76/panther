@@ -24,6 +24,7 @@
     - New Style of Middleware declaration [[Documentation]](middlewares.md).
     - New background task declaration, `background_tasks.add_task(BackgroundTask(...))` --> `BackgroundTask(...).submit()`.
     - `REDIS` block in configs does not support `websocket_db` anymore.
+    - `MIDDLEWARE` does not support WebSocket middlewares anymore, you have to define them in `WS_MIDDLEWARE`. 
 
 ### 4.3.7
 - Improve MultiPart-FormData Regex

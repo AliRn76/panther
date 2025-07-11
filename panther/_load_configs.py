@@ -140,9 +140,7 @@ def load_log_queries(_configs: dict, /) -> None:
 
 
 def load_middlewares(_configs: dict, /) -> None:
-    middlewares = {'http': [], 'ws': []}
-
-    # Collect Middlewares
+    # Collect HTTP Middlewares
     for middleware in _configs.get('MIDDLEWARES') or []:
         # This block is for Backward Compatibility
         if isinstance(middleware, list | tuple):
@@ -171,22 +169,37 @@ def load_middlewares(_configs: dict, /) -> None:
                     error=f'{middleware} is not a valid middleware path or type',
                 )
 
-        if issubclass(middleware, (MonitoringMiddleware, WebsocketMonitoringMiddleware)):
+        if not issubclass(middleware, HTTPMiddleware):
+            raise _exception_handler(field='MIDDLEWARES', error=f'{middleware} is not a sub class of `HTTPMiddleware`')
+
+        if issubclass(middleware, MonitoringMiddleware):
             monitoring_logger.debug('')  # Initiated
             config.MONITORING = True
 
-        if issubclass(middleware, HTTPMiddleware):
-            middlewares['http'].append(middleware)
-        elif issubclass(middleware, WebsocketMiddleware):
-            middlewares['ws'].append(middleware)
-        else:
+        config.HTTP_MIDDLEWARES.append(middleware)
+
+    # Collect WebSocket Middlewares
+    for middleware in _configs.get('WS_MIDDLEWARES') or []:
+        # `middleware` can be type or path of a class
+        if not callable(middleware):
+            try:
+                middleware = import_class(middleware)
+            except (AttributeError, ModuleNotFoundError):
+                raise _exception_handler(
+                    field='WS_MIDDLEWARES',
+                    error=f'{middleware} is not a valid middleware path or type',
+                )
+
+        if not issubclass(middleware, WebsocketMiddleware):
             raise _exception_handler(
-                field='MIDDLEWARES',
-                error='is not a sub class of `HTTPMiddleware` or `WebsocketMiddleware`',
+                field='WS_MIDDLEWARES', error=f'{middleware} is not a sub class of `WebsocketMiddleware`'
             )
 
-    config.HTTP_MIDDLEWARES = middlewares['http']
-    config.WS_MIDDLEWARES = middlewares['ws']
+        if issubclass(middleware, WebsocketMonitoringMiddleware):
+            monitoring_logger.debug('')  # Initiated
+            config.MONITORING = True
+
+        config.WS_MIDDLEWARES.append(middleware)
 
 
 def load_auto_reformat(_configs: dict, /) -> None:

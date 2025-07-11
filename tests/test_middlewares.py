@@ -122,6 +122,9 @@ urls = {
 
 
 class TestMiddleware(IsolatedAsyncioTestCase):
+    def tearDown(self):
+        config.refresh()
+
     async def test_before_base_middleware(self):
         global MIDDLEWARES
         MIDDLEWARES = [BeforeMiddleware1]
@@ -154,12 +157,21 @@ class TestMiddleware(IsolatedAsyncioTestCase):
     async def test_websocket_middleware_in_http(self):
         global MIDDLEWARES
         MIDDLEWARES = [MyWSMiddleware1]
-        app = Panther(__name__, configs=__name__, urls=urls)
-        client = APIClient(app=app)
-        response = await client.get('')
-        assert response.status_code == 200
-        assert response.data == ['FunctionCall']
-        MIDDLEWARES = []
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__, urls={})
+            except SystemExit:
+                assert True
+            else:
+                assert False
+            finally:
+                MIDDLEWARES = []
+
+        assert len(captured.records) == 1
+        assert (
+            captured.records[0].getMessage()
+            == "Invalid 'MIDDLEWARES': <class 'tests.test_middlewares.MyWSMiddleware1'> is not a sub class of `HTTPMiddleware`"
+        )
 
     async def test_private_empty_middleware(self):
         app = Panther(__name__, configs=__name__, urls=urls)
@@ -188,7 +200,6 @@ class TestMiddleware(IsolatedAsyncioTestCase):
             AfterMiddleware3,
             MyMiddleware,
             BeforeMiddleware1,
-            MyWSMiddleware1,
             AfterMiddleware1,
             AfterMiddleware2,
             MyMiddleware,
@@ -221,9 +232,15 @@ class TestWebsocketMiddleware(TestCase):
     def tearDownClass(cls):
         config.refresh()
 
+    def setUp(self):
+        config.HAS_WS = True
+
+    def tearDown(self):
+        config.refresh()
+
     def test_websocket_middleware(self):
-        global MIDDLEWARES
-        MIDDLEWARES = [MyWSMiddleware1, MyWSMiddleware2]
+        global WS_MIDDLEWARES
+        WS_MIDDLEWARES = [MyWSMiddleware1, MyWSMiddleware2]
         app = Panther(__name__, configs=__name__, urls=urls)
         ws = WebsocketClient(app=app)
         responses = ws.connect('websocket')
@@ -237,29 +254,30 @@ class TestWebsocketMiddleware(TestCase):
         assert responses[2]['type'] == 'websocket.close'
         assert responses[2]['code'] == 1000
         assert responses[2]['reason'] == ''
-        MIDDLEWARES = []
+        WS_MIDDLEWARES = []
 
     def test_http_middleware_in_websocket(self):
-        global MIDDLEWARES
-        MIDDLEWARES = [MyWSMiddleware1, MyMiddleware, MyWSMiddleware2]
-        app = Panther(__name__, configs=__name__, urls=urls)
-        ws = WebsocketClient(app=app)
-        responses = ws.connect('websocket')
-        assert responses[0]['type'] == 'websocket.accept'
-        assert responses[0]['subprotocol'] is None
-        assert responses[0]['headers'] == {}
+        global WS_MIDDLEWARES
+        WS_MIDDLEWARES = [MyWSMiddleware1, MyMiddleware, MyWSMiddleware2]
+        with self.assertLogs(level='ERROR') as captured:
+            try:
+                Panther(name=__name__, configs=__name__, urls={})
+            except SystemExit:
+                assert True
+            else:
+                assert False
+            finally:
+                WS_MIDDLEWARES = []
 
-        assert responses[1]['type'] == 'websocket.send'
-        assert responses[1]['text'] == '["MyWSMiddleware1","MyWSMiddleware2","WebsocketConnect"]'
-
-        assert responses[2]['type'] == 'websocket.close'
-        assert responses[2]['code'] == 1000
-        assert responses[2]['reason'] == ''
-        MIDDLEWARES = []
+        assert len(captured.records) == 1
+        assert (
+            captured.records[0].getMessage()
+            == "Invalid 'WS_MIDDLEWARES': <class 'tests.test_middlewares.MyMiddleware'> is not a sub class of `WebsocketMiddleware`"
+        )
 
     def test_base_middleware(self):
-        global MIDDLEWARES
-        MIDDLEWARES = [MyWSMiddleware1, MyWSMiddleware2]
+        global WS_MIDDLEWARES
+        WS_MIDDLEWARES = [MyWSMiddleware1, MyWSMiddleware2]
         app = Panther(__name__, configs=__name__, urls=urls)
         ws = WebsocketClient(app=app)
         responses = ws.connect('websocket')
@@ -273,4 +291,4 @@ class TestWebsocketMiddleware(TestCase):
         assert responses[2]['type'] == 'websocket.close'
         assert responses[2]['code'] == 1000
         assert responses[2]['reason'] == ''
-        MIDDLEWARES = []
+        WS_MIDDLEWARES = []

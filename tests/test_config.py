@@ -88,10 +88,8 @@ class TestConfig(TestCase):
             DATABASE
 
         # MIDDLEWARES
-        MIDDLEWARES = [
-            'panther.middlewares.monitoring.MonitoringMiddleware',  # MONITORING
-            'panther.middlewares.monitoring.WebsocketMonitoringMiddleware',
-        ]
+        MIDDLEWARES = ['panther.middlewares.monitoring.MonitoringMiddleware']
+        WS_MIDDLEWARES = ['panther.middlewares.monitoring.WebsocketMonitoringMiddleware']
         LOG_QUERIES = True
         throttle = Throttle(rate=10, duration=timedelta(seconds=10))
         THROTTLING = throttle
@@ -246,10 +244,8 @@ class TestConfig(TestCase):
             DATABASE
 
         # MIDDLEWARES
-        MIDDLEWARES = [
-            'panther.middlewares.monitoring.MonitoringMiddleware',  # MONITORING
-            'panther.middlewares.monitoring.WebsocketMonitoringMiddleware',
-        ]
+        MIDDLEWARES = ['panther.middlewares.monitoring.MonitoringMiddleware']
+        WS_MIDDLEWARES = ['panther.middlewares.monitoring.WebsocketMonitoringMiddleware']
         LOG_QUERIES = True
         throttle = Throttle(rate=10, duration=timedelta(seconds=10))
         THROTTLING = throttle
