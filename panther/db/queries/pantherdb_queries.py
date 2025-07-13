@@ -71,9 +71,6 @@ class BasePantherDBQuery(BaseQuery):
         return [await cls.insert_one(document) for document in documents]
 
     # # # # # Delete # # # # #
-    async def delete(self) -> None:
-        db.session.collection(self.__class__.__name__).delete_one(_id=self._id)
-
     @classmethod
     async def delete_one(cls, _filter: dict | None = None, /, **kwargs) -> bool:
         return db.session.collection(cls.__name__).delete_one(**cls._merge(_filter, kwargs))
@@ -83,23 +80,48 @@ class BasePantherDBQuery(BaseQuery):
         return db.session.collection(cls.__name__).delete_many(**cls._merge(_filter, kwargs))
 
     # # # # # Update # # # # #
-    async def update(self, _update: dict | None = None, /, **kwargs) -> None:
-        document = self._merge(_update, kwargs)
-        document.pop('_id', None)
-        self._validate_data(data=kwargs, is_updating=True)
-
-        for field, value in document.items():
-            if isinstance(value, dict):
-                value = type(getattr(self, field))(**value)
-            setattr(self, field, value)
-        db.session.collection(self.__class__.__name__).update_one({'_id': self._id}, **document)
-
     @classmethod
     async def update_one(cls, _filter: dict, _update: dict | None = None, /, **kwargs) -> bool:
         prepare_id_for_query(_filter)
-        return db.session.collection(cls.__name__).update_one(_filter, **cls._merge(_update, kwargs))
+
+        # Step 1: Merge document parameters
+        # Combine the _update dict with keyword arguments into a single document
+        document = cls._merge(_update, kwargs)
+
+        # Step 2: Process and validate document
+        # - Validate data types and structure
+        # - Convert Model instances to their IDs for database storage
+        # - Handle File objects by saving to disk and storing file paths
+        # - Process nested objects and relationships
+        final_document = await cls._process_document(document)
+
+        # Step 3: Create model instance (Validating)
+        # - Retrieve Model instances from database using IDs
+        # - Open File objects from their stored paths
+        # - Build the complete model instance with all relationships
+        await cls._create_model_instance(document=final_document, is_updating=True)
+
+        return db.session.collection(cls.__name__).update_one(_filter, **final_document)
 
     @classmethod
-    async def update_many(cls, _filter: dict, _data: dict | None = None, /, **kwargs) -> int:
+    async def update_many(cls, _filter: dict, _update: dict | None = None, /, **kwargs) -> int:
         prepare_id_for_query(_filter)
-        return db.session.collection(cls.__name__).update_many(_filter, **cls._merge(_data, kwargs))
+
+        # Step 1: Merge document parameters
+        # Combine the _update dict with keyword arguments into a single document
+        document = cls._merge(_update, kwargs)
+
+        # Step 2: Process and validate document
+        # - Validate data types and structure
+        # - Convert Model instances to their IDs for database storage
+        # - Handle File objects by saving to disk and storing file paths
+        # - Process nested objects and relationships
+        final_document = await cls._process_document(document)
+
+        # Step 3: Create model instance (Validating)
+        # - Retrieve Model instances from database using IDs
+        # - Open File objects from their stored paths
+        # - Build the complete model instance with all relationships
+        await cls._create_model_instance(document=final_document, is_updating=True)
+
+        return db.session.collection(cls.__name__).update_many(_filter, **final_document)

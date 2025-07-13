@@ -73,7 +73,7 @@ class BaseQuery:
         # Handle basic types (str, int, bool, dict, datetime) and Pydantic.BaseModel and File subclasses
         try:
             if isinstance(annotation, type) and (
-                annotation in (str, int, bool, dict, datetime) or issubclass(annotation, (BaseModel, File))
+                annotation in (str, int, bool, dict, float, datetime) or issubclass(annotation, (BaseModel, File))
             ):
                 return annotation
         except TypeError:
@@ -178,7 +178,7 @@ class BaseQuery:
         return value
 
     @classmethod
-    async def _create_model_instance(cls, document: dict) -> Self:
+    async def _create_model_instance(cls, document: dict, is_updating: bool = False) -> Self:
         """Prepares document and creates an instance of the model."""
         if '_id' in document:
             document['id'] = document.pop('_id')
@@ -190,8 +190,8 @@ class BaseQuery:
         try:
             return cls(**processed_document)
         except ValidationError as validation_error:
-            error = cls._clean_error_message(validation_error=validation_error)
-            raise DatabaseError(error) from validation_error
+            if error := cls._clean_error_message(validation_error=validation_error, is_updating=is_updating):
+                raise DatabaseError(error) from validation_error
 
     @classmethod
     async def _clean_value(cls, value: Any) -> dict[str, Any] | list[Any]:
@@ -242,7 +242,7 @@ class BaseQuery:
         # 2. Check type of field_value and do the stuff (save() or return ._id)
         processed_document = {}
         for field_name, field_value in document.items():
-            if field_name == 'id':
+            if field_name in ['id', '_id']:
                 continue
             field_type = await cls._extract_type(field_name)
             if field_type:

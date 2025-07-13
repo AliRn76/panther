@@ -95,9 +95,6 @@ class BaseMongoDBQuery(BaseQuery):
         return results
 
     # # # # # Delete # # # # #
-    async def delete(self) -> None:
-        await db.session[self.__class__.__name__].delete_one({'_id': self._id})
-
     @classmethod
     async def delete_one(cls, _filter: dict | None = None, /, **kwargs) -> bool:
         result = await db.session[cls.__name__].delete_one(cls._merge(_filter, kwargs))
@@ -109,36 +106,35 @@ class BaseMongoDBQuery(BaseQuery):
         return result.deleted_count
 
     # # # # # Update # # # # #
-    async def update(self, _update: dict | None = None, /, **kwargs) -> None:
-        merged_update_query = self._merge(_update, kwargs)
-        merged_update_query.pop('_id', None)
-
-        self._validate_data(data=merged_update_query, is_updating=True)
-
-        update_query = {}
-        for field, value in merged_update_query.items():
-            if field.startswith('$'):
-                update_query[field] = value
-            else:
-                update_query['$set'] = update_query.get('$set', {})
-                update_query['$set'][field] = value
-                if isinstance(value, dict):
-                    value = type(getattr(self, field))(**value)
-                setattr(self, field, value)
-
-        await db.session[self.__class__.__name__].update_one({'_id': self._id}, update_query)
-
     @classmethod
     async def update_one(cls, _filter: dict, _update: dict | None = None, /, **kwargs) -> bool:
         prepare_id_for_query(_filter, is_mongo=True)
-        merged_update_query = cls._merge(_update, kwargs)
 
+        # Step 1: Merge document parameters
+        # Combine the _update dict with keyword arguments into a single document
+        document = cls._merge(_update, kwargs)
+
+        # Step 2: Process and validate document
+        # - Validate data types and structure
+        # - Convert Model instances to their IDs for database storage
+        # - Handle File objects by saving to disk and storing file paths
+        # - Process nested objects and relationships
+        final_document = await cls._process_document(document)
+
+        # Step 3: Create model instance (Validating)
+        # - Retrieve Model instances from database using IDs
+        # - Open File objects from their stored paths
+        # - Build the complete model instance with all relationships
+        await cls._create_model_instance(document=final_document, is_updating=True)
+
+        # Step 4: Create the query
         update_query = {}
-        for field, value in merged_update_query.items():
+        for field, value in final_document.items():
             if field.startswith('$'):
                 update_query[field] = value
             else:
-                update_query['$set'] = update_query.get('$set', {})
+                if not '$set' in update_query:
+                    update_query['$set'] = {}
                 update_query['$set'][field] = value
 
         result = await db.session[cls.__name__].update_one(_filter, update_query)
@@ -147,7 +143,33 @@ class BaseMongoDBQuery(BaseQuery):
     @classmethod
     async def update_many(cls, _filter: dict, _update: dict | None = None, /, **kwargs) -> int:
         prepare_id_for_query(_filter, is_mongo=True)
-        update_fields = {'$set': cls._merge(_update, kwargs)}
 
-        result = await db.session[cls.__name__].update_many(_filter, update_fields)
+        # Step 1: Merge document parameters
+        # Combine the _update dict with keyword arguments into a single document
+        document = cls._merge(_update, kwargs)
+
+        # Step 2: Process and validate document
+        # - Validate data types and structure
+        # - Convert Model instances to their IDs for database storage
+        # - Handle File objects by saving to disk and storing file paths
+        # - Process nested objects and relationships
+        final_document = await cls._process_document(document)
+
+        # Step 3: Create model instance (Validating)
+        # - Retrieve Model instances from database using IDs
+        # - Open File objects from their stored paths
+        # - Build the complete model instance with all relationships
+        await cls._create_model_instance(document=final_document, is_updating=True)
+
+        # Step 4: Create the query
+        update_query = {}
+        for field, value in final_document.items():
+            if field.startswith('$'):
+                update_query[field] = value
+            else:
+                if not '$set' in update_query:
+                    update_query['$set'] = {}
+                update_query['$set'][field] = value
+
+        result = await db.session[cls.__name__].update_many(_filter, update_query)
         return result.modified_count
