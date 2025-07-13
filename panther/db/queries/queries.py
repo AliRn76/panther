@@ -185,20 +185,20 @@ class Query(BaseQuery):
         # Step 1: Merge document parameters
         # Combine the _document dict with keyword arguments into a single document
         document = cls._merge(_document, kwargs)
-        
+
         # Step 2: Process and validate document
         # - Validate data types and structure
         # - Convert Model instances to their IDs for database storage
         # - Handle File objects by saving to disk and storing file paths
         # - Process nested objects and relationships
         final_document = await cls._process_document(document)
-        
+
         # Step 3: Create model instance
         # - Retrieve Model instances from database using IDs
         # - Open File objects from their stored paths
         # - Build the complete model instance with all relationships
         result = await cls._create_model_instance(document=final_document)
-        
+
         # Step 4: Insert into database and return
         # - Insert the processed document into the database
         # - Assign the generated ID to the model instance
@@ -243,7 +243,7 @@ class Query(BaseQuery):
             >>> await user.delete()
 
         """
-        await super().delete()
+        await self.delete_one(id=self.id)
 
     @classmethod
     @check_connection
@@ -305,7 +305,8 @@ class Query(BaseQuery):
             >>> await user.update({'name': 'Saba', 'age': 19})
 
         """
-        await super().update(_update, **kwargs)
+        await self.update_one({'id': self.id}, _update, **kwargs)
+        await self.reload()
 
     @classmethod
     @check_connection
@@ -447,7 +448,7 @@ class Query(BaseQuery):
         else:
             self.id = (await self.insert_one(document)).id
 
-    async def reload(self) -> Self:
-        new_obj = await self.find_one(id=self.id)
-        [setattr(self, f, getattr(new_obj, f)) for f in new_obj.model_fields]
-        return self
+    async def reload(self):
+        updated_instance = await self.find_one(id=self.id)
+        for field_name in self.__class__.model_fields:
+            setattr(self, field_name, getattr(updated_instance, field_name))
