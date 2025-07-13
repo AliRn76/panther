@@ -73,7 +73,7 @@ class BaseQuery:
         # Handle basic types (str, int, bool, dict, datetime) and Pydantic.BaseModel and File subclasses
         try:
             if isinstance(annotation, type) and (
-                annotation in (str, int, bool, dict, datetime) or issubclass(annotation, (BaseModel, File))
+                annotation in (str, int, bool, dict, float, datetime) or issubclass(annotation, (BaseModel, File))
             ):
                 return annotation
         except TypeError:
