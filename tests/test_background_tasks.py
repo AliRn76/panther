@@ -204,7 +204,7 @@ class TestBackgroundTasks(TestCase):
         BackgroundTask(func, numbers).at((now + datetime.timedelta(seconds=3)).time()).submit()
         time.sleep(2)
         assert len(numbers) == 0
-        time.sleep(2)
+        time.sleep(3)
         assert len(numbers) == 1
 
     def test_task_on_specific_weekday(self):

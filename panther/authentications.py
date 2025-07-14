@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from typing import Literal
 
 from panther.base_websocket import Websocket
-from panther.cli.utils import import_error
 from panther.configs import config
 from panther.db.connections import redis
 from panther.db.models import Model
@@ -15,8 +14,13 @@ from panther.utils import generate_hash_value_from_string
 
 try:
     from jose import JWTError, jwt
-except ModuleNotFoundError as e:
-    raise import_error(e, package='python-jose')
+except ImportError as e:
+    # This `JWTError` and `jwt` is not going to be used,
+    #   If user really wants to use redis,
+    #   we are going to force him to install it in `panther._load_configs.load_jwt_config`
+    JWTError = type('JWTError', (), {})
+    jwt = type('jwt', (), {})
+
 
 logger = logging.getLogger('panther')
 

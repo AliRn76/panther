@@ -7,6 +7,7 @@ from multiprocessing import Manager
 import jinja2
 
 from panther._utils import check_class_type_endpoint, check_function_type_endpoint, import_class
+from panther.authentications import JWTAuthentication
 from panther.background_tasks import _background_tasks
 from panther.base_websocket import WebsocketConnections
 from panther.cli.utils import import_error
@@ -266,19 +267,24 @@ def load_authentication_class(_configs: dict, /) -> None:
 
 def load_jwt_config(_configs: dict, /) -> None:
     """Only Collect JWT Config If Authentication Is JWTAuthentication"""
-    from panther.authentications import JWTAuthentication
 
     auth_is_jwt = (config.AUTHENTICATION and issubclass(config.AUTHENTICATION, JWTAuthentication)) or (
         config.WS_AUTHENTICATION and issubclass(config.WS_AUTHENTICATION, JWTAuthentication)
     )
-    jwt = _configs.get('JWT_CONFIG', {})
+
+    jwt_config = _configs.get('JWT_CONFIG', {})
     using_panel_views = HomeView in config.FLAT_URLS.values()
     if auth_is_jwt or using_panel_views:
-        if 'key' not in jwt:
+        if 'key' not in jwt_config:
             if config.SECRET_KEY is None:
                 raise _exception_handler(field='JWTConfig', error='`JWTConfig.key` or `SECRET_KEY` is required.')
-            jwt['key'] = config.SECRET_KEY
-        config.JWT_CONFIG = JWTConfig(**jwt)
+            jwt_config['key'] = config.SECRET_KEY
+        config.JWT_CONFIG = JWTConfig(**jwt_config)
+
+        try:
+            import jose
+        except ImportError as e:
+            raise import_error(e, package='python-jose')
 
 
 def load_websocket_connections():
