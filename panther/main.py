@@ -155,10 +155,9 @@ class Panther:
             else:  # ENDPOINT_WEBSOCKET
                 raise UpgradeRequiredError
 
-            if config.HTTP_MIDDLEWARES:
-                # Create Middlewares chain
-                for middleware in config.HTTP_MIDDLEWARES:
-                    endpoint = middleware(dispatch=endpoint)
+            # Create Middlewares chain
+            for middleware in config.HTTP_MIDDLEWARES:
+                endpoint = middleware(dispatch=endpoint)
 
             response = await endpoint(request=request)
 

@@ -101,7 +101,8 @@ class API:
                 raise MethodNotAllowedAPIError
 
             # 2. Authentication
-            if auth := (self.auth or config.AUTHENTICATION):
+            if self.auth or config.AUTHENTICATION:
+                auth = self.auth or config.AUTHENTICATION
                 if inspect.isclass(auth):
                     auth = auth()
                 self.request.user = await auth(self.request)
@@ -115,7 +116,8 @@ class API:
                         raise AuthorizationAPIError
 
             # 4. Throttle
-            if throttling := (self.throttling or config.THROTTLING):
+            if self.throttling or config.THROTTLING:
+                throttling = self.throttling or config.THROTTLING
                 await throttling.check_and_increment(request=self.request)
 
             # 5. Validate Input

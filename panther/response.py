@@ -37,6 +37,17 @@ StreamingDataTypes = Generator | AsyncGenerator
 logger = logging.getLogger('panther')
 
 
+def serialization_default(obj: Any):
+    if isinstance(obj, BaseModel):
+        return obj.model_dump()
+    if isinstance(obj, (Cursor, PantherDBCursor)):
+        return list(obj)
+    if isinstance(obj, bytes):
+        return f'raw bytes is not JSON serializable ({len(obj)} bytes)'
+    raise TypeError(f'Type {type(obj)} not serializable')
+
+
+
 @dataclass(slots=True)
 class Cookie:
     """
@@ -98,7 +109,9 @@ class Response:
             data = list(data)
         self.data = data
         self.status_code = status_code
-        self.headers = {'Content-Type': self.content_type} | (headers or {})
+        self.headers = {'Content-Type': self.content_type}
+        if headers:
+            self.headers |= headers
         self.pagination: Pagination | None = pagination
         self.cookies = None
         if set_cookies:
@@ -126,25 +139,15 @@ class Response:
 
     @property
     def body(self) -> bytes:
-        def default(obj: Any):
-            if isinstance(obj, BaseModel):
-                return obj.model_dump()
-            if isinstance(obj, (Cursor, PantherDBCursor)):
-                return list(obj)
-            if isinstance(obj, bytes):
-                return f'raw bytes is not JSON serializable ({len(obj)} bytes)'
-            raise TypeError(f'Type {type(obj)} not serializable')
-
         if isinstance(self.data, bytes):
             return self.data
         if self.data is None:
             return b''
-        return json.dumps(self.data, default=default)
+        return json.dumps(self.data, default=serialization_default)
 
     @property
     def bytes_headers(self) -> list[tuple[bytes, bytes]]:
-        headers = {'Content-Length': len(self.body)} | self.headers
-        result = [(k.encode(), str(v).encode()) for k, v in headers.items()]
+        result = [(k.encode(), str(v).encode()) for k, v in ({'Content-Length': len(self.body)} | self.headers).items()]
         if self.cookies:
             result += self.cookies
         return result
