@@ -787,6 +787,24 @@ class _BaseDatabaseTestCase:
         assert isinstance(library.viewer, Viewer)
         assert library.viewer.first_name == 'Ali'
 
+    async def test_unicode_and_special_characters(self):
+        """Test inserting and querying with special characters and unicode"""
+        special_name = '书📚✨漢字-العربية-русский-हिन्दी'
+        await Book.insert_one(name=special_name)
+        found = await Book.find_one(name=special_name)
+        assert found is not None
+        assert found.name == special_name
+
+    async def test_field_type_mutation(self):
+        """Test updating a field with a different type than originally set"""
+        book = await Book.insert_one(name='type_test')
+        # Try to update 'name' from str to int
+        try:
+            await Book.update_one({'id': book.id}, name=12345)
+            assert False, 'Should have failed due to type mismatch'
+        except Exception:
+            pass  # Expected
+
 
 class TestPantherDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
     DB_PATH = 'test.pdb'

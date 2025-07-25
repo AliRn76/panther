@@ -7,7 +7,8 @@ from pathlib import Path
 import panther.logging
 from panther import status
 from panther._load_configs import *
-from panther._utils import ENDPOINT_CLASS_BASED_API, ENDPOINT_FUNCTION_BASED_API, reformat_code, traceback_message
+from panther._utils import ENDPOINT_CLASS_BASED_API, ENDPOINT_FUNCTION_BASED_API, reformat_code, traceback_message, \
+    ENDPOINT_WEBSOCKET
 from panther.base_websocket import Websocket
 from panther.cli.utils import print_info
 from panther.configs import config
@@ -93,13 +94,12 @@ class Panther:
         # Find Endpoint
         endpoint, found_path = find_endpoint(path=connection.path)
         if endpoint is None:
-            logger.debug(f'Path `{connection.path}` not found')
             await connection.close()
             return connection
 
         # Check Endpoint Type
-        if not issubclass(endpoint, GenericWebsocket):
-            logger.warning(f'{endpoint.__name__}() class is not a Websocket class.')
+        if endpoint._endpoint_type is not ENDPOINT_WEBSOCKET:
+            logger.warning(f'{endpoint.__name__}() class is not a subclass of `GenericWebsocket`.')
             await connection.close()
             return connection
 
@@ -119,7 +119,7 @@ class Panther:
 
         # Create Middlewares chain
         chained_func = cls.handle_ws_endpoint
-        for middleware in reversed(config.WS_MIDDLEWARES):
+        for middleware in config.WS_MIDDLEWARES:
             chained_func = middleware(dispatch=chained_func)
 
         # Call Middlewares & Endpoint
@@ -132,53 +132,44 @@ class Panther:
             logger.error(traceback_message(exception=e))
             await connection.close()
 
-    @staticmethod
-    async def handle_http_endpoint(request: Request) -> Response:
-        # Find Endpoint
-        endpoint, found_path = find_endpoint(path=request.path)
-        if endpoint is None:
-            raise NotFoundAPIError
-
-        # Collect Path Variables
-        request.collect_path_variables(found_path=found_path)
-
-        if endpoint._endpoint_type is ENDPOINT_FUNCTION_BASED_API:
-            return await endpoint(request=request)
-        if endpoint._endpoint_type is ENDPOINT_CLASS_BASED_API:
-            return await endpoint().call_method(request=request)
-
-        # ENDPOINT_WEBSOCKET
-        raise UpgradeRequiredError
-
     @classmethod
     async def handle_http(cls, scope: dict, receive: Callable, send: Callable) -> None:
         # Create `Request` and its body
         request = Request(scope=scope, receive=receive, send=send)
         await request.read_body()
 
-        # Create Middlewares chain
-        chained_func = cls.handle_http_endpoint
-        for middleware in reversed(config.HTTP_MIDDLEWARES):
-            chained_func = middleware(dispatch=chained_func)
-
         # Call Middlewares & Endpoint
         try:
-            response = await chained_func(request=request)
-            if response is None:
-                logger.error('You forgot to return `response` on the `Middlewares.__call__()`')
-                response = Response(
-                    data={'detail': 'Internal Server Error'},
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-        # Handle `APIError` Exceptions
+            # Find Endpoint
+            endpoint, found_path = find_endpoint(path=request.path)
+            if endpoint is None:
+                raise NotFoundAPIError
+
+            # Collect Path Variables
+            request.collect_path_variables(found_path=found_path)
+
+            if endpoint._endpoint_type is ENDPOINT_FUNCTION_BASED_API:
+                pass
+            elif endpoint._endpoint_type is ENDPOINT_CLASS_BASED_API:
+                endpoint = endpoint().call_method
+            else:  # ENDPOINT_WEBSOCKET
+                raise UpgradeRequiredError
+
+            if config.HTTP_MIDDLEWARES:
+                # Create Middlewares chain
+                for middleware in config.HTTP_MIDDLEWARES:
+                    endpoint = middleware(dispatch=endpoint)
+
+            response = await endpoint(request=request)
+
         except APIError as e:
             response = Response(
                 data=e.detail if isinstance(e.detail, dict) else {'detail': e.detail},
                 headers=e.headers,
                 status_code=e.status_code,
             )
-        # Handle Unknown Exceptions
-        except Exception as e:
+
+        except Exception as e:  # Handle Unknown Exceptions
             logger.error(traceback_message(exception=e))
             response = Response(
                 data={'detail': 'Internal Server Error'},

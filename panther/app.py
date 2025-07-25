@@ -51,7 +51,6 @@ class API:
     permissions: List of permissions that will be called sequentially after authentication to authorize the user.
     throttling: It will limit the users' request on a specific (time-window, path)
     cache: Specify the duration of the cache (Will be used only in GET requests).
-    middlewares: These middlewares have inner priority than global middlewares.
     """
 
     func: Callable
@@ -80,7 +79,6 @@ class API:
             self.permissions = [self.permissions]
         self.throttling = throttling
         self.cache = cache
-        self.middlewares = middlewares
         self.request: Request | None = None
         if self.auth is not None:
             validate_api_auth(self.auth)
@@ -96,11 +94,61 @@ class API:
 
         @functools.wraps(func)
         async def wrapper(request: Request) -> Response:
-            chained_func = self.handle_endpoint
-            if self.middlewares:
-                for middleware in reversed(self.middlewares):
-                    chained_func = middleware(chained_func)
-            return await chained_func(request=request)
+            self.request = request
+
+            # 1. Check Method
+            if self.request.method not in self.methods:
+                raise MethodNotAllowedAPIError
+
+            # 2. Authentication
+            if auth := (self.auth or config.AUTHENTICATION):
+                if inspect.isclass(auth):
+                    auth = auth()
+                self.request.user = await auth(self.request)
+
+            # 3. Permissions
+            if self.permissions:
+                for perm in self.permissions:
+                    if inspect.isclass(perm):
+                        perm = perm()
+                    if await perm(self.request) is False:
+                        raise AuthorizationAPIError
+
+            # 4. Throttle
+            if throttling := (self.throttling or config.THROTTLING):
+                await throttling.check_and_increment(request=self.request)
+
+            # 5. Validate Input
+            if self.input_model and self.request.method in {'POST', 'PUT', 'PATCH'}:
+                self.request.validate_data(model=self.input_model)
+
+            # 6. Get Cached Response
+            if self.cache and self.request.method == 'GET':
+                if cached := await get_response_from_cache(request=self.request, duration=self.cache):
+                    return Response(data=cached.data, headers=cached.headers, status_code=cached.status_code)
+
+            # 7. Put PathVariables and Request(If User Wants It) In kwargs
+            kwargs = self.request.clean_parameters(self.function_annotations)
+
+            # 8. Call Endpoint
+            if self.is_function_async:
+                response = await self.func(**kwargs)
+            else:
+                response = self.func(**kwargs)
+
+            # 9. Clean Response
+            if not isinstance(response, Response):
+                response = Response(data=response)
+            if self.output_model and response.data:
+                await response.serialize_output(output_model=self.output_model)
+            if response.pagination:
+                response.data = await response.pagination.template(response.data)
+
+            # 10. Set New Response To Cache
+            if self.cache and self.request.method == 'GET':
+                await set_response_in_cache(request=self.request, response=response, duration=self.cache)
+
+            return response
 
         # Store attributes on the function, so have the same behaviour as class-based (useful in `openapi.view.OpenAPI`)
         wrapper.auth = self.auth
@@ -108,82 +156,14 @@ class API:
         wrapper.methods = self.methods
         wrapper.throttling = self.throttling
         wrapper.permissions = self.permissions
-        wrapper.middlewares = self.middlewares
         wrapper.input_model = self.input_model
         wrapper.output_model = self.output_model
         wrapper.output_schema = self.output_schema
         wrapper._endpoint_type = ENDPOINT_FUNCTION_BASED_API
         return wrapper
 
-    async def handle_endpoint(self, request: Request) -> Response:
-        self.request = request
 
-        # 1. Check Method
-        if self.request.method not in self.methods:
-            raise MethodNotAllowedAPIError
-
-        # 2. Authentication
-        if auth := (self.auth or config.AUTHENTICATION):
-            if inspect.isclass(auth):
-                auth = auth()
-            self.request.user = await auth(self.request)
-
-        # 3. Permissions
-        if self.permissions:
-            for perm in self.permissions:
-                if inspect.isclass(perm):
-                    perm = perm()
-                if await perm(self.request) is False:
-                    raise AuthorizationAPIError
-
-        # 4. Throttle
-        if throttling := (self.throttling or config.THROTTLING):
-            await throttling.check_and_increment(request=self.request)
-
-        # 5. Validate Input
-        if self.input_model and self.request.method in {'POST', 'PUT', 'PATCH'}:
-            self.request.validate_data(model=self.input_model)
-
-        # 6. Get Cached Response
-        if self.cache and self.request.method == 'GET':
-            if cached := await get_response_from_cache(request=self.request, duration=self.cache):
-                return Response(data=cached.data, headers=cached.headers, status_code=cached.status_code)
-
-        # 7. Put PathVariables and Request(If User Wants It) In kwargs
-        kwargs = self.request.clean_parameters(self.function_annotations)
-
-        # 8. Call Endpoint
-        if self.is_function_async:
-            response = await self.func(**kwargs)
-        else:
-            response = self.func(**kwargs)
-
-        # 9. Clean Response
-        if not isinstance(response, Response):
-            response = Response(data=response)
-        if self.output_model and response.data:
-            await response.serialize_output(output_model=self.output_model)
-        if response.pagination:
-            response.data = await response.pagination.template(response.data)
-
-        # 10. Set New Response To Cache
-        if self.cache and self.request.method == 'GET':
-            await set_response_in_cache(request=self.request, response=response, duration=self.cache)
-
-        return response
-
-
-class MetaGenericAPI(type):
-    def __new__(cls, cls_name: str, bases: tuple[type[typing.Any], ...], namespace: dict[str, typing.Any], **kwargs):
-        if cls_name == 'GenericAPI':
-            return super().__new__(cls, cls_name, bases, namespace)
-        # Deprecated messages can be here
-        # e.g. if 'something' in namespace:
-        #          raise PantherError(deprecated_message)
-        return super().__new__(cls, cls_name, bases, namespace)
-
-
-class GenericAPI(metaclass=MetaGenericAPI):
+class GenericAPI:
     """
     Check out the documentation of `panther.app.API()`.
     """
