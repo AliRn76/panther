@@ -17,7 +17,7 @@ logger = logging.getLogger('panther')
 class Request(BaseRequest):
     def __init__(self, scope: dict, receive: Callable, send: Callable):
         self._data = ...
-        self.validated_data = None  # It's been set in API.validate_input()
+        self.validated_data = None  # It's been set in self.validate_input()
         super().__init__(scope=scope, receive=receive, send=send)
 
     @property

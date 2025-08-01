@@ -18,13 +18,12 @@ INSTALL_REQUIRES = [
     'orjson~=3.10.18',
     'pydantic~=2.11.7',
     'rich~=14.0.0',
-    'uvicorn~=0.35.0',
+    'uvicorn>=0.21.0',
     'pytz~=2025.2',
     'Jinja2~=3.1.6',
     'simple-ulid~=1.0.0',
+    'httptools~=0.6.4',
 ]
-if sys.version_info <= (3, 12):
-    INSTALL_REQUIRES.append('httptools~=0.6.4')
 
 EXTRAS_REQUIRE = {
     'full': [

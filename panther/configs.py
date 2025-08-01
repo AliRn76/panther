@@ -57,8 +57,8 @@ class Config:
     LOG_QUERIES: bool = False
     THROTTLING = None  # type: panther.throttling.Throttle
     SECRET_KEY: str | None = None
-    HTTP_MIDDLEWARES: list = field(default_factory=list)
-    WS_MIDDLEWARES: list = field(default_factory=list)
+    HTTP_MIDDLEWARES: list = field(default_factory=list)  # Middlewares stored in reversed order
+    WS_MIDDLEWARES: list = field(default_factory=list)  # Middlewares stored in reversed order
     USER_MODEL: type[PydanticBaseModel] | None = None
     AUTHENTICATION: type[PydanticBaseModel] | None = None
     WS_AUTHENTICATION: type[PydanticBaseModel] | None = None
