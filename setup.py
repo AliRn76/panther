@@ -31,7 +31,6 @@ EXTRAS_REQUIRE = {
         'motor~=3.7.1',
         'ipython~=9.4.0',
         'python-jose~=3.5.0',
-        'ruff~=0.12.2',
         'websockets~=15.0.1',
         'cryptography~=45.0.5',
         'watchfiles~=1.1.0',

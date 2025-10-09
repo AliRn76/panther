@@ -69,9 +69,12 @@ class RequestClient:
             data = self.response.decode()
             response = PlainTextResponse(data=data, status_code=self.header['status'], headers=response_headers)
 
-        else:
+        elif response_headers['Content-Type'] == 'application/json':
             data = json.loads(self.response or b'null')
             response = Response(data=data, status_code=self.header['status'], headers=response_headers)
+
+        else:
+            response = Response(data=self.response, status_code=self.header['status'], headers=response_headers)
         response.cookies = cookies
         return response
 

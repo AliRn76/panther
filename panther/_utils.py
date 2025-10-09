@@ -9,6 +9,7 @@ import traceback
 import types
 from collections.abc import AsyncGenerator, Callable, Generator, Iterator
 from datetime import timedelta
+from pathlib import Path
 from traceback import TracebackException
 from typing import Any
 
@@ -256,7 +257,86 @@ def check_api_deprecations(cache, **kwargs):
         raise PantherError(msg)
 
 
-def detect_mime_type(file_path: str) -> str:
+CUSTOM_MIME_TYPES = {
+    # Text & Web
+    'html': 'text/html',
+    'htm': 'text/html',
+    'css': 'text/css',
+    'csv': 'text/csv',
+    'txt': 'text/plain',
+    'md': 'text/markdown',
+    'xml': 'application/xml',
+    'json': 'application/json',
+    'yml': 'text/yaml',
+    'yaml': 'text/yaml',
+    'js': 'application/javascript',
+    'mjs': 'application/javascript',
+    'ts': 'application/typescript',
+    'map': 'application/json',
+    # Images
+    'png': 'image/png',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'gif': 'image/gif',
+    'bmp': 'image/bmp',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+    'ico': 'image/x-icon',
+    'tiff': 'image/tiff',
+    'avif': 'image/avif',
+    # Fonts
+    'woff': 'font/woff',
+    'woff2': 'font/woff2',
+    'ttf': 'font/ttf',
+    'otf': 'font/otf',
+    'eot': 'application/vnd.ms-fontobject',
+    # Audio
+    'mp3': 'audio/mpeg',
+    'ogg': 'audio/ogg',
+    'wav': 'audio/wav',
+    'flac': 'audio/flac',
+    'm4a': 'audio/mp4',
+    'aac': 'audio/aac',
+    # Video
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'ogv': 'video/ogg',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    'mkv': 'video/x-matroska',
+    # Archives & binaries
+    'zip': 'application/zip',
+    'gz': 'application/gzip',
+    'tar': 'application/x-tar',
+    'rar': 'application/vnd.rar',
+    '7z': 'application/x-7z-compressed',
+    'bz2': 'application/x-bzip2',
+    # Documents
+    'pdf': 'application/pdf',
+    'rtf': 'application/rtf',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'xls': 'application/vnd.ms-excel',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'ppt': 'application/vnd.ms-powerpoint',
+    'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    # Code & Config
+    'py': 'text/x-python',
+    'go': 'text/x-go',
+    'java': 'text/x-java-source',
+    'c': 'text/x-c',
+    'cpp': 'text/x-c++',
+    'h': 'text/x-c',
+    'sh': 'application/x-sh',
+    'bat': 'application/x-msdos-program',
+    'ini': 'text/plain',
+    'env': 'text/plain',
+}
+
+
+def detect_mime_type(file_path: str | Path) -> str:
+    file_path = str(file_path)
+
     # Try extension-based detection
     mime_type, _ = mimetypes.guess_type(file_path)
     if mime_type:
@@ -286,6 +366,10 @@ def detect_mime_type(file_path: str) -> str:
                 return 'video/mp4'
     except Exception:
         pass
+
+    # Custom mapping fallback
+    if (ext := file_path.rsplit('.', maxsplit=1)[1].lower()) in CUSTOM_MIME_TYPES:
+        return CUSTOM_MIME_TYPES[ext]
 
     # Fallback if no match
     return 'application/octet-stream'

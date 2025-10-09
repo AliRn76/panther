@@ -1,3 +1,4 @@
+import platform
 from unittest import IsolatedAsyncioTestCase
 
 from pydantic import BaseModel
@@ -6,7 +7,15 @@ from panther import Panther
 from panther.app import API, GenericAPI
 from panther.configs import config
 from panther.db import Model
-from panther.response import Cookie, HTMLResponse, PlainTextResponse, Response, StreamingResponse, TemplateResponse
+from panther.response import (
+    Cookie,
+    FileResponse,
+    HTMLResponse,
+    PlainTextResponse,
+    Response,
+    StreamingResponse,
+    TemplateResponse,
+)
 from panther.test import APIClient
 
 
@@ -182,6 +191,16 @@ class ReturnTemplateResponse(GenericAPI):
 
 
 @API()
+async def return_file_not_found_response():
+    return FileResponse('random.file')
+
+
+@API()
+async def return_file_response():
+    return FileResponse('README.md')
+
+
+@API()
 async def return_plain_response():
     return PlainTextResponse('Hello World')
 
@@ -269,6 +288,8 @@ urls = {
     'response-list': return_response_list,
     'response-tuple': return_response_tuple,
     'html': return_html_response,
+    'file-not-found': return_file_not_found_response,
+    'file': return_file_response,
     'plain': return_plain_response,
     'template': return_template_response,
     'nothing-cls': ReturnNothing,
@@ -568,6 +589,28 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
         assert res.headers['Content-Type'] == 'text/html; charset=utf-8'
         assert res.headers['Content-Length'] == '44'
+
+    async def test_response_file_not_found(self):
+        res = await self.client.get('file-not-found/')
+        assert res.status_code == 404
+        assert res.data == {'detail': 'Not Found'}
+        assert res.body == b'{"detail":"Not Found"}'
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
+        assert res.headers['Content-Type'] == 'application/json'
+        assert res.headers['Content-Length'] == '22'
+
+    async def test_response_file(self):
+        res = await self.client.get('file/')
+        assert res.status_code == 200
+        assert res.data
+        assert res.body
+        assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
+        assert res.headers['Content-Type'] == 'text/markdown'
+        if platform.system() == 'Windows':
+            # Line breaks are \n\r
+            assert res.headers['Content-Length'] == '4783'
+        else:
+            assert res.headers['Content-Length'] == '4645'
 
     async def test_response_plain(self):
         res = await self.client.get('plain/')

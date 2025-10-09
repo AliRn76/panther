@@ -23,7 +23,7 @@ from pantherdb import Cursor as PantherDBCursor
 from pydantic import BaseModel
 
 from panther import status
-from panther._utils import to_async_generator
+from panther._utils import detect_mime_type, to_async_generator
 from panther.configs import config
 from panther.db.cursor import Cursor
 from panther.pagination import Pagination
@@ -281,6 +281,29 @@ class PlainTextResponse(Response):
         return self.data.encode()
 
 
+class FileResponse(Response):
+    """
+    Usage Example:
+        from panther.response import FileResponse
+
+        def my_api():
+            return FileResponse(data="file.txt")
+    """
+
+    def __init__(self, file_path: str, headers: dict | NoneType = None, status_code: int = status.HTTP_200_OK):
+        """
+        :param file_path: path of the file
+        :param headers: should be dict of headers
+        :param status_code: should be int
+        """
+        file = config.BASE_DIR / file_path
+        if not file.exists():
+            super().__init__(data={'detail': 'Not Found'}, headers=headers, status_code=status.HTTP_404_NOT_FOUND)
+        else:
+            headers = {'Content-Type': detect_mime_type(file)} | (headers or {})
+            super().__init__(data=file.read_bytes(), headers=headers, status_code=status_code)
+
+
 class TemplateResponse(HTMLResponse):
     """
     Usage Example:
@@ -296,7 +319,6 @@ class TemplateResponse(HTMLResponse):
 
     Example:
         TEMPLATES_DIR = 'templates/'
-
     """
 
     def __init__(
