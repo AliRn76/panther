@@ -1,10 +1,11 @@
 import datetime
 import typing
+from sys import version_info
 from typing import Any
 
-from pydantic import BaseModel, BeforeValidator, create_model
-from pydantic.fields import FieldInfo
-from pydantic_core._pydantic_core import PydanticUndefined
+import pydantic
+import pydantic.fields
+import pydantic_core._pydantic_core
 
 from panther.db import Model
 from panther.utils import run_coroutine, timezone_now
@@ -16,10 +17,10 @@ class MetaModelSerializer:
     def __new__(cls, cls_name: str, bases: tuple[type[typing.Any], ...], namespace: dict[str, typing.Any], **kwargs):
         if cls_name == 'ModelSerializer':
             # Put `model` to the main class with `create_model()`
-            namespace['__annotations__'].pop('model')
+            if version_info < (3, 14):
+                namespace['__annotations__'].pop('model')
             cls.model_serializer = type(cls_name, (), namespace)
             return super().__new__(cls)
-
         # 1. Initial Check
         cls.check_config(cls_name=cls_name, namespace=namespace)
         config = namespace.pop('Config')
@@ -31,12 +32,12 @@ class MetaModelSerializer:
         model_config = cls.collect_model_config(config=config, namespace=namespace)
         namespace |= {'model_config': model_config}
         # 4. Create a serializer
-        return create_model(
+        return pydantic.create_model(
             cls_name,
             __module__=namespace['__module__'],
             __validators__=namespace,
-            __base__=(cls.model_serializer, BaseModel),
-            model=(typing.ClassVar[type[BaseModel]], config.model),
+            __base__=(cls.model_serializer, pydantic.BaseModel),
+            model=(typing.ClassVar[type[pydantic.BaseModel]], config.model),
             **field_definitions,
         )
 
@@ -57,11 +58,11 @@ class MetaModelSerializer:
 
         # Check `model` type
         try:
-            if not issubclass(model, (Model, BaseModel)):
+            if not issubclass(model, (Model, pydantic.BaseModel)):
                 msg = f'`{cls_name}.Config.model` is not subclass of `panther.db.Model` or `pydantic.BaseModel`.'
                 raise AttributeError(msg) from None
         except TypeError:
-            msg = f'`{cls_name}.Config.model` is not subclass of `panther.db.Model`.'
+            msg = f'`{cls_name}.Config.model` is not subclass of `panther.db.Model` or `pydantic.BaseModel`.'
             raise AttributeError(msg) from None
 
         # Check `fields`
@@ -158,10 +159,10 @@ class MetaModelSerializer:
         # Apply `required_fields`
         if config.required_fields == '*':
             for value in field_definitions.values():
-                value[1].default = PydanticUndefined
+                value[1].default = pydantic_core._pydantic_core.PydanticUndefined
         else:
             for field_name in config.required_fields:
-                field_definitions[field_name][1].default = PydanticUndefined
+                field_definitions[field_name][1].default = pydantic_core._pydantic_core.PydanticUndefined
 
         # Apply `optional_fields`
         if config.optional_fields == '*':
@@ -174,15 +175,19 @@ class MetaModelSerializer:
                 else:
                     field_definitions[field_name][1].default = field_definitions[field_name][0]()
         # Collect and Override `Class Fields`
-        for key, value in namespace.pop('__annotations__', {}).items():
-            field_info = namespace.pop(key, FieldInfo(annotation=value))
+        if version_info < (3, 14):
+            annotations = namespace.pop('__annotations__', {})
+        else:
+            annotations = namespace['__annotate_func__'](0) if '__annotate_func__' in namespace else {}
+        for key, value in annotations.items():
+            field_info = namespace.pop(key, pydantic.fields.FieldInfo(annotation=value))
             field_definitions[key] = (value, field_info)
 
         # Check Foreign Keys
         for field_name, field_config in field_definitions.items():
             try:
                 if issubclass(field_config[0], Model):
-                    validator = BeforeValidator(cls.convert_str_to_model(field_config[0]))
+                    validator = pydantic.BeforeValidator(cls.convert_str_to_model(field_config[0]))
                     ann = typing.Annotated[field_config[0], validator]
                     field_definitions[field_name] = (ann, field_config[1])
             except TypeError:
@@ -241,7 +246,7 @@ class ModelSerializer(metaclass=MetaModelSerializer):
                 optional_fields = ['age', 'bio']
     """
 
-    model: type[BaseModel]
+    model: type[pydantic.BaseModel]
 
     async def to_response(self, instance: Any, data: dict) -> dict:
         return data

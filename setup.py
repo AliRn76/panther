@@ -14,15 +14,15 @@ with open('README.md', encoding='utf-8') as file:
     DESCRIPTION = file.read()
 
 INSTALL_REQUIRES = [
-    'pantherdb~=2.3.1',
-    'orjson~=3.10.18',
-    'pydantic~=2.11.7',
-    'rich~=14.0.0',
+    'pantherdb~=2.3.3',
+    'orjson~=3.11.3',
+    'pydantic~=2.12.3',
+    'rich~=14.2.0',
     'uvicorn>=0.21.0',
     'pytz~=2025.2',
     'Jinja2~=3.1.6',
     'simple-ulid~=1.0.0',
-    'httptools~=0.6.4',
+    'httptools~=0.7.1',
 ]
 
 EXTRAS_REQUIRE = {
@@ -55,6 +55,7 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
     ],
     entry_points={
         'console_scripts': ['panther=panther.cli.main:start'],
