@@ -84,27 +84,29 @@ class MetaModelSerializer:
         if not hasattr(config, 'required_fields'):
             config.required_fields = []
 
-        for required in config.required_fields:
-            if required not in model.model_fields:
-                msg = f'`{cls_name}.Config.required_fields.{required}` is not valid.'
-                raise AttributeError(msg) from None
+        if config.required_fields != '*':
+            for required in config.required_fields:
+                if required not in model.model_fields:
+                    msg = f'`{cls_name}.Config.required_fields.{required}` is not valid.'
+                    raise AttributeError(msg) from None
 
-            if config.fields != '*' and required not in config.fields:
-                msg = f'`{cls_name}.Config.required_fields.{required}` is not defined in `Config.fields`.'
-                raise AttributeError(msg) from None
+                if config.fields != '*' and required not in config.fields:
+                    msg = f'`{cls_name}.Config.required_fields.{required}` is not defined in `Config.fields`.'
+                    raise AttributeError(msg) from None
 
         # Check `optional_fields`
         if not hasattr(config, 'optional_fields'):
             config.optional_fields = []
 
-        for optional in config.optional_fields:
-            if optional not in model.model_fields:
-                msg = f'`{cls_name}.Config.optional_fields.{optional}` is not valid.'
-                raise AttributeError(msg) from None
+        if config.optional_fields != '*':
+            for optional in config.optional_fields:
+                if optional not in model.model_fields:
+                    msg = f'`{cls_name}.Config.optional_fields.{optional}` is not valid.'
+                    raise AttributeError(msg) from None
 
-            if config.fields != '*' and optional not in config.fields:
-                msg = f'`{cls_name}.Config.optional_fields.{optional}` is not defined in `Config.fields`.'
-                raise AttributeError(msg) from None
+                if config.fields != '*' and optional not in config.fields:
+                    msg = f'`{cls_name}.Config.optional_fields.{optional}` is not defined in `Config.fields`.'
+                    raise AttributeError(msg) from None
 
         # Check `required_fields` and `optional_fields` together
         if (config.optional_fields == '*' and config.required_fields != []) or (
