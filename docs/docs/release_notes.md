@@ -1,5 +1,9 @@
 # Panther Release Notes
 
+### 5.2.3 
+- Fix background task async loop mismatch with app event loop registration (#146)
+- Escape Mongodb search input before building regex (#147)
+
 ### 5.2.2
 - Fix function API request isolation
 - Make `find_one_or_insert` race-safe on duplicate key conflicts
