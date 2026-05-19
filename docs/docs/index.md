@@ -58,6 +58,9 @@ Panther is designed to be **fast**, **simple**, and **powerful**. Here's what ma
 
 ### Quick Start Guide
 
+!!! tip "LLM and coding-agent context"
+    If you are using an LLM or coding agent, start with [LLM Context](llm-context.md), [Architecture](architecture.md), and the canonical examples in `examples/canonical/`.
+
 1. **Create a new project directory**
    ```shell
    $ mkdir my_panther_app

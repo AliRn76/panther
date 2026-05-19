@@ -7,13 +7,14 @@ Authentication in Panther ensures that only authorized users can access your API
 ## How Authentication Works
 
 - The `auth` parameter for an API or WebSocket should be an async function or a class with an async `__call__` method. Panther will use this callable to verify the user.
-- If you do not set `auth`, Panther will use the default `AUTHENTICATION` from your config **only if the request contains an authorization header**. If there is no authorization header, authentication is bypassed and `request.user` will be `None`.
+- If you do not set `auth`, Panther will use the default `AUTHENTICATION` from your config when it is configured.
+- Built-in JWT authentication classes return `None` when their expected token source is absent, so `request.user` can be `None`; use permissions when an endpoint requires an authenticated user.
 - If authentication fails, Panther raises `HTTP_401_UNAUTHORIZED`.
 - The authenticated user is available as:
   - `request.user` in API views
   - `self.user` in WebSocket connections
 
-> **Note:** When authentication is bypassed (no authorization header), `request.user` will be `None` and you must rely on permissions to check the user and their authorization.
+> **Note:** With built-in JWT authentication, missing credentials leave `request.user` as `None`. Use permissions such as `IsAuthenticated` when an endpoint must require a user.
 
 ---
 
@@ -148,4 +149,4 @@ You can implement your own authentication logic by either:
 - Use JWT configuration options to control token behavior.
 - For WebSocket, prefer query parameter-based authentication.
 - Implement custom authentication as an async function or a class with an async `__call__` method.
-- If authentication is bypassed, `request.user` will be `None` and you must use permissions to check the user and their authorization.
+- With built-in JWT authentication, missing credentials leave `request.user` as `None`; use permissions to require authenticated access.

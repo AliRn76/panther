@@ -211,7 +211,7 @@ Serializers transform data between the application and API requests.
 === "Generic API (Beta)"
 
     ```python title="app/apis.py" linenums="1"
-    from panther.app import CreateAPI
+    from panther.generics import CreateAPI
 
     from app.serializers import BookSerializer
     

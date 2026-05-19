@@ -58,7 +58,7 @@ class ProfileUploadSerializer(ModelSerializer):
 
 
 # APIs
-@API(input_model=DocumentUploadSerializer)
+@API(input_model=DocumentUploadSerializer, methods=['POST'])
 async def upload_document(request: Request):
     """Upload a document with validation"""
     try:
@@ -109,7 +109,7 @@ async def upload_document(request: Request):
         raise APIError(detail=f'File upload failed: {str(e)}', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@API(input_model=ProfileUploadSerializer)
+@API(input_model=ProfileUploadSerializer, methods=['POST'])
 async def upload_profile_image(request: Request):
     """Upload a profile image with automatic image validation"""
     try:

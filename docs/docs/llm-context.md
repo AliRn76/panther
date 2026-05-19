@@ -156,7 +156,7 @@ Use Pydantic models or `ModelSerializer` as `input_model`. Validated input is av
 Use `output_model` to filter response data.
 
 ```python
-@API(input_model=InputModel, output_model=OutputModel)
+@API(methods=['POST'], input_model=InputModel, output_model=OutputModel)
 async def endpoint(request: Request):
     return request.validated_data.model_dump()
 ```
@@ -218,8 +218,10 @@ Use `APIClient` and `WebsocketClient` from `panther.test`.
 from panther.test import APIClient
 
 
-client = APIClient(app=app)
-response = await client.get('/health/')
+async def test_health():
+    client = APIClient(app=app)
+    response = await client.get('/health/')
+    assert response.status_code == 200
 ```
 
 ## Common Gotchas

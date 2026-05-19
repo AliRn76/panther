@@ -213,7 +213,7 @@ from panther.app import API
 from panther.request import Request
 from panther.response import Response
 
-@API(input_model=FileUploadSerializer)
+@API(input_model=FileUploadSerializer, methods=['POST'])
 async def upload_file(request: Request):
     file_data = request.validated_data
     file = file_data.file
@@ -242,7 +242,7 @@ async def upload_file(request: Request):
 from panther import status
 from panther.exceptions import APIError
 
-@API(input_model=FileUploadSerializer)
+@API(input_model=FileUploadSerializer, methods=['POST'])
 async def upload_file(request: Request):
     try:
         file_data = request.validated_data
@@ -258,6 +258,8 @@ async def upload_file(request: Request):
         saved_path = file.save("uploads/")
         return Response(data={"saved_path": saved_path})
         
+    except APIError:
+        raise
     except Exception as e:
         raise APIError(
             detail=f"File upload failed: {str(e)}",

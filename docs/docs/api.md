@@ -51,7 +51,7 @@ class UserInputSerializer(ModelSerializer):
     from app.serializers import UserInputSerializer
     
 
-    @API(input_model=UserInputSerializer)
+    @API(input_model=UserInputSerializer, methods=['POST'])
     async def user_api(request: Request):
         request.validated_data  # This is now available
         ...
@@ -62,6 +62,7 @@ class UserInputSerializer(ModelSerializer):
     ```python title="app/apis.py" linenums="1"
     from panther import status
     from panther.app import GenericAPI
+    from panther.request import Request
     from panther.response import Response
     
     from app.serializers import UserInputSerializer
@@ -70,7 +71,7 @@ class UserInputSerializer(ModelSerializer):
     class UserAPI(GenericAPI):
         input_model = UserInputSerializer
     
-        async def get(self, request: Request):
+        async def post(self, request: Request):
             request.validated_data  # This is now available
             ...
     ```
@@ -122,8 +123,8 @@ To ensure that each request contains a valid authentication header, use the `aut
 
 - The `auth` parameter can be an any async function or a class with an async `__call__` method.
 - If you set `auth`, Panther will use your specified authentication class or function. 
-- If you do not set `auth`, Panther will use the default `AUTHENTICATION` from your config **only if the request contains an authorization header**. 
-- If there is no authorization header in the request, authentication is bypassed, `request.user` will be `None` and you must rely on permissions to check the user and their authorization.
+- If you do not set `auth`, Panther will use the default `AUTHENTICATION` from your config when it is configured.
+- Built-in JWT authentication classes return `None` when their expected token source is absent, so `request.user` can be `None`; use permissions when an endpoint requires an authenticated user.
 
 ??? question "How do authentications work in Panther?"
     Refer to [Authentications](authentications.md) to learn more about authentications.
@@ -481,7 +482,7 @@ class FileUploadSerializer(ModelSerializer):
         model = FileUpload
         fields = '*'
 
-@API(input_model=FileUploadSerializer)
+@API(input_model=FileUploadSerializer, methods=['POST'])
 async def upload_file(request: Request):
     file_data = request.validated_data
     file = file_data.file

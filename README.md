@@ -122,6 +122,19 @@ app = Panther(__name__, configs=__name__, urls=url_routing)
 
 ---
 
+## For LLMs and Coding Agents
+
+Start with:
+
+- [`AGENTS.md`](AGENTS.md)
+- [`docs/llms.txt`](docs/llms.txt)
+- [`docs/docs/llm-context.md`](docs/docs/llm-context.md)
+- [`examples/canonical/`](examples/canonical/)
+
+These files are kept focused on current Panther APIs and copyable examples.
+
+---
+
 ## 🙏 Acknowledgments
 
 <div align="center">

@@ -59,8 +59,8 @@ urls = {
 ### Authentication
 You can enable authentication in your WebSocket class by setting `auth` to an async function or a class with an async `__call__` method. Panther will use this callable to authenticate the user. 
 
-- If you do not set `auth`, Panther will use the default `WS_AUTHENTICATION` from your configuration **only if the request contains an authorization header/ cookie/ param/ etc.**. 
-- If there is no authorization header, authentication is bypassed and `self.user` will be `None`.
+- If you do not set `auth`, Panther will use the default `WS_AUTHENTICATION` from your configuration when it is configured.
+- Built-in JWT authentication classes return `None` when their expected token source is absent, so `self.user` can be `None`.
 
 There are several built-in options, but we recommend `QueryParamJWTAuthentication` for WebSocket authentication.
 
@@ -82,7 +82,7 @@ class MyWebSocket(GenericWebsocket):
         ...
 ```
 
-> **Note:** When authentication is bypassed (no authorization header), `self.user` will be `None` and you must rely on permissions to check the user and their authorization.
+> **Note:** With built-in JWT authentication, missing credentials leave `self.user` as `None`. Use permissions when a WebSocket endpoint must require a user.
 
 ### Permissions
 You can implement your authorization logic using permission classes or functions. Any async function or class with an async `__call__` method can be used as a permission. Panther will call each permission (asynchronously). 
@@ -230,4 +230,3 @@ app = Panther(__name__, configs=__name__, urls=url_routing)
 ---
 
 Enjoy building with Panther WebSockets!
-
