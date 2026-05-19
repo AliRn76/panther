@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from panther import Panther
 from panther.app import GenericAPI
 from panther.db import Model
@@ -9,10 +11,12 @@ class User(Model):
     connection_id: str
 
 
+BASE_DIR = Path(__file__).resolve().parent
+
 DATABASE = {
     'engine': {
         'class': 'panther.db.connections.PantherDBConnection',
-        'path': 'database.pdb',
+        'path': str(BASE_DIR / 'broadcast_websocket.pdb'),
     }
 }
 

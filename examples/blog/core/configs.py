@@ -1,7 +1,10 @@
 import os
 from datetime import timedelta
+from pathlib import Path
 
 from panther.throttling import Throttle
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Generate Secret Key with `panther.utils.generate_secret_key`
 SECRET_KEY = os.environ.get('SECRET_KEY', 'nggtD7uISmU3t61KUpOR642L2MFLUxxY3uoHGfMBH6E=')
@@ -10,7 +13,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'nggtD7uISmU3t61KUpOR642L2MFLUxxY3uoHG
 DATABASE = {
     'engine': {
         'class': 'panther.db.connections.PantherDBConnection',
-        'path': 'database.pdb',
+        'path': str(BASE_DIR / 'database.pdb'),
     }
 }
 
