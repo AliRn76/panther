@@ -1,0 +1,24 @@
+# Panther LLM Guide
+
+Panther is a Python 3.10+ async ASGI web framework for building APIs. It includes function-based APIs, class-based APIs, routing, request/response primitives, OpenAPI docs, WebSockets, middleware, authentication, permissions, throttling, caching, background tasks, templates, file handling, and PantherDB/MongoDB integrations.
+
+Use these files as the best context sources:
+
+- `/AGENTS.md` - repository workflow and coding-agent rules.
+- `/docs/docs/llm-context.md` - compact Panther reference for LLMs.
+- `/docs/docs/architecture.md` - internal architecture and request lifecycle.
+- `/examples/README.md` - example organization.
+- `/examples/canonical/` - small, copyable, validated examples.
+- `/docs/docs/api.md` - API endpoint behavior.
+- `/docs/docs/urls.md` - routing.
+- `/docs/docs/serializer.md` - serializers and validation.
+- `/docs/docs/model.md` - models.
+- `/docs/docs/database.md` and `/docs/docs/query.md` - database setup and querying.
+- `/docs/docs/websocket.md` - WebSocket behavior.
+- `/docs/docs/middlewares.md` - middleware behavior.
+- `/docs/docs/authentications.md` - authentication.
+- `/docs/docs/background_tasks.md` and `/docs/docs/events.md` - runtime hooks.
+
+Prefer examples from `/examples/canonical/` when generating code. They are intentionally small and kept close to the current public API.
+
+Do not invent APIs that are not present in source, docs, or canonical examples. When uncertain, inspect the source under `/panther/`.
