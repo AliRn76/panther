@@ -209,3 +209,5 @@ user: User = await User.find_one_or_raise(age=18)
 - All methods are async unless otherwise noted.
 - Filters can be passed as keyword arguments or as a dictionary.
 - Some features (like `aggregate`) are only available for MongoDB.
+- SQLite supports equality filters only in the first native SQL backend.
+- SQLite does not support Mongo-style update operators.

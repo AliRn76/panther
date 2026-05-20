@@ -15,6 +15,7 @@ from panther.configs import JWTConfig, config
 from panther.db.connections import redis
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
+from panther.db.queries.sqlite_queries import BaseSQLiteQuery
 from panther.exceptions import PantherError
 from panther.middlewares.base import HTTPMiddleware, WebsocketMiddleware
 from panther.middlewares.monitoring import MonitoringMiddleware, WebsocketMonitoringMiddleware
@@ -112,6 +113,8 @@ def load_database(_configs: dict, /) -> None:
             config.QUERY_ENGINE = BasePantherDBQuery
         elif engine_class_path == 'panther.db.connections.MongoDBConnection':
             config.QUERY_ENGINE = BaseMongoDBQuery
+        elif engine_class_path == 'panther.db.connections.SQLiteConnection':
+            config.QUERY_ENGINE = BaseSQLiteQuery
 
     if 'query' in database_config:
         if config.QUERY_ENGINE:

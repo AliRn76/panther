@@ -1,6 +1,6 @@
 # Database Support in Panther
 
-Panther natively supports two databases: `MongoDB` and `PantherDB`. However, you can also define your own custom database connections and queries.
+Panther natively supports `PantherDB`, `MongoDB`, and `SQLite`. However, you can also define your own custom database connections and queries.
 
 ---
 
@@ -23,6 +23,7 @@ DATABASE = {
 - **Built-in supported engines:**
   - `panther.db.connections.PantherDBConnection`
   - `panther.db.connections.MongoDBConnection`
+  - `panther.db.connections.SQLiteConnection`
 - All values in `engine` (except `class`) are passed to the `__init__` method of the specified class.
 - The `query` key is optional for the default supported engines, but you can customize it if needed.
 
@@ -64,6 +65,47 @@ DATABASE = {
 
 ### Notes
 - The parameters for the engine are the same as those for `pymongo.MongoClient`. See the [PyMongo documentation](https://pymongo.readthedocs.io/en/stable/tutorial.html#making-a-connection-with-mongoclient) for details.
+
+---
+
+## SQLite
+
+SQLite support is available through the optional SQL dependency:
+
+```bash
+pip install "panther[sql]"
+```
+
+Example configuration:
+
+```python
+DATABASE = {
+    'engine': {
+        'class': 'panther.db.connections.SQLiteConnection',
+        'path': BASE_DIR / 'database.sqlite3',
+    }
+}
+```
+
+Create tables for your registered models during startup:
+
+```python
+from panther.events import Event
+from panther.db.connections import db
+
+
+@Event.startup
+async def create_tables():
+    await db.session.create_tables()
+```
+
+### Notes
+
+- SQLite uses the same `panther.db.Model` CRUD methods as PantherDB and MongoDB.
+- The first SQLite backend supports equality filters only, such as `User.find(username='ali')`.
+- `aggregate()` and Mongo-style update operators are not supported.
+- `Model`-typed fields are stored as foreign keys and hydrated as related model instances.
+- Table creation is supported, but migrations are not included.
 
 ---
 

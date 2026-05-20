@@ -1,9 +1,13 @@
 import asyncio
 import contextlib
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any
+from datetime import datetime
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, get_args, get_origin
 
+import ulid
 from pantherdb import PantherDB
+from pydantic import BaseModel
 
 from panther.cli.utils import import_error
 from panther.configs import config
@@ -97,6 +101,120 @@ class PantherDBConnection(BaseDatabaseConnection):
     @property
     def client(self):
         return self._connection
+
+
+class SQLiteConnection(BaseDatabaseConnection):
+    def init(self, path: str | Path = 'database.sqlite3') -> None:
+        try:
+            import aiosqlite
+        except ModuleNotFoundError as e:
+            raise import_error(e, package='aiosqlite')
+
+        self._aiosqlite = aiosqlite
+        self.path = Path(path)
+        self._connection = None
+
+    @property
+    def session(self):
+        return self
+
+    @property
+    def client(self):
+        return self
+
+    async def connection(self):
+        if self._connection is None:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self._connection = await self._aiosqlite.connect(self.path)
+            self._connection.row_factory = self._aiosqlite.Row
+            await self._connection.execute('PRAGMA foreign_keys = ON')
+            await self._connection.commit()
+        return self._connection
+
+    async def execute(self, query: str, params: tuple = ()):
+        connection = await self.connection()
+        cursor = await connection.execute(query, params)
+        await connection.commit()
+        return cursor
+
+    async def fetchone(self, query: str, params: tuple = ()):
+        cursor = await self.execute(query, params)
+        return await cursor.fetchone()
+
+    async def fetchall(self, query: str, params: tuple = ()):
+        cursor = await self.execute(query, params)
+        return await cursor.fetchall()
+
+    async def close(self):
+        if self._connection is not None:
+            await self._connection.close()
+            self._connection = None
+
+    async def create_tables(self, *models: type[BaseModel]) -> None:
+        if not models:
+            models = tuple(config.MODELS)
+
+        for model in models:
+            if not hasattr(model, 'model_fields'):
+                continue
+
+            columns = ['"id" TEXT PRIMARY KEY']
+            foreign_keys = []
+            for field_name, field in model.model_fields.items():
+                if field_name == 'id':
+                    continue
+
+                field_type = self._unwrap_annotation(field.annotation)
+                column_name = field_name
+                if self._is_model(field_type):
+                    column_name = f'{field_name}_id'
+                    related_table = self.table_name(field_type)
+                    foreign_keys.append(
+                        f'FOREIGN KEY ("{column_name}") REFERENCES "{related_table}"("id")',
+                    )
+
+                columns.append(f'"{column_name}" {self._column_type(field_type)}')
+
+            columns.extend(foreign_keys)
+            query = f'CREATE TABLE IF NOT EXISTS "{self.table_name(model)}" ({", ".join(columns)})'
+            await self.execute(query)
+
+    @staticmethod
+    def table_name(model: type[BaseModel]) -> str:
+        return getattr(model, '__tablename__', None) or model.__name__
+
+    @staticmethod
+    def generate_id() -> str:
+        return ulid.new()
+
+    @classmethod
+    def _unwrap_annotation(cls, annotation):
+        origin = get_origin(annotation)
+        if origin in (list, dict):
+            return annotation
+        if origin:
+            for arg in get_args(annotation):
+                if arg is not type(None):
+                    return arg
+        return annotation
+
+    @classmethod
+    def _is_model(cls, field_type) -> bool:
+        from panther.db import Model
+
+        return isinstance(field_type, type) and issubclass(field_type, Model)
+
+    @classmethod
+    def _column_type(cls, field_type) -> str:
+        if cls._is_model(field_type):
+            return 'TEXT'
+        if field_type in (str, datetime):
+            return 'TEXT'
+        if field_type in (int, bool):
+            return 'INTEGER'
+        if field_type is float:
+            return 'REAL'
+        return 'TEXT'
 
 
 class DatabaseConnection(Singleton):

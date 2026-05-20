@@ -17,6 +17,17 @@ class User(Model):
 
 Panther models inherit from both `pydantic.BaseModel` and `panther.db.Query`, giving you access to data validation and database queries.
 
+When using SQLite, the table name defaults to the model class name. You can override it with `__tablename__`:
+
+```python title="app/models.py" linenums="1"
+from panther.db import Model
+
+class User(Model):
+    __tablename__ = 'users'
+
+    username: str
+```
+
 ## Defining Attributes
 
 You can define model attributes (columns) using Python type hints. Each attribute type is handled as follows:
@@ -165,5 +176,4 @@ print(document.file.size)  # File size in bytes
 with document.file as f:
     content = f.read()
 ```
-
 

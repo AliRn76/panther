@@ -1,5 +1,4 @@
 import re
-import sys
 
 from setuptools import setup
 
@@ -26,7 +25,11 @@ INSTALL_REQUIRES = [
 ]
 
 EXTRAS_REQUIRE = {
+    'sql': [
+        'aiosqlite~=0.21.0',
+    ],
     'full': [
+        'aiosqlite~=0.21.0',
         'redis==6.2.0',
         'motor~=3.7.1',
         'ipython~=9.4.0',
