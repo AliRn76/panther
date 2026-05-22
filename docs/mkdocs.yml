@@ -57,6 +57,9 @@ nav:
       - Log Queries: 'log_queries.md'
       - Admin Panel: 'admin_panel.md'
   - Deployment: 'deployment.md'
+  - AI and Architecture:
+      - LLM Context: 'llm-context.md'
+      - Architecture: 'architecture.md'
   - Roadmap: 'roadmap.md'
   - Release Notes: 'release_notes.md'
 
