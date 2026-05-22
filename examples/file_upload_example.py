@@ -6,6 +6,7 @@ the File and Image classes with proper validation and error handling.
 """
 
 from datetime import datetime
+from pathlib import Path
 
 from panther import Panther, status
 from panther.app import API
@@ -16,11 +17,13 @@ from panther.request import Request
 from panther.response import Response
 from panther.serializer import ModelSerializer
 
+BASE_DIR = Path(__file__).resolve().parent
+
 # Database configuration
 DATABASE = {
     'engine': {
         'class': 'panther.db.connections.PantherDBConnection',
-        'path': 'file_upload_example.pdb',
+        'path': str(BASE_DIR / 'file_upload_example.pdb'),
     }
 }
 
@@ -77,7 +80,7 @@ async def upload_document(request: Request):
             )
 
         # Save file to disk
-        saved_path = file.save('uploads/documents/')
+        saved_path = file.save(str(BASE_DIR / 'uploads' / 'documents') + '/')
 
         # Store in database
         document = await Document.insert_one(
@@ -100,6 +103,8 @@ async def upload_document(request: Request):
             status_code=status.HTTP_201_CREATED,
         )
 
+    except APIError:
+        raise
     except Exception as e:
         raise APIError(detail=f'File upload failed: {str(e)}', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -118,7 +123,7 @@ async def upload_profile_image(request: Request):
             )
 
         # Save image
-        saved_path = image.save('uploads/images/')
+        saved_path = image.save(str(BASE_DIR / 'uploads' / 'images') + '/')
 
         # Store in database
         profile = await Profile.insert_one({'name': profile_data.name, 'avatar': image, 'bio': profile_data.bio})
@@ -134,6 +139,8 @@ async def upload_profile_image(request: Request):
             status_code=status.HTTP_201_CREATED,
         )
 
+    except APIError:
+        raise
     except Exception as e:
         raise APIError(detail=f'Image upload failed: {str(e)}', status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -163,7 +170,7 @@ async def list_documents(request: Request):
 @API()
 async def get_document(document_id: str):
     """Get a specific document by ID"""
-    document = await Document.find_one_or_raise(document_id)
+    document = await Document.find_one_or_raise(id=document_id)
 
     return Response(
         data={

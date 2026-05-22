@@ -1,6 +1,6 @@
+import asyncio
 import json
 from datetime import datetime
-from time import sleep
 
 from panther import Panther
 from panther.app import GenericAPI
@@ -8,10 +8,10 @@ from panther.response import StreamingResponse
 
 
 class MainPage(GenericAPI):
-    def generator(self):
+    async def generator(self):
         """Simple number generator with delays"""
         for i in range(10):
-            sleep(1)
+            await asyncio.sleep(1)
             yield f'data: {i}\n\n'
 
     def get(self):
@@ -19,7 +19,7 @@ class MainPage(GenericAPI):
 
 
 class ProgressStream(GenericAPI):
-    def generator(self):
+    async def generator(self):
         """Simulate a long-running task with progress updates"""
         total_steps = 20
         for i in range(total_steps + 1):
@@ -32,14 +32,14 @@ class ProgressStream(GenericAPI):
                 'timestamp': datetime.now().isoformat(),
             }
             yield f'data: {json.dumps(data)}\n\n'
-            sleep(0.5)
+            await asyncio.sleep(0.5)
 
     def get(self):
         return StreamingResponse(data=self.generator())
 
 
 class LogStream(GenericAPI):
-    def generator(self):
+    async def generator(self):
         """Simulate real-time log streaming"""
         log_levels = ['INFO', 'WARNING', 'ERROR', 'DEBUG']
         messages = [
@@ -59,14 +59,14 @@ class LogStream(GenericAPI):
             level = log_levels[i % len(log_levels)]
             log_entry = {'timestamp': datetime.now().isoformat(), 'level': level, 'message': message, 'id': i + 1}
             yield f'data: {json.dumps(log_entry)}\n\n'
-            sleep(0.8)
+            await asyncio.sleep(0.8)
 
     def get(self):
         return StreamingResponse(data=self.generator())
 
 
 class ChatStream(GenericAPI):
-    def generator(self):
+    async def generator(self):
         """Simulate a chat bot response"""
         response_parts = [
             "Hello! I'm a streaming chatbot.",
@@ -85,14 +85,14 @@ class ChatStream(GenericAPI):
                 'timestamp': datetime.now().isoformat(),
             }
             yield f'data: {json.dumps(data)}\n\n'
-            sleep(0.6)
+            await asyncio.sleep(0.6)
 
     def get(self):
         return StreamingResponse(data=self.generator())
 
 
 class ErrorHandlingStream(GenericAPI):
-    def generator(self):
+    async def generator(self):
         """Demonstrate error handling in streaming"""
         try:
             for i in range(5):
@@ -102,7 +102,7 @@ class ErrorHandlingStream(GenericAPI):
 
                 data = {'step': i, 'status': 'success', 'message': f'Processed step {i}'}
                 yield f'data: {json.dumps(data)}\n\n'
-                sleep(1)
+                await asyncio.sleep(1)
         except Exception as e:
             error_data = {'error': True, 'message': str(e), 'timestamp': datetime.now().isoformat()}
             yield f'data: {json.dumps(error_data)}\n\n'
