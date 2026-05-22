@@ -32,7 +32,7 @@ class UserSerializer(BaseModel):
     first_name: str = Field(default='', min_length=2)
     last_name: str = Field(default='', min_length=4)
 
-@API(input_model=UserSerializer)
+@API(input_model=UserSerializer, methods=['POST'])
 async def serializer_example(request: Request):
     return Response(data=request.validated_data)
 ```
@@ -72,7 +72,7 @@ class UserModelSerializer(ModelSerializer):
         required_fields = ['first_name']
         exclude = ['id', 'password']
 
-@API(input_model=UserModelSerializer)
+@API(input_model=UserModelSerializer, methods=['POST'])
 async def model_serializer_example(request: Request):
     return Response(data=request.validated_data)
 ```
@@ -114,7 +114,7 @@ class UserModelSerializer(ModelSerializer):
         print(f'{username=}')
         return username
 
-@API(input_model=UserModelSerializer)
+@API(input_model=UserModelSerializer, methods=['POST'])
 async def model_serializer_example(request: Request):
     return Response(data=request.validated_data)
 ```

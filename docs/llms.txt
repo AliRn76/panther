@@ -7,6 +7,9 @@ Use these files as the best context sources:
 - `/AGENTS.md` - repository workflow and coding-agent rules.
 - `/docs/docs/llm-context.md` - compact Panther reference for LLMs.
 - `/docs/docs/architecture.md` - internal architecture and request lifecycle.
+- `/docs/docs/configuration.md` - configuration reference.
+- `/docs/docs/responses.md` - response classes and output behavior.
+- `/docs/docs/errors.md` - error handling and exception classes.
 - `/examples/README.md` - example organization.
 - `/examples/canonical/` - small, copyable, validated examples.
 - `/docs/docs/api.md` - API endpoint behavior.
