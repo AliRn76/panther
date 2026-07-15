@@ -30,7 +30,7 @@ class RequestClient:
     async def request(
         self,
         path: str,
-        method: Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        method: Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'QUERY', 'OPTIONS'],
         payload: bytes | dict | None,
         headers: dict,
         query_params: dict,
@@ -86,8 +86,8 @@ class APIClient:
     async def _send_request(
         self,
         path: str,
-        method: Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-        payload: dict | None,
+        method: Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'QUERY', 'OPTIONS'],
+        payload: bytes | dict | None,
         headers: dict,
         query_params: dict,
     ) -> Response:
@@ -190,6 +190,23 @@ class APIClient:
             method='DELETE',
             payload=None,
             headers=headers or {},
+            query_params=query_params or {},
+        )
+
+    async def query(
+        self,
+        path: str,
+        payload: bytes | dict | None = None,
+        headers: dict | None = None,
+        query_params: dict | None = None,
+        content_type: str | None = 'application/json',
+    ) -> Response:
+        headers = ({'content-type': content_type} if content_type else {}) | (headers or {})
+        return await self._send_request(
+            path=path,
+            method='QUERY',
+            payload=payload,
+            headers=headers,
             query_params=query_params or {},
         )
 

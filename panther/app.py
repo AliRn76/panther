@@ -36,6 +36,10 @@ __all__ = ('API', 'GenericAPI')
 
 logger = logging.getLogger('panther')
 
+HTTP_METHODS = ('GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'QUERY')
+BODY_METHODS = {'POST', 'PUT', 'PATCH', 'QUERY'}
+CACHEABLE_METHODS = {'GET', 'QUERY'}
+
 
 class API:
     """
@@ -49,7 +53,7 @@ class API:
         `panther.exceptions.AuthenticationAPIError`.
     permissions: List of permissions that will be called sequentially after authentication to authorize the user.
     throttling: It will limit the users' request on a specific (time-window, path)
-    cache: Specify the duration of the cache (Will be used only in GET requests).
+    cache: Specify the duration of the cache (Will be used only in GET and QUERY requests).
     middlewares: These middlewares have inner priority than global middlewares.
     """
 
@@ -58,7 +62,7 @@ class API:
     def __init__(
         self,
         *,
-        methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE']] | None = None,
+        methods: list[Literal['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'QUERY']] | None = None,
         input_model: type[ModelSerializer] | type[BaseModel] | None = None,
         output_model: type[ModelSerializer] | type[BaseModel] | None = None,
         output_schema: OutputSchema | None = None,
@@ -69,7 +73,7 @@ class API:
         middlewares: list[type[HTTPMiddleware]] | None = None,
         **kwargs,
     ):
-        self.methods = {m.upper() for m in methods} if methods else {'GET', 'POST', 'PUT', 'PATCH', 'DELETE'}
+        self.methods = {m.upper() for m in methods} if methods else set(HTTP_METHODS)
         self.input_model = input_model
         self.output_model = output_model
         self.output_schema = output_schema
@@ -116,7 +120,7 @@ class API:
     async def handle_endpoint(self, request: Request) -> Response:
         # 1. Check Method
         if request.method not in self.methods:
-            raise MethodNotAllowedAPIError
+            raise MethodNotAllowedAPIError(headers={'Allow': ', '.join(sorted(self.methods))})
 
         # 2. Authentication
         if self.auth or config.AUTHENTICATION:
@@ -139,11 +143,13 @@ class API:
             await throttling.check_and_increment(request=request)
 
         # 5. Validate Input
-        if self.input_model and request.method in {'POST', 'PUT', 'PATCH'}:
+        if request.method == 'QUERY':
+            request.validate_query_content()
+        if self.input_model and request.method in BODY_METHODS:
             request.validate_data(model=self.input_model)
 
         # 6. Get Cached Response
-        if self.cache and request.method == 'GET':
+        if self.cache and request.method in CACHEABLE_METHODS:
             if cached := await get_response_from_cache(request=request, duration=self.cache):
                 return Response(data=cached.data, headers=cached.headers, status_code=cached.status_code)
 
@@ -165,7 +171,7 @@ class API:
             response.data = await response.pagination.template(response.data)
 
         # 10. Set New Response To Cache
-        if self.cache and request.method == 'GET':
+        if self.cache and request.method in CACHEABLE_METHODS:
             await set_response_in_cache(request=request, response=response, duration=self.cache)
 
         return response
@@ -217,20 +223,19 @@ class GenericAPI:
     async def delete(self, *args, **kwargs):
         raise MethodNotAllowedAPIError
 
+    async def query(self, *args, **kwargs):
+        raise MethodNotAllowedAPIError
+
     async def call_method(self, request: Request):
-        match request.method:
-            case 'GET':
-                func = self.get
-            case 'POST':
-                func = self.post
-            case 'PUT':
-                func = self.put
-            case 'PATCH':
-                func = self.patch
-            case 'DELETE':
-                func = self.delete
-            case _:
-                raise MethodNotAllowedAPIError
+        method_name = request.method.lower()
+        if request.method not in HTTP_METHODS or getattr(type(self), method_name) is getattr(GenericAPI, method_name):
+            allowed_methods = [
+                method
+                for method in HTTP_METHODS
+                if getattr(type(self), method.lower()) is not getattr(GenericAPI, method.lower())
+            ]
+            raise MethodNotAllowedAPIError(headers={'Allow': ', '.join(allowed_methods)})
+        func = getattr(self, method_name)
 
         return await API(
             input_model=self.input_model,

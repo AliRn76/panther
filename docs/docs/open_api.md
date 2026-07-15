@@ -2,6 +2,8 @@
 
 Panther automatically generates an OpenAPI specification for your APIs. This makes it easy to document, test, and share your API endpoints.
 
+Generated documents use OpenAPI 3.2 so `QUERY` operations are represented by the standard Path Item `query` field.
+
 ## How to Enable OpenAPI in Your Project
 
 Panther provides multiple OpenAPI UI options that you can import directly into your project. You don't need to add the bundled `openapi.urls.url_routing` - instead, you can choose the specific UI component you prefer.

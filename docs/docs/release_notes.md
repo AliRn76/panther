@@ -1,5 +1,11 @@
 # Panther Release Notes
 
+### 5.3.0
+
+- Add RFC 10008 HTTP `QUERY` support for function and class APIs.
+- Validate required `QUERY` content metadata and include query content in cache keys.
+- Add `APIClient.query()`, CORS preflight defaults, and OpenAPI 3.2 `query` operations.
+
 ### 5.2.3 
 - Fix background task async loop mismatch with app event loop registration (#146)
 - Escape Mongodb search input before building regex (#147)
@@ -482,4 +488,3 @@
 
 ### 0.0.1
 - Make It Ready For PyPI 
-

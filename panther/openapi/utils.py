@@ -2,7 +2,7 @@
 OpenAPI utilities for parsing endpoints and generating OpenAPI documentation.
 
 This module provides classes and functions for analyzing Python endpoints
-and generating OpenAPI 3.0 specification documents.
+and generating OpenAPI 3.2 specification documents.
 """
 
 import ast
@@ -246,14 +246,14 @@ class EndpointParser:
 
 class OpenAPIGenerator:
     """
-    Generates OpenAPI 3.0 specification documents from Panther endpoints.
+    Generates OpenAPI 3.2 specification documents from Panther endpoints.
 
     This class analyzes registered endpoints and generates comprehensive
     OpenAPI documentation including schemas, paths, and security definitions.
     """
 
-    HTTP_METHODS = ['post', 'get', 'put', 'patch', 'delete']
-    REQUEST_BODY_METHODS = ['post', 'put', 'patch']
+    HTTP_METHODS = ('post', 'get', 'put', 'patch', 'delete', 'query')
+    REQUEST_BODY_METHODS = ('post', 'put', 'patch', 'query')
 
     @classmethod
     def get_model_name(cls, model: type[BaseModel]) -> str:
@@ -526,7 +526,7 @@ class OpenAPIGenerator:
     @classmethod
     def generate_openapi_spec(cls) -> dict[str, Any]:
         """
-        Generate complete OpenAPI 3.0 specification.
+        Generate complete OpenAPI 3.2 specification.
 
         Returns:
             Complete OpenAPI specification dictionary
@@ -564,7 +564,7 @@ class OpenAPIGenerator:
 
         # Build complete OpenAPI specification
         openapi_spec = {
-            'openapi': '3.0.0',
+            'openapi': '3.2.0',
             'info': {
                 'title': 'Panther API',
                 'version': '1.0.0',

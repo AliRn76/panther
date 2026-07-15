@@ -98,6 +98,10 @@ class NotesAPI(GenericAPI):
         return {'created': request.data}
 ```
 
+## HTTP QUERY
+
+Panther supports RFC 10008 `QUERY` requests for safe, idempotent operations with request content. Function endpoints use `@API(methods=['QUERY'])`; class endpoints implement `query()`. A `Content-Type` header is required, input models validate `QUERY` content, explicit endpoint caching uses a content-aware key, and tests can call `APIClient.query(...)`.
+
 ## Routing
 
 Routes are dictionaries. Nested dictionaries are supported. Path variables use angle brackets.
@@ -223,6 +227,8 @@ async def test_health():
     response = await client.get('/health/')
     assert response.status_code == 200
 ```
+
+Use `await client.query(path, payload=..., content_type=...)` for RFC 10008 endpoints.
 
 ## Common Gotchas
 

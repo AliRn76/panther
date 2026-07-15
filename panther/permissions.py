@@ -17,4 +17,4 @@ class IsAuthenticated(BasePermission):
 
 class IsAuthenticatedOrReadonly(BasePermission):
     async def __call__(self, request: Request) -> bool:
-        return request.user or request.method == 'GET'
+        return request.user or request.method in {'GET', 'QUERY'}

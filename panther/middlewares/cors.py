@@ -17,7 +17,7 @@ class CORSMiddleware(HTTPMiddleware):
     ALLOW_ORIGINS: list[str]
         List of allowed origins. Use ["*"] to allow all origins. Default: ["*"]
     ALLOW_METHODS: list[str]
-        List of allowed HTTP methods. Default: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+        List of allowed HTTP methods. Default: ["GET", "POST", "PUT", "PATCH", "DELETE", "QUERY", "OPTIONS"]
     ALLOW_HEADERS: list[str]
         List of allowed request headers. Use ["*"] to allow all headers. Default: ["*"]
     ALLOW_CREDENTIALS: bool
@@ -36,7 +36,7 @@ class CORSMiddleware(HTTPMiddleware):
     async def __call__(self, request: Request) -> Response:
         # Fetch CORS settings from config, with defaults
         allow_origins = config.ALLOW_ORIGINS or ['*']
-        allow_methods = config.ALLOW_METHODS or ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+        allow_methods = config.ALLOW_METHODS or ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'QUERY', 'OPTIONS']
         allow_headers = config.ALLOW_HEADERS or ['*']
         allow_credentials = config.ALLOW_CREDENTIALS or False
         expose_headers = config.EXPOSE_HEADERS or []

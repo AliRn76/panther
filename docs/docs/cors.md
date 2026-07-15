@@ -17,7 +17,7 @@ Set the following variables in your Panther config file (e.g., `core/configs.py`
 | Config Variable     | Type      | Description                                                          | Default                                                |
 |---------------------|-----------|----------------------------------------------------------------------|--------------------------------------------------------|
 | _ALLOW_ORIGINS_     | list[str] | List of allowed origins. Use `["*"]` to allow all origins.           | `["*"]`                                                |
-| _ALLOW_METHODS_     | list[str] | List of allowed HTTP methods.                                        | `["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]` |
+| _ALLOW_METHODS_     | list[str] | List of allowed HTTP methods.                                        | `["GET", "POST", "PUT", "PATCH", "DELETE", "QUERY", "OPTIONS"]` |
 | _ALLOW_HEADERS_     | list[str] | List of allowed request headers. Use `["*"]` to allow all headers.   | `["*"]`                                                |
 | _ALLOW_CREDENTIALS_ | bool      | Whether to allow credentials (cookies, authorization headers, etc.). | `False`                                                |
 | _EXPOSE_HEADERS_    | list[str] | List of headers that can be exposed to the browser.                  | `[]`                                                   |
@@ -48,6 +48,7 @@ MIDDLEWARES = [
 
 - For every request, the middleware adds the appropriate CORS headers to the response.
 - For preflight (OPTIONS) requests, it returns a 204 response with the necessary headers.
+- `QUERY` is included in the default allowed methods because cross-origin `QUERY` requests require preflight.
 - The headers are set based on your configuration, with sensible defaults if not specified.
 
 ## Notes

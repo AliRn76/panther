@@ -218,7 +218,7 @@ class TestOpenAPI(IsolatedAsyncioTestCase):
     <div id="swagger-ui"></div>
     <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui-bundle.js"></script>
     <script>
-      SwaggerUIBundle({ spec: {"components": {"schemas": {}, "securitySchemes": {"BearerAuth": {"bearerFormat": "JWT", "scheme": "bearer", "type": "http"}}}, "info": {"description": "Auto-generated OpenAPI documentation for Panther project.", "title": "Panther API", "version": "1.0.0"}, "openapi": "3.0.0", "paths": {"/docs/rapidoc/": {}, "/docs/redoc/": {}, "/docs/scalar/": {}, "/docs/spotlight/": {}, "/docs/swagger/": {}}, "security": [{"BearerAuth": []}]}, dom_id: '#swagger-ui' });
+      SwaggerUIBundle({ spec: {"components": {"schemas": {}, "securitySchemes": {"BearerAuth": {"bearerFormat": "JWT", "scheme": "bearer", "type": "http"}}}, "info": {"description": "Auto-generated OpenAPI documentation for Panther project.", "title": "Panther API", "version": "1.0.0"}, "openapi": "3.2.0", "paths": {"/docs/rapidoc/": {}, "/docs/redoc/": {}, "/docs/scalar/": {}, "/docs/spotlight/": {}, "/docs/swagger/": {}}, "security": [{"BearerAuth": []}]}, dom_id: '#swagger-ui' });
     </script>
   </body>
 </html>"""
@@ -240,7 +240,7 @@ class TestOpenAPI(IsolatedAsyncioTestCase):
     <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
     <script>
       Scalar.createApiReference('#app', {
-        content: {"components": {"schemas": {}, "securitySchemes": {"BearerAuth": {"bearerFormat": "JWT", "scheme": "bearer", "type": "http"}}}, "info": {"description": "Auto-generated OpenAPI documentation for Panther project.", "title": "Panther API", "version": "1.0.0"}, "openapi": "3.0.0", "paths": {"/docs/rapidoc/": {}, "/docs/redoc/": {}, "/docs/scalar/": {}, "/docs/spotlight/": {}, "/docs/swagger/": {}}, "security": [{"BearerAuth": []}]}
+        content: {"components": {"schemas": {}, "securitySchemes": {"BearerAuth": {"bearerFormat": "JWT", "scheme": "bearer", "type": "http"}}}, "info": {"description": "Auto-generated OpenAPI documentation for Panther project.", "title": "Panther API", "version": "1.0.0"}, "openapi": "3.2.0", "paths": {"/docs/rapidoc/": {}, "/docs/redoc/": {}, "/docs/scalar/": {}, "/docs/spotlight/": {}, "/docs/swagger/": {}}, "security": [{"BearerAuth": []}]}
       })
     </script>
   </body>
@@ -266,7 +266,7 @@ class TestOpenAPI(IsolatedAsyncioTestCase):
     <div id="redoc-container"></div>
     <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"></script>
     <script>
-      Redoc.init({"components": {"schemas": {}, "securitySchemes": {"BearerAuth": {"bearerFormat": "JWT", "scheme": "bearer", "type": "http"}}}, "info": {"description": "Auto-generated OpenAPI documentation for Panther project.", "title": "Panther API", "version": "1.0.0"}, "openapi": "3.0.0", "paths": {"/docs/rapidoc/": {}, "/docs/redoc/": {}, "/docs/scalar/": {}, "/docs/spotlight/": {}, "/docs/swagger/": {}}, "security": [{"BearerAuth": []}]}, {}, document.getElementById("redoc-container"));
+      Redoc.init({"components": {"schemas": {}, "securitySchemes": {"BearerAuth": {"bearerFormat": "JWT", "scheme": "bearer", "type": "http"}}}, "info": {"description": "Auto-generated OpenAPI documentation for Panther project.", "title": "Panther API", "version": "1.0.0"}, "openapi": "3.2.0", "paths": {"/docs/rapidoc/": {}, "/docs/redoc/": {}, "/docs/scalar/": {}, "/docs/spotlight/": {}, "/docs/swagger/": {}}, "security": [{"BearerAuth": []}]}, {}, document.getElementById("redoc-container"));
     </script>
   </body>
 </html>"""
@@ -291,7 +291,7 @@ class TestOpenAPI(IsolatedAsyncioTestCase):
     <script>
       document.addEventListener('readystatechange', (event) => {
         let docEl = document.getElementById("thedoc");
-        docEl.loadSpec({"components": {"schemas": {}, "securitySchemes": {"BearerAuth": {"bearerFormat": "JWT", "scheme": "bearer", "type": "http"}}}, "info": {"description": "Auto-generated OpenAPI documentation for Panther project.", "title": "Panther API", "version": "1.0.0"}, "openapi": "3.0.0", "paths": {"/docs/rapidoc/": {}, "/docs/redoc/": {}, "/docs/scalar/": {}, "/docs/spotlight/": {}, "/docs/swagger/": {}}, "security": [{"BearerAuth": []}]});
+        docEl.loadSpec({"components": {"schemas": {}, "securitySchemes": {"BearerAuth": {"bearerFormat": "JWT", "scheme": "bearer", "type": "http"}}}, "info": {"description": "Auto-generated OpenAPI documentation for Panther project.", "title": "Panther API", "version": "1.0.0"}, "openapi": "3.2.0", "paths": {"/docs/rapidoc/": {}, "/docs/redoc/": {}, "/docs/scalar/": {}, "/docs/spotlight/": {}, "/docs/swagger/": {}}, "security": [{"BearerAuth": []}]});
       })
     </script>
   </body>
@@ -320,7 +320,7 @@ class TestOpenAPI(IsolatedAsyncioTestCase):
   <elements-api id="api-viewer" router="hash"></elements-api>
   <script>
     customElements.whenDefined("elements-api").then(() => {
-      document.getElementById("api-viewer").apiDescriptionDocument = {"components": {"schemas": {}, "securitySchemes": {"BearerAuth": {"bearerFormat": "JWT", "scheme": "bearer", "type": "http"}}}, "info": {"description": "Auto-generated OpenAPI documentation for Panther project.", "title": "Panther API", "version": "1.0.0"}, "openapi": "3.0.0", "paths": {"/docs/rapidoc/": {}, "/docs/redoc/": {}, "/docs/scalar/": {}, "/docs/spotlight/": {}, "/docs/swagger/": {}}, "security": [{"BearerAuth": []}]};
+      document.getElementById("api-viewer").apiDescriptionDocument = {"components": {"schemas": {}, "securitySchemes": {"BearerAuth": {"bearerFormat": "JWT", "scheme": "bearer", "type": "http"}}}, "info": {"description": "Auto-generated OpenAPI documentation for Panther project.", "title": "Panther API", "version": "1.0.0"}, "openapi": "3.2.0", "paths": {"/docs/rapidoc/": {}, "/docs/redoc/": {}, "/docs/scalar/": {}, "/docs/spotlight/": {}, "/docs/swagger/": {}}, "security": [{"BearerAuth": []}]};
     });
   </script>
 </body>

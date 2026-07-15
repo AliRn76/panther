@@ -14,7 +14,7 @@ async def simple_api():
 urls = {'test': simple_api}
 
 ALLOW_ORIGINS = ['*']
-ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'QUERY', 'OPTIONS']
 ALLOW_HEADERS = ['*']
 ALLOW_CREDENTIALS = False
 EXPOSE_HEADERS = []
@@ -59,6 +59,14 @@ class TestCORSMiddlewares(IsolatedAsyncioTestCase):
         assert res.headers['Access-Control-Allow-Methods'] == ', '.join(ALLOW_METHODS)
         assert res.headers['Access-Control-Allow-Headers'] == ', '.join(ALLOW_HEADERS)
         assert res.headers['Access-Control-Max-Age'] == str(CORS_MAX_AGE)
+
+    async def test_default_methods_include_query(self):
+        allow_methods = config.ALLOW_METHODS
+        config.ALLOW_METHODS = []
+        response = await self.client.options(path='test', headers={'origin': 'http://example.com'})
+        config.ALLOW_METHODS = allow_methods
+
+        assert 'QUERY' in response.headers['Access-Control-Allow-Methods']
 
     async def test_custom_origins(self):
         allow_origins = config.ALLOW_ORIGINS

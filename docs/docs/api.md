@@ -29,7 +29,7 @@ Middlewares
 
 You can validate incoming data using the `input_model` parameter. Pass a serializer to it, and Panther will send `request.data` to this serializer, placing the validated data in `request.validated_data`. As a result, `request.validated_data` will be an instance of your serializer.
 
-> Note: `request.data` is validated only for 'POST', 'PUT', and 'PATCH' methods.
+> Note: `request.data` is validated only for `POST`, `PUT`, `PATCH`, and `QUERY` methods.
 
 ??? question "How do serializers work in Panther?"
     Refer to [Serializer](serializer.md) to learn more about serializers.
@@ -165,7 +165,7 @@ To ensure that each request contains a valid authentication header, use the `aut
 
 ## Method
 
-You can specify which HTTP methods are allowed for an endpoint by setting `methods` in function-based APIs. Only the following methods are supported: `['GET', 'POST', 'PUT', 'PATCH', 'DELETE']`.
+You can specify which HTTP methods are allowed for an endpoint by setting `methods` in function-based APIs. The supported methods are `['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'QUERY']`.
 
 > If a method is not allowed, a 405 status code will be returned.
 
@@ -198,6 +198,51 @@ You can specify which HTTP methods are allowed for an endpoint by setting `metho
     ```
 
     1. Now this class only accepts `GET` and `POST` requests.
+
+### QUERY requests
+
+Panther supports the safe, idempotent HTTP `QUERY` method defined by [RFC 10008](https://www.rfc-editor.org/rfc/rfc10008.html). Use it for read-only operations whose query is too large or structured to put in the URI.
+
+=== "Function-Base API"
+
+    ```python linenums="1"
+    from pydantic import BaseModel
+
+    from panther.app import API
+    from panther.request import Request
+    from panther.response import Response
+
+
+    class SearchInput(BaseModel):
+        term: str
+        limit: int = 10
+
+
+    @API(methods=['QUERY'], input_model=SearchInput)
+    async def search(request: Request):
+        return Response(
+            data={'term': request.validated_data.term},
+            headers={'Accept-Query': 'application/json'},
+        )
+    ```
+
+=== "Class-Base API"
+
+    ```python linenums="1"
+    from panther.app import GenericAPI
+    from panther.request import Request
+
+
+    class SearchAPI(GenericAPI):
+        input_model = SearchInput
+
+        async def query(self, request: Request):
+            return {'term': request.validated_data.term}
+    ```
+
+Every `QUERY` request must include `Content-Type`; Panther returns `400` when it is missing or inconsistent with content Panther knows how to parse. Application-specific media types remain available as raw bytes through `request.data`. An endpoint can advertise its supported query formats with the structured `Accept-Query` response header.
+
+`QUERY` is a safe and idempotent method by contract. Endpoint implementations must not use it for requested state changes.
 
 ---
 
@@ -275,12 +320,12 @@ class CustomPermission(BasePermission):
 
 ## Cache
 
-Responses can be cached for a specific amount of time per request or IP. Caching is only applied to `GET` requests. The response's headers, data, and status code will be cached.
+Responses can be cached for a specific amount of time per request or IP. Caching is applied to `GET` and `QUERY` requests. The response's headers, data, and status code will be cached.
 
-The cache is stored in Redis (if connected) or in memory. The cache key is based on the user ID or IP, request path, query parameters, and validated data:
+The cache is stored in Redis (if connected) or in memory. The cache key is based on the user ID or IP, HTTP method, request path, query parameters, and validated data. For `QUERY`, it also incorporates the request content and representation metadata required by RFC 10008:
 
 ```
-'user_id or ip - request.path - hash of query param - request.validated_data'
+'user_id or ip - method - request.path - hash of query params - hash of QUERY content and metadata - request.validated_data'
 ```
 
 The value of `cache` should be an instance of `datetime.timedelta()`.

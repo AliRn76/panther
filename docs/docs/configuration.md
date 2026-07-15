@@ -180,7 +180,7 @@ When using `CORSMiddleware`, configure CORS settings in the same config module:
 
 ```python
 ALLOW_ORIGINS = ['https://example.com']
-ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'QUERY']
 ALLOW_HEADERS = ['*']
 ALLOW_CREDENTIALS = True
 CORS_MAX_AGE = 3600

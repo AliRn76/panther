@@ -61,13 +61,13 @@ Endpoint handling order is:
 2. Run authentication.
 3. Run permissions.
 4. Run throttling.
-5. Validate input model for `POST`, `PUT`, and `PATCH`.
-6. Read cached response for cached `GET` endpoints.
+5. Validate query content and input models for `POST`, `PUT`, `PATCH`, and `QUERY`.
+6. Read cached responses for cached `GET` and `QUERY` endpoints.
 7. Build endpoint keyword arguments from path variables and request annotations.
 8. Call the endpoint.
 9. Wrap plain data in `Response`.
 10. Apply output model and pagination.
-11. Store cached response for cached `GET` endpoints.
+11. Store cached responses for cached `GET` and `QUERY` endpoints.
 
 ## Routing
 

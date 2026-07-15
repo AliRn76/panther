@@ -77,6 +77,9 @@ class AllMethods(GenericAPI):
     def delete(self, *args, **kwargs):
         return Response()
 
+    def query(self, *args, **kwargs):
+        return Response()
+
 
 @API()
 async def all_methods():
@@ -312,6 +315,11 @@ class TestRequest(IsolatedAsyncioTestCase):
 
         res_func = await self.client.delete('all-func/')
         res_class = await self.client.delete('all-class/')
+        assert res_func.status_code == 200
+        assert res_class.status_code == 200
+
+        res_func = await self.client.query('all-func/')
+        res_class = await self.client.query('all-class/')
         assert res_func.status_code == 200
         assert res_class.status_code == 200
 

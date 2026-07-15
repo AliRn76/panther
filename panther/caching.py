@@ -1,6 +1,7 @@
 import logging
 from collections import namedtuple
 from datetime import datetime, timedelta
+from hashlib import sha256
 
 import orjson as json
 
@@ -18,7 +19,19 @@ CachedResponse = namedtuple('CachedResponse', ['data', 'headers', 'status_code']
 def api_cache_key(request: Request, duration: timedelta | None = None) -> str:
     client = (request.user and request.user.id) or request.client.ip
     query_params_hash = generate_hash_value_from_string(request.scope['query_string'].decode('utf-8'))
-    key = f'{client}-{request.path}-{query_params_hash}-{request.validated_data}'
+    query_content_hash = ''
+    if request.method == 'QUERY':
+        related_headers = sorted(
+            (name.lower(), value)
+            for name, value in request.headers.__dict__.items()
+            if name.lower() in {'accept', 'accept-encoding', 'accept-language'}
+            or (name.lower().startswith('content-') and name.lower() != 'content-length')
+        )
+        content_digest = sha256(request.body)
+        content_digest.update(repr(related_headers).encode())
+        query_content_hash = content_digest.hexdigest()
+    validated_data = '' if request.method == 'QUERY' else request.validated_data
+    key = f'{client}-{request.method}-{request.path}-{query_params_hash}-{query_content_hash}-{validated_data}'
 
     if duration:
         time = round_datetime(datetime.now(), duration)
