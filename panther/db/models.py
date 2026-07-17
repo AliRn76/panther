@@ -24,7 +24,7 @@ else:
 
 
 def validate_object_id(value, handler):
-    if config.DATABASE.__class__.__name__ != 'MongoDBConnection':
+    if not getattr(config.DATABASE, 'uses_object_ids', False):
         return str(value)
 
     if isinstance(value, bson.ObjectId):
@@ -55,7 +55,7 @@ class Model(PydanticBaseModel, Query):
             - For MongoDB: returns ObjectId
             - For PantherDB: returns str
         """
-        if config.DATABASE.__class__.__name__ == 'MongoDBConnection':
+        if getattr(config.DATABASE, 'uses_object_ids', False):
             return bson.ObjectId(self.id)
         return self.id
 
