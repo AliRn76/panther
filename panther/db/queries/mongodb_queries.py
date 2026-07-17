@@ -5,7 +5,7 @@ from sys import version_info
 
 from panther.db.connections import db
 from panther.db.cursor import Cursor
-from panther.db.queries.base_queries import BaseQuery
+from panther.db.queries.document_queries import BaseDocumentQuery
 from panther.db.utils import prepare_id_for_query
 
 if typing.TYPE_CHECKING:
@@ -30,7 +30,7 @@ else:
     Self = TypeVar('Self', bound='BaseMongoDBQuery')
 
 
-class BaseMongoDBQuery(BaseQuery):
+class BaseMongoDBQuery(BaseDocumentQuery):
     @classmethod
     def _merge(cls, *args, is_mongo: bool = True) -> dict:
         return super()._merge(*args, is_mongo=is_mongo)
