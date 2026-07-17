@@ -21,6 +21,11 @@ class LifecycleDatabaseConnection(BaseDatabaseConnection):
         self.events.append('shutdown')
 
 
+class FailingWebsocketConnections:
+    async def start(self) -> None:
+        raise RuntimeError('WebSocket startup failed')
+
+
 class TestDatabaseLifecycle(IsolatedAsyncioTestCase):
     def setUp(self):
         Event.clear()
@@ -117,3 +122,30 @@ class TestDatabaseLifecycle(IsolatedAsyncioTestCase):
             config.HAS_WS = previous_has_websocket
 
         assert events == ['shutdown']
+
+    async def test_application_shuts_down_database_when_websocket_startup_fails(self):
+        previous_database = config.DATABASE
+        previous_has_websocket = config.HAS_WS
+        previous_websocket_connections = config.WEBSOCKET_CONNECTIONS
+        database = LifecycleDatabaseConnection()
+        application = object.__new__(Panther)
+        sent_messages = []
+
+        async def receive():
+            return {'type': 'lifespan.startup'}
+
+        async def send(message):
+            sent_messages.append(message)
+
+        try:
+            config.DATABASE = database
+            config.HAS_WS = True
+            config.WEBSOCKET_CONNECTIONS = FailingWebsocketConnections()
+            await application(scope={'type': 'lifespan'}, receive=receive, send=send)
+        finally:
+            config.DATABASE = previous_database
+            config.HAS_WS = previous_has_websocket
+            config.WEBSOCKET_CONNECTIONS = previous_websocket_connections
+
+        assert database.events == ['startup', 'shutdown']
+        assert sent_messages == [{'type': 'lifespan.startup.failed', 'message': 'WebSocket startup failed'}]

@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 import sys
 from collections.abc import Callable
@@ -112,12 +113,17 @@ class Panther:
             while True:
                 message = await receive()
                 if message['type'] == 'lifespan.startup':
+                    database_started = False
                     try:
                         await db.startup()
+                        database_started = True
                         if config.HAS_WS:
                             await config.WEBSOCKET_CONNECTIONS.start()
                         await Event.run_startups()
                     except Exception as e:
+                        if database_started:
+                            with contextlib.suppress(Exception):
+                                await db.shutdown()
                         await send({'type': 'lifespan.startup.failed', 'message': str(e)})
                         return
                     await send({'type': 'lifespan.startup.complete'})

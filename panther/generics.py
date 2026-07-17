@@ -142,7 +142,7 @@ class UpdateAPI(GenericAPI):
 
 class DeleteAPI(GenericAPI):
     @abstractmethod
-    async def get_instance(self, request: Request, **kwargs) -> Model:
+    async def get_instance(self, request: Request, **kwargs) -> DocumentModel:
         """
         Should return an instance of Model, e.g. `await User.find_one()`
         """
