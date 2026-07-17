@@ -1,5 +1,12 @@
 # Panther Release Notes
 
+### 5.3.0
+
+- Add a backend-neutral database connection foundation with lifecycle hooks and scoped-session support.
+- Make `DocumentModel` the explicit name for Panther's built-in document model; `Model` remains a compatibility alias.
+- Move document-only query behavior out of the generic query contract, enabling relational backends to provide their own query implementation.
+- Run startup and shutdown events through the ASGI lifespan protocol, including support for asynchronous shutdown handlers.
+
 ### 5.2.3 
 - Fix background task async loop mismatch with app event loop registration (#146)
 - Escape Mongodb search input before building regex (#147)
@@ -482,4 +489,3 @@
 
 ### 0.0.1
 - Make It Ready For PyPI 
-

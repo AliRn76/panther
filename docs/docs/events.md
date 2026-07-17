@@ -40,4 +40,5 @@ You can define multiple shutdown event handlers as well.
 
 - **Multiple Handlers:** You can register multiple functions for both `startup` and `shutdown` events. All will be called.
 - **Sync & Async Support:** Event handlers can be either synchronous or asynchronous functions.
+- **ASGI Lifespan:** Panther runs startup handlers after receiving `lifespan.startup` and shutdown handlers when it receives `lifespan.shutdown`. Use an ASGI server with lifespan support so shutdown handlers can complete before the process exits.
 - **Use Cases:** Common use cases include initializing resources (like database connections) on startup and cleaning up resources on shutdown.

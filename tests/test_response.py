@@ -197,7 +197,7 @@ async def return_file_not_found_response():
 
 @API()
 async def return_file_response():
-    return FileResponse('README.md')
+    return FileResponse('panther/__init__.py')
 
 
 @API()
@@ -605,12 +605,12 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.data
         assert res.body
         assert set(res.headers.keys()) == {'Content-Type', 'Content-Length'}
-        assert res.headers['Content-Type'] == 'text/markdown'
+        assert res.headers['Content-Type'] == 'text/x-python'
         if platform.system() == 'Windows':
             # Line breaks are \n\r
-            assert res.headers['Content-Length'] == '4783'
+            assert res.headers['Content-Length'] == '117'
         else:
-            assert res.headers['Content-Length'] == '4645'
+            assert res.headers['Content-Length'] == '110'
 
     async def test_response_plain(self):
         res = await self.client.get('plain/')
