@@ -56,6 +56,12 @@ class BaseDatabaseConnection:
         """Return the query implementation used by this backend, if any."""
         return None
 
+    async def startup(self) -> None:
+        """Initialize resources that require an active application event loop."""
+
+    async def shutdown(self) -> None:
+        """Release resources created during application startup."""
+
 
 class MongoDBConnection(BaseDatabaseConnection):
     uses_document_models = True
@@ -150,6 +156,14 @@ class DatabaseConnection(Singleton):
     @property
     def client(self):
         return config.DATABASE.client
+
+    async def startup(self) -> None:
+        if self.is_defined:
+            await config.DATABASE.startup()
+
+    async def shutdown(self) -> None:
+        if self.is_defined:
+            await config.DATABASE.shutdown()
 
 
 class RedisConnection(Singleton, _Redis):

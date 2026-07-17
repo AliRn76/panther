@@ -32,6 +32,8 @@ Custom engines should subclass `panther.db.connections.BaseDatabaseConnection` a
 
 Backends declare capabilities rather than requiring Panther to check their concrete class. The built-in document backends use `uses_document_models`; MongoDB additionally uses `uses_object_ids` and `uses_mongo_query_syntax`. A future relational backend can leave these capabilities disabled and provide its own query implementation.
 
+If a backend needs an active event loop to allocate or release resources, implement its async `startup()` and `shutdown()` hooks. Panther invokes them during ASGI lifespan startup and shutdown.
+
 ---
 
 ## PantherDB
