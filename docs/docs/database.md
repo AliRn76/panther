@@ -2,6 +2,8 @@
 
 Panther natively supports two document databases: `MongoDB` and `PantherDB`. However, you can also define your own custom database connections and queries.
 
+The built-in `panther.db.Model` is a document model. It remains available for compatibility; `panther.db.DocumentModel` is its explicit name. Relational integrations should provide their own persistence models rather than inheriting from either class.
+
 ---
 
 ## Configuration Structure

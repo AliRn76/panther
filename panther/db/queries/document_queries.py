@@ -70,7 +70,7 @@ class BaseDocumentQuery(BaseQuery):
 
     @classmethod
     async def _create_list(cls, field_type: type, value: Any) -> Any:
-        from panther.db import Model
+        from panther.db import DocumentModel
 
         if isinstance(field_type, (types.GenericAlias, typing._GenericAlias)):
             element_type = cls._get_annotation_type(field_type)
@@ -80,7 +80,7 @@ class BaseDocumentQuery(BaseQuery):
                 raise DatabaseError(f'Expected a list for nested generic type {field_type}, got {type(value)}')
             return [await cls._create_list(field_type=element_type, value=item) for item in value]
 
-        if isinstance(field_type, type) and issubclass(field_type, Model):
+        if isinstance(field_type, type) and issubclass(field_type, DocumentModel):
             return await field_type.first(id=value)
 
         if isinstance(field_type, type) and issubclass(field_type, BaseModel):
@@ -94,7 +94,7 @@ class BaseDocumentQuery(BaseQuery):
 
     @classmethod
     async def _create_field(cls, model: type, field_name: str, value: Any) -> Any:
-        from panther.db import Model
+        from panther.db import DocumentModel
 
         if field_name == 'id' or field_name not in model.model_fields:
             return value
@@ -119,7 +119,7 @@ class BaseDocumentQuery(BaseQuery):
             with open(value, 'rb') as f:
                 return File(file_name=value, content_type=content_type, file=f.read()).model_dump()
 
-        if isinstance(unwrapped_type, type) and issubclass(unwrapped_type, Model):
+        if isinstance(unwrapped_type, type) and issubclass(unwrapped_type, DocumentModel):
             if obj := await unwrapped_type.first(id=value):
                 return obj.model_dump()
             return None
@@ -159,12 +159,12 @@ class BaseDocumentQuery(BaseQuery):
 
     @classmethod
     async def _clean_value(cls, value: Any) -> dict[str, Any] | list[Any]:
-        from panther.db import Model
+        from panther.db import DocumentModel
 
         match value:
             case None:
                 return None
-            case Model() as model:
+            case DocumentModel() as model:
                 if model.id in [None, '']:
                     await model.save()
                 return model._id

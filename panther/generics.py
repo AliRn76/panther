@@ -8,7 +8,7 @@ from pantherdb import Cursor as PantherDBCursor
 from panther import status
 from panther.app import GenericAPI
 from panther.configs import config
-from panther.db import Model
+from panther.db import DocumentModel
 from panther.db.cursor import Cursor
 from panther.db.models import ID
 from panther.exceptions import APIError
@@ -25,7 +25,7 @@ logger = logging.getLogger('panther')
 
 class RetrieveAPI(GenericAPI):
     @abstractmethod
-    async def get_instance(self, request: Request, **kwargs) -> Model:
+    async def get_instance(self, request: Request, **kwargs) -> DocumentModel:
         """
         Should return an instance of Model, e.g. `await User.find_one()`
         """
@@ -122,7 +122,7 @@ class CreateAPI(GenericAPI):
 
 class UpdateAPI(GenericAPI):
     @abstractmethod
-    async def get_instance(self, request: Request, **kwargs) -> Model:
+    async def get_instance(self, request: Request, **kwargs) -> DocumentModel:
         """
         Should return an instance of Model, e.g. `await User.find_one()`
         """

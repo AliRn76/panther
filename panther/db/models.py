@@ -40,7 +40,9 @@ def validate_object_id(value, handler):
 ID = Annotated[str, WrapValidator(validate_object_id), PlainSerializer(lambda x: str(x), return_type=str)] | None
 
 
-class Model(PydanticBaseModel, Query):
+class DocumentModel(PydanticBaseModel, Query):
+    """Base model for Panther's built-in document database query API."""
+
     def __init_subclass__(cls, **kwargs):
         if cls.__module__ == 'panther.db.models' and cls.__name__ == 'BaseUser':
             return
@@ -60,7 +62,10 @@ class Model(PydanticBaseModel, Query):
         return self.id
 
 
-class BaseUser(Model):
+Model = DocumentModel
+
+
+class BaseUser(DocumentModel):
     username: str
     password: str = Field('', max_length=64)
     last_login: datetime | None = None

@@ -1,1 +1,1 @@
-from panther.db.models import Model  # noqa: F401
+from panther.db.models import DocumentModel, Model  # noqa: F401
