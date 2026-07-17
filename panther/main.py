@@ -170,7 +170,7 @@ class Panther:
         for middleware in config.WS_MIDDLEWARES:
             chained_func = middleware(dispatch=chained_func)
 
-        # Call Middlewares & Endpoint
+        # Read the body, then call middlewares and the endpoint.
         try:
             connection = await chained_func(connection=connection)
         except BaseError as e:
@@ -202,8 +202,6 @@ class Panther:
     async def handle_http(cls, scope: dict, receive: Callable, send: Callable) -> None:
         # Create `Request` and its body
         request = Request(scope=scope, receive=receive, send=send)
-        await request.read_body()
-
         # Create Middlewares chain
         chained_func = cls.handle_http_endpoint
         for middleware in config.HTTP_MIDDLEWARES:
@@ -211,6 +209,7 @@ class Panther:
 
         # Call Middlewares & Endpoint
         try:
+            await request.read_body()
             response = await chained_func(request=request)
             if response is None:
                 logger.error('You forgot to return `response` on the `Middlewares.__call__()`')

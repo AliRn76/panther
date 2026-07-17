@@ -5,6 +5,7 @@ import orjson as json
 from panther import Panther
 from panther.app import API, GenericAPI
 from panther.configs import config
+from panther.exceptions import BadRequestAPIError
 from panther.request import Request
 from panther.response import Response
 from panther.test import APIClient
@@ -470,3 +471,45 @@ class TestRequest(IsolatedAsyncioTestCase):
         res_class = await self.client.delete('get-post-patch-class/')
         assert res_func.status_code == 405
         assert res_class.status_code == 405
+
+
+class TestRequestBody(IsolatedAsyncioTestCase):
+    def tearDown(self) -> None:
+        config.refresh()
+
+    @staticmethod
+    def request(*, receive, headers: list[tuple[bytes, bytes]] | None = None) -> Request:
+        return Request(
+            scope={'method': 'POST', 'headers': headers or []},
+            receive=receive,
+            send=None,
+        )
+
+    async def test_read_body_collects_chunks_once(self):
+        messages = iter(
+            [
+                {'type': 'http.request', 'body': b'Pan', 'more_body': True},
+                {'type': 'http.request', 'body': b'ther', 'more_body': False},
+            ]
+        )
+        receive_calls = 0
+
+        async def receive():
+            nonlocal receive_calls
+            receive_calls += 1
+            return next(messages)
+
+        request = self.request(receive=receive)
+
+        assert await request.read_body() == b'Panther'
+        assert await request.read_body() == b'Panther'
+        assert receive_calls == 2
+
+    async def test_client_disconnect_raises_bad_request(self):
+        async def receive():
+            return {'type': 'http.disconnect'}
+
+        request = self.request(receive=receive)
+
+        with self.assertRaises(BadRequestAPIError):
+            await request.read_body()
