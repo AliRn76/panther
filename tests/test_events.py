@@ -84,7 +84,7 @@ class TestEvents(IsolatedAsyncioTestCase):
         assert Event._shutdowns[0] == shutdown_event
 
         with self.assertLogs(level='INFO') as capture:
-            Event.run_shutdowns()
+            await Event.run_shutdowns()
 
         assert len(capture.records) == 1
         assert capture.records[0].getMessage() == 'This Is Shutdown.'
@@ -92,7 +92,7 @@ class TestEvents(IsolatedAsyncioTestCase):
     async def shutdown_event(self):
         logger.info('This Is Shutdown.')
 
-    def test_async_shutdown(self):
+    async def test_async_shutdown(self):
         assert len(Event._shutdowns) == 0
 
         Event.shutdown(self.shutdown_event)
@@ -101,12 +101,12 @@ class TestEvents(IsolatedAsyncioTestCase):
         assert Event._shutdowns[0] == self.shutdown_event
 
         with self.assertLogs(level='INFO') as capture:
-            Event.run_shutdowns()
+            await Event.run_shutdowns()
 
         assert len(capture.records) == 1
         assert capture.records[0].getMessage() == 'This Is Shutdown.'
 
-    def test_shutdown(self):
+    async def test_shutdown(self):
         assert len(Event._shutdowns) == 0
 
         def shutdown_event_sync():
@@ -120,7 +120,7 @@ class TestEvents(IsolatedAsyncioTestCase):
         assert Event._shutdowns[1] == shutdown_event_sync
 
         with self.assertLogs(level='INFO') as capture:
-            Event.run_shutdowns()
+            await Event.run_shutdowns()
 
         assert len(capture.records) == 2
         assert capture.records[0].getMessage() == 'This Is Shutdown.'

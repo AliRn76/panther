@@ -10,7 +10,8 @@ from panther.authentications import CookieJWTAuthentication, QueryParamJWTAuthen
 from panther.base_websocket import WebsocketConnections
 from panther.configs import JWTConfig, config
 from panther.db import Model
-from panther.db.connections import PantherDBConnection
+from panther.db.connections import MongoDBConnection, PantherDBConnection
+from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.events import Event
 from panther.middlewares.monitoring import MonitoringMiddleware, WebsocketMonitoringMiddleware
@@ -60,6 +61,17 @@ def my_shutdown2():
 
 
 class TestConfig(TestCase):
+    def test_builtin_database_backend_capabilities(self):
+        assert PantherDBConnection.uses_document_models is True
+        assert PantherDBConnection.uses_object_ids is False
+        assert PantherDBConnection.uses_mongo_query_syntax is False
+        assert PantherDBConnection.get_query_engine() is BasePantherDBQuery
+
+        assert MongoDBConnection.uses_document_models is True
+        assert MongoDBConnection.uses_object_ids is True
+        assert MongoDBConnection.uses_mongo_query_syntax is True
+        assert MongoDBConnection.get_query_engine() is BaseMongoDBQuery
+
     def test_loading_known_configs(self):
         global \
             BASE_DIR, \

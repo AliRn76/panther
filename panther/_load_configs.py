@@ -13,8 +13,6 @@ from panther.base_websocket import WebsocketConnections
 from panther.cli.utils import import_error
 from panther.configs import JWTConfig, config
 from panther.db.connections import redis
-from panther.db.queries.mongodb_queries import BaseMongoDBQuery
-from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.exceptions import PantherError
 from panther.middlewares.base import HTTPMiddleware, WebsocketMiddleware
 from panther.middlewares.monitoring import MonitoringMiddleware, WebsocketMonitoringMiddleware
@@ -108,10 +106,8 @@ def load_database(_configs: dict, /) -> None:
         args.pop('class')
         config.DATABASE = engine_class(**args)
 
-        if engine_class_path == 'panther.db.connections.PantherDBConnection':
-            config.QUERY_ENGINE = BasePantherDBQuery
-        elif engine_class_path == 'panther.db.connections.MongoDBConnection':
-            config.QUERY_ENGINE = BaseMongoDBQuery
+        if query_engine := config.DATABASE.get_query_engine():
+            config.QUERY_ENGINE = query_engine
 
     if 'query' in database_config:
         if config.QUERY_ENGINE:

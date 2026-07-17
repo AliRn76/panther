@@ -8,8 +8,7 @@ from pantherdb import Cursor as PantherDBCursor
 from panther import status
 from panther.app import GenericAPI
 from panther.configs import config
-from panther.db import Model
-from panther.db.connections import MongoDBConnection
+from panther.db import DocumentModel
 from panther.db.cursor import Cursor
 from panther.db.models import ID
 from panther.exceptions import APIError
@@ -26,7 +25,7 @@ logger = logging.getLogger('panther')
 
 class RetrieveAPI(GenericAPI):
     @abstractmethod
-    async def get_instance(self, request: Request, **kwargs) -> Model:
+    async def get_instance(self, request: Request, **kwargs) -> DocumentModel:
         """
         Should return an instance of Model, e.g. `await User.find_one()`
         """
@@ -82,7 +81,10 @@ class ListAPI(GenericAPI):
         for field in self.filter_fields:
             if field in query_params:
                 _filter[field] = query_params[field]
-                if isinstance(config.DATABASE, MongoDBConnection) and cursor.cls.model_fields[field].annotation == ID:
+                if (
+                    getattr(config.DATABASE, 'uses_object_ids', False)
+                    and cursor.cls.model_fields[field].annotation == ID
+                ):
                     _filter[field] = bson.ObjectId(_filter[field])
         return _filter
 
@@ -90,7 +92,7 @@ class ListAPI(GenericAPI):
         search_param = query_params.get('search')
         if not self.search_fields or not search_param:
             return {}
-        if isinstance(config.DATABASE, MongoDBConnection):
+        if getattr(config.DATABASE, 'uses_mongo_query_syntax', False):
             escaped_search_param = re.escape(search_param)
             if search := [{field: {'$regex': escaped_search_param}} for field in self.search_fields]:
                 return {'$or': search}
@@ -120,7 +122,7 @@ class CreateAPI(GenericAPI):
 
 class UpdateAPI(GenericAPI):
     @abstractmethod
-    async def get_instance(self, request: Request, **kwargs) -> Model:
+    async def get_instance(self, request: Request, **kwargs) -> DocumentModel:
         """
         Should return an instance of Model, e.g. `await User.find_one()`
         """
@@ -140,7 +142,7 @@ class UpdateAPI(GenericAPI):
 
 class DeleteAPI(GenericAPI):
     @abstractmethod
-    async def get_instance(self, request: Request, **kwargs) -> Model:
+    async def get_instance(self, request: Request, **kwargs) -> DocumentModel:
         """
         Should return an instance of Model, e.g. `await User.find_one()`
         """

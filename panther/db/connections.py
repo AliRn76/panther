@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from pantherdb import PantherDB
 
@@ -22,6 +22,17 @@ if TYPE_CHECKING:
 
 
 class BaseDatabaseConnection:
+    """Base class for Panther database backends.
+
+    Backends declare their behaviour here instead of callers identifying them by
+    their concrete class.  This keeps the document backends compatible while
+    allowing future relational backends to expose a different query engine.
+    """
+
+    uses_document_models: ClassVar[bool] = False
+    uses_object_ids: ClassVar[bool] = False
+    uses_mongo_query_syntax: ClassVar[bool] = False
+
     def __init__(self, *args, **kwargs):
         """Initialized in application startup"""
         self.init(*args, **kwargs)
@@ -35,8 +46,43 @@ class BaseDatabaseConnection:
     def session(self):
         pass
 
+    @property
+    def client(self):
+        """Return the underlying client when it is distinct from the session."""
+        return self.session
+
+    @contextlib.asynccontextmanager
+    async def session_context(self):
+        """Yield a database session for a unit of work.
+
+        Document backends share their connection, while relational backends can
+        override this method to create and close a request-scoped session.
+        """
+        yield self.session
+
+    @classmethod
+    def get_query_engine(cls):
+        """Return the query implementation used by this backend, if any."""
+        return None
+
+    async def startup(self) -> None:
+        """Initialize resources that require an active application event loop."""
+
+    async def shutdown(self) -> None:
+        """Release resources created during application startup."""
+
 
 class MongoDBConnection(BaseDatabaseConnection):
+    uses_document_models = True
+    uses_object_ids = True
+    uses_mongo_query_syntax = True
+
+    @classmethod
+    def get_query_engine(cls):
+        from panther.db.queries.mongodb_queries import BaseMongoDBQuery
+
+        return BaseMongoDBQuery
+
     def init(
         self,
         host: str = 'localhost',
@@ -79,6 +125,14 @@ class MongoDBConnection(BaseDatabaseConnection):
 
 
 class PantherDBConnection(BaseDatabaseConnection):
+    uses_document_models = True
+
+    @classmethod
+    def get_query_engine(cls):
+        from panther.db.queries.pantherdb_queries import BasePantherDBQuery
+
+        return BasePantherDBQuery
+
     def init(self, path: str | None = None, encryption: bool = False):
         params = {'db_name': path, 'return_dict': True, 'return_cursor': True}
         if encryption:
@@ -111,6 +165,20 @@ class DatabaseConnection(Singleton):
     @property
     def client(self):
         return config.DATABASE.client
+
+    @contextlib.asynccontextmanager
+    async def session_context(self):
+        """Yield a session from the configured database backend."""
+        async with config.DATABASE.session_context() as session:
+            yield session
+
+    async def startup(self) -> None:
+        if self.is_defined:
+            await config.DATABASE.startup()
+
+    async def shutdown(self) -> None:
+        if self.is_defined:
+            await config.DATABASE.shutdown()
 
 
 class RedisConnection(Singleton, _Redis):
