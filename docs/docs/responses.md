@@ -23,6 +23,8 @@ Supported JSON response data includes dictionaries, lists, tuples, sets, cursors
 
 Panther uses `orjson` for JSON serialization. `Content-Type` defaults to `application/json`, and `Content-Length` is added when the response is sent.
 
+Response bytes are created lazily and reused for headers and sending. Finish processing a response before accessing `response.body`; assigning a new `response.data` value creates new bytes, but in-place mutations of an already rendered container are not tracked.
+
 ## Returning Plain Data
 
 You can return plain serializable data from an API. Panther wraps it in `Response`.
