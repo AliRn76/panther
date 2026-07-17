@@ -169,6 +169,22 @@ async def create_and_list_users(name: str) -> list[User]:
 
 Panther disposes the connection pool during ASGI shutdown.
 
+Use `sqlalchemy.text()` for raw SQL and bind external values as parameters rather than formatting them into the query string:
+
+```python
+from sqlalchemy import text
+
+
+async with db.session_context() as session:
+    result = await session.execute(
+        text('SELECT id, name FROM users WHERE id = :user_id'),
+        {'user_id': user_id},
+    )
+    user = result.mappings().one_or_none()
+```
+
+For a complete CRUD, relationship, and cursor-pagination example, see the `examples/postgresql` directory in the Panther repository.
+
 ---
 
 ## How Does It Work?
