@@ -3,6 +3,7 @@ from unittest import IsolatedAsyncioTestCase
 from panther import Panther
 from panther.configs import config
 from panther.db.connections import BaseDatabaseConnection, db
+from panther.events import Event
 
 
 class LifecycleDatabaseConnection(BaseDatabaseConnection):
@@ -21,6 +22,12 @@ class LifecycleDatabaseConnection(BaseDatabaseConnection):
 
 
 class TestDatabaseLifecycle(IsolatedAsyncioTestCase):
+    def setUp(self):
+        Event.clear()
+
+    def tearDown(self):
+        Event.clear()
+
     async def test_database_connection_delegates_lifecycle_hooks(self):
         previous_database = config.DATABASE
         database = LifecycleDatabaseConnection()
@@ -49,24 +56,64 @@ class TestDatabaseLifecycle(IsolatedAsyncioTestCase):
         database = LifecycleDatabaseConnection()
         application = object.__new__(Panther)
 
+        messages = iter(
+            [
+                {'type': 'lifespan.startup'},
+                {'type': 'lifespan.shutdown'},
+            ],
+        )
+        sent_messages = []
+
+        async def receive():
+            return next(messages)
+
+        async def send(message):
+            sent_messages.append(message)
+
+        try:
+            config.DATABASE = database
+            config.HAS_WS = False
+
+            await application(scope={'type': 'lifespan'}, receive=receive, send=send)
+        finally:
+            config.DATABASE = previous_database
+            config.HAS_WS = previous_has_websocket
+
+        assert database.events == ['startup', 'shutdown']
+        assert sent_messages == [
+            {'type': 'lifespan.startup.complete'},
+            {'type': 'lifespan.shutdown.complete'},
+        ]
+
+    async def test_application_lifespan_awaits_async_shutdown_events(self):
+        previous_database = config.DATABASE
+        previous_has_websocket = config.HAS_WS
+        database = LifecycleDatabaseConnection()
+        application = object.__new__(Panther)
+        messages = iter(
+            [
+                {'type': 'lifespan.startup'},
+                {'type': 'lifespan.shutdown'},
+            ],
+        )
+        events = []
+
+        @Event.shutdown
+        async def shutdown_event():
+            events.append('shutdown')
+
+        async def receive():
+            return next(messages)
+
         async def send(_message):
             pass
 
         try:
             config.DATABASE = database
             config.HAS_WS = False
-
-            async def startup_message():
-                return {'type': 'lifespan.startup'}
-
-            await application(scope={'type': 'lifespan'}, receive=startup_message, send=send)
-
-            async def shutdown_message():
-                return {'type': 'lifespan.shutdown'}
-
-            await application(scope={'type': 'lifespan'}, receive=shutdown_message, send=send)
+            await application(scope={'type': 'lifespan'}, receive=receive, send=send)
         finally:
             config.DATABASE = previous_database
             config.HAS_WS = previous_has_websocket
 
-        assert database.events == ['startup', 'shutdown']
+        assert events == ['shutdown']

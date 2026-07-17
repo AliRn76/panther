@@ -109,15 +109,27 @@ class Panther:
         elif scope['type'] == 'websocket':
             await self.handle_ws(scope=scope, receive=receive, send=send)
         elif scope['type'] == 'lifespan':
-            message = await receive()
-            if message['type'] == 'lifespan.startup':
-                await db.startup()
-                if config.HAS_WS:
-                    await config.WEBSOCKET_CONNECTIONS.start()
-                await Event.run_startups()
-            elif message['type'] == 'lifespan.shutdown':
-                await db.shutdown()
-            return
+            while True:
+                message = await receive()
+                if message['type'] == 'lifespan.startup':
+                    try:
+                        await db.startup()
+                        if config.HAS_WS:
+                            await config.WEBSOCKET_CONNECTIONS.start()
+                        await Event.run_startups()
+                    except Exception as e:
+                        await send({'type': 'lifespan.startup.failed', 'message': str(e)})
+                        return
+                    await send({'type': 'lifespan.startup.complete'})
+                elif message['type'] == 'lifespan.shutdown':
+                    try:
+                        await Event.run_shutdowns()
+                        await db.shutdown()
+                    except Exception as e:
+                        await send({'type': 'lifespan.shutdown.failed', 'message': str(e)})
+                        return
+                    await send({'type': 'lifespan.shutdown.complete'})
+                    return
 
     @staticmethod
     async def handle_ws_endpoint(connection: Websocket):
@@ -215,6 +227,3 @@ class Panther:
 
         # Return Response
         await response.send(send=send, receive=receive)
-
-    def __del__(self):
-        Event.run_shutdowns()
