@@ -2,6 +2,9 @@
 
 Panther models allow you to define your data schema and interact with the database using Python classes. They are built on top of `pydantic.BaseModel` and extend its functionality with database query capabilities.
 
+!!! note "Document models only"
+    `panther.db.Model` and `panther.db.DocumentModel` are Panther's document-model APIs for MongoDB and PantherDB. PostgreSQL applications should define standard SQLAlchemy declarative models and use SQLAlchemy sessions and queries; see the [PostgreSQL guide](database.md#postgresql).
+
 ## Creating a Model
 
 To create a Panther model, define a class that inherits from `panther.db.Model`:
@@ -165,5 +168,4 @@ print(document.file.size)  # File size in bytes
 with document.file as f:
     content = f.read()
 ```
-
 

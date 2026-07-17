@@ -2,6 +2,9 @@ We assume you have successfully set up your project following the [Introduction]
 
 In this guide, we will create a `CRUD` (`Create`, `Retrieve`, `Update`, and `Delete`) API for managing `Book` entities.
 
+!!! note "Document CRUD APIs"
+    This guide uses Panther document `Model` classes and the built-in document generic APIs. PostgreSQL applications use SQLAlchemy models and custom Panther endpoints instead; see the [PostgreSQL guide](database.md#postgresql) and the `examples/postgresql` application in the Panther repository.
+
 ---
 
 ## Project Structure

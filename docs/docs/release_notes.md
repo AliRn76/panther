@@ -1,5 +1,12 @@
 # Panther Release Notes
 
+### 5.4.0
+
+- Add opt-in PostgreSQL support using SQLAlchemy async and `asyncpg` through `PostgreSQLConnection`.
+- Add PostgreSQL connection lifecycle checks, scoped SQLAlchemy sessions, explicit transaction control, and integration-test coverage.
+- Document PostgreSQL configuration, SQLAlchemy API patterns, raw SQL execution, Alembic migrations, and SQL-backed JWT user lookup.
+- Clarify that Panther document models, document generic APIs, document query methods, and the built-in admin panel do not support SQLAlchemy models.
+
 ### 5.3.0
 
 - Add a backend-neutral database connection foundation with lifecycle hooks and scoped-session support.
