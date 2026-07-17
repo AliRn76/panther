@@ -62,7 +62,7 @@ def load_redis(_configs: dict, /) -> None:
     if redis_config := _configs.get('REDIS'):
         # Check redis module installation
         try:
-            from redis.asyncio import Redis
+            from redis.asyncio import Redis  # noqa: F401
         except ImportError as e:
             raise import_error(e, package='redis')
         redis_class_path = redis_config.get('class', 'panther.db.connections.RedisConnection')
@@ -285,7 +285,7 @@ def load_jwt_config(_configs: dict, /) -> None:
         config.JWT_CONFIG = JWTConfig(**jwt_config)
 
         try:
-            import jose
+            import jose  # noqa: F401
         except ImportError as e:
             raise import_error(e, package='python-jose')
 
@@ -295,7 +295,7 @@ def load_websocket_connections():
     if config.HAS_WS:
         # Check `websockets`
         try:
-            import websockets
+            import websockets  # noqa: F401
         except ImportError as e:
             raise import_error(e, package='websockets')
 

@@ -450,7 +450,7 @@ class TestOpenAPI(IsolatedAsyncioTestCase):
     async def test_my_api21(self):
         parsed = EndpointParser(my_api21, 'get')
         assert parsed.status_code == 200
-        assert parsed.response_data == True
+        assert parsed.response_data is True
 
     async def test_my_api22(self):
         parsed = EndpointParser(my_api22, 'get')

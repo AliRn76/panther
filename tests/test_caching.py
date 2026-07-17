@@ -3,8 +3,6 @@ import time
 from datetime import timedelta
 from unittest import IsolatedAsyncioTestCase
 
-import pytest
-
 from panther import Panther
 from panther.app import API
 from panther.configs import config

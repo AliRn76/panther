@@ -246,10 +246,10 @@ class TestJWTAuthentication(IsolatedAsyncioTestCase):
         config.AUTHENTICATION = CookieJWTAuthentication
 
         user = await User.insert_one(username='Username', password='Password')
-        tokens = await user.login()
+        await user.login()
 
         with self.assertLogs(level='ERROR') as captured:
-            res = await self.client.get('auth-required', {'cookie': f'access_token=s'})
+            res = await self.client.get('auth-required', {'cookie': 'access_token=s'})
 
         assert len(captured.records) == 1
         assert captured.records[0].getMessage() == 'CookieJWTAuthentication Error: "Not enough segments"'

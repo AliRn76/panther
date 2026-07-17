@@ -133,7 +133,7 @@ class BaseMongoDBQuery(BaseQuery):
             if field.startswith('$'):
                 update_query[field] = value
             else:
-                if not '$set' in update_query:
+                if '$set' not in update_query:
                     update_query['$set'] = {}
                 update_query['$set'][field] = value
 
@@ -167,7 +167,7 @@ class BaseMongoDBQuery(BaseQuery):
             if field.startswith('$'):
                 update_query[field] = value
             else:
-                if not '$set' in update_query:
+                if '$set' not in update_query:
                     update_query['$set'] = {}
                 update_query['$set'][field] = value
 

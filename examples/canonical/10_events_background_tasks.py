@@ -5,7 +5,6 @@ from panther.app import API
 from panther.background_tasks import BackgroundTask
 from panther.events import Event
 
-
 BACKGROUND_TASKS = True
 
 

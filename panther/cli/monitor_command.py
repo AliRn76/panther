@@ -62,7 +62,7 @@ class Monitoring:
     def initialize(self) -> str:
         # Check requirements
         try:
-            from watchfiles import watch
+            from watchfiles import watch  # noqa: F401
         except ImportError as e:
             return import_error(e, package='watchfiles').args[0]
 

@@ -1,6 +1,6 @@
 import asyncio
-from unittest import TestCase
 from threading import Event, Thread
+from unittest import TestCase
 
 import panther.background_tasks as background_tasks
 from panther.background_tasks import BackgroundTask
@@ -37,9 +37,9 @@ class TestBackgroundTaskEventLoopIsolation(TestCase):
 
         try:
             _set_application_loop(app_loop)
-            loop_bound_future = asyncio.run_coroutine_threadsafe(
-                _create_loop_bound_future(app_loop), app_loop
-            ).result(timeout=1)
+            loop_bound_future = asyncio.run_coroutine_threadsafe(_create_loop_bound_future(app_loop), app_loop).result(
+                timeout=1
+            )
             results = []
 
             async def consume_loop_bound_future(_results):

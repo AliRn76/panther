@@ -4,7 +4,6 @@ from panther import Panther
 from panther.app import API
 from panther.response import FileResponse, HTMLResponse, RedirectResponse, StreamingResponse, TemplateResponse
 
-
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = str(BASE_DIR / 'templates')
 

@@ -118,32 +118,32 @@ class TestKwargs(IsolatedAsyncioTestCase):
     async def test_boolean_true(self):
         re1 = await self.client.get('boolean/true/')
         assert re1.status_code == 200
-        assert re1.data == True
+        assert re1.data is True
 
         res2 = await self.client.get('boolean/TRUE/')
         assert res2.status_code == 200
-        assert res2.data == True
+        assert res2.data is True
 
         res3 = await self.client.get('boolean/true/')
         assert res3.status_code == 200
-        assert res3.data == True
+        assert res3.data is True
 
     async def test_boolean_false(self):
         res1 = await self.client.get('boolean/false/')
         assert res1.status_code == 200
-        assert res1.data == False
+        assert res1.data is False
 
         res2 = await self.client.get('boolean/FALSE/')
         assert res2.status_code == 200
-        assert res2.data == False
+        assert res2.data is False
 
         res3 = await self.client.get('boolean/False/')
         assert res3.status_code == 200
-        assert res3.data == False
+        assert res3.data is False
 
         res4 = await self.client.get('boolean/0/')
         assert res4.status_code == 200
-        assert res4.data == False
+        assert res4.data is False
 
     async def test_invalid_boolean(self):
         res = await self.client.get('boolean/ali/')
