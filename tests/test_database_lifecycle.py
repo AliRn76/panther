@@ -33,6 +33,16 @@ class TestDatabaseLifecycle(IsolatedAsyncioTestCase):
 
         assert database.events == ['startup', 'shutdown']
 
+    async def test_database_connection_yields_the_backend_session(self):
+        previous_database = config.DATABASE
+        database = LifecycleDatabaseConnection()
+        config.DATABASE = database
+        try:
+            async with db.session_context() as session:
+                assert session is database.session
+        finally:
+            config.DATABASE = previous_database
+
     async def test_application_lifespan_runs_database_lifecycle_hooks(self):
         previous_database = config.DATABASE
         previous_has_websocket = config.HAS_WS

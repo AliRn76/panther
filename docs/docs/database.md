@@ -34,6 +34,8 @@ Backends declare capabilities rather than requiring Panther to check their concr
 
 If a backend needs an active event loop to allocate or release resources, implement its async `startup()` and `shutdown()` hooks. Panther invokes them during ASGI lifespan startup and shutdown.
 
+Backends can also override `session_context()` to provide a scoped unit of work. The built-in document backends yield their existing connection; relational backends can create, commit or roll back, and close a session there.
+
 ---
 
 ## PantherDB

@@ -51,6 +51,15 @@ class BaseDatabaseConnection:
         """Return the underlying client when it is distinct from the session."""
         return self.session
 
+    @contextlib.asynccontextmanager
+    async def session_context(self):
+        """Yield a database session for a unit of work.
+
+        Document backends share their connection, while relational backends can
+        override this method to create and close a request-scoped session.
+        """
+        yield self.session
+
     @classmethod
     def get_query_engine(cls):
         """Return the query implementation used by this backend, if any."""
@@ -156,6 +165,12 @@ class DatabaseConnection(Singleton):
     @property
     def client(self):
         return config.DATABASE.client
+
+    @contextlib.asynccontextmanager
+    async def session_context(self):
+        """Yield a session from the configured database backend."""
+        async with config.DATABASE.session_context() as session:
+            yield session
 
     async def startup(self) -> None:
         if self.is_defined:
