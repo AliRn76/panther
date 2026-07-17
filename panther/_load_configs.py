@@ -173,7 +173,7 @@ def load_middlewares(_configs: dict, /) -> None:
             monitoring_logger.debug('')  # Initiated
             config.MONITORING = True
 
-        config.HTTP_MIDDLEWARES.insert(0, middleware)
+        config.HTTP_MIDDLEWARES.append(middleware)
 
     # Collect WebSocket Middlewares
     for middleware in _configs.get('WS_MIDDLEWARES') or []:
@@ -196,7 +196,7 @@ def load_middlewares(_configs: dict, /) -> None:
             monitoring_logger.debug('')  # Initiated
             config.MONITORING = True
 
-        config.WS_MIDDLEWARES.insert(0, middleware)
+        config.WS_MIDDLEWARES.append(middleware)
 
 
 def load_auto_reformat(_configs: dict, /) -> None:

@@ -79,6 +79,14 @@ class PrivateMiddleware2(HTTPMiddleware):
         return response
 
 
+class CountingMiddleware(HTTPMiddleware):
+    instances = 0
+
+    def __init__(self, dispatch):
+        type(self).instances += 1
+        super().__init__(dispatch=dispatch)
+
+
 @API()
 async def handle_middlewares(request: Request):
     states = ['FunctionCall']
@@ -192,6 +200,34 @@ class TestMiddleware(IsolatedAsyncioTestCase):
             'PrivateMiddleware2',
             'PrivateMiddleware1',
         ]
+
+    async def test_global_middleware_is_constructed_once_per_app(self):
+        global MIDDLEWARES
+        CountingMiddleware.instances = 0
+        MIDDLEWARES = [CountingMiddleware]
+        app = Panther(__name__, configs=__name__, urls=urls)
+        client = APIClient(app=app)
+
+        assert CountingMiddleware.instances == 1
+        await client.get('')
+        await client.get('')
+        assert CountingMiddleware.instances == 1
+        MIDDLEWARES = []
+
+    async def test_endpoint_middleware_is_constructed_once(self):
+        CountingMiddleware.instances = 0
+
+        @API(middlewares=[CountingMiddleware])
+        async def endpoint(request: Request):
+            return {'ok': True}
+
+        app = Panther(__name__, configs=__name__, urls={'': endpoint})
+        client = APIClient(app=app)
+
+        assert CountingMiddleware.instances == 1
+        await client.get('')
+        await client.get('')
+        assert CountingMiddleware.instances == 1
 
     async def test_middlewares_order(self):
         global MIDDLEWARES

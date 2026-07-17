@@ -6,6 +6,12 @@ from panther.response import Response
 from panther.websocket import GenericWebsocket
 
 
+def compile_middleware_chain(dispatch: typing.Callable, middleware_classes: list[type]) -> typing.Callable:
+    for middleware_class in reversed(middleware_classes):
+        dispatch = middleware_class(dispatch=dispatch)
+    return dispatch
+
+
 class HTTPMiddleware:
     """Used only in http requests"""
 
