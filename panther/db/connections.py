@@ -124,6 +124,48 @@ class MongoDBConnection(BaseDatabaseConnection):
         return self._client
 
 
+class PostgreSQLConnection(BaseDatabaseConnection):
+    """Async PostgreSQL backend powered by SQLAlchemy and asyncpg."""
+
+    def init(self, url: str, **kwargs: Any) -> None:
+        try:
+            from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+        except ModuleNotFoundError as e:
+            raise import_error(e, package='panther[postgresql]')
+
+        self._engine = create_async_engine(url, **kwargs)
+        self._session_factory = async_sessionmaker(self._engine, expire_on_commit=False)
+
+    @property
+    def session(self):
+        """Return the SQLAlchemy session factory."""
+        return self._session_factory
+
+    @property
+    def client(self):
+        """Return the SQLAlchemy async engine."""
+        return self._engine
+
+    @contextlib.asynccontextmanager
+    async def session_context(self):
+        """Yield a new session and roll it back if the unit of work fails."""
+        async with self._session_factory() as session:
+            try:
+                yield session
+            except BaseException:
+                await session.rollback()
+                raise
+
+    async def startup(self) -> None:
+        from sqlalchemy import text
+
+        async with self._engine.connect() as connection:
+            await connection.execute(text('SELECT 1'))
+
+    async def shutdown(self) -> None:
+        await self._engine.dispose()
+
+
 class PantherDBConnection(BaseDatabaseConnection):
     uses_document_models = True
 
