@@ -35,6 +35,40 @@ Panther provides three built-in authentication classes, all based on JWT (JSON W
 AUTHENTICATION = 'panther.authentications.JWTAuthentication'
 ```
 
+#### PostgreSQL user lookup
+
+The default `get_user()` implementation uses the document `USER_MODEL.find_one()` API. Applications with PostgreSQL can keep Panther's JWT parsing and token handling by overriding that existing method:
+
+```python
+from panther.authentications import JWTAuthentication
+from panther.db.connections import db
+
+from app.models import User
+
+
+class PostgreSQLJWTAuthentication(JWTAuthentication):
+    @classmethod
+    async def get_user(cls, payload: dict) -> User:
+        user_id = payload.get('user_id')
+        if user_id is None:
+            raise cls.exception('Payload does not have `user_id`')
+
+        async with db.session_context() as session:
+            user = await session.get(User, user_id)
+
+        if user is None:
+            raise cls.exception('User not found')
+        return user
+```
+
+Configure the subclass instead of the default authentication class:
+
+```python
+AUTHENTICATION = 'app.authentications.PostgreSQLJWTAuthentication'
+```
+
+The returned user must expose an `id`. For built-in token refresh and logout flows, it must also allow Panther to store transient `_auth_token` and `_auth_refresh_token` attributes.
+
 #### JWT Configuration
 You can customize JWT behavior by setting `JWT_CONFIG` in your configs. Example:
 
@@ -113,7 +147,7 @@ You can implement your own authentication logic by either:
    class CustomAuthentication(BaseAuthentication):
        async def __call__(self, request: Request):
            # Your authentication logic here
-           # Return an instance of USER_MODEL (default: BaseUser)
+           # Return the authenticated application user.
            # Or raise AuthenticationAPIError on failure
            ...
    ```
@@ -121,7 +155,7 @@ You can implement your own authentication logic by either:
    ```python
    async def custom_authentication(request: Request):
        # Your authentication logic here
-       # Return an instance of USER_MODEL (default: BaseUser)
+           # Return the authenticated application user.
        # Or raise AuthenticationAPIError on failure
        ...
    ```
