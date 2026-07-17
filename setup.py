@@ -29,6 +29,7 @@ EXTRAS_REQUIRE = {
         'SQLAlchemy>=2.0,<3.0',
         'asyncpg>=0.29,<1.0',
         'greenlet>=3.0,<4.0',
+        'alembic>=1.13,<2.0',
     ],
     'full': [
         'redis==6.2.0',

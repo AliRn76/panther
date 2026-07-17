@@ -39,6 +39,7 @@ nav:
   - Models: 'model.md'
   - File Handling: 'file_handling.md'
   - Database: 'database.md'
+  - PostgreSQL Migrations: 'postgresql_migrations.md'
   - Query: 'query.md'
   - Redis: 'redis.md'
   - Events: 'events.md'
