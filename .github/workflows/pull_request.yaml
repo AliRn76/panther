@@ -10,6 +10,23 @@ jobs:
     name: Test Linux
     runs-on: ubuntu-latest
 
+    services:
+      postgresql:
+        image: postgres:16
+        env:
+          POSTGRES_DB: panther_test
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d panther_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PANTHER_POSTGRES_TEST_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/panther_test
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
@@ -58,7 +75,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: python tests --not_mongodb --not_slow
+        run: python tests --not_mongodb --not_slow --not_postgresql
 
   tests-macos:
     name: Test MacOS
@@ -80,4 +97,4 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: python tests --not_mongodb --not_slow
+        run: python tests --not_mongodb --not_slow --not_postgresql

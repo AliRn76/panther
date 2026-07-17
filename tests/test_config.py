@@ -10,7 +10,7 @@ from panther.authentications import CookieJWTAuthentication, QueryParamJWTAuthen
 from panther.base_websocket import WebsocketConnections
 from panther.configs import JWTConfig, config
 from panther.db import Model
-from panther.db.connections import MongoDBConnection, PantherDBConnection
+from panther.db.connections import MongoDBConnection, PantherDBConnection, PostgreSQLConnection
 from panther.db.queries.mongodb_queries import BaseMongoDBQuery
 from panther.db.queries.pantherdb_queries import BasePantherDBQuery
 from panther.events import Event
@@ -71,6 +71,9 @@ class TestConfig(TestCase):
         assert MongoDBConnection.uses_object_ids is True
         assert MongoDBConnection.uses_mongo_query_syntax is True
         assert MongoDBConnection.get_query_engine() is BaseMongoDBQuery
+
+        assert PostgreSQLConnection.uses_document_models is False
+        assert PostgreSQLConnection.get_query_engine() is None
 
     def test_loading_known_configs(self):
         global \

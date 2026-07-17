@@ -6,6 +6,9 @@
 
 Panther provides a built-in admin panel that allows you to easily manage your database models through a web interface.
 
+!!! warning "Document models only"
+    The built-in admin panel currently supports Panther document models backed by MongoDB or PantherDB. It does not manage PostgreSQL SQLAlchemy models. PostgreSQL applications should provide their own administration endpoints or use a SQLAlchemy-compatible admin tool.
+
 ## Enabling the Admin Panel
 
 To enable the admin panel in your project, follow these steps:
@@ -59,4 +62,4 @@ panther createuser main.py
 
 Replace `main.py` with the path to your main application file if it is different. This command will create a new user based on your `USER_MODEL` (by default, `panther.db.models.BaseUser`).
 
-Once the user is created, you can log in to the admin panel using the credentials you set during user creation. 
+Once the user is created, you can log in to the admin panel using the credentials you set during user creation.
