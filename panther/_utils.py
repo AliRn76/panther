@@ -107,8 +107,8 @@ def traceback_message(exception: Exception) -> str:
 
 def reformat_code(base_dir):
     try:
-        subprocess.run(['ruff', 'format', base_dir])
         subprocess.run(['ruff', 'check', '--select', 'I', '--fix', base_dir])
+        subprocess.run(['ruff', 'format', base_dir])
     except FileNotFoundError:
         raise PantherError("No module named 'ruff', Hint: `pip install ruff`")
 

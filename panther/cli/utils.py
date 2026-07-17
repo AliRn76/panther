@@ -125,7 +125,7 @@ def print_info(config: Config):
     uvloop_msg = None
     if platform.system() != 'Windows':
         try:
-            import uvloop
+            import uvloop  # noqa: F401
         except ImportError:
             uvloop_msg = (
                 f'{h} * You may want to install `uvloop` for better performance  {h}\n'
@@ -136,7 +136,7 @@ def print_info(config: Config):
     gunicorn_msg = None
     if config.HAS_WS:
         try:
-            import gunicorn
+            import gunicorn  # noqa: F401
 
             gunicorn_msg = f'{h} * You have WS, so make sure to run gunicorn with --preload  {h}\n'
         except ImportError:

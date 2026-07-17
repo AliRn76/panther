@@ -1,5 +1,8 @@
 from datetime import timedelta
 
+from app.models import Post
+from app.serializers import CommentSerializer, PostDetailOutputSerializer, PostOutputSerializer, PostSerializer
+
 from panther import status
 from panther.app import GenericAPI
 from panther.db import Model
@@ -10,9 +13,6 @@ from panther.permissions import IsAuthenticated, IsAuthenticatedOrReadonly
 from panther.request import Request
 from panther.response import Response
 from panther.throttling import Throttle
-
-from app.models import Post
-from app.serializers import CommentSerializer, PostDetailOutputSerializer, PostOutputSerializer, PostSerializer
 
 
 # PostAPI - For Listing Posts and Creating a Post

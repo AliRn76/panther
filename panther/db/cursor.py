@@ -17,7 +17,7 @@ if version_info >= (3, 11):
 else:
     from typing import TypeVar
 
-    Self = TypeVar('Self', bound='BaseMongoDBQuery')
+    Self = TypeVar('Self', bound='Cursor')
 
 
 class Cursor(_Cursor):

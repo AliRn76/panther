@@ -14,7 +14,7 @@ from panther.utils import generate_hash_value_from_string
 
 try:
     from jose import JWTError, jwt
-except ImportError as e:
+except ImportError:
     # This `JWTError` and `jwt` is not going to be used,
     #   If user really wants to use redis,
     #   we are going to force him to install it in `panther._load_configs.load_jwt_config`

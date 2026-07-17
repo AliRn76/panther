@@ -481,7 +481,7 @@ class _BaseDatabaseTestCase:
     async def test_update_with_complex_data(self):
         """Test update operations with complex nested data"""
         book = await Book.insert_one(name='original_book')
-        author = await Author.insert_one(
+        await Author.insert_one(
             name='original_author',
             books=[book],
             books2=[book],
@@ -566,7 +566,7 @@ class _BaseDatabaseTestCase:
         book1 = await Book.insert_one(name='book1')
         book2 = await Book.insert_one(name='book2')
 
-        author1 = await Author.insert_one(
+        await Author.insert_one(
             name='author1',
             books=[book1],
             books2=[book1],
@@ -575,7 +575,7 @@ class _BaseDatabaseTestCase:
             our_book_detail=BookDetail(detail='detail1', book=book1, more_books=[[book1]]),
         )
 
-        author2 = await Author.insert_one(
+        await Author.insert_one(
             name='author2',
             books=[book2],
             books2=[book2],
@@ -973,12 +973,10 @@ class TestMongoDB(_BaseDatabaseTestCase, IsolatedAsyncioTestCase):
         """Test MongoDB-specific bulk operations"""
         # Test bulk write operations
         books_data = [{'name': f'mongodb_bulk_{i}'} for i in range(10)]
-        books = await Book.insert_many(books_data)
+        await Book.insert_many(books_data)
 
         # Test bulk update with MongoDB operators
-        update_result = await Book.update_many(
-            {'name': {'$regex': 'mongodb_bulk_'}}, {'$set': {'name': 'updated_mongodb_bulk'}}
-        )
+        await Book.update_many({'name': {'$regex': 'mongodb_bulk_'}}, {'$set': {'name': 'updated_mongodb_bulk'}})
 
         # Verify all documents were updated
         updated_books = await Book.find(name='updated_mongodb_bulk')

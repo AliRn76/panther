@@ -38,7 +38,8 @@ line-length = 120
 # Set the indentation style
 indent-width = 4
 
-# Enable/disable specific rules
+# Enable/disable specific lint rules
+[lint]
 select = ["E", "F", "I"]
 ignore = ["E501"]
 
@@ -48,6 +49,22 @@ quote-style = "single"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+```
+
+## Commands
+
+Use check-only commands in CI and before opening a pull request:
+
+```bash
+ruff check .
+ruff format --check .
+```
+
+To update a working tree, apply lint fixes first and then format the result:
+
+```bash
+ruff check --fix .
+ruff format .
 ```
 
 ## Benefits

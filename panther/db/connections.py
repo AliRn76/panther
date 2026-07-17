@@ -83,7 +83,7 @@ class PantherDBConnection(BaseDatabaseConnection):
         params = {'db_name': path, 'return_dict': True, 'return_cursor': True}
         if encryption:
             try:
-                import cryptography
+                import cryptography  # noqa: F401
             except ImportError as e:
                 raise import_error(e, package='cryptography')
             params['secret_key'] = config.SECRET_KEY.encode()

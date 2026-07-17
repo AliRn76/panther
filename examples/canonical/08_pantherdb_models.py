@@ -9,7 +9,6 @@ from panther.request import Request
 from panther.response import Response
 from panther.serializer import ModelSerializer
 
-
 DATABASE = {
     'engine': {
         'class': 'panther.db.connections.PantherDBConnection',

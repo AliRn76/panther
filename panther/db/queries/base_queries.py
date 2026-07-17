@@ -10,9 +10,7 @@ from functools import reduce
 from sys import version_info
 from typing import Any, Union, get_args, get_origin
 
-from pantherdb import Cursor
 from pydantic import BaseModel, ValidationError
-from pydantic_core._pydantic_core import ValidationError
 
 from panther._utils import detect_mime_type
 from panther.db.cursor import Cursor

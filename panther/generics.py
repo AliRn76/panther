@@ -16,7 +16,6 @@ from panther.exceptions import APIError
 from panther.pagination import Pagination
 from panther.request import Request
 from panther.response import Response
-from panther.serializer import ModelSerializer
 
 with contextlib.suppress(ImportError):
     # Only required if user wants to use mongodb

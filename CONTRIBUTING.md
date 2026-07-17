@@ -121,6 +121,7 @@ coverage html
    
    # Run linting
    ruff check .
+   ruff format --check .
    ```
 
 4. **Reinstall Panther** after making changes to see them immediately:
@@ -133,14 +134,13 @@ coverage html
 Panther uses [Ruff](https://github.com/astral-sh/ruff) for code formatting and linting. The configuration is in `ruff.toml`.
 
 ```bash
-# Format code
-ruff format .
-
-# Check for linting issues
+# Verify linting and formatting without modifying files (use in CI)
 ruff check .
+ruff format --check .
 
-# Fix auto-fixable issues
+# Apply lint fixes, then format the result
 ruff check --fix .
+ruff format .
 ```
 
 ### Testing Your Changes
@@ -169,7 +169,7 @@ You can test your changes in real-time by:
 2. **Check code style**:
    ```bash
    ruff check .
-   ruff format .
+   ruff format --check .
    ```
 
 3. **Update documentation** if your changes affect public APIs or behavior.

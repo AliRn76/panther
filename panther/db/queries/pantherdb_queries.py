@@ -3,8 +3,6 @@ from __future__ import annotations
 from collections.abc import Iterable
 from sys import version_info
 
-from pantherdb import Cursor
-
 from panther.db.connections import db
 from panther.db.cursor import Cursor
 from panther.db.queries.base_queries import BaseQuery

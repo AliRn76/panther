@@ -1,5 +1,4 @@
 from collections import defaultdict
-from types import NoneType
 from typing import Any
 
 from pydantic import BaseModel

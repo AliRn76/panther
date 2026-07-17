@@ -7,7 +7,25 @@ from pathlib import Path
 
 import panther.logging
 from panther import status
-from panther._load_configs import *
+from panther._load_configs import (
+    check_endpoints_inheritance,
+    load_authentication_class,
+    load_auto_reformat,
+    load_background_tasks,
+    load_configs_module,
+    load_database,
+    load_log_queries,
+    load_middlewares,
+    load_other_configs,
+    load_redis,
+    load_secret_key,
+    load_templates_dir,
+    load_throttling,
+    load_timezone,
+    load_urls,
+    load_user_model,
+    load_websocket_connections,
+)
 from panther._utils import (
     ENDPOINT_CLASS_BASED_API,
     ENDPOINT_FUNCTION_BASED_API,
@@ -26,7 +44,6 @@ from panther.exceptions import APIError, BaseError, NotFoundAPIError, PantherErr
 from panther.request import Request
 from panther.response import Response
 from panther.routings import find_endpoint
-from panther.websocket import GenericWebsocket
 
 dictConfig(panther.logging.LOGGING)
 logger = logging.getLogger('panther')
