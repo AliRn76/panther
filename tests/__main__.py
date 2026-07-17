@@ -28,6 +28,8 @@ def main():
     # Make sure to define each flag in here, pyproject.toml and on top of the test target.
     parser.add_argument('--mongodb', action='store_true', help='Only run mongodb tests.')
     parser.add_argument('--not_mongodb', action='store_true', help='Does not run mongodb tests.')
+    parser.add_argument('--postgresql', action='store_true', help='Only run PostgreSQL tests.')
+    parser.add_argument('--not_postgresql', action='store_true', help='Does not run PostgreSQL tests.')
     parser.add_argument('--slow', action='store_true', help='Only run slow tests.')
     parser.add_argument('--not_slow', action='store_true', help='Does not run slow tests.')
     args = parser.parse_args()
@@ -41,6 +43,10 @@ def main():
         flags.append('not slow')
     if args.mongodb:
         flags.append('mongodb')
+    if args.not_postgresql:
+        flags.append('not postgresql')
+    if args.postgresql:
+        flags.append('postgresql')
     if args.slow:
         flags.append('slow')
     if flags:

@@ -2,6 +2,9 @@
 
 Panther ODM provides a simple, async interface for interacting with your database models. This guide covers the most common operations.
 
+!!! note "Document queries only"
+    These query methods apply to Panther document models used with MongoDB and PantherDB. PostgreSQL applications use SQLAlchemy queries such as `select()` within `db.session_context()`; see the [PostgreSQL guide](database.md#postgresql).
+
 ---
 
 ### find_one

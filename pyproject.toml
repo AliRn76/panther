@@ -8,5 +8,6 @@ build-backend = "setuptools.build_meta"
 [tool.pytest.ini_options]
 markers = [
 	"mongodb: marks mongodb tests",
+	"postgresql: marks PostgreSQL integration tests",
 	"slow: marks slow tests"
 ]
