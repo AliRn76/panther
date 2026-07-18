@@ -42,6 +42,11 @@ def _is_url_endpoint_valid(url: str, endpoint: Callable):
         raise PantherError(f"URL Can't Point To None. ('{url}' -> None)")
     if url and not re.match(r'^[a-zA-Z<>0-9_/-]+$', url):
         raise PantherError(f"URL Is Not Valid. --> '{url}'")
+    if any(
+        ('<' in part or '>' in part) and not re.fullmatch(r'<[a-zA-Z0-9_]+>', part)
+        for part in url.strip('/').split('/')
+    ):
+        raise PantherError(f"URL Is Not Valid. --> '{url}'")
     elif isinstance(endpoint, types.ModuleType):
         raise PantherError(f"URL Can't Point To Module. --> '{url}'")
 
@@ -115,6 +120,10 @@ def _deepmerge(dst, src):
         if key in dst:
             if _is_recursive_merge(dst[key], src[key]):
                 _deepmerge(dst[key], src[key])
+            elif isinstance(dst[key], Mapping) and not isinstance(src[key], Mapping):
+                dst[key][''] = deepcopy(src[key])
+            elif not isinstance(dst[key], Mapping) and isinstance(src[key], Mapping):
+                dst[key] = _deepmerge(deepcopy(src[key]), {'': dst[key]})
             else:
                 dst[key] = deepcopy(src[key])
         else:
