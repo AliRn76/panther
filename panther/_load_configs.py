@@ -27,6 +27,7 @@ __all__ = (
     'load_configs_module',
     'load_database',
     'load_log_queries',
+    'load_max_request_body_size',
     'load_middlewares',
     'load_other_configs',
     'load_redis',
@@ -134,6 +135,21 @@ def load_user_model(_configs: dict, /) -> None:
 def load_log_queries(_configs: dict, /) -> None:
     if _configs.get('LOG_QUERIES'):
         config.LOG_QUERIES = True
+
+
+def load_max_request_body_size(_configs: dict, /) -> None:
+    if 'MAX_REQUEST_BODY_SIZE' not in _configs:
+        return
+
+    max_request_body_size = _configs['MAX_REQUEST_BODY_SIZE']
+    if max_request_body_size is not None and (
+        isinstance(max_request_body_size, bool)
+        or not isinstance(max_request_body_size, int)
+        or max_request_body_size < 0
+    ):
+        raise _exception_handler(field='MAX_REQUEST_BODY_SIZE', error='should be a non-negative integer or None.')
+
+    config.MAX_REQUEST_BODY_SIZE = max_request_body_size
 
 
 def load_middlewares(_configs: dict, /) -> None:

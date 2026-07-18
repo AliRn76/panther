@@ -39,6 +39,11 @@ class BadRequestAPIError(APIError):
     status_code = status.HTTP_400_BAD_REQUEST
 
 
+class RequestEntityTooLargeAPIError(APIError):
+    detail = 'Request Entity Too Large'
+    status_code = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+
+
 class AuthenticationAPIError(APIError):
     detail = 'Authentication Error'
     status_code = status.HTTP_401_UNAUTHORIZED

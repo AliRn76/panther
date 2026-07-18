@@ -29,6 +29,7 @@ In multi-file apps, define settings in `core/configs.py` and let `Panther(__name
 | `WS_MIDDLEWARES` | `list` | `[]` | Global WebSocket middleware classes or dotted paths. |
 | `THROTTLING` | `Throttle` | `None` | Global request throttle. |
 | `BACKGROUND_TASKS` | `bool` | `False` | Enables background task processing. |
+| `MAX_REQUEST_BODY_SIZE` | `int` or `None` | `0` | Maximum request body size in bytes. `0` and `None` disable the limit. The default will become `10 * 1024 * 1024` in the next major release. |
 | `TEMPLATES_DIR` | `str` or `list[str]` | `'.'` | Template lookup directory or directories. |
 | `TIMEZONE` | `str` | `'UTC'` | Timezone name used by Panther utilities. |
 | `LOG_QUERIES` | `bool` | `False` | Enables query logging. |

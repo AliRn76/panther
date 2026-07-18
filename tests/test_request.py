@@ -5,7 +5,7 @@ import orjson as json
 from panther import Panther
 from panther.app import API, GenericAPI
 from panther.configs import config
-from panther.exceptions import BadRequestAPIError
+from panther.exceptions import BadRequestAPIError, RequestEntityTooLargeAPIError
 from panther.request import Request
 from panther.response import Response
 from panther.test import APIClient
@@ -211,6 +211,17 @@ class TestRequest(IsolatedAsyncioTestCase):
         res = await self.client.post('data/', payload=json.dumps(payload))
         assert res.status_code == 200
         assert res.data == payload
+
+    async def test_request_body_size_limit_returns_413(self):
+        max_request_body_size = config.MAX_REQUEST_BODY_SIZE
+        config.MAX_REQUEST_BODY_SIZE = 3
+        try:
+            response = await self.client.post('data/', payload=b'1234')
+        finally:
+            config.MAX_REQUEST_BODY_SIZE = max_request_body_size
+
+        assert response.status_code == 413
+        assert response.data == {'detail': 'Request Entity Too Large'}
 
     async def test_path_variables(self):
         res = await self.client.post('path/Ali/variable/27/true/')
@@ -513,3 +524,46 @@ class TestRequestBody(IsolatedAsyncioTestCase):
 
         with self.assertRaises(BadRequestAPIError):
             await request.read_body()
+
+    async def test_read_body_rejects_declared_size_before_receiving(self):
+        config.MAX_REQUEST_BODY_SIZE = 3
+        receive_calls = 0
+
+        async def receive():
+            nonlocal receive_calls
+            receive_calls += 1
+            return {'type': 'http.request', 'body': b'1234', 'more_body': False}
+
+        request = self.request(receive=receive, headers=[(b'content-length', b'4')])
+
+        with self.assertRaises(RequestEntityTooLargeAPIError):
+            await request.read_body()
+
+        assert receive_calls == 0
+
+    async def test_read_body_rejects_chunked_size_limit(self):
+        config.MAX_REQUEST_BODY_SIZE = 3
+        messages = iter(
+            [
+                {'type': 'http.request', 'body': b'12', 'more_body': True},
+                {'type': 'http.request', 'body': b'34', 'more_body': False},
+            ],
+        )
+
+        async def receive():
+            return next(messages)
+
+        request = self.request(receive=receive)
+
+        with self.assertRaises(RequestEntityTooLargeAPIError):
+            await request.read_body()
+
+    async def test_zero_body_size_limit_allows_any_size(self):
+        config.MAX_REQUEST_BODY_SIZE = 0
+
+        async def receive():
+            return {'type': 'http.request', 'body': b'1234', 'more_body': False}
+
+        request = self.request(receive=receive, headers=[(b'content-length', b'4')])
+
+        assert await request.read_body() == b'1234'

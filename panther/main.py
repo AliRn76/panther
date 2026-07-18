@@ -16,6 +16,7 @@ from panther._load_configs import (
     load_configs_module,
     load_database,
     load_log_queries,
+    load_max_request_body_size,
     load_middlewares,
     load_other_configs,
     load_redis,
@@ -94,6 +95,7 @@ class Panther:
         load_throttling(self._configs_module)
         load_user_model(self._configs_module)
         load_log_queries(self._configs_module)
+        load_max_request_body_size(self._configs_module)
         load_templates_dir(self._configs_module)
         load_middlewares(self._configs_module)
         load_auto_reformat(self._configs_module)

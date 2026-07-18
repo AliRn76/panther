@@ -9,7 +9,8 @@ from pydantic import ValidationError
 
 from panther._utils import read_multipart_form_data
 from panther.base_request import BaseRequest
-from panther.exceptions import BadRequestAPIError, UnprocessableEntityError
+from panther.configs import config
+from panther.exceptions import BadRequestAPIError, RequestEntityTooLargeAPIError, UnprocessableEntityError
 
 logger = logging.getLogger('panther')
 
@@ -47,7 +48,13 @@ class Request(BaseRequest):
         if self._body is not None:
             return self._body
 
+        max_body_size = config.MAX_REQUEST_BODY_SIZE
+        content_length = self.headers.content_length
+        if max_body_size and content_length and content_length.isdigit() and int(content_length) > max_body_size:
+            raise RequestEntityTooLargeAPIError
+
         chunks = []
+        body_size = 0
         while True:
             message = await self.asgi_receive()
             if message['type'] == 'http.disconnect':
@@ -55,6 +62,9 @@ class Request(BaseRequest):
 
             chunk = message.get('body', b'')
             if chunk:
+                body_size += len(chunk)
+                if max_body_size and body_size > max_body_size:
+                    raise RequestEntityTooLargeAPIError
                 chunks.append(chunk)
 
             if not message.get('more_body', False):
