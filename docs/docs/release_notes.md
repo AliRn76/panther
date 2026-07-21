@@ -1,5 +1,13 @@
 # Panther Release Notes
 
+### 5.5.0
+
+- Add `MAX_REQUEST_BODY_SIZE` to limit HTTP request bodies. Oversized requests return `413 Request Entity Too Large`; the default remains unlimited for compatibility.
+- Cache request bodies after their first read, so repeated `await request.read_body()` calls return the same bytes without receiving the ASGI body again.
+- Cache rendered non-streaming response bytes for consistent `Content-Length` calculation and sending.
+- Compile global and function-API middleware chains during setup, reducing per-request work. Middleware instances are shared across concurrent requests and must not retain request-specific state on `self`.
+- Improve routing, response, request-body, middleware, OpenAPI, and configuration test coverage.
+
 ### 5.4.0
 
 - Add opt-in PostgreSQL support using SQLAlchemy async and `asyncpg` through `PostgreSQLConnection`.

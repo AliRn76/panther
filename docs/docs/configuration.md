@@ -38,6 +38,16 @@ In multi-file apps, define settings in `core/configs.py` and let `Panther(__name
 
 Unknown uppercase config values are also copied onto `panther.configs.config`, so project-specific settings can be accessed through `config.MY_SETTING`.
 
+## Request Body Limits
+
+Set `MAX_REQUEST_BODY_SIZE` to a positive number of bytes to reject oversized HTTP request bodies with `413 Request Entity Too Large` before endpoint processing:
+
+```python
+MAX_REQUEST_BODY_SIZE = 10 * 1024 * 1024  # 10 MiB
+```
+
+`0` and `None` disable the limit. The default remains unlimited for compatibility and will change to `10 * 1024 * 1024` in the next major release.
+
 ## URLs
 
 For single-file apps, pass routes directly:

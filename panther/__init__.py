@@ -1,6 +1,6 @@
 from panther.main import Panther  # noqa: F401
 
-__version__ = '5.4.0'
+__version__ = '5.5.0'
 
 
 def version():
