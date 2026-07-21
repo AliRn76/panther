@@ -94,6 +94,7 @@ class TestConfig(TestCase):
             URLS, \
             WEBSOCKET_CONNECTIONS, \
             BACKGROUND_TASKS, \
+            MAX_REQUEST_BODY_SIZE, \
             HAS_WS, \
             TIMEZONE, \
             TEMPLATES_DIR, \
@@ -115,6 +116,7 @@ class TestConfig(TestCase):
         WS_AUTHENTICATION = 'panther.authentications.CookieJWTAuthentication'
         JWT_CONFIG = {'life_time': timedelta(seconds=20)}
         BACKGROUND_TASKS = True
+        MAX_REQUEST_BODY_SIZE = 1024
         TIMEZONE = 'Asia/Tehran'
         TEMPLATES_DIR = 'templates/'
         AUTO_REFORMAT = True
@@ -141,6 +143,7 @@ class TestConfig(TestCase):
         assert config.URLS == {}
         assert config.WEBSOCKET_CONNECTIONS is None
         assert config.BACKGROUND_TASKS is False
+        assert config.MAX_REQUEST_BODY_SIZE == 0
         assert config.HAS_WS is True
         assert config.TIMEZONE == 'UTC'
         assert config.TEMPLATES_DIR == '.'
@@ -148,6 +151,7 @@ class TestConfig(TestCase):
         assert config.AUTO_REFORMAT is False
         assert config.QUERY_ENGINE is None
         assert config.DATABASE is None
+        assert config.MAX_REQUEST_BODY_SIZE == 0
 
         with self.assertNoLogs(level='ERROR'):
             Panther(name=__name__, configs=__name__, urls={'dummy': DummyAPI, 'ws': DummyWS})
@@ -169,6 +173,7 @@ class TestConfig(TestCase):
             'URLS',
             'WEBSOCKET_CONNECTIONS',
             'BACKGROUND_TASKS',
+            'MAX_REQUEST_BODY_SIZE',
             'HAS_WS',
             'TIMEZONE',
             'TEMPLATES_DIR',
@@ -197,6 +202,7 @@ class TestConfig(TestCase):
         assert {'dummy': DummyAPI, 'ws': DummyWS} == config.URLS
         assert isinstance(config.WEBSOCKET_CONNECTIONS, WebsocketConnections)
         assert config.BACKGROUND_TASKS is True
+        assert config.MAX_REQUEST_BODY_SIZE == 1024
         assert config.HAS_WS is True
         assert config.TIMEZONE == 'Asia/Tehran'
         assert config.TEMPLATES_DIR == 'templates/'
@@ -250,6 +256,7 @@ class TestConfig(TestCase):
             URLS, \
             WEBSOCKET_CONNECTIONS, \
             BACKGROUND_TASKS, \
+            MAX_REQUEST_BODY_SIZE, \
             HAS_WS, \
             TIMEZONE, \
             TEMPLATES_DIR, \
@@ -271,6 +278,7 @@ class TestConfig(TestCase):
         WS_AUTHENTICATION = 'panther.authentications.CookieJWTAuthentication'
         JWT_CONFIG = {'life_time': timedelta(seconds=20)}
         BACKGROUND_TASKS = True
+        MAX_REQUEST_BODY_SIZE = 1024
         TIMEZONE = 'Asia/Tehran'
         TEMPLATES_DIR = 'templates/'
         AUTO_REFORMAT = True
@@ -300,6 +308,7 @@ class TestConfig(TestCase):
         assert config.URLS == {}
         assert config.WEBSOCKET_CONNECTIONS is None
         assert config.BACKGROUND_TASKS is False
+        assert config.MAX_REQUEST_BODY_SIZE == 0
         assert config.HAS_WS is False
         assert config.TIMEZONE == 'UTC'
         assert config.TEMPLATES_DIR == '.'

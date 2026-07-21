@@ -13,15 +13,14 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock
 
 import pytest
+from sqlalchemy import text
+
+from panther.db.connections import PostgreSQLConnection
 
 POSTGRES_TEST_URL = os.getenv(
     'PANTHER_POSTGRES_TEST_URL',
     'postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/panther_test',
 )
-
-from sqlalchemy import text
-
-from panther.db.connections import PostgreSQLConnection
 
 pytestmark = pytest.mark.postgresql
 

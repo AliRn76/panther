@@ -276,8 +276,8 @@ class OpenAPIGenerator:
             List of parameter schemas for OpenAPI
         """
         param_names = []
-        for url, endpoint in config.FLAT_URLS.items():
-            if endpoint.__name__ == endpoint_name:
+        for url, registered_endpoint in config.FLAT_URLS.items():
+            if registered_endpoint.__name__ == endpoint_name:
                 for part in url.split('/'):
                     if part.startswith('<'):
                         param_names.append(part.strip('< >'))
@@ -325,9 +325,9 @@ class OpenAPIGenerator:
         if not docstring:
             return '', ''
 
-        lines = docstring.strip().split('\n')
+        lines = [line.strip() for line in docstring.strip().split('\n')]
         summary = lines[0]
-        description = '<br>'.join(lines[1:]).strip() if len(lines) > 1 else ''
+        description = '<br>'.join(line for line in lines[1:] if line) if len(lines) > 1 else ''
 
         return summary, description
 

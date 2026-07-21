@@ -9,7 +9,8 @@ from pydantic import ValidationError
 
 from panther._utils import read_multipart_form_data
 from panther.base_request import BaseRequest
-from panther.exceptions import BadRequestAPIError, UnprocessableEntityError
+from panther.configs import config
+from panther.exceptions import BadRequestAPIError, RequestEntityTooLargeAPIError, UnprocessableEntityError
 
 logger = logging.getLogger('panther')
 
@@ -17,6 +18,7 @@ logger = logging.getLogger('panther')
 class Request(BaseRequest):
     def __init__(self, scope: dict, receive: Callable, send: Callable):
         self._data = ...
+        self._body: bytes | None = None
         self.validated_data = None  # It's been set in self.validate_input()
         super().__init__(scope=scope, receive=receive, send=send)
 
@@ -30,25 +32,46 @@ class Request(BaseRequest):
         if self._data is ...:
             match (self.headers.content_type or '').split('; boundary='):
                 case ['' | 'application/json']:
-                    self._data = json.loads(self.__body or b'{}')
+                    self._data = json.loads(self._body or b'{}')
                 case ['application/x-www-form-urlencoded']:
-                    self._data = {k.decode(): v.decode() for k, v in parse_qsl(self.__body)}
+                    self._data = {k.decode(): v.decode() for k, v in parse_qsl(self._body)}
                 case ['multipart/form-data', boundary]:
-                    self._data = read_multipart_form_data(boundary=boundary, body=self.__body)
+                    self._data = read_multipart_form_data(boundary=boundary, body=self._body)
                 case [unknown]:
                     # We don't know the `content-type` so just pass the payload to user
                     logger.warning(f"'{unknown}' Content-Type is not supported")
-                    self._data = self.__body
+                    self._data = self._body
         return self._data
 
-    async def read_body(self) -> None:
+    async def read_body(self) -> bytes:
         """Read the entire body from an incoming ASGI message."""
-        self.__body = b''
-        more_body = True
-        while more_body:
+        if self._body is not None:
+            return self._body
+
+        max_body_size = config.MAX_REQUEST_BODY_SIZE
+        content_length = self.headers.content_length
+        if max_body_size and content_length and content_length.isdigit() and int(content_length) > max_body_size:
+            raise RequestEntityTooLargeAPIError
+
+        chunks = []
+        body_size = 0
+        while True:
             message = await self.asgi_receive()
-            self.__body += message.get('body', b'')
-            more_body = message.get('more_body', False)
+            if message['type'] == 'http.disconnect':
+                raise BadRequestAPIError(detail='Client disconnected')
+
+            chunk = message.get('body', b'')
+            if chunk:
+                body_size += len(chunk)
+                if max_body_size and body_size > max_body_size:
+                    raise RequestEntityTooLargeAPIError
+                chunks.append(chunk)
+
+            if not message.get('more_body', False):
+                break
+
+        self._body = b''.join(chunks)
+        return self._body
 
     def validate_data(self, model):
         if isinstance(self.data, bytes):

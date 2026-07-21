@@ -25,7 +25,7 @@ from panther.exceptions import (
     AuthorizationAPIError,
     MethodNotAllowedAPIError,
 )
-from panther.middlewares import HTTPMiddleware
+from panther.middlewares import HTTPMiddleware, compile_middleware_chain
 from panther.openapi import OutputSchema
 from panther.request import Request
 from panther.response import Response
@@ -92,13 +92,11 @@ class API:
             k: v for k, v in func.__annotations__.items() if v in {BaseRequest, Request, bool, int}
         }
 
+        handler = compile_middleware_chain(self.handle_endpoint, self.middlewares or [])
+
         @functools.wraps(func)
         async def wrapper(request: Request) -> Response:
-            chained_func = self.handle_endpoint
-            if self.middlewares:
-                for middleware in reversed(self.middlewares):
-                    chained_func = middleware(chained_func)
-            return await chained_func(request=request)
+            return await handler(request=request)
 
         # Store attributes on the function, so have the same behaviour as class-based (useful in `openapi.view.OpenAPI`)
         wrapper.auth = self.auth

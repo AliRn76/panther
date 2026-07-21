@@ -1,10 +1,15 @@
 import platform
+from datetime import timedelta
+from types import SimpleNamespace
 from unittest import IsolatedAsyncioTestCase
+from unittest.mock import patch
 
 from pydantic import BaseModel
 
 from panther import Panther
+from panther import response as response_module
 from panther.app import API, GenericAPI
+from panther.caching import caches, set_response_in_cache
 from panther.configs import config
 from panther.db import Model
 from panther.response import (
@@ -686,3 +691,77 @@ class TestResponses(IsolatedAsyncioTestCase):
         assert res.status_code == 200
         assert 'Set-Cookie' in res.headers
         assert res.cookies == [(b'Set-Cookie', b'custom_key=custom_value; Path=/; SameSite=lax')]
+
+
+class TestResponseRendering(IsolatedAsyncioTestCase):
+    async def test_json_response_is_serialized_once_when_sent(self):
+        dumps = response_module.json.dumps
+        messages = []
+
+        async def send(message):
+            messages.append(message)
+
+        with patch.object(response_module.json, 'dumps', wraps=dumps) as mocked_dumps:
+            response = Response(data={'ok': True})
+            await response.send(send=send, receive=None)
+
+        assert mocked_dumps.call_count == 1
+        assert messages == [
+            {
+                'type': 'http.response.start',
+                'status': 200,
+                'headers': [(b'Content-Length', b'11'), (b'Content-Type', b'application/json')],
+            },
+            {'type': 'http.response.body', 'body': b'{"ok":true}', 'more_body': False},
+        ]
+
+    async def test_bytes_response_never_serializes(self):
+        dumps = response_module.json.dumps
+
+        async def send(message):
+            pass
+
+        with patch.object(response_module.json, 'dumps', wraps=dumps) as mocked_dumps:
+            await Response(data=b'raw bytes').send(send=send, receive=None)
+
+        assert mocked_dumps.call_count == 0
+
+    async def test_cache_population_and_send_share_cached_body(self):
+        caches.clear()
+        request = SimpleNamespace(
+            user=None,
+            client=SimpleNamespace(ip='127.0.0.1'),
+            scope={'query_string': b''},
+            path='cached',
+            validated_data=None,
+        )
+        dumps = response_module.json.dumps
+
+        async def send(message):
+            pass
+
+        try:
+            with patch.object(response_module.json, 'dumps', wraps=dumps) as mocked_dumps:
+                response = Response(data={'ok': True})
+                await set_response_in_cache(request=request, response=response, duration=timedelta(seconds=1))
+                await response.send(send=send, receive=None)
+
+            assert mocked_dumps.call_count == 1
+        finally:
+            caches.clear()
+
+    def test_data_reassignment_invalidates_cached_body(self):
+        response = Response(data={'ok': True})
+
+        assert response.body == b'{"ok":true}'
+
+        response.data = {'ok': False}
+
+        assert response.body == b'{"ok":false}'
+
+    def test_html_and_plain_text_responses_cache_rendered_bytes(self):
+        html = HTMLResponse(data='<p>Panther</p>')
+        text = PlainTextResponse(data='Panther')
+
+        assert html.body is html.body
+        assert text.body is text.body

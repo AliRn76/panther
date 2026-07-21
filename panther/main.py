@@ -16,6 +16,7 @@ from panther._load_configs import (
     load_configs_module,
     load_database,
     load_log_queries,
+    load_max_request_body_size,
     load_middlewares,
     load_other_configs,
     load_redis,
@@ -43,6 +44,7 @@ from panther.configs import config
 from panther.db.connections import db
 from panther.events import Event
 from panther.exceptions import APIError, BaseError, NotFoundAPIError, PantherError, UpgradeRequiredError
+from panther.middlewares import compile_middleware_chain
 from panther.request import Request
 from panther.response import Response
 from panther.routings import find_endpoint
@@ -71,6 +73,8 @@ class Panther:
 
         try:
             self.load_configs()
+            self._http_handler = compile_middleware_chain(self.handle_http_endpoint, config.HTTP_MIDDLEWARES)
+            self._websocket_handler = compile_middleware_chain(self.handle_ws_endpoint, config.WS_MIDDLEWARES)
             if config.AUTO_REFORMAT:
                 reformat_code(base_dir=config.BASE_DIR)
         except Exception as e:
@@ -91,6 +95,7 @@ class Panther:
         load_throttling(self._configs_module)
         load_user_model(self._configs_module)
         load_log_queries(self._configs_module)
+        load_max_request_body_size(self._configs_module)
         load_templates_dir(self._configs_module)
         load_middlewares(self._configs_module)
         load_auto_reformat(self._configs_module)
@@ -160,19 +165,12 @@ class Panther:
 
         return await config.WEBSOCKET_CONNECTIONS.listen(connection=final_connection)
 
-    @classmethod
-    async def handle_ws(cls, scope: dict, receive: Callable, send: Callable) -> None:
+    async def handle_ws(self, scope: dict, receive: Callable, send: Callable) -> None:
         # Create Temp Connection
         connection = Websocket(scope=scope, receive=receive, send=send)
 
-        # Create Middlewares chain
-        chained_func = cls.handle_ws_endpoint
-        for middleware in config.WS_MIDDLEWARES:
-            chained_func = middleware(dispatch=chained_func)
-
-        # Call Middlewares & Endpoint
         try:
-            connection = await chained_func(connection=connection)
+            connection = await self._websocket_handler(connection=connection)
         except BaseError as e:
             connection.log(e.detail)
             await connection.close()
@@ -198,20 +196,13 @@ class Panther:
         # ENDPOINT_WEBSOCKET
         raise UpgradeRequiredError
 
-    @classmethod
-    async def handle_http(cls, scope: dict, receive: Callable, send: Callable) -> None:
+    async def handle_http(self, scope: dict, receive: Callable, send: Callable) -> None:
         # Create `Request` and its body
         request = Request(scope=scope, receive=receive, send=send)
-        await request.read_body()
-
-        # Create Middlewares chain
-        chained_func = cls.handle_http_endpoint
-        for middleware in config.HTTP_MIDDLEWARES:
-            chained_func = middleware(dispatch=chained_func)
-
         # Call Middlewares & Endpoint
         try:
-            response = await chained_func(request=request)
+            await request.read_body()
+            response = await self._http_handler(request=request)
             if response is None:
                 logger.error('You forgot to return `response` on the `Middlewares.__call__()`')
                 response = Response(

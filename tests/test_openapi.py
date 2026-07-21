@@ -1,15 +1,19 @@
+from datetime import timedelta
 from unittest import IsolatedAsyncioTestCase
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from panther import Panther, status
 from panther.app import API, GenericAPI
 from panther.configs import config
 from panther.db import Model
+from panther.middlewares.base import HTTPMiddleware
+from panther.openapi import OutputSchema
 from panther.openapi.urls import url_routing
-from panther.openapi.utils import EndpointParser
+from panther.openapi.utils import EndpointParser, OpenAPIGenerator
 from panther.response import Response
 from panther.test import APIClient
+from panther.throttling import Throttle
 
 
 @API()
@@ -190,6 +194,73 @@ def my_api26():
 @API()
 def my_api27():
     return CustomModel(title='Book')
+
+
+class DocumentInput(BaseModel):
+    title: str = Field(min_length=3, max_length=100)
+    page_count: int = Field(gt=0)
+
+
+class DocumentOutput(BaseModel):
+    id: int
+    title: str
+
+
+class DocumentPermission:
+    async def __call__(self, request):
+        return True
+
+
+class DocumentAuthentication:
+    async def __call__(self, request):
+        return None
+
+
+class DocumentMiddleware(HTTPMiddleware):
+    pass
+
+
+@API(
+    methods=['POST'],
+    input_model=DocumentInput,
+    output_schema=OutputSchema(
+        model=DocumentOutput,
+        status_code=status.HTTP_201_CREATED,
+        tags=['documents'],
+        deprecated=True,
+    ),
+    auth=DocumentAuthentication,
+    permissions=[DocumentPermission],
+    throttling=Throttle(rate=10, duration=timedelta(minutes=1)),
+    cache=timedelta(minutes=5),
+    middlewares=[DocumentMiddleware],
+)
+def create_document(document_id: int, preview: bool, scale: float, missing: str):
+    """Create a document.
+
+    Persists a document after validating its request body.
+    """
+    return Response({'id': document_id, 'title': 'Panther'}, status_code=status.HTTP_201_CREATED)
+
+
+class DocumentDetailAPI(GenericAPI):
+    output_model = DocumentOutput
+
+    async def get(self, document_id: int):
+        """Fetch a document."""
+        return {'id': document_id, 'title': 'Panther'}
+
+
+@API(output_schema=OutputSchema(exclude_in_docs=True))
+def internal_document():
+    return {'detail': 'internal'}
+
+
+openapi_urls = {
+    'documents/<document_id>/<preview>/<scale>/<missing>/': create_document,
+    'documents/<document_id>/': DocumentDetailAPI,
+    'internal-documents/': internal_document,
+}
 
 
 class TestOpenAPI(IsolatedAsyncioTestCase):
@@ -481,3 +552,60 @@ class TestOpenAPI(IsolatedAsyncioTestCase):
         parsed = EndpointParser(my_api27, 'get')
         assert parsed.status_code == 200
         assert parsed.response_data == {'title': 'Book'}
+
+
+class TestOpenAPIGenerator(IsolatedAsyncioTestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        Panther(__name__, configs=__name__, urls=openapi_urls)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        config.refresh()
+
+    async def test_generates_complete_contract_for_documented_endpoints(self):
+        spec = OpenAPIGenerator.generate_openapi_spec()
+
+        create_operation = spec['paths']['/documents/{document_id}/{preview}/{scale}/{missing}/']['post']
+        assert create_operation['operationId'] == 'create_document_post'
+        assert create_operation['summary'] == 'Create a document.'
+        assert create_operation['description'] == (
+            "Persists a document after validating its request body.<br>  - Permissions: ['DocumentPermission']"
+            '<br>  - Throttling: 10 per 0:01:00<br>  - Cache: 0:05:00'
+            "<br>  - Middlewares: ['DocumentMiddleware']"
+        )
+        assert create_operation['tags'] == ['documents']
+        assert create_operation['security'] == [{'BearerAuth': []}]
+        assert create_operation['deprecated'] is True
+        assert create_operation['parameters'] == [
+            {'name': 'document_id', 'in': 'path', 'required': True, 'schema': {'type': 'integer'}},
+            {'name': 'preview', 'in': 'path', 'required': True, 'schema': {'type': 'boolean'}},
+            {'name': 'scale', 'in': 'path', 'required': True, 'schema': {'type': 'number'}},
+            {'name': 'missing', 'in': 'path', 'required': True, 'schema': {'type': 'string'}},
+        ]
+        assert create_operation['requestBody'] == {
+            'required': True,
+            'content': {'application/json': {'schema': {'$ref': '#/components/schemas/DocumentInput'}}},
+        }
+        assert create_operation['responses'] == {
+            201: {'content': {'application/json': {'schema': {'$ref': '#/components/schemas/DocumentOutput'}}}},
+            401: {'description': 'Unauthorized'},
+            403: {'description': 'Forbidden'},
+            400: {'description': 'Bad Request'},
+            422: {'description': 'Unprocessable Entity'},
+        }
+
+        detail_operation = spec['paths']['/documents/{document_id}/']['get']
+        assert detail_operation['parameters'] == [
+            {'name': 'document_id', 'in': 'path', 'required': True, 'schema': {'type': 'integer'}},
+        ]
+        assert 'requestBody' not in detail_operation
+        assert detail_operation['responses'] == {
+            200: {'content': {'application/json': {'schema': {'$ref': '#/components/schemas/DocumentOutput'}}}},
+        }
+
+        assert spec['paths']['/internal-documents/'] == {}
+        assert set(spec['components']['schemas']) == {'DocumentInput', 'DocumentOutput'}
+        assert spec['components']['schemas']['DocumentInput']['properties']['title']['minLength'] == 3
+        assert spec['components']['schemas']['DocumentInput']['properties']['title']['maxLength'] == 100
+        assert spec['components']['schemas']['DocumentInput']['properties']['page_count']['exclusiveMinimum'] == 0

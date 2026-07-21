@@ -35,6 +35,7 @@ If `detail` is a string, Panther wraps it as `{'detail': detail}`.
 | --- | ---: | --- |
 | `APIError` | 500 | `Internal Server Error` |
 | `BadRequestAPIError` | 400 | `Bad Request` |
+| `RequestEntityTooLargeAPIError` | 413 | `Request Entity Too Large` |
 | `AuthenticationAPIError` | 401 | `Authentication Error` |
 | `AuthorizationAPIError` | 403 | `Permission Denied` |
 | `NotFoundAPIError` | 404 | `Not Found` |

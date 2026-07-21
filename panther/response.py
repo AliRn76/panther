@@ -96,6 +96,7 @@ class Response:
         """
         if isinstance(data, (Cursor, PantherDBCursor)):
             data = list(data)
+        self._body: bytes | None = None
         self.data = data
         self.status_code = status_code
         self.headers = {'Content-Type': self.content_type} | (headers or {})
@@ -125,7 +126,19 @@ class Response:
     __repr__ = __str__
 
     @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, value) -> None:
+        self._data = value
+        self._body = None
+
+    @property
     def body(self) -> bytes:
+        if self._body is not None:
+            return self._body
+
         def default(obj: Any):
             if isinstance(obj, BaseModel):
                 return obj.model_dump()
@@ -136,10 +149,14 @@ class Response:
             raise TypeError(f'Type {type(obj)} not serializable')
 
         if isinstance(self.data, bytes):
-            return self.data
-        if self.data is None:
-            return b''
-        return json.dumps(self.data, default=default)
+            body = self.data
+        elif self.data is None:
+            body = b''
+        else:
+            body = json.dumps(self.data, default=default)
+
+        self._body = body
+        return body
 
     @property
     def bytes_headers(self) -> list[tuple[bytes, bytes]]:
@@ -258,9 +275,14 @@ class HTMLResponse(Response):
 
     @property
     def body(self) -> bytes:
+        if self._body is not None:
+            return self._body
         if isinstance(self.data, bytes):
-            return self.data
-        return self.data.encode()
+            body = self.data
+        else:
+            body = self.data.encode()
+        self._body = body
+        return body
 
 
 class PlainTextResponse(Response):
@@ -276,9 +298,14 @@ class PlainTextResponse(Response):
 
     @property
     def body(self) -> bytes:
+        if self._body is not None:
+            return self._body
         if isinstance(self.data, bytes):
-            return self.data
-        return self.data.encode()
+            body = self.data
+        else:
+            body = self.data.encode()
+        self._body = body
+        return body
 
 
 class FileResponse(Response):

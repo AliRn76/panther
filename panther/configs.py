@@ -57,8 +57,8 @@ class Config:
     LOG_QUERIES: bool = False
     THROTTLING = None  # type: panther.throttling.Throttle
     SECRET_KEY: str | None = None
-    HTTP_MIDDLEWARES: list = field(default_factory=list)  # Middlewares stored in reversed order
-    WS_MIDDLEWARES: list = field(default_factory=list)  # Middlewares stored in reversed order
+    HTTP_MIDDLEWARES: list = field(default_factory=list)
+    WS_MIDDLEWARES: list = field(default_factory=list)
     USER_MODEL: type[PydanticBaseModel] | None = None
     AUTHENTICATION: type[PydanticBaseModel] | None = None
     WS_AUTHENTICATION: type[PydanticBaseModel] | None = None
@@ -68,6 +68,7 @@ class Config:
     URLS: dict = field(default_factory=dict)
     WEBSOCKET_CONNECTIONS: Callable | None = None
     BACKGROUND_TASKS: bool = False
+    MAX_REQUEST_BODY_SIZE: int | None = 0
     HAS_WS: bool = False
     TIMEZONE: str = 'UTC'
     TEMPLATES_DIR: str | list[str] = '.'

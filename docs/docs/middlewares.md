@@ -6,9 +6,9 @@ Middlewares allow you to process requests and responses globally or for all or s
 
 ## Global Middlewares
 
-To apply middlewares globally, define a `MIDDLEWARES` list in your configs for HTTP middlewares, and a `WS_MIDDLEWARE` list for WebSocket middlewares. **Only HTTP-related middlewares should be placed in `MIDDLEWARES`, and WebSocket middlewares must be placed in `WS_MIDDLEWARE`.**
+To apply middlewares globally, define a `MIDDLEWARES` list in your configs for HTTP middlewares, and a `WS_MIDDLEWARES` list for WebSocket middlewares. **Only HTTP-related middlewares should be placed in `MIDDLEWARES`, and WebSocket middlewares must be placed in `WS_MIDDLEWARES`.**
 
-> **Note:** Previously, WebSocket middlewares were also defined in `MIDDLEWARES`. Now, you must define them in `WS_MIDDLEWARE` instead.
+> **Note:** Previously, WebSocket middlewares were also defined in `MIDDLEWARES`. Now, you must define them in `WS_MIDDLEWARES` instead.
 
 Each item can be either a string (dotted path to the middleware class) or the class itself (useful for single-file applications):
 
@@ -21,7 +21,7 @@ MIDDLEWARES = [
     Middleware,                       # Or directly by class
 ]
 
-WS_MIDDLEWARE = [
+WS_MIDDLEWARES = [
     'core.middlewares.MyWebsocketMiddleware',  # WebSocket middleware by dotted path
     MyWebsocketMiddleware,                     # Or directly by class
 ]
@@ -87,6 +87,8 @@ from panther.middlewares import WebsocketMiddleware
 - Create a class inheriting from `HTTPMiddleware` or `WebsocketMiddleware`.
 - Implement an asynchronous `__call__` method.
 - Always return either `await self.dispatch(...)` or a `Response`/`GenericWebsocket` instance at the end of `__call__()`.
+
+Panther creates each middleware instance once when the application or function API is set up, then reuses that instance for concurrent requests. Keep request-specific state in local variables, on `request`/`connection`, or in `contextvars`; do not store it on `self`.
 
 #### Example: HTTP Middleware
 

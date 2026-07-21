@@ -1,4 +1,5 @@
 import random
+import types
 from unittest import TestCase
 
 from panther.base_request import BaseRequest
@@ -6,6 +7,7 @@ from panther.configs import config
 from panther.exceptions import PantherError
 from panther.routings import (
     ENDPOINT_NOT_FOUND,
+    _deepmerge,
     finalize_urls,
     find_endpoint,
     flatten_urls,
@@ -101,6 +103,18 @@ class TestRoutingFunctions(TestCase):
             assert exc.args[0] == "URL Is Not Valid. --> 'user/لیست/'"
         else:
             assert False
+
+    def test_flatten_urls_rejects_malformed_path_variable_syntax(self):
+        def endpoint():
+            pass
+
+        for route in ('<user_id', 'user_id>', '<>', 'prefix<user_id>'):
+            with self.assertRaisesRegex(PantherError, 'URL Is Not Valid'):
+                flatten_urls({route: endpoint})
+
+    def test_flatten_urls_rejects_module_endpoint(self):
+        with self.assertRaisesRegex(PantherError, "URL Can't Point To Module"):
+            flatten_urls({'module/': types})
 
     def test_flatten_urls_empty_url(self):
         def temp_func():
@@ -549,6 +563,58 @@ class TestRoutingFunctions(TestCase):
         }
         assert finalized_urls == expected_result
 
+    def test_finalize_urls_preserves_an_endpoint_when_adding_nested_routes(self):
+        def users_endpoint():
+            pass
+
+        def user_detail_endpoint():
+            pass
+
+        finalized_urls = finalize_urls(
+            {
+                'users/': users_endpoint,
+                'users/detail/': user_detail_endpoint,
+            }
+        )
+
+        assert finalized_urls == {
+            'users': {
+                '': users_endpoint,
+                'detail': user_detail_endpoint,
+            },
+        }
+
+        config.URLS = finalized_urls
+        assert find_endpoint('users') == (users_endpoint, 'users')
+        assert find_endpoint('users/detail') == (user_detail_endpoint, 'users/detail')
+
+        reverse_order_urls = finalize_urls(
+            {
+                'users/detail/': user_detail_endpoint,
+                'users/': users_endpoint,
+            }
+        )
+        assert reverse_order_urls == finalized_urls
+
+    def test_deepmerge_replaces_conflicting_non_route_values(self):
+        assert _deepmerge({'endpoint': 1}, {'endpoint': 2}) == {'endpoint': 2}
+
+    def test_deepmerge_preserves_parent_endpoints_when_routes_are_nested(self):
+        def parent_endpoint():
+            pass
+
+        def child_endpoint():
+            pass
+
+        assert _deepmerge(
+            {'users': {'detail': child_endpoint}},
+            {'users': parent_endpoint},
+        ) == {'users': {'': parent_endpoint, 'detail': child_endpoint}}
+        assert _deepmerge(
+            {'users': parent_endpoint},
+            {'users': {'detail': child_endpoint}},
+        ) == {'users': {'': parent_endpoint, 'detail': child_endpoint}}
+
     def test_finalize_urls_with_same_level_path_variables(self):
         def temp_func():
             pass
@@ -879,6 +945,25 @@ class TestRoutingFunctions(TestCase):
 
         assert path == ''
         assert func is None
+
+    def test_find_endpoint_does_not_match_a_path_variable_after_a_static_endpoint(self):
+        def static_endpoint():
+            pass
+
+        def dynamic_endpoint():
+            pass
+
+        config.URLS = {
+            'users': static_endpoint,
+            '<resource>': {'detail': dynamic_endpoint},
+        }
+
+        assert find_endpoint('users/detail') == ENDPOINT_NOT_FOUND
+
+    def test_find_endpoint_rejects_an_invalid_terminal_path_variable_configuration(self):
+        config.URLS = {'users': {'<user_id>': {'': object()}}}
+
+        assert find_endpoint('users/1') == ENDPOINT_NOT_FOUND
 
     def test_find_endpoint_not_found_not_enough(self):
         def temp_func():

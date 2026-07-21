@@ -5,7 +5,9 @@ from panther.app import API
 from panther.base_websocket import Websocket
 from panther.configs import config
 from panther.middlewares.base import HTTPMiddleware, WebsocketMiddleware
+from panther.middlewares.monitoring import MonitoringMiddleware, WebsocketMonitoringMiddleware
 from panther.request import Request
+from panther.response import Response
 from panther.test import APIClient, WebsocketClient
 from panther.websocket import GenericWebsocket
 
@@ -77,6 +79,14 @@ class PrivateMiddleware2(HTTPMiddleware):
         response = await self.dispatch(request=request)
         response.data = [*response.data, 'PrivateMiddleware2']
         return response
+
+
+class CountingMiddleware(HTTPMiddleware):
+    instances = 0
+
+    def __init__(self, dispatch):
+        type(self).instances += 1
+        super().__init__(dispatch=dispatch)
 
 
 @API()
@@ -193,6 +203,34 @@ class TestMiddleware(IsolatedAsyncioTestCase):
             'PrivateMiddleware1',
         ]
 
+    async def test_global_middleware_is_constructed_once_per_app(self):
+        global MIDDLEWARES
+        CountingMiddleware.instances = 0
+        MIDDLEWARES = [CountingMiddleware]
+        app = Panther(__name__, configs=__name__, urls=urls)
+        client = APIClient(app=app)
+
+        assert CountingMiddleware.instances == 1
+        await client.get('')
+        await client.get('')
+        assert CountingMiddleware.instances == 1
+        MIDDLEWARES = []
+
+    async def test_endpoint_middleware_is_constructed_once(self):
+        CountingMiddleware.instances = 0
+
+        @API(middlewares=[CountingMiddleware])
+        async def endpoint(request: Request):
+            return {'ok': True}
+
+        app = Panther(__name__, configs=__name__, urls={'': endpoint})
+        client = APIClient(app=app)
+
+        assert CountingMiddleware.instances == 1
+        await client.get('')
+        await client.get('')
+        assert CountingMiddleware.instances == 1
+
     async def test_middlewares_order(self):
         global MIDDLEWARES
         MIDDLEWARES = [
@@ -255,6 +293,66 @@ class TestWebsocketMiddleware(TestCase):
         assert responses[2]['code'] == 1000
         assert responses[2]['reason'] == ''
         WS_MIDDLEWARES = []
+
+
+class TestMonitoringMiddleware(IsolatedAsyncioTestCase):
+    @staticmethod
+    def _scope(scope_type: str) -> dict:
+        return {
+            'type': scope_type,
+            'client': ('127.0.0.1', 55330),
+            'headers': [],
+            'method': 'GET',
+            'path': '/monitored',
+            'query_string': b'',
+            'server': ('127.0.0.1', 8000),
+            'http_version': '1.1',
+            'scheme': 'ws' if scope_type == 'websocket' else 'http',
+        }
+
+    async def test_http_monitoring_logs_request_details_and_status(self):
+        async def dispatch(request):
+            return Response(data={'ok': True}, status_code=201)
+
+        request = Request(scope=self._scope('http'), receive=None, send=None)
+        middleware = MonitoringMiddleware(dispatch=dispatch)
+
+        with self.assertLogs('monitoring', level='INFO') as captured:
+            response = await middleware(request=request)
+
+        assert response.status_code == 201
+        message = captured.records[0].getMessage()
+        assert message.startswith('GET | /monitored | 127.0.0.1:55330 | ')
+        assert message.endswith(' | 201')
+
+    async def test_websocket_monitoring_logs_connection_state_before_and_after_dispatch(self):
+        async def dispatch(connection):
+            connection.change_state(state='Accepted')
+            return connection
+
+        connection = Websocket(scope=self._scope('websocket'), receive=None, send=None)
+        middleware = WebsocketMonitoringMiddleware(dispatch=dispatch)
+
+        with self.assertLogs('monitoring', level='INFO') as captured:
+            result = await middleware(connection=connection)
+
+        assert result is connection
+        assert connection.state == 'Accepted'
+        assert captured.records[0].getMessage() == 'WS | /monitored | 127.0.0.1:55330 | - | Connected'
+        assert captured.records[1].getMessage().startswith('WS | /monitored | 127.0.0.1:55330 | ')
+        assert captured.records[1].getMessage().endswith(' | Accepted')
+
+
+class TestWebsocketMiddlewareValidation(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        config.refresh()
+
+    def setUp(self):
+        config.HAS_WS = True
+
+    def tearDown(self):
+        config.refresh()
 
     def test_http_middleware_in_websocket(self):
         global WS_MIDDLEWARES
