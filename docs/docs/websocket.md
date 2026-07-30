@@ -133,6 +133,30 @@ class MyWebSocket(GenericWebsocket):
   gunicorn -w 10 -k uvicorn.workers.UvicornWorker main:app --preload
   ```
 - **Uvicorn Limitation:** WebSockets do not work properly when using uvicorn directly with the `--workers` flag (e.g., `uvicorn main:app --workers 4`). This is because each worker process maintains its own separate WebSocket connections, and there's no shared state between workers. Use Gunicorn with the `--preload` flag or add Redis for proper WebSocket support with multiple workers.
+- **How the no-Redis fallback works:** Without Redis, pubsub is backed by a `multiprocessing.Manager` that Panther creates while your configs load, which is why `--preload` works: Gunicorn forks its workers afterwards, so they all share that one manager. The manager runs in a process of its own, so a machine with Redis available should prefer Redis.
+
+### Testing WebSocket Endpoints
+Use `WebsocketClient` from `panther.test`. It drives the ASGI app in-process, with no server or socket:
+
+```python
+from panther.test import WebsocketClient
+
+from main import app
+
+
+def test_echo_websocket():
+    client = WebsocketClient(app=app)
+    messages = client.connect('/ws/echo/')
+
+    assert messages[0]['type'] == 'websocket.accept'
+    assert messages[1]['text'] == 'Connected to Panther WebSocket'
+```
+
+`connect()` is synchronous and returns the list of raw ASGI events your endpoint sent. It performs the
+handshake, runs `connect()`, and then disconnects, so it covers accepting, rejecting, and whatever the endpoint
+sends on connect. It does not keep a live connection open, so `receive()` logic is better tested by calling the
+method directly or by running a real client against a running server. `connect()` also accepts `headers` and
+`query_params`, the latter being how you pass a token for `QueryParamJWTAuthentication`.
 
 ### Closing Connections
 - **Within the WebSocket class:**

@@ -4,6 +4,7 @@ from typing import Literal
 
 import orjson as json
 
+from panther import status
 from panther.response import HTMLResponse, PlainTextResponse, Response
 
 __all__ = ('APIClient', 'WebsocketClient')
@@ -198,11 +199,24 @@ class WebsocketClient:
     def __init__(self, app: Callable):
         self.app = app
         self.responses = []
+        self._handshake_sent = False
 
     async def send(self, data: dict):
         self.responses.append(data)
 
     async def receive(self):
+        """
+        Complete the handshake on the first call, then report a disconnect.
+
+        `listen_connection()` loops until the client disconnects, and it `continue`s on
+        `websocket.connect`. A client that only ever answers `websocket.connect` would spin there
+        forever, so this fake client says its piece once and then hangs up, which lets the endpoint
+        finish and `connect()` return the messages it sent.
+        """
+        if self._handshake_sent:
+            return {'type': 'websocket.disconnect', 'code': status.WS_1000_NORMAL_CLOSURE}
+
+        self._handshake_sent = True
         return {'type': 'websocket.connect'}
 
     def connect(
@@ -211,6 +225,10 @@ class WebsocketClient:
         headers: dict | None = None,
         query_params: dict | None = None,
     ):
+        # Each connect() is its own connection, so don't carry over the previous one's messages.
+        self.responses = []
+        self._handshake_sent = False
+
         headers = [(k.encode(), str(v).encode()) for k, v in (headers or {}).items()]
         if not path.startswith('/'):
             path = f'/{path}'

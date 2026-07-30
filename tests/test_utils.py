@@ -41,6 +41,30 @@ DB_PORT = "{self.db_port}"
         assert variables['DB_HOST'] == self.db_host
         assert variables['DB_PORT'] == str(self.db_port)
 
+    def test_load_env_exports_to_os_environ(self):
+        """
+        `load_env()` returns a dict and also exports every key, so `os.environ` works afterwards.
+        The two differ in type: booleans are converted in the returned dict, while environment
+        values are always the raw string.
+        """
+        keys = ('IS_ACTIVE', 'DB_HOST', 'DB_PORT')
+        for key in keys:
+            os.environ.pop(key, None)
+            self.addCleanup(os.environ.pop, key, None)
+
+        self._create_env_file(f"""
+IS_ACTIVE = {self.is_active}
+DB_HOST = {self.db_host}
+DB_PORT = {self.db_port}
+        """)
+
+        variables = load_env(self.file_path)
+
+        assert os.environ['DB_HOST'] == self.db_host
+        assert os.environ['DB_PORT'] == str(self.db_port)
+        assert os.environ['IS_ACTIVE'] == str(self.is_active)
+        assert variables['IS_ACTIVE'] is self.is_active
+
     def test_load_env_single_quote(self):
         self._create_env_file(f"""
 IS_ACTIVE = '{self.is_active}'

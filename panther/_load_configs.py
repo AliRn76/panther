@@ -2,14 +2,13 @@ import logging
 import sys
 import types
 from importlib import import_module
-from multiprocessing import Manager
 
 import jinja2
 
 from panther._utils import check_class_type_endpoint, check_function_type_endpoint, import_class
 from panther.authentications import JWTAuthentication
 from panther.background_tasks import _background_tasks
-from panther.base_websocket import WebsocketConnections
+from panther.base_websocket import WebsocketConnections, create_pubsub_manager
 from panther.cli.utils import import_error
 from panther.configs import JWTConfig, config
 from panther.db.connections import redis
@@ -309,7 +308,7 @@ def load_websocket_connections():
             raise import_error(e, package='websockets')
 
         # Use the redis pubsub if `redis.is_connected`, else use the `multiprocessing.Manager`
-        pubsub_connection = redis.create_connection_for_websocket() if redis.is_connected else Manager()
+        pubsub_connection = redis.create_connection_for_websocket() if redis.is_connected else create_pubsub_manager()
         config.WEBSOCKET_CONNECTIONS = WebsocketConnections(pubsub_connection=pubsub_connection)
 
 

@@ -224,6 +224,17 @@ async def test_health():
     assert response.status_code == 200
 ```
 
+`WebsocketClient.connect()` is synchronous and returns the ASGI events the endpoint sent.
+
+```python
+from panther.test import WebsocketClient
+
+
+def test_echo():
+    messages = WebsocketClient(app=app).connect('/ws/echo/')
+    assert messages[0]['type'] == 'websocket.accept'
+```
+
 ## Common Gotchas
 
 - Prefer `examples/canonical/` for generated code patterns.

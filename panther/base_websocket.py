@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
+import multiprocessing
 from multiprocessing.managers import SyncManager
 from typing import TYPE_CHECKING, Callable, Literal
 
@@ -22,6 +23,34 @@ if TYPE_CHECKING:
 logger = logging.getLogger('panther')
 
 
+def create_pubsub_manager() -> SyncManager | None:
+    """
+    Create the `multiprocessing.Manager` that backs websocket pubsub when Redis is not connected.
+
+    The manager runs in a process of its own. Under the `spawn` start method (the default on macOS and
+    Windows) that process re-imports the application's main module, which builds the Panther app a second
+    time and asks for another manager, so CPython aborts the child with
+    `RuntimeError: An attempt has been made to start a new process before the current process has finished
+    its bootstrapping phase.` and the parent then fails with `EOFError`. Two defenses:
+
+        1. Prefer the `fork` start method wherever the platform offers it. A forked manager is a copy of
+           this process, so it re-imports nothing and starts considerably faster.
+        2. Return `None` while a spawned child is re-importing the main module, which is the only path
+           left on Windows. That child exists to serve the manager and never handles a request, so it has
+           no use for a manager of its own.
+
+    Returns `None` only in case 2. Note that this runs while configs load, i.e. before Gunicorn's
+    `--preload` forks its workers, so the workers keep inheriting one shared manager.
+    """
+    if getattr(multiprocessing.current_process(), '_inheriting', False):
+        return None
+
+    if 'fork' in multiprocessing.get_all_start_methods():
+        return multiprocessing.get_context('fork').Manager()
+
+    return multiprocessing.Manager()
+
+
 class PubSub:
     def __init__(self, manager: SyncManager):
         self._manager = manager
@@ -38,15 +67,22 @@ class PubSub:
 
 
 class WebsocketConnections(Singleton):
-    def __init__(self, pubsub_connection: Redis | SyncManager):
+    def __init__(self, pubsub_connection: Redis | SyncManager | None):
         self.connections = {}
         self.connections_count = 0
         self.pubsub_connection = pubsub_connection
+        self.pubsub = None
 
         if isinstance(self.pubsub_connection, SyncManager):
             self.pubsub = PubSub(manager=self.pubsub_connection)
 
     async def __call__(self):
+        if self.pubsub_connection is None:
+            # `create_pubsub_manager()` declined to build a manager, which only happens inside the
+            # spawned process that serves it. That process never accepts connections, so there is
+            # nothing to listen for.
+            return
+
         if isinstance(self.pubsub_connection, SyncManager):
             # We don't have redis connection, so use the `multiprocessing.Manager`
             self.pubsub: PubSub
@@ -107,6 +143,8 @@ class WebsocketConnections(Singleton):
 
         if redis.is_connected:
             await redis.publish('websocket_connections', json.dumps(publish_data))
+        elif self.pubsub is None:
+            logger.error('Websocket pubsub is unavailable, so the message was not published.')
         else:
             self.pubsub.publish(publish_data)
 

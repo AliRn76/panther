@@ -1,5 +1,12 @@
 # Panther Release Notes
 
+### 5.5.1
+
+- Fix websocket applications failing to start when Redis is not configured. The `multiprocessing.Manager` backing websocket pubsub is now created with the `fork` start method where the platform provides it, and is skipped inside the spawned process that re-imports the main module. Previously, running a websocket app as a script or importing one into a test suite crashed with `RuntimeError: An attempt has been made to start a new process before the current process has finished its bootstrapping phase.` or hung, on platforms that default to the `spawn` start method such as macOS and Windows.
+- Fix `WebsocketClient.connect()` never returning for endpoints that accept a connection without closing it. The client answered every `receive()` with `websocket.connect`, which the connection listener skips, leaving the client in an endless loop. It now completes the handshake once and then reports a disconnect.
+- Reset `WebsocketClient` messages on each `connect()`, so consecutive connections from one client no longer accumulate each other's messages.
+- Load websocket connections before background tasks, so the pubsub manager is created before any thread starts.
+
 ### 5.5.0
 
 - Add `MAX_REQUEST_BODY_SIZE` to limit HTTP request bodies. Oversized requests return `413 Request Entity Too Large`; the default remains unlimited for compatibility.
