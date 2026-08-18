@@ -23,6 +23,7 @@ Panther is designed to be **fast**, **simple**, and **powerful**. Here's what ma
 - **Background tasks** - Handle long-running operations
 - **Middleware & Throttling** - Extensible and configurable
 - **File upload handling** - Built-in File and Image classes for easy file processing
+- **Optional Rust web server** - Serve on [hyper](https://hyper.rs) + [tokio](https://tokio.rs) instead of Uvicorn ([Rust Web Server](rust_server.md))
 
 ---
 
@@ -156,7 +157,7 @@ app = Panther(__name__, configs=__name__, urls=url_routing)
    $ panther run main:app --reload
    ```
    
-    > **Note:** Panther uses [Uvicorn](https://github.com/encode/uvicorn) as the default ASGI server, but you can also use [Granian](https://pypi.org/project/granian/), [Daphne](https://pypi.org/project/daphne/), or any ASGI-compatible server.
+    > **Note:** Panther uses [Uvicorn](https://github.com/encode/uvicorn) as the default ASGI server, but you can also use Panther's own [Rust web server](rust_server.md) (`panther run --server rust main:app`), [Granian](https://pypi.org/project/granian/), [Daphne](https://pypi.org/project/daphne/), or any ASGI-compatible server.
 
 2. **Test your application**
     - For the _API_ example: Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) to see the "Hello World" response

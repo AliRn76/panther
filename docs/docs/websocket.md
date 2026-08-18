@@ -134,6 +134,7 @@ class MyWebSocket(GenericWebsocket):
   ```
 - **Uvicorn Limitation:** WebSockets do not work properly when using uvicorn directly with the `--workers` flag (e.g., `uvicorn main:app --workers 4`). This is because each worker process maintains its own separate WebSocket connections, and there's no shared state between workers. Use Gunicorn with the `--preload` flag or add Redis for proper WebSocket support with multiple workers.
 - **How the no-Redis fallback works:** Without Redis, pubsub is backed by a `multiprocessing.Manager` that Panther creates while your configs load, which is why `--preload` works: Gunicorn forks its workers afterwards, so they all share that one manager. The manager runs in a process of its own, so a machine with Redis available should prefer Redis.
+- **Rust web server:** `panther run --server rust` supports WebSockets too, and its `--workers` sets tokio threads inside a *single* process, so connections stay in shared memory and the multi-worker caveats above do not apply. Run multiple instances only with Redis configured. [See Rust Web Server](rust_server.md)
 
 ### Testing WebSocket Endpoints
 Use `WebsocketClient` from `panther.test`. It drives the ASGI app in-process, with no server or socket:

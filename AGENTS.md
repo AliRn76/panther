@@ -18,6 +18,8 @@ When working in this repository, optimize for correctness first, then simplicity
 - `panther/openapi/` contains OpenAPI schema and documentation views.
 - `panther/panel/` contains the built-in admin panel.
 - `panther/cli/` contains command-line tooling.
+- `panther/server.py` drives an ASGI app on the optional Rust web server (lifespan, accept loop, graceful drain).
+- `rust/` contains the optional Rust web server: a PyO3 extension built on hyper and tokio, packaged separately as `panther-server`.
 - `tests/` contains the test suite.
 - `docs/docs/` contains documentation pages.
 - `examples/` contains example Panther applications.
@@ -39,6 +41,17 @@ Some tests need external services:
 docker run --rm -p 27017:27017 -d --name mongo mongo
 docker run --rm -p 6379:6379 -d --name redis redis
 ```
+
+The Rust web server is optional and not needed for most work. To build it you need a
+[Rust toolchain](https://rustup.rs):
+
+```bash
+pip install maturin
+maturin develop --release -m rust/Cargo.toml
+```
+
+Without it, the socket-level tests in `tests/test_rust_server.py` skip and everything else runs
+unchanged. Keep it that way: `pip install panther` must never require a Rust toolchain.
 
 ## Test Commands
 
@@ -76,6 +89,13 @@ ruff check .
 ruff check --fix .
 ```
 
+Rust code under `rust/` uses the standard toolchain:
+
+```bash
+cargo fmt --manifest-path rust/Cargo.toml
+cargo clippy --manifest-path rust/Cargo.toml --all-targets -- -D warnings
+```
+
 Follow the existing style:
 
 - Single quotes for strings unless double quotes are clearer.
@@ -95,6 +115,10 @@ Follow the existing style:
 - Be cautious when changing request parsing, multipart handling, response headers, caching, authentication, or database behavior because these affect public APIs.
 - Function-based APIs and class-based APIs should stay behaviorally consistent.
 - Public behavior changes should include tests and documentation updates.
+- Keep the Rust web server opt-in. Uvicorn stays the default, `panther/server.py` must import
+  cleanly without the extension, and nothing in `panther/` may require it.
+- In `rust/`, keep the one-directional design: Rust publishes connections onto a queue and Python
+  drains it. Do not add code paths where Rust calls into the interpreter on its own.
 
 ## Documentation Rules
 

@@ -25,6 +25,7 @@ Panther is designed to be **fast**, **simple**, and **powerful**. Here's what ma
 - **Authentication & Permissions** - Built-in security features
 - **Background tasks** - Handle long-running operations
 - **Middleware & Throttling** - Extensible and configurable
+- **Optional Rust web server** - Serve on [hyper](https://hyper.rs) + [tokio](https://tokio.rs) instead of Uvicorn ([docs](https://pantherpy.github.io/rust_server/))
 
 ---
 
@@ -119,6 +120,19 @@ app = Panther(__name__, configs=__name__, urls=url_routing)
 2. **Test your application**
     - For the _API_ example: Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) to see the "Hello World" response
     - For the _WebSocket_ example: Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) and send a message.
+
+### Optional: Run on the Rust Web Server
+
+`panther run` uses Uvicorn by default. Panther also ships an optional web server written in Rust
+(hyper + tokio, bridged with PyO3) that speaks the same ASGI protocol:
+
+```shell
+$ pip install panther[rust]
+$ panther run --server rust main:app
+```
+
+Nothing else changes — your APIs, WebSockets and lifespan events behave exactly the same.
+See the [Rust Web Server](https://pantherpy.github.io/rust_server/) docs for options and limitations.
 
 ---
 

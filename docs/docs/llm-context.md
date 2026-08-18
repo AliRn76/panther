@@ -53,6 +53,11 @@ Run with:
 panther run main:app
 ```
 
+That is an alias for Uvicorn. Panther also has an optional Rust web server (hyper + tokio through
+PyO3), installed with `pip install panther[rust]` and selected with
+`panther run --server rust main:app`, or from Python with `panther.server.run(app)`. It is opt-in —
+never assume it is installed. See [Rust Web Server](rust_server.md).
+
 ## Function APIs
 
 Use `@API(...)` on a function. Panther injects path variables by name and injects `Request` when the function annotation asks for it.
