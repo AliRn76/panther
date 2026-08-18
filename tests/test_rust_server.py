@@ -17,6 +17,52 @@ except ImportError:
     websockets = None
 
 
+class TestPackaging(TestCase):
+    """`rust/` is a second top-level directory, which breaks setuptools' flat-layout
+    auto-discovery unless `packages` is declared explicitly. Guard that here: the
+    failure mode is an install that dies with "Multiple top-level packages
+    discovered in a flat-layout".
+    """
+
+    @staticmethod
+    def _setup_kwargs():
+        import setuptools
+
+        setup_py = Path(__file__).resolve().parent.parent / 'setup.py'
+        captured = {}
+        original = setuptools.setup
+        setuptools.setup = lambda **kwargs: captured.update(kwargs)
+        try:
+            namespace = {'__name__': '__main__', '__file__': str(setup_py)}
+            exec(compile(setup_py.read_text(), str(setup_py), 'exec'), namespace)  # noqa: S102
+        finally:
+            setuptools.setup = original
+        return captured
+
+    def test_packages_are_declared_explicitly(self):
+        packages = self._setup_kwargs()['packages']
+        assert 'panther' in packages
+        assert [name for name in packages if name == 'rust' or name.startswith('rust.')] == []
+        assert all(name == 'panther' or name.startswith('panther.') for name in packages)
+
+    def test_subpackages_are_included(self):
+        packages = set(self._setup_kwargs()['packages'])
+        expected = {
+            'panther.cli',
+            'panther.db',
+            'panther.db.queries',
+            'panther.middlewares',
+            'panther.openapi',
+            'panther.panel',
+        }
+        assert expected <= packages
+
+    def test_rust_extra_exists(self):
+        extras = self._setup_kwargs()['extras_require']
+        assert 'rust' in extras
+        assert any('panther-server' in requirement for requirement in extras['rust'])
+
+
 class TestSplitServerOption(TestCase):
     def test_default_is_uvicorn(self):
         server, args = split_server_option(['main:app', '--reload'])
@@ -479,6 +525,7 @@ class TestRustServerWebsocket(IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         ready = asyncio.get_running_loop().create_future()
         self.scopes = []
+        self.received = []
 
         async def app(scope, receive, send):
             if scope['type'] != 'websocket':
@@ -492,7 +539,11 @@ class TestRustServerWebsocket(IsolatedAsyncioTestCase):
                 message = await receive()
                 if message['type'] == 'websocket.disconnect':
                     return
-                if message.get('text') is not None:
+                self.received.append(message)
+                # Dispatch the way Panther's `listen_connection()` does, so a
+                # message carrying both keys would route a binary frame down
+                # the text branch and fail loudly.
+                if 'text' in message:
                     await send({'type': 'websocket.send', 'text': message['text'].upper()})
                 else:
                     await send({'type': 'websocket.send', 'bytes': message['bytes'][::-1]})
@@ -523,3 +574,45 @@ class TestRustServerWebsocket(IsolatedAsyncioTestCase):
 
         assert self.scopes[0]['path'] == '/ws/room'
         assert self.scopes[0]['type'] == 'websocket'
+        # Websocket scopes carry no `method`, matching uvicorn and Panther's
+        # own `WebsocketClient`.
+        assert 'method' not in self.scopes[0]
+
+        # Exactly one of the two payload keys per message, never both.
+        assert [sorted(set(m) & {'text', 'bytes'}) for m in self.received] == [['text'], ['bytes']]
+
+
+class TestExtensionLinking(TestCase):
+    """A bare `cargo build` inside `rust/` must link on macOS.
+
+    `pyo3`'s `extension-module` feature leaves CPython's symbols undefined for the
+    interpreter to resolve at import time. Mach-O rejects that unless the linker is
+    told to look them up dynamically, so without `build.rs` every macOS build dies
+    with "Undefined symbols for architecture arm64". `maturin` passes the flag on
+    its own, which is why this only bites contributors who run cargo directly.
+    """
+
+    BUILD_SCRIPT = Path(__file__).resolve().parent.parent / 'rust' / 'build.rs'
+
+    @classmethod
+    def _code(cls) -> str:
+        """The build script with its comments stripped.
+
+        The comments deliberately name `cfg!(target_os = ...)` to explain why it is
+        the wrong tool here, so a substring check over the raw file finds the very
+        thing it is meant to forbid.
+        """
+        return '\n'.join(
+            line for line in cls.BUILD_SCRIPT.read_text().splitlines() if not line.lstrip().startswith('//')
+        )
+
+    def test_build_script_exists(self):
+        assert self.BUILD_SCRIPT.is_file()
+
+    def test_macos_gets_dynamic_lookup(self):
+        assert 'cargo:rustc-cdylib-link-arg=-Wl,-undefined,dynamic_lookup' in self._code()
+
+    def test_flag_is_gated_on_the_target_not_the_host(self):
+        code = self._code()
+        assert 'CARGO_CFG_TARGET_OS' in code
+        assert 'cfg!(target_os' not in code
