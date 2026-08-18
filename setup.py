@@ -1,6 +1,6 @@
 import re
 
-from setuptools import setup
+from setuptools import find_namespace_packages, setup
 
 
 def panther_version() -> str:
@@ -59,6 +59,11 @@ setup(
     long_description=DESCRIPTION,
     long_description_content_type='text/markdown',
     include_package_data=True,
+    # Declared explicitly rather than left to setuptools' flat-layout
+    # auto-discovery: `rust/` is a second top-level directory in this
+    # repository, and auto-discovery refuses to build when it finds more than
+    # one. This list is exactly what auto-discovery produced beforehand.
+    packages=find_namespace_packages(include=['panther', 'panther.*']),
     license='BSD-3-Clause license',
     classifiers=[
         'Operating System :: OS Independent',
