@@ -86,13 +86,11 @@ pub async fn handle(
         .map(|value| value.as_bytes() == b"13")
         .unwrap_or(false);
     if !version_supported {
-        return Some(
-            Response::builder()
-                .status(StatusCode::UPGRADE_REQUIRED)
-                .header("sec-websocket-version", "13")
-                .body(empty_body())
-                .ok()?,
-        );
+        return Response::builder()
+            .status(StatusCode::UPGRADE_REQUIRED)
+            .header("sec-websocket-version", "13")
+            .body(empty_body())
+            .ok();
     }
 
     // Must be taken before the request is consumed by `into_parts()`.
@@ -109,16 +107,14 @@ pub async fn handle(
     let (in_tx, in_rx) = mpsc::channel::<RxMessage>(state.message_buffer);
     let (out_tx, mut out_rx) = mpsc::channel::<TxMessage>(state.message_buffer);
 
-    if state
-        .accept_tx
-        .send(PendingConnection {
+    let published = state
+        .publish(PendingConnection {
             scope,
             rx: in_rx,
             tx: out_tx,
         })
-        .await
-        .is_err()
-    {
+        .await;
+    if !published {
         return Some(simple_response(
             StatusCode::SERVICE_UNAVAILABLE,
             "Server is not accepting connections",

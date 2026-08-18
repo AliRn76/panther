@@ -21,13 +21,13 @@ use pyo3::prelude::*;
 
 static RUNTIME_INIT: Once = Once::new();
 
-/// Configure the tokio runtime backing the server.
+/// Build the tokio runtime, exactly once per process.
 ///
-/// Must be called before the first `Server` is started; later calls are ignored
-/// because the runtime can only be built once per process.
-#[pyfunction]
-#[pyo3(signature = (worker_threads = None, thread_name = "panther-server"))]
-fn configure_runtime(worker_threads: Option<usize>, thread_name: &str) -> PyResult<bool> {
+/// `pyo3_async_runtimes::tokio::init` may only be called once, so every entry
+/// point funnels through here. Returns whether this call was the one that built
+/// it. `Server::new` calls it with defaults, so the runtime is always
+/// initialized through this path rather than relying on lazy construction.
+pub(crate) fn ensure_runtime(worker_threads: Option<usize>, thread_name: &str) -> bool {
     let mut configured = false;
     let name = thread_name.to_string();
 
@@ -41,7 +41,18 @@ fn configure_runtime(worker_threads: Option<usize>, thread_name: &str) -> PyResu
         configured = true;
     });
 
-    Ok(configured)
+    configured
+}
+
+/// Configure the tokio runtime backing the server.
+///
+/// Must be called before the first `Server` is created; later calls are ignored
+/// because the runtime can only be built once per process. Returns `True` when
+/// this call is the one that built it.
+#[pyfunction]
+#[pyo3(signature = (worker_threads = None, thread_name = "panther-server"))]
+fn configure_runtime(worker_threads: Option<usize>, thread_name: &str) -> PyResult<bool> {
+    Ok(ensure_runtime(worker_threads, thread_name))
 }
 
 /// Number of worker threads tokio would use by default.

@@ -74,16 +74,14 @@ pub async fn handle(
     let (body_tx, body_rx) = mpsc::channel::<RxMessage>(state.message_buffer);
     let (out_tx, mut out_rx) = mpsc::channel::<TxMessage>(state.message_buffer);
 
-    if state
-        .accept_tx
-        .send(PendingConnection {
+    let published = state
+        .publish(PendingConnection {
             scope,
             rx: body_rx,
             tx: out_tx,
         })
-        .await
-        .is_err()
-    {
+        .await;
+    if !published {
         return Some(simple_response(
             StatusCode::SERVICE_UNAVAILABLE,
             "Server is not accepting connections",

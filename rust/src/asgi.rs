@@ -11,7 +11,7 @@ use std::sync::Arc;
 use bytes::Bytes;
 use http::request::Parts;
 use http::{HeaderMap, Version};
-use pyo3::exceptions::{PyRuntimeError, PyValueError};
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyAnyMethods, PyBytes, PyDict, PyList, PyString, PyTuple};
 use tokio::sync::{mpsc, Mutex as AsyncMutex};
@@ -49,15 +49,17 @@ impl RxMessage {
             RxMessage::WsConnect => {
                 dict.set_item("type", "websocket.connect")?;
             }
+            // Exactly one of `text`/`bytes` is set, never both-with-one-None.
+            // The spec allows either shape, but code in the wild — Panther's own
+            // `listen_connection()` included — dispatches on `'text' in message`,
+            // so a `text: None` key would swallow every binary frame.
             RxMessage::WsReceiveText(text) => {
                 dict.set_item("type", "websocket.receive")?;
                 dict.set_item("text", text)?;
-                dict.set_item("bytes", py.None())?;
             }
             RxMessage::WsReceiveBytes(data) => {
                 dict.set_item("type", "websocket.receive")?;
                 dict.set_item("bytes", PyBytes::new(py, &data))?;
-                dict.set_item("text", py.None())?;
             }
             RxMessage::WsDisconnect { code } => {
                 dict.set_item("type", "websocket.disconnect")?;
@@ -106,7 +108,7 @@ fn parse_headers(value: Option<Bound<'_, PyAny>>) -> PyResult<Vec<(Bytes, Bytes)
 
     let mut headers = Vec::new();
 
-    if let Ok(mapping) = value.downcast::<PyDict>() {
+    if let Ok(mapping) = value.cast::<PyDict>() {
         for (key, val) in mapping.iter() {
             headers.push((coerce_bytes(&key)?, coerce_bytes(&val)?));
         }
@@ -129,10 +131,10 @@ fn parse_headers(value: Option<Bound<'_, PyAny>>) -> PyResult<Vec<(Bytes, Bytes)
 /// Accept `bytes` or `str` wherever ASGI asks for `bytes`; Python code in the
 /// wild is loose about this and being strict buys nothing.
 fn coerce_bytes(value: &Bound<'_, PyAny>) -> PyResult<Bytes> {
-    if let Ok(data) = value.downcast::<PyBytes>() {
+    if let Ok(data) = value.cast::<PyBytes>() {
         return Ok(Bytes::copy_from_slice(data.as_bytes()));
     }
-    if let Ok(text) = value.downcast::<PyString>() {
+    if let Ok(text) = value.cast::<PyString>() {
         return Ok(Bytes::from(text.to_cow()?.into_owned().into_bytes()));
     }
     if let Ok(data) = value.extract::<Vec<u8>>() {
@@ -203,7 +205,8 @@ impl TxMessage {
                 Ok(TxMessage::WsClose { code, reason })
             }
             other => Err(PyValueError::new_err(format!(
-                "unsupported ASGI message type: {other!r}"
+                "unsupported ASGI message type: {}",
+                other
             ))),
         }
     }
@@ -331,7 +334,10 @@ impl ScopeData {
             },
         )?;
         scope.set_item("http_version", self.http_version)?;
-        scope.set_item("method", self.method)?;
+        if self.kind == ConnectionKind::Http {
+            // Websocket scopes carry no `method`; the handshake is always GET.
+            scope.set_item("method", self.method)?;
+        }
         scope.set_item("scheme", self.scheme)?;
         scope.set_item("path", self.path)?;
         scope.set_item("raw_path", PyBytes::new(py, &self.raw_path))?;
@@ -432,9 +438,12 @@ impl Connection {
         let parsed = TxMessage::from_py(message)?;
         let tx = self.tx.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            tx.send(parsed)
-                .await
-                .map_err(|_| PyRuntimeError::new_err("connection is closed"))?;
+            // Sending after the peer is gone is a no-op rather than an error.
+            // Clients abort requests constantly, and raising here would turn
+            // every aborted request into a logged traceback from the endpoint
+            // that was midway through its response. Applications learn about
+            // the disconnect through `receive()`, which is where ASGI puts it.
+            let _ = tx.send(parsed).await;
             Ok(())
         })
     }

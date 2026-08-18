@@ -49,6 +49,21 @@ impl ServerState {
     pub fn is_shutting_down(&self) -> bool {
         *self.shutdown_rx.borrow()
     }
+
+    /// Hand a connection to Python, waiting for room in the queue.
+    ///
+    /// Returns `false` when the connection could not be published. The wait is
+    /// cancelled by shutdown: once Python stops calling `accept()` nothing will
+    /// drain the queue again, and a plain `send().await` would hang the request
+    /// forever instead of letting hyper answer and close.
+    pub async fn publish(&self, pending: PendingConnection) -> bool {
+        let mut shutdown = self.shutdown_rx.clone();
+        tokio::select! {
+            biased;
+            _ = shutdown_signal(&mut shutdown) => false,
+            result = self.accept_tx.send(pending) => result.is_ok(),
+        }
+    }
 }
 
 /// Resolve once the server has been asked to stop.
@@ -184,6 +199,10 @@ impl Server {
                 "`backlog` and `message_buffer` must be greater than zero",
             ));
         }
+
+        // No-op when `configure_runtime()` already ran; this only covers callers
+        // that construct a `Server` directly.
+        crate::ensure_runtime(None, "panther-server");
 
         let (accept_tx, accept_rx) = mpsc::channel(backlog);
         let (shutdown_tx, shutdown_rx) = watch::channel(false);
