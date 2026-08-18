@@ -25,6 +25,13 @@ Some examples need optional dependencies:
 pip install "panther[full]"
 ```
 
+Run any example on the optional Rust web server instead of Uvicorn:
+
+```bash
+pip install "panther[rust]"
+panther run --server rust examples.canonical.11_rust_server:app
+```
+
 ## Scenario Examples
 
 - `streaming_response.py` demonstrates several streaming response patterns.
