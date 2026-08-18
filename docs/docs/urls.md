@@ -23,15 +23,13 @@ You can define variables in your URL paths using angle brackets (`<variable_name
 === "Function-based"
     ```python title="app/apis.py"
     @API()
-    async def profile_api(user_id: int, title: str, is_alive: bool):
-        ...
+    async def profile_api(user_id: int, title: str, is_alive: bool): ...
     ```
 
 === "Class-based"
     ```python title="app/apis.py"
     class MyAPI(GenericAPI):
-        async def get(self, user_id: int, title: str, is_alive: bool):
-            ...
+        async def get(self, user_id: int, title: str, is_alive: bool): ...
     ```
 
 ---
@@ -74,9 +72,9 @@ app_urls = {
 ```python title="app/apis.py" linenums="1"
 from panther import API
 
+
 @API()
-async def profile_api(user_id: int, title: str, is_alive: bool):
-    ...
+async def profile_api(user_id: int, title: str, is_alive: bool): ...
 ```
 
 ---

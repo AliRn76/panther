@@ -1,0 +1,37 @@
+[package]
+name = "panther-server"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+description = "Rust (hyper + tokio) ASGI web server for the Panther framework, exposed to Python via PyO3"
+license = "BSD-3-Clause"
+repository = "https://github.com/AliRn76/panther"
+readme = "README.md"
+
+[lib]
+name = "_panther_server"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.29", features = ["extension-module"] }
+pyo3-async-runtimes = { version = "0.29", features = ["tokio-runtime"] }
+
+tokio = { version = "1", features = ["rt-multi-thread", "net", "sync", "time", "macros"] }
+tokio-tungstenite = "0.30"
+
+hyper = { version = "1", features = ["http1", "server"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+http = "1"
+http-body-util = "0.1"
+
+bytes = "1"
+futures-util = { version = "0.3", default-features = false, features = ["std", "sink"] }
+base64 = "0.22"
+sha1 = "0.10"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+# Note: `panic = "abort"` is deliberately not set. PyO3 turns a Rust panic into
+# a Python exception, which aborting would prevent.

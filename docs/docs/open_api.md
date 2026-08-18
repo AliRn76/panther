@@ -24,9 +24,9 @@ You can import and use any of these UI components directly in your URL configura
 from panther.openapi.views import ScalarOpenAPI, SwaggerOpenAPI, RedocOpenAPI
 
 url_routing = {
-    'docs/scalar/': ScalarOpenAPI,    # Modern UI at /docs/scalar/
+    'docs/scalar/': ScalarOpenAPI,  # Modern UI at /docs/scalar/
     'docs/swagger/': SwaggerOpenAPI,  # Classic Swagger at /docs/swagger/
-    'docs/redoc/': RedocOpenAPI,      # Clean interface at /docs/redoc/
+    'docs/redoc/': RedocOpenAPI,  # Clean interface at /docs/redoc/
     # Other urls
 }
 ```
@@ -78,14 +78,15 @@ Panther inspects your API views for an `output_schema` attribute. This attribute
     from panther import status
     from panther.app import API
     from panther.openapi import OutputSchema
-    
+
+
     class UserSerializer(BaseModel):
         username: str
         age: int
-    
+
+
     @API(output_schema=OutputSchema(model=UserSerializer, status_code=status.HTTP_200_OK))
-    def user_api():
-        ...
+    def user_api(): ...
     ```
 
 === "Class-Base API"
@@ -95,11 +96,13 @@ Panther inspects your API views for an `output_schema` attribute. This attribute
     from panther import status
     from panther.app import GenericAPI
     from panther.openapi import OutputSchema
-    
+
+
     class UserSerializer(BaseModel):
         username: str
         age: int
-    
+
+
     class UserAPI(GenericAPI):
         output_schema = OutputSchema(model=UserSerializer, status_code=status.HTTP_200_OK)
         ...

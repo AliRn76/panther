@@ -55,6 +55,48 @@ jobs:
       - name: Show Coverage
         run: coverage report
 
+  rust-server:
+    name: Rust Web Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Check Formatting
+        run: cargo fmt --manifest-path rust/Cargo.toml --check
+
+      - name: Lint
+        run: cargo clippy --manifest-path rust/Cargo.toml --all-targets -- -D warnings
+
+      - name: Install Requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt maturin
+
+      - name: Build The Extension
+        run: |
+          maturin build --release -m rust/Cargo.toml --out dist
+          pip install --find-links dist --no-index panther-server
+
+      - name: Run Tests
+        run: python -m pytest tests/test_rust_server.py -v
+
   tests-windows:
     name: Test Windows
     runs-on: windows-latest

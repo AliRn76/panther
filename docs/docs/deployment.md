@@ -9,6 +9,7 @@ Panther is an ASGI-compatible web framework, which means you can deploy your Pan
 While Panther comes with a convenient CLI, you are not limited to it. You can use any ASGI server to run your app:
 
 - **Uvicorn** (default, recommended)
+- **Panther's Rust web server** (optional, hyper + tokio — see [Rust Web Server](rust_server.md))
 - **Granian**
 - **Daphne**
 - **Hypercorn**
@@ -47,6 +48,23 @@ is **an alias for running Uvicorn** with your Panther app. You can use all Uvico
 - Omit `--reload` for production.
 
 **Note:** For advanced deployment, prefer running Uvicorn (or another ASGI server) directly, as shown above.
+
+### Example: Using the Rust Web Server
+
+Panther ships an optional web server written in Rust (hyper + tokio, bridged with PyO3):
+
+```bash
+pip install panther[rust]
+panther run --server rust main:app --host 0.0.0.0 --port 8000 --workers 4
+```
+
+`--workers` here sets **tokio worker threads inside one process**, not separate OS processes.
+For multi-process deployments, run several instances behind your reverse proxy (and configure
+[Redis](redis.md) if you use WebSockets), or stay on Gunicorn + Uvicorn workers.
+
+The Rust server does not terminate TLS and has no `--reload`; put it behind Nginx or Caddy in
+production and use Uvicorn during development. See [Rust Web Server](rust_server.md) for the full
+option list.
 
 ---
 

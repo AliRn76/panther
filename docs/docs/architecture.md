@@ -25,6 +25,34 @@ The global config object lives in `panther/configs.py`. This keeps simple apps e
 - `scope['type'] == 'websocket'` goes to `handle_ws`.
 - `scope['type'] == 'lifespan'` runs startup events and starts the WebSocket connection listener when needed.
 
+Panther itself never talks to a socket. Whatever produces those three callables — Uvicorn by
+default, or the optional Rust web server described below — is interchangeable.
+
+## Web Server Layer
+
+Two servers can drive the application:
+
+- **Uvicorn** is the default and the only one installed by `pip install panther`.
+- **The Rust web server** is optional, ships as the separate `panther-server` distribution built
+  from `rust/`, and is selected with `panther run --server rust` or `panther.server.run()`.
+
+The Rust server is built on hyper (HTTP/1.1 and websocket framing), tokio (I/O) and PyO3 (the
+Python bridge). Its structure is deliberately one-directional:
+
+1. `rust/src/server.rs` binds the socket and runs hyper on a tokio runtime.
+2. Each connection becomes an ASGI scope plus a pair of channels (`rust/src/asgi.rs`), pushed onto
+   a queue.
+3. `panther/server.py` drains that queue from the asyncio event loop with `Server.accept()` and
+   calls `app(scope, receive, send)` itself.
+
+The consequence worth remembering: **Rust never calls into the interpreter on its own.** Every
+entry into Python happens on the event loop thread, which keeps the GIL out of the parsing hot path
+and avoids scheduling coroutines across threads.
+
+`panther/server.py` also owns the lifespan protocol, the accept loop and the graceful drain on
+shutdown, so the Rust side stays free of application semantics. See [Rust Web Server](rust_server.md)
+for usage and `rust/README.md` for the crate layout.
+
 ## HTTP Request Flow
 
 The HTTP path is:

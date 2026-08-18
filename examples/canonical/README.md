@@ -18,6 +18,12 @@ WebSocket examples require Panther's optional WebSocket dependency:
 pip install "panther[full]"
 ```
 
+`11_rust_server.py` requires the optional Rust web server:
+
+```bash
+pip install "panther[rust]"
+```
+
 ## Files
 
 - `01_single_file.py` - Minimal app with a plain `Response`.
@@ -30,5 +36,6 @@ pip install "panther[full]"
 - `08_pantherdb_models.py` - PantherDB model, serializer, and CRUD-style endpoints.
 - `09_testing_clients.py` - Using `APIClient` and `WebsocketClient`.
 - `10_events_background_tasks.py` - Startup/shutdown events and background task scheduling.
+- `11_rust_server.py` - Running the same HTTP and WebSocket endpoints on the optional Rust web server.
 
 Prefer these files over older generated Q&A material when teaching an LLM Panther APIs.

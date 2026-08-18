@@ -14,6 +14,7 @@ To see all available timezone options, you can run:
 
 ```python
 import pytz
+
 print(pytz.all_timezones)
 ```
 

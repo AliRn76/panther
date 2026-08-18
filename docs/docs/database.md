@@ -77,7 +77,7 @@ DATABASE = {
     'engine': {
         'class': 'panther.db.connections.PantherDBConnection',
         'path': BASE_DIR / 'database.pdb',  # Optional
-        'encryption': True  # Optional, default is False
+        'encryption': True,  # Optional, default is False
     }
 }
 ```
@@ -95,10 +95,7 @@ Example configuration for MongoDB:
 
 ```python
 DATABASE = {
-    'engine': {
-        'class': 'panther.db.connections.MongoDBConnection',
-        'host': 'mongodb://127.0.0.1:27017/database_name'
-    }
+    'engine': {'class': 'panther.db.connections.MongoDBConnection', 'host': 'mongodb://127.0.0.1:27017/database_name'}
 }
 ```
 

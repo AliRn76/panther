@@ -21,6 +21,7 @@ Use these files as the best context sources:
 - `/docs/docs/middlewares.md` - middleware behavior.
 - `/docs/docs/authentications.md` - authentication.
 - `/docs/docs/background_tasks.md` and `/docs/docs/events.md` - runtime hooks.
+- `/docs/docs/rust_server.md` - the optional Rust (hyper + tokio) web server, its CLI flags and `panther.server` API.
 
 Prefer examples from `/examples/canonical/` when generating code. They are intentionally small and kept close to the current public API.
 

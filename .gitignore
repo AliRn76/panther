@@ -12,3 +12,7 @@ docs/site/*
 *coverage*
 .prettierrc
 .vscode
+# Rust web server build artifacts
+rust/target/
+rust/python/panther_server/*.so
+rust/python/panther_server/*.pyd

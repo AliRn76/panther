@@ -12,6 +12,7 @@ To create a Panther model, define a class that inherits from `panther.db.Model`:
 ```python title="app/models.py" linenums="1"
 from panther.db import Model
 
+
 class User(Model):
     username: str
     age: int
@@ -31,6 +32,7 @@ You can define model attributes (columns) using Python type hints. Each attribut
 ```python title="app/models.py" linenums="1"
 from panther.db import Model
 
+
 class Product(Model):
     name: str
     price: int
@@ -45,14 +47,17 @@ class Product(Model):
 from pydantic import BaseModel
 from panther.db import Model
 
+
 class Book(BaseModel):
     title: str
     author: str
     tags: list[str]
 
+
 class Library(Model):
     name: str
     books: list[Book]
+
 
 class School(Model):
     name: str
@@ -66,6 +71,7 @@ class School(Model):
 ```python title="app/models.py" linenums="1"
 from panther.db import Model
 
+
 class Config(Model):
     settings: dict
 ```
@@ -78,9 +84,11 @@ class Config(Model):
 from pydantic import BaseModel
 from panther.db import Model
 
+
 class Address(BaseModel):
     city: str
     zipcode: str
+
 
 class Customer(Model):
     name: str
@@ -98,8 +106,10 @@ class Customer(Model):
 ```python title="app/models.py" linenums="1"
 from panther.db import Model
 
+
 class Department(Model):
     name: str
+
 
 class Employee(Model):
     name: str
@@ -113,6 +123,7 @@ class Employee(Model):
 **Example:**
 ```python title="app/models.py" linenums="1"
 from panther.db import Model
+
 
 class Article(Model):
     title: str
@@ -132,10 +143,12 @@ from datetime import datetime
 from panther.db import Model
 from panther.file_handler import File, Image
 
+
 class Document(Model):
     title: str
     file: File
     uploaded_at: datetime
+
 
 class Profile(Model):
     name: str
@@ -153,11 +166,13 @@ When using File types in models:
 **Example usage:**
 ```python
 # Create a document with file
-document = await Document.insert_one({
-    'title': 'My Document',
-    'file': File(file_name='document.pdf', content_type='application/pdf', file=file_bytes),
-    'uploaded_at': datetime.now()
-})
+document = await Document.insert_one(
+    {
+        'title': 'My Document',
+        'file': File(file_name='document.pdf', content_type='application/pdf', file=file_bytes),
+        'uploaded_at': datetime.now(),
+    }
+)
 
 # Access file properties
 print(document.file.file_name)  # 'document.pdf'

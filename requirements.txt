@@ -1,4 +1,5 @@
 .
+setuptools
 python-jose
 faker
 coverage

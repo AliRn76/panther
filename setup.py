@@ -1,6 +1,6 @@
 import re
 
-from setuptools import setup
+from setuptools import find_namespace_packages, setup
 
 
 def panther_version() -> str:
@@ -25,6 +25,12 @@ INSTALL_REQUIRES = [
 ]
 
 EXTRAS_REQUIRE = {
+    # The Rust (hyper + tokio) web server, built from the `rust/` directory.
+    # Optional on purpose: uvicorn stays the default, so a plain
+    # `pip install panther` never needs a Rust toolchain.
+    'rust': [
+        'panther-server>=0.1,<0.2',
+    ],
     'postgresql': [
         'SQLAlchemy>=2.0,<3.0',
         'asyncpg>=0.29,<1.0',
@@ -53,6 +59,11 @@ setup(
     long_description=DESCRIPTION,
     long_description_content_type='text/markdown',
     include_package_data=True,
+    # Declared explicitly rather than left to setuptools' flat-layout
+    # auto-discovery: `rust/` is a second top-level directory in this
+    # repository, and auto-discovery refuses to build when it finds more than
+    # one. This list is exactly what auto-discovery produced beforehand.
+    packages=find_namespace_packages(include=['panther', 'panther.*']),
     license='BSD-3-Clause license',
     classifiers=[
         'Operating System :: OS Independent',

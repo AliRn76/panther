@@ -74,19 +74,19 @@ You can customize JWT behavior by setting `JWT_CONFIG` in your configs. Example:
 
 ```python title="core/configs.py" linenums="1"
 from datetime import timedelta
-from panther.utils import load_env  
+from panther.utils import load_env
 from pathlib import Path
 
-BASE_DIR = Path(__name__).resolve().parent  
+BASE_DIR = Path(__name__).resolve().parent
 env = load_env(BASE_DIR / '.env')
 
 SECRET_KEY = env['SECRET_KEY']
 
 JWT_CONFIG = {
-    'key': SECRET_KEY,              # Secret key for signing tokens (default: `SECRET_KEY`)
-    'algorithm': 'HS256',           # Algorithm used for JWT (default: `'HS256'`)
-    'life_time': timedelta(days=2), # Access token lifetime (default: `timedelta(days=1)`)
-    'refresh_life_time': timedelta(days=10), # Refresh token lifetime (default: `2 * life_time`)
+    'key': SECRET_KEY,  # Secret key for signing tokens (default: `SECRET_KEY`)
+    'algorithm': 'HS256',  # Algorithm used for JWT (default: `'HS256'`)
+    'life_time': timedelta(days=2),  # Access token lifetime (default: `timedelta(days=1)`)
+    'refresh_life_time': timedelta(days=10),  # Refresh token lifetime (default: `2 * life_time`)
 }
 ```
 
@@ -144,6 +144,7 @@ You can implement your own authentication logic by either:
    from panther.exceptions import AuthenticationAPIError
    from panther.authentications import BaseAuthentication
 
+
    class CustomAuthentication(BaseAuthentication):
        async def __call__(self, request: Request):
            # Your authentication logic here
@@ -155,7 +156,7 @@ You can implement your own authentication logic by either:
    ```python
    async def custom_authentication(request: Request):
        # Your authentication logic here
-           # Return the authenticated application user.
+       # Return the authenticated application user.
        # Or raise AuthenticationAPIError on failure
        ...
    ```
@@ -166,8 +167,7 @@ You can implement your own authentication logic by either:
 3. **Or set it per API using the `auth` parameter:**
    ```python
    @API(auth=CustomAuthentication)
-   async def my_api(request: Request):
-       ...
+   async def my_api(request: Request): ...
    ```
 
 ---

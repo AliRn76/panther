@@ -118,9 +118,10 @@ Serializers transform data between the application and API requests.
 
     ```python title="app/serializers.py" linenums="1"
     from panther.serializer import ModelSerializer
-    
+
     from app.models import Book
-    
+
+
     class BookSerializer(ModelSerializer):
         class Config:
             model = Book
@@ -130,9 +131,10 @@ Serializers transform data between the application and API requests.
 
     ```python title="app/serializers.py" linenums="1"
     import pydantic
-    
+
     from app.models import Book
-    
+
+
     class BookSerializer(pydantic.BaseModel):
         name: str
         author: str
@@ -144,9 +146,10 @@ Serializers transform data between the application and API requests.
 
     ```python title="app/serializers.py" linenums="1"
     from panther.serializer import ModelSerializer
-    
+
     from app.models import Book
-    
+
+
     class BookSerializer(ModelSerializer):
         class Config:
             model = Book
@@ -270,17 +273,18 @@ Serializers transform data between the application and API requests.
     from panther.generics import CreateAPI, ListAPI
     from panther.pagination import Pagination
     from panther.request import Request
-    
+
     from app.models import Book
     from app.serializers import BookSerializer
-        
+
+
     class BookAPI(CreateAPI, ListAPI):
         input_model = BookSerializer
-        pagination = Pagination  #(1)!
-        search_fields = ['name', 'author']  #(2)!
-        filter_fields = ['name', 'author']  #(3)!
-        sort_fields = ['name', 'pages_count']  #(4)!
-    
+        pagination = Pagination  # (1)!
+        search_fields = ['name', 'author']  # (2)!
+        filter_fields = ['name', 'author']  # (3)!
+        sort_fields = ['name', 'pages_count']  # (4)!
+
         async def get_query(self, request: Request, **kwargs):
             return await Book.find()
     ```
@@ -354,13 +358,13 @@ Serializers transform data between the application and API requests.
     from panther.response import Response
 
     from app.models import Book
-    from app.serializers import BookSerializer 
-    
-   
+    from app.serializers import BookSerializer
+
+
     @API(input_model=BookSerializer, methods=['GET', 'PUT'])
     async def single_book_api(request: Request, book_id: int):
         ...
-        if request.method == 'PUT':            
+        if request.method == 'PUT':
             is_updated = await Book.update_one({'id': book_id}, request.validated_data.model_dump())
             data = {'is_updated': is_updated}
             return Response(data=data, status_code=status.HTTP_200_OK)
@@ -414,9 +418,9 @@ Serializers transform data between the application and API requests.
     from panther.response import Response
 
     from app.models import Book
-    from app.serializers import BookSerializer 
-    
-   
+    from app.serializers import BookSerializer
+
+
     @API(input_model=BookSerializer, methods=['GET', 'PUT', 'DELETE'])
     async def single_book_api(request: Request, book_id: int):
         ...

@@ -23,6 +23,7 @@ Panther is designed to be **fast**, **simple**, and **powerful**. Here's what ma
 - **Background tasks** - Handle long-running operations
 - **Middleware & Throttling** - Extensible and configurable
 - **File upload handling** - Built-in File and Image classes for easy file processing
+- **Optional Rust web server** - Serve on [hyper](https://hyper.rs) + [tokio](https://tokio.rs) instead of Uvicorn ([Rust Web Server](rust_server.md))
 
 ---
 
@@ -89,16 +90,15 @@ from panther.app import GenericAPI
 from panther.openapi.views import ScalarOpenAPI
 from panther.response import Response
 
+
 class HelloAPI(GenericAPI):
     # Cache responses for 10 seconds
     cache = timedelta(seconds=10)
-    
+
     def get(self):
         current_time = datetime.now().isoformat()
-        return Response(
-            data={'message': f'Hello from Panther! 🐾 | {current_time}'},
-            status_code=status.HTTP_200_OK
-        )
+        return Response(data={'message': f'Hello from Panther! 🐾 | {current_time}'}, status_code=status.HTTP_200_OK)
+
 
 # URL routing configuration
 url_routing = {
@@ -120,14 +120,16 @@ from panther.app import GenericAPI
 from panther.response import HTMLResponse
 from panther.websocket import GenericWebsocket
 
+
 class EchoWebsocket(GenericWebsocket):
     async def connect(self, **kwargs):
         await self.accept()
-        await self.send("Connected to Panther WebSocket!")
-    
+        await self.send('Connected to Panther WebSocket!')
+
     async def receive(self, data: str | bytes):
         # Echo back the received message
-        await self.send(f"Echo: {data}")
+        await self.send(f'Echo: {data}')
+
 
 class WebSocketPage(GenericAPI):
     def get(self):
@@ -141,6 +143,7 @@ class WebSocketPage(GenericAPI):
         </script>
         """
         return HTMLResponse(template)
+
 
 url_routing = {
     '': WebSocketPage,
@@ -156,7 +159,7 @@ app = Panther(__name__, configs=__name__, urls=url_routing)
    $ panther run main:app --reload
    ```
    
-    > **Note:** Panther uses [Uvicorn](https://github.com/encode/uvicorn) as the default ASGI server, but you can also use [Granian](https://pypi.org/project/granian/), [Daphne](https://pypi.org/project/daphne/), or any ASGI-compatible server.
+    > **Note:** Panther uses [Uvicorn](https://github.com/encode/uvicorn) as the default ASGI server, but you can also use Panther's own [Rust web server](rust_server.md) (`panther run --server rust main:app`), [Granian](https://pypi.org/project/granian/), [Daphne](https://pypi.org/project/daphne/), or any ASGI-compatible server.
 
 2. **Test your application**
     - For the _API_ example: Visit [http://127.0.0.1:8000/](http://127.0.0.1:8000/) to see the "Hello World" response
