@@ -56,7 +56,15 @@ help_message = rf"""{logo}
 {h}           * `panther run` is alias of `uvicorn`.           {h}
 {h}           Example: `panther run main:app --reload`         {h}
 {h}                                                            {h}
-{h}       - shell <application_file>                           {h}       
+{h}           --server rust                                    {h}
+{h}             Use the Rust (hyper + tokio) web server.       {h}
+{h}             * Requires `pip install panther\[rust]`         {h}
+{h}             * Options: --host, --port, --workers,          {h}
+{h}               --root-path, --no-lifespan                   {h}
+{h}             Example:                                       {h}
+{h}               `panther run --server rust main:app`         {h}
+{h}                                                            {h}
+{h}       - shell <application_file>                           {h}
 {h}           Start an interactive Python shell with your app. {h}
 {h}           * application_file: path to your main app file.  {h}           
 {h}           Example: `panther shell main.py`                 {h}

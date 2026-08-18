@@ -25,6 +25,12 @@ INSTALL_REQUIRES = [
 ]
 
 EXTRAS_REQUIRE = {
+    # The Rust (hyper + tokio) web server, built from the `rust/` directory.
+    # Optional on purpose: uvicorn stays the default, so a plain
+    # `pip install panther` never needs a Rust toolchain.
+    'rust': [
+        'panther-server>=0.1,<0.2',
+    ],
     'postgresql': [
         'SQLAlchemy>=2.0,<3.0',
         'asyncpg>=0.29,<1.0',
