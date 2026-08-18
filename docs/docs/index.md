@@ -90,16 +90,15 @@ from panther.app import GenericAPI
 from panther.openapi.views import ScalarOpenAPI
 from panther.response import Response
 
+
 class HelloAPI(GenericAPI):
     # Cache responses for 10 seconds
     cache = timedelta(seconds=10)
-    
+
     def get(self):
         current_time = datetime.now().isoformat()
-        return Response(
-            data={'message': f'Hello from Panther! 🐾 | {current_time}'},
-            status_code=status.HTTP_200_OK
-        )
+        return Response(data={'message': f'Hello from Panther! 🐾 | {current_time}'}, status_code=status.HTTP_200_OK)
+
 
 # URL routing configuration
 url_routing = {
@@ -121,14 +120,16 @@ from panther.app import GenericAPI
 from panther.response import HTMLResponse
 from panther.websocket import GenericWebsocket
 
+
 class EchoWebsocket(GenericWebsocket):
     async def connect(self, **kwargs):
         await self.accept()
-        await self.send("Connected to Panther WebSocket!")
-    
+        await self.send('Connected to Panther WebSocket!')
+
     async def receive(self, data: str | bytes):
         # Echo back the received message
-        await self.send(f"Echo: {data}")
+        await self.send(f'Echo: {data}')
+
 
 class WebSocketPage(GenericAPI):
     def get(self):
@@ -142,6 +143,7 @@ class WebSocketPage(GenericAPI):
         </script>
         """
         return HTMLResponse(template)
+
 
 url_routing = {
     '': WebSocketPage,

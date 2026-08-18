@@ -12,6 +12,7 @@ Create a WebSocket handler class in `app/websockets.py` by inheriting from `Gene
 ```python title="app/websockets.py" linenums="1"
 from panther.websocket import GenericWebsocket
 
+
 class BookWebsocket(GenericWebsocket):
     async def connect(self):
         await self.accept()
@@ -49,6 +50,7 @@ urls = {
     - **Outside the WebSocket class:** Use `send_message_to_websocket()`:
       ```python
       from panther.websocket import send_message_to_websocket
+
       await send_message_to_websocket(connection_id='7e82d57c9ec0478787b01916910a9f45', data='New Message From WS')
       ```
 
@@ -74,9 +76,10 @@ This will set `self.user` to a `UserModel` instance or `None`. The connection wi
 from panther.websocket import GenericWebsocket
 from app.authentications import MyAuthenticationClass
 
+
 class MyWebSocket(GenericWebsocket):
     auth = MyAuthenticationClass  # Or use an async function
-    
+
     async def connect(self):
         print(self.user)
         ...
@@ -100,6 +103,7 @@ Pass a list of permission callables to your WebSocket class.
 ```python title="app/permissions.py" linenums="1"
 from panther.websocket import Websocket
 
+
 async def custom_permission(request: Websocket) -> bool:
     return True
 ```
@@ -110,6 +114,7 @@ async def custom_permission(request: Websocket) -> bool:
 from panther.websocket import Websocket
 from panther.permissions import BasePermission
 
+
 class CustomPermission(BasePermission):
     async def __call__(self, request: Websocket) -> bool:
         return True
@@ -119,11 +124,11 @@ class CustomPermission(BasePermission):
 from panther.websocket import GenericWebsocket
 from app.permissions import custom_permission, CustomPermission
 
+
 class MyWebSocket(GenericWebsocket):
     permissions = [custom_permission, CustomPermission]  # Or just one
-    
-    async def connect(self):
-        ...
+
+    async def connect(self): ...
 ```
 
 ### Multiple Workers & Redis
@@ -163,13 +168,17 @@ method directly or by running a real client against a running server. `connect()
 - **Within the WebSocket class:**
   ```python
   from panther import status
+
   await self.close(code=status.WS_1000_NORMAL_CLOSURE, reason='Closing connection')
   ```
 - **Outside the WebSocket class:**
   ```python
   from panther import status
   from panther.websocket import close_websocket_connection
-  await close_websocket_connection(connection_id='7e82d57c9ec0478787b01916910a9f45', code=status.WS_1008_POLICY_VIOLATION, reason='Closing connection')
+
+  await close_websocket_connection(
+      connection_id='7e82d57c9ec0478787b01916910a9f45', code=status.WS_1008_POLICY_VIOLATION, reason='Closing connection'
+  )
   ```
 
 ### Path Variables
@@ -178,13 +187,13 @@ You can define path variables in your WebSocket URL. These will be passed to the
 ```python linenums="1"
 from panther.websocket import GenericWebsocket
 
+
 class UserWebsocket(GenericWebsocket):
     async def connect(self, user_id: int, room_id: str):
         await self.accept()
 
-urls = {
-    '/ws/<user_id>/<room_id>/': UserWebsocket
-}
+
+urls = {'/ws/<user_id>/<room_id>/': UserWebsocket}
 ```
 
 ---
@@ -216,12 +225,14 @@ from panther.app import GenericAPI
 from panther.response import HTMLResponse
 from panther.websocket import GenericWebsocket
 
+
 class EchoWebsocket(GenericWebsocket):
     async def connect(self, **kwargs):
         await self.accept()
 
     async def receive(self, data: str | bytes):
         await self.send(data)
+
 
 class MainPage(GenericAPI):
     def get(self):
@@ -234,6 +245,7 @@ class MainPage(GenericAPI):
         </script>
         """
         return HTMLResponse(template)
+
 
 url_routing = {
     '': MainPage,

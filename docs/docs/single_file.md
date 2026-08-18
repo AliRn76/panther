@@ -9,6 +9,7 @@ Write your API endpoints as usual using the `@API()` decorator or inheriting fro
 ```python title="main.py" linenums="1"
 from panther.app import API
 
+
 @API()
 async def hello_world_api():
     return {'detail': 'Hello World'}
@@ -32,9 +33,11 @@ Create an instance of the `Panther` app, passing your current module name and th
 from panther import Panther
 from panther.app import API
 
+
 @API()
 async def hello_world_api():
     return {'detail': 'Hello World'}
+
 
 url_routing = {
     '/': hello_world_api,

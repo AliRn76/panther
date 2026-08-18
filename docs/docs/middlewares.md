@@ -16,14 +16,15 @@ Each item can be either a string (dotted path to the middleware class) or the cl
 class Middleware(HTTPMiddleware):
     pass
 
+
 MIDDLEWARES = [
     'core.middlewares.MyMiddleware',  # Import by dotted path
-    Middleware,                       # Or directly by class
+    Middleware,  # Or directly by class
 ]
 
 WS_MIDDLEWARES = [
     'core.middlewares.MyWebsocketMiddleware',  # WebSocket middleware by dotted path
-    MyWebsocketMiddleware,                     # Or directly by class
+    MyWebsocketMiddleware,  # Or directly by class
 ]
 ```
 
@@ -37,12 +38,15 @@ You can assign middlewares to specific APIs, either class-based or function-base
 from panther.app import API, GenericAPI
 from panther.middlewares import HTTPMiddleware
 
+
 class Middleware(HTTPMiddleware):
     pass
+
 
 # Class-Based API
 class MyAPI(GenericAPI):
     middlewares = [Middleware]
+
 
 # Function-Based API
 @API(middlewares=[Middleware])
@@ -98,6 +102,7 @@ from panther.middlewares.base import HTTPMiddleware
 from panther.request import Request
 from panther.response import Response
 
+
 class CustomMiddleware(HTTPMiddleware):
     async def __call__(self, request: Request) -> Response:
         start_time = datetime.now()
@@ -113,6 +118,7 @@ class CustomMiddleware(HTTPMiddleware):
 from datetime import datetime
 from panther.middlewares.base import WebsocketMiddleware
 from panther.websocket import GenericWebsocket, Websocket
+
 
 class TimerMiddleware(WebsocketMiddleware):
     async def __call__(self, connection: Websocket) -> GenericWebsocket:

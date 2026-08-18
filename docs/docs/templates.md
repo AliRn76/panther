@@ -33,10 +33,7 @@ from panther.response import TemplateResponse
 
 @API()
 def my_html():
-    return TemplateResponse(
-        name='index.html', 
-        context={'name': 'Ali', 'title': 'Welcome'}
-    )
+    return TemplateResponse(name='index.html', context={'name': 'Ali', 'title': 'Welcome'})
 ```
 
 **Benefits:**
@@ -57,10 +54,7 @@ from panther.response import TemplateResponse
 @API()
 def my_html():
     html_content = open('index.html', 'r').read()
-    return TemplateResponse(
-        source=html_content, 
-        context={'name': 'Ali', 'title': 'Welcome'}
-    )
+    return TemplateResponse(source=html_content, context={'name': 'Ali', 'title': 'Welcome'})
 ```
 
 **Note:** This approach requires you to manage the HTML content manually and doesn't provide the benefits of template files.
@@ -73,19 +67,17 @@ The `context` parameter allows you to pass variables to your templates:
 from panther.app import API
 from panther.response import TemplateResponse
 
+
 def get_user(user_id: int):
     return ...
+
 
 @API()
 def user_profile(user_id: int):
     user = get_user(user_id)  # Your user fetching logic
     return TemplateResponse(
         name='profile.html',
-        context={
-            'user': user,
-            'page_title': f'{user.name}\'s Profile',
-            'is_admin': user.role == 'admin'
-        }
+        context={'user': user, 'page_title': f"{user.name}'s Profile", 'is_admin': user.role == 'admin'},
     )
 ```
 

@@ -37,8 +37,8 @@ You can validate incoming data using the `input_model` parameter. Pass a seriali
 ```python title="app/serializers.py" linenums="1"
 from panther.serializer import ModelSerializer
 
-class UserInputSerializer(ModelSerializer):
-    ...
+
+class UserInputSerializer(ModelSerializer): ...
 ```
 === "Function-Base API"
 
@@ -87,8 +87,8 @@ Use the `output_model` parameter to automatically serialize your API response da
 ```python title="app/serializers.py" linenums="1"
 from panther.serializer import ModelSerializer
 
-class UserSerializer(ModelSerializer):
-    ...
+
+class UserSerializer(ModelSerializer): ...
 ```
 
 === "Function-Base API"
@@ -96,10 +96,10 @@ class UserSerializer(ModelSerializer):
     ```python title="app/apis.py" linenums="1"
     from panther.app import API
     from app.serializers import UserSerializer
-    
+
+
     @API(output_model=UserSerializer)
-    async def user_api():
-        ...
+    async def user_api(): ...
     ```
 
 === "Class-Base API"
@@ -107,7 +107,8 @@ class UserSerializer(ModelSerializer):
     ```python title="app/apis.py" linenums="1"
     from panther.app import GenericAPI
     from app.serializers import UserSerializer
-    
+
+
     class UserAPI(GenericAPI):
         output_model = UserSerializer
         ...
@@ -137,7 +138,8 @@ To ensure that each request contains a valid authentication header, use the `aut
     from panther.request import Request
     from panther.response import Response
     from app.authentications import MyAuthenticationClass
-    
+
+
     @API(auth=MyAuthenticationClass)  # You can also use a function
     async def user_api(request: Request):
         user = request.user
@@ -152,10 +154,11 @@ To ensure that each request contains a valid authentication header, use the `aut
     from panther.app import GenericAPI
     from panther.response import Response
     from app.authentications import MyAuthenticationClass
-    
+
+
     class UserAPI(GenericAPI):
         auth = MyAuthenticationClass  # You can also use a function
-    
+
         async def get(self, request: Request):
             user = request.user
             return Response(data=user, status_code=status.HTTP_200_OK)
@@ -174,7 +177,8 @@ You can specify which HTTP methods are allowed for an endpoint by setting `metho
     ```python title="app/apis.py" linenums="1"
     from panther.app import API
     from panther.request import Request
-    
+
+
     @API(methods=['GET', 'POST'])
     async def user_api(request: Request):
         match request.method:
@@ -188,13 +192,12 @@ You can specify which HTTP methods are allowed for an endpoint by setting `metho
 
     ```python title="app/apis.py" linenums="1"
     from panther.app import GenericAPI
-    
+
+
     class UserAPI(GenericAPI):  # (1)!
-        async def get(self):
-            ...
-    
-        async def post(self):
-            ...
+        async def get(self): ...
+
+        async def post(self): ...
     ```
 
     1. Now this class only accepts `GET` and `POST` requests.
@@ -214,6 +217,7 @@ Pass a list of permission callables to your API using the `permissions` paramete
 ```python title="app/permissions.py" linenums="1"
 from panther.request import Request
 
+
 async def custom_permission(request: Request) -> bool:
     return True
 ```
@@ -223,6 +227,7 @@ async def custom_permission(request: Request) -> bool:
 ```python title="app/permissions.py" linenums="1"
 from panther.permissions import BasePermission
 from panther.request import Request
+
 
 class CustomPermission(BasePermission):
     async def __call__(self, request: Request) -> bool:
@@ -234,19 +239,19 @@ class CustomPermission(BasePermission):
     ```python title="app/apis.py" linenums="1"
     from panther.app import API
     from app.permissions import custom_permission, CustomPermission
-    
+
+
     @API(permissions=[custom_permission, CustomPermission])
-    async def user_api():
-        ...
+    async def user_api(): ...
     ```
     Or, if you have only one permission:
     ```python title="app/apis.py" linenums="1"
     from panther.app import API
     from app.permissions import custom_permission
-    
+
+
     @API(permissions=custom_permission)
-    async def user_api():
-        ...
+    async def user_api(): ...
     ```
     Panther will treat it as a list internally.
 
@@ -255,7 +260,8 @@ class CustomPermission(BasePermission):
     ```python title="app/apis.py" linenums="1"
     from panther.app import GenericAPI
     from app.permissions import CustomPermission
-    
+
+
     class UserAPI(GenericAPI):
         permissions = [CustomPermission]
         ...
@@ -264,7 +270,8 @@ class CustomPermission(BasePermission):
     ```python title="app/apis.py" linenums="1"
     from panther.app import GenericAPI
     from app.permissions import custom_permission
-    
+
+
     class UserAPI(GenericAPI):
         permissions = custom_permission
         ...
@@ -290,10 +297,10 @@ The value of `cache` should be an instance of `datetime.timedelta()`.
     ```python title="app/apis.py" linenums="1"
     from datetime import timedelta
     from panther.app import API
-    
+
+
     @API(cache=timedelta(minutes=10))
-    async def user_api():
-        ...
+    async def user_api(): ...
     ```
 
 === "Class-Base API"
@@ -301,7 +308,8 @@ The value of `cache` should be an instance of `datetime.timedelta()`.
     ```python title="app/apis.py" linenums="1"
     from datetime import timedelta
     from panther.app import GenericAPI
-    
+
+
     class UserAPI(GenericAPI):
         cache = timedelta(minutes=10)
         ...
@@ -335,10 +343,10 @@ THROTTLING = Throttle(rate=5, duration=timedelta(minutes=1))
     from datetime import timedelta
     from panther.app import API
     from panther.throttling import Throttle
-    
+
+
     @API(throttling=Throttle(rate=5, duration=timedelta(minutes=1)))
-    async def user_api():
-        ...
+    async def user_api(): ...
     ```
 
 === "Class-Base API"
@@ -347,7 +355,8 @@ THROTTLING = Throttle(rate=5, duration=timedelta(minutes=1))
     from datetime import timedelta
     from panther.app import GenericAPI
     from panther.throttling import Throttle
-    
+
+
     class UserAPI(GenericAPI):
         throttling = Throttle(rate=5, duration=timedelta(minutes=1))
         ...
@@ -361,9 +370,9 @@ Throttling works with `request.user.id` or `request.client.ip`. You can customiz
 from panther.request import Request
 from panther.throttling import Throttle
 
+
 class CustomThrottle(Throttle):
-    def build_cache_key(self, request: Request) -> str:
-        ...
+    def build_cache_key(self, request: Request) -> str: ...
 ```
 
 ---
@@ -379,6 +388,7 @@ from panther.middlewares.base import HTTPMiddleware
 from panther.request import Request
 from panther.response import Response
 
+
 class CustomMiddleware(HTTPMiddleware):
     async def __call__(self, request: Request) -> Response:
         print('Hi')
@@ -391,19 +401,20 @@ class CustomMiddleware(HTTPMiddleware):
 
     ```python title="app/apis.py" linenums="1"
     from panther.app import API
-    from app.middlewares import CustomMiddleware 
-    
+    from app.middlewares import CustomMiddleware
+
+
     @API(middlewares=[CustomMiddleware])
-    async def user_api():
-        ...
+    async def user_api(): ...
     ```
 
 === "Class-Base API"
 
     ```python title="app/apis.py" linenums="1"
     from panther.app import GenericAPI
-    from app.middlewares import CustomMiddleware 
-    
+    from app.middlewares import CustomMiddleware
+
+
     class UserAPI(GenericAPI):
         middlewares = [CustomMiddleware]
         ...
@@ -424,8 +435,8 @@ It should be an instance of `panther.openapi.OutputSchema`, which specifies the 
 ```python title="app/serializers.py" linenums="1"
 from panther.serializer import ModelSerializer
 
-class UserSerializer(ModelSerializer):
-    ...
+
+class UserSerializer(ModelSerializer): ...
 ```
 
 === "Function-Base API"
@@ -435,10 +446,10 @@ class UserSerializer(ModelSerializer):
     from panther.app import API
     from panther.openapi import OutputSchema
     from app.serializers import UserSerializer
-    
+
+
     @API(output_schema=OutputSchema(status_code=status.HTTP_201_CREATED, model=UserSerializer))
-    async def user_api():
-        ...
+    async def user_api(): ...
     ```
 
 === "Class-Base API"
@@ -447,7 +458,8 @@ class UserSerializer(ModelSerializer):
     from panther.app import GenericAPI
     from panther.openapi import OutputSchema
     from app.serializers import UserSerializer
-    
+
+
     class UserAPI(GenericAPI):
         output_schema = OutputSchema(status_code=status.HTTP_201_CREATED, model=UserSerializer)
         ...
@@ -473,25 +485,25 @@ from panther.request import Request
 from panther.response import Response
 from panther.serializer import ModelSerializer
 
+
 class FileUpload(Model):
     file: File
     description: str
+
 
 class FileUploadSerializer(ModelSerializer):
     class Config:
         model = FileUpload
         fields = '*'
 
+
 @API(input_model=FileUploadSerializer, methods=['POST'])
 async def upload_file(request: Request):
     file_data = request.validated_data
     file = file_data.file
-    
+
     # Save file to disk
-    saved_path = file.save("uploads/")
-    
-    return Response(data={
-        "message": "File uploaded successfully",
-        "saved_path": saved_path
-    })
+    saved_path = file.save('uploads/')
+
+    return Response(data={'message': 'File uploaded successfully', 'saved_path': saved_path})
 ```

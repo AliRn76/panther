@@ -11,6 +11,7 @@ To run code when your application starts, use the `@Event.startup` decorator:
 ```python title="events.py" linenums="1"
 from panther.events import Event
 
+
 @Event.startup
 def do_something_on_startup():
     print('Hello, I am at startup')
@@ -26,6 +27,7 @@ To run code when your application is shutting down, use the `@Event.shutdown` de
 
 ```python title="events.py" linenums="1"
 from panther.events import Event
+
 
 @Event.shutdown
 def do_something_on_shutdown():

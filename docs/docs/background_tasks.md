@@ -13,10 +13,12 @@ Panther can run background tasks in a separate thread at startup if you set `BAC
 2. **Create and submit a task**  
     ```python linenums="1"
     from panther.background_tasks import BackgroundTask
-    
+
+
     def do_something(name: str, age: int):
-       print(f"{name} is {age} years old.")
-    
+        print(f'{name} is {age} years old.')
+
+
     BackgroundTask(do_something, name='Ali', age=26).submit()
     ```
     - You must call `.submit()` to add the task to the queue.
@@ -63,10 +65,7 @@ Run a task at a specific time:
 from datetime import time
 from panther.background_tasks import BackgroundTask
 
-BackgroundTask(do_something, name='Ali', age=26)\
-    .every_days()\
-    .at(time(hour=8, minute=0))\
-    .submit()
+BackgroundTask(do_something, name='Ali', age=26).every_days().at(time(hour=8, minute=0)).submit()
 ```
 
 - The task will run when the system time matches the specified hour, minute, and second.
@@ -79,11 +78,7 @@ Run a task on a specific day of the week:
 from datetime import time
 from panther.background_tasks import BackgroundTask, WeekDay
 
-BackgroundTask(do_something, name='Ali', age=26)\
-    .every_weeks(2)\
-    .on(WeekDay.SUNDAY)\
-    .at(time(hour=8))\
-    .submit()
+BackgroundTask(do_something, name='Ali', age=26).every_weeks(2).on(WeekDay.SUNDAY).at(time(hour=8)).submit()
 ```
 
 - Valid days: `WeekDay.MONDAY`, `WeekDay.TUESDAY`, `WeekDay.WEDNESDAY`, `WeekDay.THURSDAY`, `WeekDay.FRIDAY`, `WeekDay.SATURDAY`, `WeekDay.SUNDAY`.
@@ -119,8 +114,10 @@ BackgroundTask(do_something, 'Ali', 26)
 import datetime
 from panther.background_tasks import BackgroundTask
 
+
 async def hello(name: str):
     print(f'Hello {name}')
+
 
 # Run 2 times, every 5 seconds
 BackgroundTask(hello, 'Ali').interval(2).every_seconds(5).submit()

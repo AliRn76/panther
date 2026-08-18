@@ -31,11 +31,11 @@ Set the following variables in your Panther config file (e.g., `core/configs.py`
 ### Example Configuration
 
 ```python title="e.g. core/configs.py"
-ALLOW_ORIGINS = ["https://example.com", "https://another.com"]
-ALLOW_METHODS = ["GET", "POST"]
-ALLOW_HEADERS = ["Content-Type", "Authorization"]
+ALLOW_ORIGINS = ['https://example.com', 'https://another.com']
+ALLOW_METHODS = ['GET', 'POST']
+ALLOW_HEADERS = ['Content-Type', 'Authorization']
 ALLOW_CREDENTIALS = True
-EXPOSE_HEADERS = ["X-Custom-Header"]
+EXPOSE_HEADERS = ['X-Custom-Header']
 CORS_MAX_AGE = 3600
 
 MIDDLEWARES = [

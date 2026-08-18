@@ -10,8 +10,8 @@ To enable Redis in Panther, fill out the `REDIS` block in your configuration fil
 REDIS = {
     'class': 'panther.db.connections.RedisConnection',
     'host': 'localhost',  # Optional, default is 'localhost'
-    'port': 6379,         # Optional, default is 6379
-    'db': 0,              # Optional, default is 0
+    'port': 6379,  # Optional, default is 6379
+    'db': 0,  # Optional, default is 0
     # Add any other redis-py supported parameters here
 }
 ```

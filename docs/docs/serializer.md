@@ -26,11 +26,13 @@ from panther.app import API
 from panther.request import Request
 from panther.response import Response
 
+
 class UserSerializer(BaseModel):
     username: str
     password: str
     first_name: str = Field(default='', min_length=2)
     last_name: str = Field(default='', min_length=4)
+
 
 @API(input_model=UserSerializer, methods=['POST'])
 async def serializer_example(request: Request):
@@ -51,11 +53,13 @@ from panther.request import Request
 from panther.response import Response
 from panther.serializer import ModelSerializer
 
+
 class User(Model):
     username: str
     password: str
     first_name: str = Field(default='', min_length=2)
     last_name: str = Field(default='', min_length=4)
+
 
 # Option 1: Specify fields explicitly
 class UserModelSerializer(ModelSerializer):
@@ -64,6 +68,7 @@ class UserModelSerializer(ModelSerializer):
         fields = ['username', 'first_name', 'last_name']
         required_fields = ['first_name']
 
+
 # Option 2: Exclude specific fields
 class UserModelSerializer(ModelSerializer):
     class Config:
@@ -71,6 +76,7 @@ class UserModelSerializer(ModelSerializer):
         fields = '*'
         required_fields = ['first_name']
         exclude = ['id', 'password']
+
 
 @API(input_model=UserModelSerializer, methods=['POST'])
 async def model_serializer_example(request: Request):
@@ -91,11 +97,13 @@ from panther.request import Request
 from panther.response import Response
 from panther.serializer import ModelSerializer
 
+
 class User(Model):
     username: str
     password: str
     first_name: str = Field(default='', min_length=2)
     last_name: str = Field(default='', min_length=4)
+
 
 class UserModelSerializer(ModelSerializer):
     model_config = ConfigDict(str_to_upper=True)
@@ -113,6 +121,7 @@ class UserModelSerializer(ModelSerializer):
     def validate_username(cls, username):
         print(f'{username=}')
         return username
+
 
 @API(input_model=UserModelSerializer, methods=['POST'])
 async def model_serializer_example(request: Request):
@@ -159,11 +168,13 @@ When working with file uploads, Panther's `File` and `Image` classes integrate s
 ```python title="app/serializers.py" linenums="1"
 from panther.serializer import ModelSerializer
 
+
 class FileUploadSerializer(ModelSerializer):
     class Config:
         model = FileUpload
         fields = ['file', 'description']
         required_fields = ['file']
+
 
 class ImageUploadSerializer(ModelSerializer):
     class Config:
@@ -181,6 +192,7 @@ from panther.exceptions import APIError
 from panther.file_handler import File
 from panther.serializer import ModelSerializer
 
+
 class DocumentUploadSerializer(ModelSerializer):
     class Config:
         model = DocumentUpload
@@ -192,8 +204,7 @@ class DocumentUploadSerializer(ModelSerializer):
     def validate_file_size(cls, file: File) -> File:
         if file.size > 10 * 1024 * 1024:  # 10MB limit
             raise APIError(
-                detail='File size must be less than 10MB',
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+                detail='File size must be less than 10MB', status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
             )
         return file
 ```
